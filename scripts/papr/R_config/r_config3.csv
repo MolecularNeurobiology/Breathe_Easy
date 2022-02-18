@@ -1,0 +1,74 @@
+Column,Alias,Independent,Dependent,Covariate,Ignore,Start Body Temp,Mid Body Temp,End Body Temp,Post Body Temp,Body Weight
+MUID,MUID,0,0,0,1,0,0,0,0,0
+Sex,Sex,1,0,0,0,0,0,0,0,0
+Genotype,Genotype,0,0,0,0,0,0,0,0,0
+Group,Group,1,0,0,0,0,0,0,0,0
+Weight,Weight,0,0,0,1,0,0,0,0,1
+Age,Age,0,0,0,1,0,0,0,0,0
+DOB,DOB,0,0,0,1,0,0,0,0,0
+Experiment_Name,Experiment_Name,0,0,0,1,0,0,0,0,0
+Recearcher,Recearcher,0,0,0,1,0,0,0,0,0
+Experimental_Date,Experimental_Date,0,0,0,1,0,0,0,0,0
+time started,time started,0,0,0,1,0,0,0,0,0
+Rig,Rig,0,0,0,1,0,0,0,0,0
+Tag Number,Tag Number,0,0,0,1,0,0,0,0,0
+Start_body_temperature,Start,0,0,0,1,1,0,0,0,0
+Mid_body_temperature,Mid,0,0,0,1,0,1,0,0,0
+End_body_temperature,End,0,0,0,1,0,0,1,0,0
+post30_body_temperature,Post_30,0,0,0,1,0,0,0,1,0
+Room_Temp,Room_Temp,0,0,0,1,0,0,0,0,0
+Bar_Pres,Bar_Pres,0,0,0,1,0,0,0,0,0
+Rotometer_Flowrate,Rotometer_Flowrate,0,0,0,1,0,0,0,0,0
+Pump Flowrate,Pump Flowrate,0,0,0,1,0,0,0,0,0
+Calibration_Volume,Calibration_Volume,0,0,0,1,0,0,0,0,0
+Calibration_Condition,Calibration_Condition,0,0,0,1,0,0,0,0,0
+Experimental_Condition,Experimental_Condition,0,0,0,1,0,0,0,0,0
+Experimental_Treatment,Experimental_Treatment,0,0,0,1,0,0,0,0,0
+Gas 1,Gas 1,0,0,0,1,0,0,0,0,0
+Gas 2,Gas 2,0,0,0,1,0,0,0,0,0
+Gas 3,Gas 3,0,0,0,1,0,0,0,0,0
+Tank 1,Tank 1,0,0,0,1,0,0,0,0,0
+Tank 2,Tank 2,0,0,0,1,0,0,0,0,0
+Tank 3,Tank 3,0,0,0,1,0,0,0,0,0
+Dose,Dose,0,0,0,1,0,0,0,0,0
+Habituation,Habituation,0,0,0,1,0,0,0,0,0
+Plethysmography,Plethysmography,0,0,0,1,0,0,0,0,0
+PlyUID,PlyUID,0,0,0,1,0,0,0,0,0
+Notes,Notes,0,0,0,1,0,0,0,0,0
+Project Number,Project Number,0,0,0,1,0,0,0,0,0
+AUTO_IND_INCLUDE,AUTO_IND_INCLUDE,0,0,0,1,0,0,0,0,0
+AUTO_IND_CAL,AUTO_IND_CAL,0,0,0,1,0,0,0,0,0
+AUTO_IND_GAS,AUTO_IND_GAS,0,0,0,1,0,0,0,0,0
+AUTO_IND_INJECTION,AUTO_IND_INJECTION,0,0,0,1,0,0,0,0,0
+TStart (s),TStart (s),0,0,0,1,0,0,0,0,0
+TEnd (s),TEnd (s),0,0,0,1,0,0,0,0,0
+Width (ms),Width (ms),0,0,0,1,0,0,0,0,0
+Height (V),Height (V),0,0,0,1,0,0,0,0,0
+SlopeRise (V/s),SlopeRise (V/s),0,0,0,1,0,0,0,0,0
+SlopeFall (V/s),SlopeFall (V/s),0,0,0,1,0,0,0,0,0
+Sel Duration,Sel Duration,0,0,0,1,0,0,0,0,0
+Freq,Freq,0,0,0,1,0,0,0,0,0
+Avg Period,Avg Period,0,0,0,1,0,0,0,0,0
+O2 Mean,O2 Mean,0,0,0,1,0,0,0,0,0
+CO2 Mean,CO2 Mean,0,0,0,1,0,0,0,0,0
+Temp Mean,Temp Mean,0,0,0,1,0,0,0,0,0
+Body Temp Linear C,Body Temp Linear C,0,0,0,1,0,0,0,0,0
+Body Temp Avg C,Body Temp Avg C,0,0,0,1,0,0,0,0,0
+TV cal mL,TV cal mL,0,0,0,1,0,0,0,0,0
+AP_2x_Loc,AP_2x_Loc,0,0,0,1,0,0,0,0,0
+Sigh_2x_locTV,Sigh_2x_locTV,0,0,0,1,0,0,0,0,0
+Calm_Filter,Calm_Filter,0,0,0,1,0,0,0,0,0
+Auto_Condition,Condition,1,0,0,1,0,0,0,0,0
+Man_Block,Man_Block,0,0,0,1,0,0,0,0,0
+Chunk_ID,Chunk_ID,0,0,0,1,0,0,0,0,0
+Mouse_ID,Mouse_ID,0,0,0,1,0,0,0,0,0
+Mouse_Group,Mouse_Group,0,0,0,1,0,0,0,0,0
+Mouse_State,Mouse_State,0,0,0,1,0,0,0,0,0
+Mouse_Air,Mouse_Air,0,0,0,1,0,0,0,0,0
+VE,VE,0,1,0,0,0,0,0,0,0
+VT,VT,0,0,0,0,0,0,0,0,0
+VO2,VO2,0,0,0,0,0,0,0,0,0
+VCO2,VCO2,0,0,0,0,0,0,0,0,0
+VEVO2,VEVO2,0,0,0,0,0,0,0,0,0
+VF,VF,0,0,0,0,0,0,0,0,0
+VTG,VTG,0,0,0,0,0,0,0,0,0

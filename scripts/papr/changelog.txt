@@ -1,0 +1,23 @@
+Pipeline
+  - Allows for choosing graph image file type for saving. 
+    - Assumes argument has the full name of the extension, e.g. ".jpeg".
+  - Failsafe for environment saving.
+
+Data import
+  - Will only attempt to import files that have a .json extension.
+  - Has a check that will skip importing files that contain "config" in filename.
+
+Statistical analysis
+  - Does a check to see whether user wants to run the original dependent variable in the model or just transformations.
+  - Will run original variable if there is a "non" in the transform column of the R/variable config file, e.g. "log10@non," or if no transformations are provided.
+  - ATH: Added if((!is_empty(interaction_vars))) to the lmer loop so the pipeline can skip the stats if they just want a poincare or spectral, etc.
+  - ATH: Changed the way the env is saved to match the way it's saved towards the end of pipeline script with prefix myEnv_ and timestamp beginning with year
+
+Graph generator
+  - Now manually calculated y-axis ranges by default as well.
+  - (Should fix issues with lines and asterisks being cut off.)
+  - ATH: Added if((!is_empty(interaction_vars))) to the graph-making loop so the pipeline can skip the graph-making for the model if they don't have a model and just want a poincare or spectral, etc.
+  - ATH: Changed the way the env is saved to match the way it's saved towards the end of pipeline script with prefix myEnv_ and timestamp beginning with year
+
+Optional graphs
+  - Fixes error that would arise if no spectral and/or poincare plots were asked for.

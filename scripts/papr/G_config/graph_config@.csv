@@ -1,0 +1,5 @@
+Alias,Role,Order
+Sex,1,Female@Male
+Condition,2,PreCNO 5% CO2@PostCNO PostCO2 Recovery@PreCNO Room Air@PostCNO 5% CO2@PostCNO Room Air@PreCNO PostCO2 Recovery
+,3,
+,4,

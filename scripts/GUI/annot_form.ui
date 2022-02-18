@@ -1,0 +1,746 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Annot</class>
+ <widget class="QMainWindow" name="Annot">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>3800</width>
+    <height>2000</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Variable_config</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout_6" stretch="1,5,1">
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_5">
+        <item>
+         <spacer name="verticalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,3,3,1,4">
+          <item>
+           <spacer name="horizontalSpacer_8">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label">
+            <property name="font">
+             <font>
+              <pointsize>24</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Variable Annotation</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_9">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="metadata_button">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Open File</string>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>18</width>
+              <height>18</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_10">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,4,0,6,0,0,0,4,0,5,0,0,0">
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout">
+          <item>
+           <widget class="QLabel" name="label_2">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Metadata columns</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="variable_list_columns"/>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>*NaN values detected</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_2">
+          <item>
+           <widget class="QLabel" name="label_3">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Values</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="variable_list_values">
+            <property name="dragEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="dragDropMode">
+             <enum>QAbstractItemView::DragOnly</enum>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_13">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_8">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QToolButton" name="move_button">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="arrowType">
+               <enum>Qt::RightArrow</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QPushButton" name="bin_value">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Bin by value</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QPushButton" name="bin_count">
+            <property name="font">
+             <font>
+              <pointsize>10</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Bin by count</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QLabel" name="label_6">
+              <property name="text">
+               <string>Bin #</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="bin_edit">
+              <property name="text">
+               <string>4</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_11">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <widget class="QLabel" name="label_5">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Groups</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QListWidget" name="group_list">
+            <property name="dragEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="dragDropMode">
+             <enum>QAbstractItemView::DragOnly</enum>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::MultiSelection</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <item>
+           <widget class="QLabel" name="label_4">
+            <property name="font">
+             <font>
+              <pointsize>16</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Recoding</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QTreeWidget" name="variable_tree">
+            <property name="dragDropMode">
+             <enum>QAbstractItemView::DragOnly</enum>
+            </property>
+            <property name="defaultDropAction">
+             <enum>Qt::CopyAction</enum>
+            </property>
+            <column>
+             <property name="text">
+              <string>Recoded variable list</string>
+             </property>
+            </column>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_12">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="add_configuration">
+          <property name="text">
+           <string>Add column</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QVBoxLayout" name="verticalLayout_7" stretch="1,2,1">
+        <item>
+         <spacer name="verticalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="5,0,0,0,1">
+          <item>
+           <spacer name="horizontalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="save_button">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Save</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="cancel_button">
+            <property name="font">
+             <font>
+              <pointsize>12</pointsize>
+             </font>
+            </property>
+            <property name="text">
+             <string>Cancel</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_7">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="verticalSpacer_4">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>metadata_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>load_metadata_file()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>559</x>
+     <y>260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>variable_list_columns</sender>
+   <signal>itemSelectionChanged()</signal>
+   <receiver>Annot</receiver>
+   <slot>populate_list_values()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>488</x>
+     <y>1095</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>add_configuration</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>add_config()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>2938</x>
+     <y>1079</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>save_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>save_config()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>2680</x>
+     <y>1998</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>group_list</sender>
+   <signal>doubleClicked(QModelIndex)</signal>
+   <receiver>Annot</receiver>
+   <slot>relabel_group()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>2350</x>
+     <y>1095</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>move_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>recode()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1933</x>
+     <y>1065</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bin_value</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>binning_value()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1933</x>
+     <y>1826</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>group_list</sender>
+   <signal>itemChanged(QListWidgetItem*)</signal>
+   <receiver>Annot</receiver>
+   <slot>tree_label()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>2372</x>
+     <y>1095</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>variable_list_columns</sender>
+   <signal>itemDoubleClicked(QListWidgetItem*)</signal>
+   <receiver>Annot</receiver>
+   <slot>relabel_column()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>398</x>
+     <y>1095</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>variable_list_columns</sender>
+   <signal>itemChanged(QListWidgetItem*)</signal>
+   <receiver>Annot</receiver>
+   <slot>column_label()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>398</x>
+     <y>1095</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>bin_count</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>binning_count()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1931</x>
+     <y>1093</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>save_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>hide()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3016</x>
+     <y>1847</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1899</x>
+     <y>999</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cancel_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3148</x>
+     <y>1847</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1899</x>
+     <y>999</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>cancel_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Annot</receiver>
+   <slot>cancel_annot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3148</x>
+     <y>1847</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1899</x>
+     <y>999</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>populate_list_columns()</slot>
+  <slot>populate_list_values()</slot>
+  <slot>recode()</slot>
+  <slot>add_config()</slot>
+  <slot>save_config()</slot>
+  <slot>relabel_group()</slot>
+  <slot>binning_value()</slot>
+  <slot>tree_label()</slot>
+  <slot>populate_groups()</slot>
+  <slot>relabel_column()</slot>
+  <slot>column_label()</slot>
+  <slot>binning_count()</slot>
+  <slot>load_metadata_file()</slot>
+  <slot>check_metadata_file()</slot>
+  <slot>cancel_annot()</slot>
+ </slots>
+</ui>
