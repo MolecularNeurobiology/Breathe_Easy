@@ -212,8 +212,8 @@ import re
 import datetime
 import numpy
 import pandas
-from pandas.api.types import is_string_dtype
-from pandas.api.types import is_numeric_dtype
+#from pandas.api.types import is_string_dtype
+#from pandas.api.types import is_numeric_dtype
 import argparse
 from scipy import stats
 from scipy import signal
@@ -1406,6 +1406,20 @@ def get_avg_by_2_index(inputlist, index1, index2):
 
 
 def extract_candidate_breath_transitions(signal_data):
+    """
+    
+
+    Parameters
+    ----------
+    signal_data : TYPE
+        DESCRIPTION.
+
+    Returns
+    -------
+    candidate_breath_transitions : TYPE
+        DESCRIPTION.
+
+    """
     candidate_breath_transitions = pandas.DataFrame()
     signal_above_zero = numpy.greater(signal_data['flow'], 0)
     dif_signal_above_zero = numpy.diff(signal_above_zero.astype(int))
@@ -1433,6 +1447,29 @@ def extract_filtered_breaths_from_candidates(
         analysis_parameters,
         local_logger
         ):
+    """
+    
+
+    Parameters
+    ----------
+    candidate_breath_transitions : TYPE
+        DESCRIPTION.
+    analysis_parameters : TYPE
+        DESCRIPTION.
+    local_logger : TYPE
+        DESCRIPTION.
+
+    Raises
+    ------
+    Exception
+        DESCRIPTION.
+
+    Returns
+    -------
+    filtered_breaths : TYPE
+        DESCRIPTION.
+
+    """
 
     # filter based on minimum PIF and PEF
     filtered_transitions = candidate_breath_transitions[
