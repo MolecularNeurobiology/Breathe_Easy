@@ -14,7 +14,8 @@ setwd(args$dir)
 
 #Imports all JSON files in file location indicated in args$JSON.
 full_dirs <- unlist(strsplit(args$JSON, ","))
-filepaths <- list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE)
+filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE), 
+               grep("\\.json", full_dirs, value = TRUE))
 
 #########################
 #####IMPORT JSONS########

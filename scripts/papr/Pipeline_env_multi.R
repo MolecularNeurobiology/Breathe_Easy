@@ -44,7 +44,7 @@ p <- add_argument (p, "--R_config", help="Filepath to properly formatted R Confi
 
 p <- add_argument (p, "--Graph", help="Filepath to properly formatted Graph Configuration sheet")
 
-p <- add_argument (p, "--Foxtrot", help="Filepath to properly formatted other_graph configuration sheet")
+p <- add_argument (p, "--Foxtrot", help="Filepath to properly formatted Optional Graph configuration sheet")
 
 p <- add_argument (p, "--Output", help="Filepath to folder that the graphs will be saved in")
 
@@ -73,14 +73,82 @@ print("Loading data")
 #understood and found by R.
 # setwd("~/") 
 setwd(args2$dir)
-print(args2$Output)
-print(args2$R_config)
 
-load(args2$JSON)
+
+load_env <- grep("\\.RData", args2$JSON, value = TRUE)
+if(length(load_env) == 0) {
+  print("No R environment selected.")
+} else if (length(load_env) > 1) {
+  print("Multiple R environments selected; only the first will be used.")
+}
+load(load_env[1])
 args <- args2
-print(args$Output)
-print(args2$Output)
-print(args$R_config)
+rm(load_ev, args2)
+
+#########################
+#####APPEND JSONS########
+#########################
+
+simple_appender <- import_data <- function(fp, breath_df = NULL){
+  #Function to convert NULL and "" values in the raw json to NA (necessitated by R handling of NULL values)
+  blank_to_na <- function(xx){
+    new_xx <- unlist(lapply(xx, function(x) ifelse(((x == "")|(is.na(x))|(x == "NA")), NA, x)))
+    return(new_xx)
+  }
+  
+  null_to_na <- function(xx){
+    new_xx <- unlist(lapply(xx, function(x) ifelse(is.null(x), NA, x)))
+    return(new_xx)
+  }
+  
+  #For each mouse, import and attach to overall tbl.
+  for(ii in fp){
+    if(grepl("config", ii)) {next}
+    print(paste0("Adding file:", ii))
+    
+    #Raw import
+    temp_json <- rjson::fromJSON(file = ii, simplify = FALSE)
+    
+    #Convert NULL to NA
+    temp_list <- lapply(temp_json, null_to_na)
+    temp_list <- lapply(temp_list, blank_to_na)
+    
+    # Turn json to tbl
+    temp_df <- as_tibble(temp_list)
+    
+    if(is.null("breath_df")){
+      # Create breath_df
+      breath_df <- temp_df 
+    } else {
+      # Check if types match
+      for(col_num in 1:ncol(breath_df)){
+        col_name <- colnames(breath_df)[col_num]
+        if((!is.null(temp_df[[col_name]])) & (class(breath_df[[col_name]]) != class(temp_df[[col_name]]))) {
+          breath_df[[col_name]] <- as.character(breath_df[[col_name]])
+          temp_df[[col_name]] <- as.character(temp_df[[col_name]])
+        }
+      }
+      # Attach to overall tbl.
+      breath_df <- bind_rows(breath_df, temp_df)
+    }
+    
+  }
+  
+  # Check if character column should be numeric
+  for(col_num in 1:ncol(breath_df)){
+    suppressWarnings(temp_comp <- as.numeric(breath_df[[col_num]]))
+    if(sum(is.na(breath_df[[col_num]])) == sum(is.na(temp_comp))) {
+      breath_df[[col_num]] <- temp_comp
+    }
+  }
+  
+  return(breath_df)
+} 
+
+full_dirs <- unlist(strsplit(args$JSON, ","))
+filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE),
+               grep("\\.json", full_dirs, value = TRUE))
+if(length(filepaths) > 0) {tbl0 <- simple_appender(filepaths, tbl0)}
 
 #########################
 #### R CONFIGURATION ####
@@ -205,7 +273,6 @@ rm(graph_df)
 
 # print("Saving environment")
 # save.image(file="./myEnv.RData")
-print(args$Output)
 save_atp <- try(save.image(file=paste0(args$Output, "/myEnv_",format(Sys.time(),'%Y%m%d_%H%M%S'),".RData")))
 if(class(save_atp) == "try-error") {save.image(file=paste0("./myEnv_", format(Sys.time(),'%Y%m%d_%H%M%S'),".RData"))}
 

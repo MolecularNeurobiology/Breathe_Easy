@@ -548,7 +548,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
         theme_few() 
       
       graph_file <- str_replace_all(paste0("Poincare_", resp_var, "_", ll, args$I), " ", "")
-      ggsave(graph_file, plot = p, path = args$Output)
+      ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm")
     }
     
   } else {
@@ -561,7 +561,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
       theme_few() 
     
     graph_file <- paste0("Poincare_", resp_var, args$I)
-    ggsave(graph_file, plot = p, path = args$Output)
+    ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm")
   }
   return()
 }
