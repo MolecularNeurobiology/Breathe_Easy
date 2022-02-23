@@ -4008,6 +4008,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if self.output_dir_py == "":
             self.breath_list.addItem("Breathcaller output directory not detected.")
         else:
+            self.breath_list.clear()
             self.breath_list.addItem(self.output_dir_py)
             self.input_dir_r = self.output_dir_py
         # breath_files_path=self.output_dir_py
