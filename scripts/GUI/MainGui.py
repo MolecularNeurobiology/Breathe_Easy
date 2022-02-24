@@ -3051,7 +3051,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
 #region Analysis parameters
 
-        os.chdir(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output"))
+        os.chdir(os.path.join(Path(__file__).parent.parent.parent))
             
 
 #endregion
@@ -3067,9 +3067,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #region Timestamper...
 
     def timestamp_dict(self):
+        print("timestamp_dict()")
         tic=datetime.datetime.now()
         print(tic)
+        print(self.stamp['Dictionaries']['Data'])
         self.stamp['Dictionaries']['Data'] = {}
+        print(self.stamp['Dictionaries']['Data'])
+        print(self.tsbyfile)
         combo_need = self.necessary_timestamp_box.currentText()
         if self.input_dir_py == "":
         # if self.signals == []:
@@ -3137,10 +3141,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb = Thumbass(self)
                 self.thumb.show()
                 self.thumb.message_received(f"{type(e).__name__}: {e}",f"The timestamp file could not be written.")
-                self.hangar.append(f"Timestamp output: \n{self.stamp['Dictionaries']['Data']}")
+            self.hangar.append(f"Timestamp output: \n{self.stamp['Dictionaries']['Data']}")
             # shutil.copy(tspath, os.path.join(os.path.join(Path(self.signals[0]).parent.parent), f"timestamp_{os.path.basename(Path(self.signals[0]).parent.parent)}"))
 
             toc=datetime.datetime.now()
+            print(self.stamp['Dictionaries']['Data'])
+            print(self.tsbyfile)
             print(toc)
             print(toc-tic) 
 
@@ -3162,6 +3168,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         errors = []
         timestamps = []
+        self.tsbyfile = {}
         
         for CurFile in self.signals:
             self.tsbyfile[CurFile]=[]
@@ -4116,6 +4123,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             else:  
                 self.input_dir_py = os.path.dirname(self.signals[0])
             print(self.input_dir_py)
+            print(self.signals)
 
     def get_metadata(self):
         print("get_metadata()")
@@ -4701,8 +4709,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             time.sleep(0.2)
             # self.progressBar_r.setValue(self.completed)
 
-    def updateProgress(self):
-        print("bob")
+    # def update_Stampprogress(self):
+    #     print("stamp go")
+    #     print("Stamp progress process id",os.getpid())
+
 
     def update_Pyprogress(self):
         print("pre go")
