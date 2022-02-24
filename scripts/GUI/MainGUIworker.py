@@ -122,7 +122,7 @@ def get_jobs_r(Plethysmography):
     print("get_jobs_r process id",os.getpid())
     
     if os.path.basename(Plethysmography.input_dir_r).endswith("RData"):
-        pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline_env (1).R")
+        pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline_env.R")
     else:
         pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline.R")
         

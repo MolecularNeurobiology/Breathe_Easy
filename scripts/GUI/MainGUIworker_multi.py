@@ -123,7 +123,7 @@ def get_jobs_r(Plethysmography):
     
     # if os.path.basename(Plethysmography.input_dir_r).endswith("RData"):
     if all([r.endswith("RData") for r in Plethysmography.input_dir_r]):
-        pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline_env (1).R")
+        pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline_env.R")
     elif any([r.endswith("RData") for r in Plethysmography.input_dir_r]):
         pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline_env_multi.R")
     else:
