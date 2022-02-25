@@ -3141,7 +3141,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb = Thumbass(self)
                 self.thumb.show()
                 self.thumb.message_received(f"{type(e).__name__}: {e}",f"The timestamp file could not be written.")
-            self.hangar.append(f"Timestamp output: \n{self.stamp['Dictionaries']['Data']}")
+            self.hangar.append("TIMESTAMP OUTPUT")
+            print(self.check)
+            for e in epoch:
+                for c in condition:
+                    for d in self.stamp['Dictionaries']['Data'][e][c]:
+                        if d is not 'tsbyfile':
+                            for x in self.stamp['Dictionaries']['Data'][e][c][d]:
+                                if self.stamp['Dictionaries']['Data'][e][c][d][x] != {} or self.stamp['Dictionaries']['Data'][e][c][d][x] != [] or self.stamp['Dictionaries']['Data'][e][c][d][x] != 'all signal files':
+                                    if d is 'files_missing_a_ts':
+                                        self.hangar.append(f"Files with missing timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts'][x])}")
+                                    elif d is 'files_with_dup_ts':
+                                        self.hangar.append(f"Files with duplicate timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_with_dup_ts'][x])}")
+                                    elif d is 'new_ts':
+                                        self.hangar.append(f"Files with novel timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][x])}")
+        
+                            # self.hangar.append(f"Files with new timestamps: \n{[d+' | '+','.join(file) for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][d] for d in self.stamp['Dictionaries']['Data'][e][c]['new_ts'] for c in self.stamp['Dictionaries']['Data'][e] for e in self.stamp['Dictionaries']['Data']]}")
+                            # self.hangar.append(f"Files with missing timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts'][x])}\nFiles with duplicate timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_with_dup_ts'][x])}\nFiles with novel timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][x])}")
+            
+            # self.hangar.append(f"TIMESTAMP OUTPUT\nFiles with missing timestamps: \n{os.linesep.join([d for d in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts']])}\n{self.stamp['Dictionaries']['Data']}")
             # shutil.copy(tspath, os.path.join(os.path.join(Path(self.signals[0]).parent.parent), f"timestamp_{os.path.basename(Path(self.signals[0]).parent.parent)}"))
 
             toc=datetime.datetime.now()
@@ -3249,6 +3267,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 goodfiles = ["all signal files"]
         self.check = {'good_files':goodfiles,'files_missing_a_ts':filesmissingts,
             'files_with_dup_ts':filesextrats,'new_ts':new_ts}
+        print(f"miss:{filesmissingts}")
+        print(f"extra:{filesextrats}")
+        print(f"new:{new_ts}")
 
 #endregion
 
