@@ -3047,6 +3047,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # for widget in [self.variable_list,self.signal_files_list,self.metadata_list,self.sections_list,self.breath_list]:
         #     self.keyPressEvent.connect(self.on_key(widget))
 
+
 #endregion
 
 #region Analysis parameters
@@ -3075,8 +3076,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print(self.stamp['Dictionaries']['Data'])
         print(self.tsbyfile)
         combo_need = self.necessary_timestamp_box.currentText()
-        if self.input_dir_py == "":
-        # if self.signals == []:
+        # if self.input_dir_py == "":
+        if self.signals == []:
             print("signals lsit empty")
             reply = QMessageBox.information(self, 'Missing signal files', 'No signal files selected.\nWould you like to select a signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
@@ -3143,18 +3144,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb.message_received(f"{type(e).__name__}: {e}",f"The timestamp file could not be written.")
             self.hangar.append("TIMESTAMP OUTPUT")
             print(self.check)
-            for e in epoch:
-                for c in condition:
-                    for d in self.stamp['Dictionaries']['Data'][e][c]:
-                        if d is not 'tsbyfile':
-                            for x in self.stamp['Dictionaries']['Data'][e][c][d]:
-                                if self.stamp['Dictionaries']['Data'][e][c][d][x] != {} or self.stamp['Dictionaries']['Data'][e][c][d][x] != [] or self.stamp['Dictionaries']['Data'][e][c][d][x] != 'all signal files':
-                                    if d is 'files_missing_a_ts':
-                                        self.hangar.append(f"Files with missing timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts'][x])}")
-                                    elif d is 'files_with_dup_ts':
-                                        self.hangar.append(f"Files with duplicate timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_with_dup_ts'][x])}")
-                                    elif d is 'new_ts':
-                                        self.hangar.append(f"Files with novel timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][x])}")
+            # for e in epoch:
+            #     for c in condition:
+            #         for d in self.stamp['Dictionaries']['Data'][e][c]:
+            #             if d is not 'tsbyfile':
+            #                 for x in self.stamp['Dictionaries']['Data'][e][c][d]:
+            #                     if self.stamp['Dictionaries']['Data'][e][c][d][x] != {} or self.stamp['Dictionaries']['Data'][e][c][d][x] != [] or self.stamp['Dictionaries']['Data'][e][c][d][x] != 'all signal files':
+            #                         if d == 'files_missing_a_ts':
+            #                             self.hangar.append(f"Files with missing timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts'][x])}")
+            #                         elif d == 'files_with_dup_ts':
+            #                             self.hangar.append(f"Files with duplicate timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_with_dup_ts'][x])}")
+            #                         elif d == 'new_ts':
+            #                             self.hangar.append(f"Files with novel timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][x])}")
         
                             # self.hangar.append(f"Files with new timestamps: \n{[d+' | '+','.join(file) for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][d] for d in self.stamp['Dictionaries']['Data'][e][c]['new_ts'] for c in self.stamp['Dictionaries']['Data'][e] for e in self.stamp['Dictionaries']['Data']]}")
                             # self.hangar.append(f"Files with missing timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts'][x])}\nFiles with duplicate timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_with_dup_ts'][x])}\nFiles with novel timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][x])}")
@@ -3867,11 +3868,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb = Thumbass(self)
                 self.thumb.show()
                 self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_signals])}\n\nThey will not be included.")
+            print(self.signals)
+            print(self.input_dir_py)
                 # reply = QMessageBox.information(self, 'Incorrect file format', 'One or more of the selected signal files are not text formatted: .\nWould you like to select a different signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
         else:
             if self.signals == []:
                 self.signal_files_list.clear()
-                self.signal_files_list.addItem("Signal files directory not detected.")
+                # self.signal_files_list.addItem("Signal files directory not detected.")
      
     def auto_get_metadata(self):
         print("auto_get_metadata()")
