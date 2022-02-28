@@ -4252,7 +4252,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not file_name[0]:
             if self.metadata == "":
                 self.metadata_list.clear()
-                self.metadata_list.addItem("No metadata file selected.")
+                # self.metadata_list.addItem("No metadata file selected.")
         else:
             self.metadata_list.clear()
             for x in range(len(file_name[0])):
