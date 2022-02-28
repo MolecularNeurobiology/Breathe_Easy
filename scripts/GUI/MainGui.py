@@ -3133,7 +3133,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # self.hangar.append(f"{self.stamp['Dictionaries']['Data'][]}")        
             print(f"{self.stamp['Dictionaries']['Data']}")
             try:
-                with open(os.path.join(Path(self.signals[0]).parent,f"timestamp_{os.path.basename(Path(self.signals[0]).parent)}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"),"w") as tspath:
+                tpath = os.path.join(Path(self.signals[0]).parent,f"timestamp_{os.path.basename(Path(self.signals[0]).parent)}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}")
+                with open(tpath,"w") as tspath:
                     tspath.write(json.dumps(self.stamp))
                     tspath.close()
             except Exception as e:
@@ -3142,8 +3143,38 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb = Thumbass(self)
                 self.thumb.show()
                 self.thumb.message_received(f"{type(e).__name__}: {e}",f"The timestamp file could not be written.")
-            self.hangar.append("TIMESTAMP OUTPUT")
+            self.hangar.append("Timestamp output saved.")
             print(self.check)
+            miss = []
+            dup = []
+            new = []
+            # for m in self.check['files_missing_a_ts']:
+                # for w in self.check['files_missing_a_ts'][m]:
+                    # print(self.check['files_missing_a_ts'][m])
+                # print(self.check['files_missing_a_ts'][m])
+            # miss.append([[w for w in self.check['files_missing_a_ts'][m]] for m in self.check['files_missing_a_ts']])
+            # for d in self.check['files_with_dup_ts']:
+                # dup.append(self.check['files_with_dup_ts'][d])
+            # for n in self.check['new_ts']:
+                # print(self.check['new_ts'][n])
+            # new.append([[z for z in self.check['new_ts'][n]] for n in self.check['new_ts']])
+            self.hangar.append("---Timestamp Summary---")
+            self.hangar.append(f"Files with missing timestamps: {', '.join(set([w for m in self.check['files_missing_a_ts'] for w in self.check['files_missing_a_ts'][m]]))}")
+            self.hangar.append(f"Files with duplicate timestamps: {', '.join(set([y for d in self.check['files_with_dup_ts'] for y in self.check['files_with_dup_ts'][d]]))}")
+            if len(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]])) == len(self.signals):
+                self.hangar.append(f"Files with novel timestamps: all signal files")
+            else:
+                self.hangar.append(f"Files with novel timestamps: {', '.join(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]]))}")
+            try:
+                self.hangar.append(f"Full review of timestamps: {Path(tpath)}")
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+            # for m in self.check['files_missing_a_ts']:
+            #     for y in self.check['files_missing_a_ts'][m]:
+            #         print(y)
+            # self.hangar.append(f"Files with missing timestamps: {miss}\nFiles with duplicate timestamps: {dup}\nFiles with novel timestamps: {[z for z in new]}")
+            # \nFiles with duplicate timestamps: {[[', '.join(z) for z in self.check['files_with_dup_ts'][d]] for d in self.check['files_with_dup_ts']]}\nFiles with novel timestamps: {[[', '.join(w) for w in self.check['new_ts'][n]] for n in self.check['new_ts']]}")
             # for e in epoch:
             #     for c in condition:
             #         for d in self.stamp['Dictionaries']['Data'][e][c]:
@@ -3195,7 +3226,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # try:
             with open(CurFile,'r') as opfi:
                 i=0
-                l=0
+                # l=0
                 for line in opfi:
                     if '#' in line:
                         # self.hangar.append('{} TS AT LINE: {} - {}'.format(os.path.basename(CurFile),i,line.split('#')[1][2:]))
@@ -3203,8 +3234,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         timestamps.append(line.split('#')[1][2:])
                         # self.tsbyfile[CurFile].append(line.split('#* ')[1].split(' \n')[0])
                         c = line.split('#')[1][2:].split(' \n')[0]
-                        self.tsbyfile[CurFile].append(f"{c}_{l}")
-                        l+=1
+                        self.tsbyfile[CurFile].append(f"{c}")
+                        # l+=1
                     i+=1
             # self.tsbyfile[CurFile]=[i.split(' \n')[0] for i in self.tsbyfile[CurFile]]
             # self.cur = [i.split(' \n')[0] for i in self.tsbyfile[CurFile]]
@@ -3264,13 +3295,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         for m in filesmissingts:
             if len(filesmissingts[m]) == len(self.signals):
                 filesmissingts[m] = ["all signal files"]
-            if len(goodfiles) == len(self.signals):
-                goodfiles = ["all signal files"]
+        if len(goodfiles) == len(self.signals):
+            goodfiles = ["all signal files"]
+        for n in filesextrats:
+            if len(filesextrats[n]) == len(self.signals):
+                filesextrats[n] = ["all signal files"]
+        for p in new_ts:
+            if len(new_ts[p]) == len(self.signals):
+                new_ts[p] = ["all signal files"]
         self.check = {'good_files':goodfiles,'files_missing_a_ts':filesmissingts,
             'files_with_dup_ts':filesextrats,'new_ts':new_ts}
         print(f"miss:{filesmissingts}")
         print(f"extra:{filesextrats}")
         print(f"new:{new_ts}")
+        
 
 #endregion
 
@@ -5115,5 +5153,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 # see GUIv7
 
 #endregion
+
+# %%
 
 # %%
