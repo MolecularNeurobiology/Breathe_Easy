@@ -1,0 +1,6 @@
+Alias,Cal Seg,AUTO_IND_INCLUDE,AUTO_IND_CAL,AUTO_IND_GAS_CAL,AUTO_IND_GAS,AUTO_IND_INJECTION,CAL_O2,CAL_CO2,Midpoint,min_TT,max_TT,max_DVTV,Startpoint,Endpoint,max_pX,X,max_calibrated_TV,max_VEVO2,include_apnea,include_sigh,include_high_chamber_temp,vol_mov_avg_drift,min_TV,min_CO2,max_CO2,min_O2,max_O2,min_bout,within_start,within_end,after_start,before_end,Key
+Cal 20 Room Air,Cal 20 Room Air,0,1,1,RA,,"21,1,10","0,-.1,.1",0,0.2,1,0.2,0,0,1,500,off,off,0,0,0,0.5,0,-1,3,19,22,10,43200,43200,0,0,Cal 20 Room Air
+Cal 20 10% O2,Cal 20 10% O2,0,1,1,10%O2,,"10,0,2",,0,0.2,1,0.2,0,0,1,500,off,off,0,0,0,0.5,0,-1,3,9,11,10,43200,43200,0,0,Cal 20 10% O2
+Room Air,Cal 20 Room Air,1,0,0,RA,,,,0,0.1,5,0.25,0,0,1,500,off,off,0,0,0,1.0,0,0,3,10,21,10,43200,43200,0,0,Room Air
+10% O2,Cal 20 10% O2,1,0,0,10%O2,,,,0,0.1,5,0.25,0,0,1,500,off,off,0,0,0,1.0,0,0,3,5,10,10,43200,600,0,0,10% O2
+Room Air 2,Cal 20 Room Air,0,0,0,RA,,,,0,0.1,5,0.25,0,0,1,500,off,off,0,0,0,1.0,0,0,3,10,21,10,43200,43200,0,0,Room Air 2

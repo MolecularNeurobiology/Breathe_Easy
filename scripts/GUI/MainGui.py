@@ -462,7 +462,7 @@ class Basic(QWidget, Ui_Basic):
         
         print(self.pleth.breath_df)
         if self.pleth.breath_df != []:
-            self.pleth.update_breath_df()
+            self.pleth.update_breath_df("basic parameters")
         print(self.pleth.breath_df)
         if self.pleth.basicap != "":
         # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
@@ -848,7 +848,7 @@ class Auto(QWidget, Ui_Auto):
             auto.to_csv(self.pleth.autosections,index=False)
             print(auto)
             if self.pleth.breath_df != []:
-                self.pleth.update_breath_df()
+                self.pleth.update_breath_df("automated settings")
         # DO NOT KEEP THIS NONSENSE JUST INVERSE THE ROWS AND COLUMNS IN THE NESTING ABOVE
         # QUICK FIX
         # self.auto_df.transpose().to_csv(self.pleth.autosections)
@@ -1306,7 +1306,7 @@ class Manual(QWidget, Ui_Manual):
                 print(traceback.format_exc())
                 self.thumb = Thumbass(self)
                 self.thumb.show()
-                self.thumb.message_received(f"{type(e).__name__}: {e}",f"{traceback.format_exc()}")
+                self.thumb.message_received(f"{type(e).__name__}: {e}",f"Please ensure that the datapad is formatted as indicated in the documentation.\n\n{traceback.format_exc()}")
                 self.pleth.save_bug(e)
         # ou'll need to implement measures to ensure correct columns names, correct data type, etc.
 
@@ -1379,7 +1379,7 @@ class Manual(QWidget, Ui_Manual):
             self.manual_df.to_csv(self.pleth.mansections,index=False)
 
             if self.pleth.breath_df != []:
-                self.pleth.update_breath_df()
+                self.pleth.update_breath_df("manual settings")
         
         # current = pd.DataFrame.to_dict(self.manual_df.set_index("index"))
         # print(current)
@@ -3331,7 +3331,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #endregion
 
 #region Variable configuration
-    def new_variable_config(self):
+    def get_bp_reqs(self):
         if self.metadata == "":
             reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Ok:
@@ -3353,6 +3353,30 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
             # and we remove them from the widget.
                     self.sections_list.takeItem(self.sections_list.row(item))
+
+    def new_variable_config(self):
+        self.get_bp_reqs()
+        # if self.metadata == "":
+        #     reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+        #     if reply == QMessageBox.Ok:
+        #         self.get_metadata()
+        #     if reply == QMessageBox.Cancel:
+        #         self.metadata_list.clear()
+        #         # for item in self.metadata_list.findItems("file not detected.",Qt.MatchEndsWith):
+        #         # and we remove them from the widget.
+        #             # self.metadata_list.takeItem(self.metadata_list.row(item))
+        #         self.metadata_list.addItem("No metadata file selected.")
+        # if self.autosections == "" and self.mansections == "":
+        #     reply = QMessageBox.information(self, 'Missing BASSPRO settings', 'Please select BASSPRO settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+        #     if reply == QMessageBox.Ok:
+        #     #     for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
+        #     # # and we remove them from the widget.
+        #     #         self.sections_list.takeItem(self.sections_list.row(item))
+        #         self.get_autosections()
+        #     if reply == QMessageBox.Cancel:
+        #         for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
+        #     # and we remove them from the widget.
+        #             self.sections_list.takeItem(self.sections_list.row(item))
                 # I'm lazy and it's easier to just delete and add it again then check for it's presence.
                 # self.sections_list.addItem("No BASSPRO settings files selected.")
         # if self.metadata != "" and (self.mansections != "" or self.autosections != ""):
@@ -3444,7 +3468,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print("variable configuration subGUI is supposed to show")
             self.v.show()
             
-    def update_breath_df(self):
+    def update_breath_df(self,updated_file):
         print("update_breath_df()")
         self.old_bdf = self.breath_df
         print(f"breath_df: {self.breath_df}")
@@ -3474,7 +3498,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print(f"non_match_new: {non_match_new}")
             print(f"non_match: {non_match}")
             if len(non_match)>0:
-                reply = QMessageBox.question(self, f'Confirm variable list', 'Would you like to update the variable list in STAGG configuration settings?\n\nUnsaved changes may be lost.\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                reply = QMessageBox.question(self, f'New {updated_file} selected', 'Would you like to update the variable list in STAGG configuration settings?\n\nUnsaved changes may be lost.\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
                     print("updating config settings")
                     self.v.setup_table_config()
@@ -3837,22 +3861,46 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not self.mothership:
             print(f'mothership after: {self.mothership}')
         else:
+            print("bob")
+            print(self.breath_df)
           # self.breathcaller_path_list.clear()
         # self.py_output_dir_list.clear()
             # self.signal_files_list.clear()
             # self.metadata_list.clear()
             # self.sections_list.clear()
         # self.py_go.setDisabled(False)
-            self.auto_get_output_dir_py()
-            self.auto_get_autosections()
-            self.auto_get_mansections()
-            self.auto_get_metadata()
-            # self.auto_get_breath_files()
-            self.auto_get_output_dir_r()
-            # self.auto_get_signal_files()
-            # self.auto_get_variable()
-            self.auto_get_basic()
-            
+            if self.breath_df != [] or self.metadata != "" or self.autosections != "" or self.basicap != "" or self.mansections != "":
+                reply = QMessageBox.question(self, f'Input detected', 'The selected directory has recognizable input.\n\nWould you like to overwrite your current input selection?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                if reply == QMessageBox.Yes:
+                    self.auto_get_output_dir_py()
+                    self.auto_get_autosections()
+                    self.auto_get_mansections()
+                    self.auto_get_metadata()
+                    # self.auto_get_breath_files()
+                    self.auto_get_output_dir_r()
+                    # self.auto_get_signal_files()
+                    # self.auto_get_variable()
+                    self.auto_get_basic()
+                    print(self.basicap)
+                    print(self.autosections)
+                    print(self.metadata)
+                    print(self.mansections)
+                    print(self.output_dir_py)
+                    print(self.output_dir_r)
+                    
+            else:
+                self.auto_get_output_dir_py()
+                self.auto_get_autosections()
+                self.auto_get_mansections()
+                self.auto_get_metadata()
+                # self.auto_get_breath_files()
+                self.auto_get_output_dir_r()
+                # self.auto_get_signal_files()
+                # self.auto_get_variable()
+                self.auto_get_basic()
+                if len(self.breath_df)>0:
+                    self.update_breath_df("settings")
+        
     # def auto_get_python_module(self):
     #     py_mod_path=self.gui_config['Dictionaries']['Paths']['breathcaller']
     #     # self.breathcaller_path_list.clear()
@@ -3921,17 +3969,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         metadata_path=os.path.join(self.mothership, 'metadata.csv')
         if Path(metadata_path).exists():
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
+            for item in self.metadata_list.findItems("metadata",Qt.MatchContains):
+            # and we remove them from the widget.
+                self.metadata_list.takeItem(self.metadata_list.row(item))
             if self.metadata == "":
                 self.metadata=metadata_path
                 self.metadata_list.addItem(self.metadata)
             else:
                 self.metadata=metadata_path
                 self.metadata_list.addItem(self.metadata)
-                if self.breath_df != []:
-                    self.update_breath_df()
-            for item in self.metadata_list.findItems("metadata",Qt.MatchContains):
-            # and we remove them from the widget.
-                self.metadata_list.takeItem(self.metadata_list.row(item))
+                # if self.breath_df != []:
+                #     self.update_breath_df("metadata")
         else:
             # self.metadata_list.clear()
             # self.metadata_list.addItem("No metadata file selected.")
@@ -3942,17 +3990,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("auto_get_basic()")
         basic_path=os.path.join(self.mothership, 'basics.csv')
         if Path(basic_path).exists():
+            for item in self.sections_list.findItems("basic",Qt.MatchContains):
+            # and we remove them from the widget.
+                self.sections_list.takeItem(self.sections_list.row(item))
             if self.basicap == "":
                 self.basicap=basic_path
                 self.sections_list.addItem(self.basicap)
             else:
                 self.basicap=basic_path
                 self.sections_list.addItem(self.basicap)
-                if not self.breath_df.empty:
-                    self.update_breath_df()
-            for item in self.sections_list.findItems("basic",Qt.MatchContains):
-            # and we remove them from the widget.
-                self.sections_list.takeItem(self.sections_list.row(item))
+                # if self.breath_df != []:
+                #     self.update_breath_df("basic settings")
         else:
             # self.sections_list.addItem("Basic parameters settings file not detected.")
             print("Basic parameters settings file not detected.")
@@ -3961,6 +4009,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("auto_get_autosections()")
         autosections_path=os.path.join(self.mothership, 'auto_sections.csv')
         if Path(autosections_path).exists():
+            for item in self.sections_list.findItems("auto",Qt.MatchContains):
+            # and we remove them from the widget.
+                self.sections_list.takeItem(self.sections_list.row(item))
             if self.autosections == "":
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
                 self.autosections=autosections_path
@@ -3968,11 +4019,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             else:
                 self.autosections=autosections_path
                 self.sections_list.addItem(self.autosections)
-                if not self.breath_df.empty:
-                    self.update_breath_df()
-            for item in self.sections_list.findItems("auto",Qt.MatchContains):
-            # and we remove them from the widget.
-                self.sections_list.takeItem(self.sections_list.row(item))
+                # if self.breath_df != []:
+                #     self.update_breath_df("automated settings")
         else:
             # self.sections_list.addItem("Autosection parameters file not detected.")
             print("Autosection parameters file not detected.")
@@ -3981,6 +4029,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("auto_get_mansections()")
         mansections_path=os.path.join(self.mothership, 'manual_sections.csv')
         if Path(mansections_path).exists():
+            for item in self.sections_list.findItems("man",Qt.MatchContains):
+                # and we remove them from the widget.
+                self.sections_list.takeItem(self.sections_list.row(item))
             if self.mansections == "":
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
                 self.mansections=mansections_path
@@ -3988,11 +4039,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             else:
                 self.mansections=mansections_path
                 self.sections_list.addItem(self.mansections)
-                if not self.breath_df.empty:
-                    self.update_breath_df()
-            for item in self.sections_list.findItems("man",Qt.MatchContains):
-                # and we remove them from the widget.
-                self.sections_list.takeItem(self.sections_list.row(item))
+                # if self.breath_df != []:
+                #     self.update_breath_df("manual settings")
         else:
             # self.sections_list.addItem("Manual sections parameters file not detected.")
             print("Manual sections parameters file not detected.")
@@ -4186,6 +4234,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.input_dir_py = os.path.dirname(self.signals[0])
             print(self.input_dir_py)
             print(self.signals)
+        signal_dir = []
+        for s in self.signals:
+            signal_dir.append(os.path.dirname(s))
+        # if len(set(signal_dir))>1:
+        print(len(set(signal_dir)))
 
     def get_metadata(self):
         print("get_metadata()")
@@ -4207,7 +4260,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.metadata = file_name[0][0]
             
             if len(self.breath_df)>0:
-                self.update_breath_df()
+                self.update_breath_df("metadata")
             # self.pleth.hangar.append("Metadata file saved.")
     
     def mp_parser(self):
@@ -4411,7 +4464,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         else:
                             plys[v] = [k]
             for w,x in plys.items():
-                self.hangar.append(f"plys.items{w}: {[x for x in plys[w]]}")
+                self.hangar.append(f"{w}: {[x for x in plys[w]]}")
                 # self.hangar.append(f"{k}: {self.metadata_warnings[k][0]}")
             #%
             p_df=pd.DataFrame(self.p_mouse_dict).transpose()
@@ -4559,16 +4612,19 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
             if not file_name[0]:
                 if self.autosections == "" and self.basicap == "" and self.mansections == "":
-                    self.sections_list.addItem("No BASSPRO settings files selected.")
+                    # self.sections_list.addItem("No BASSPRO settings files selected.")
+                    print("No BASSPRO settings files selected.")
             else:
                 # self.sections_list.clear()
                 print("files chosen")
+                n = 0
                 for x in range(len(file_name[0])):
                     if file_name[0][x].endswith('.csv'):
                         # print(file_name[0][x])
                         if os.path.basename(file_name[0][x]).startswith("auto_sections") | os.path.basename(file_name[0][x]).startswith("autosections"):
                             print(file_name[0][x])
                             self.autosections = file_name[0][x]
+                            n += 1
                             print(self.autosections)
                             for item in self.sections_list.findItems("auto_sections",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))
@@ -4576,15 +4632,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         elif os.path.basename(file_name[0][x]).startswith("manual_sections"):
                             print(file_name[0][x])
                             self.mansections = file_name[0][x]
+                            n += 1
                             for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))
                             self.sections_list.addItem(self.mansections)
                         elif os.path.basename(file_name[0][x]).startswith("basics"):
                             print(file_name[0][x])
                             self.basicap = file_name[0][x]
+                            n += 1
                             for item in self.sections_list.findItems("basics",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))
                             self.sections_list.addItem(self.basicap)
+                        if n>0:
+                            if len(self.breath_df)>0:
+                                self.update_breath_df("settings")
                     else:
                         self.thumb = Thumbass(self)
                         self.thumb.show()
@@ -4614,11 +4675,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def input_directory_r(self):
         print("input_directory_r()")
         # folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/BASSPRO_output")
-        self.input_dir_r = QFileDialog.getExistingDirectory(self, 'Choose breathlist directory', "./BASSPRO_output")
-        if not self.input_dir_r:
-            self.breath_list.clear()
-            self.breath_list.addItem("No folder selected.")
+        input_dir_r = QFileDialog.getExistingDirectory(self, 'Choose breathlist directory', "./BASSPRO_output")
+        if not input_dir_r:
+            if self.input_dir_r == "":
+                self.breath_list.clear()
+                # self.breath_list.addItem("No folder selected.")
         else:
+            self.input_dir_r = input_dir_r
             self.breath_list.clear()
             self.breath_list.addItem(self.input_dir_r)
     
@@ -4627,8 +4690,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_output")
         file_name = QFileDialog.getOpenFileNames(self, 'Select R environment', "./STAGG_output")
         if not file_name[0]:
-            self.breath_list.clear()
-            self.breath_list.addItem("No file selected.")
+            if self.input_dir_r == "":
+                self.breath_list.clear()
         elif not os.path.basename(file_name[0][0]).endswith("RData"):
             self.thumb = Thumbass(self)
             self.thumb.show()
@@ -4780,6 +4843,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("pre go")
         print('Pyprogress thread id',threading.get_ident())
         print("Pyprogress process id",os.getpid())
+        signal_dir = []
+        for s in self.signals:
+            signal_dir.append(os.path.dirname(s))
+        # if len(set(signal_dir))>1:
+        print(len(set(signal_dir)))
         self.go_py()
         print("post go")
         self.completed = 0
@@ -4811,11 +4879,16 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def py_message(self):
         print("py_message()")
         self.hangar.append("BASSPRO analyzing signal files...")
-        if self.parallel_box.isChecked() == True:
-            self.pything_to_do()
-        else:
-            self.pything_to_do_single()
-        self.auto_get_breath_files()
+        try:
+            self.get_bp_reqs()
+            if self.parallel_box.isChecked() == True:
+                self.pything_to_do()
+            else:
+                self.pything_to_do_single()
+            self.auto_get_breath_files()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
 
     def r_message(self):
         print("r_message()")
@@ -4858,124 +4931,61 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("dir_checker()")
         self.output_folder = ""
         self.output_folder_parent = ""
-        if output_folder == "":
-            if output_folder_parent == "":
-                if self.mothership == "":
-                    self.mothership = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output")
-                    print(self.mothership)
-                    print(f'no mothership so detected as: {self.mothership}')
-                    if not os.path.exists(self.mothership):
-                        print("mothership is empty and the provided default nonexistent - this shouldn't happen")
-                        try:
-                            output_folder = QFileDialog.getExistingDirectory(self, f'Choose directory for {text} output', str(self.mothership))
-                            output_folder_parent = os.path.dirname(output_folder)
-                            self.output_folder_parent = output_folder_parent
-                        except Exception as e:
-                            print(f'{type(e).__name__}: {e}')
-                            print(traceback.format_exc())
-                            print("if you've made it this far, you're screwed")
-                    else:
-                        output_folder_parent = os.path.join(self.mothership,f"{text}_output")
-                        print(output_folder_parent)
-                        print(f'mothership is empty but the default exists, so pointing out {text} output folder')
-                        if not os.path.exists(output_folder_parent):
-                            print(f"trying to make {text} output folder cause it doesn't exist")
-                            try:
-                                print(f'making {text} output folder cause it not exists')
-                                os.makedirs(output_folder_parent)
-                                self.output_folder_parent = output_folder_parent
-                            except Exception as e:
-                                print(f'{type(e).__name__}: {e}')
-                                print(traceback.format_exc())
-                                print("apparently os.path.exists says no but os.makedirs says yes it exists")
-                        else:
-                            self.output_folder_parent = output_folder_parent
-                        output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-                        print(output_folder)
-                        print('pointed out where output_folder is, now checking it exists')
-                        if not os.path.exists(output_folder):
-                            print("trying to make output folder cause it doesn't exist")
-                            try:
-                                print('making output folder cause it not exist')
-                                os.makedirs(output_folder)
-                                self.output_folder = output_folder
-                            except Exception as e:
-                                print(f'{type(e).__name__}: {e}')
-                                print(traceback.format_exc())
-                                print('apparently os.path.exists says no but os.makedirs says yes exists')
-                        else:
-                            self.output_folder = output_folder
-                else:
-                    if not os.path.exists(self.mothership):
-                        print("mothership is not empty but doesn't exist")
-                        try:
-                            output_folder = QFileDialog.getExistingDirectory(self, f'Choose directory for {text} output', str(self.mothership))
-                            output_folder_parent = os.path.dirname(output_folder)
-                            self.output_folder_parent = output_folder_parent
-                            self.output_folder = output_folder
-                        except Exception as e:
-                            print(f'{type(e).__name__}: {e}')
-                            print(traceback.format_exc())
-                            print("if you've made it this far, you're screwed")
-                    else:
-                        output_folder_parent = os.path.join(self.mothership,f"{text}_output")
-                        print(output_folder_parent)
-                        print(f'mothership exists and is not empty, so checking on the {text} output folder')
-                        if not os.path.exists(output_folder_parent):
-                            print(f"trying to make {text} output folder cause it doesn't exist")
-                            try:
-                                print(f'making {text} output folder cause it not exists')
-                                os.makedirs(output_folder_parent)
-                                self.output_folder_parent = output_folder_parent
-                            except Exception as e:
-                                print(f'{type(e).__name__}: {e}')
-                                print(traceback.format_exc())
-                                print("apparently os.path.exists says no but os.makedirs says yes it exists")
-                        else:
-                            self.output_folder_parent = output_folder_parent
-                        output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-                        print(output_folder)
-                        print('pointed out where output_folder is, now checking it exists')
-                        if not os.path.exists(output_folder):
-                            print("trying to make output folder cause it doesn't exist")
-                            try:
-                                print('making output folder cause it not exist')
-                                os.makedirs(output_folder)
-                                self.output_folder = output_folder
-                            except Exception as e:
-                                print(f'{type(e).__name__}: {e}')
-                                print(traceback.format_exc())
-                                print('apparently os.path.exists says no but os.makedirs says yes exists')
-                        else:
-                            self.output_folder = output_folder
-            else:
-                output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-                print(output_folder)
-                print('pointed out where output_folder is, now checking it exists')
-                if not os.path.exists(output_folder):
-                    print("trying to make output folder cause it doesn't exist")
-                    try:
-                        print('making output folder cause it not exist')
-                        os.makedirs(output_folder)
-                        self.output_folder = output_folder
-                    except Exception as e:
-                        print(f'{type(e).__name__}: {e}')
-                        print(traceback.format_exc())
-                        print('apparently os.path.exists says no but os.makedirs says yes exists')
+        if self.mothership == "":
+            print("mothership is empty so choose a new one")
+            try:
+                self.mothership = QFileDialog.getExistingDirectory(self, f'Choose directory for {text} output', str(self.mothership))
+                # output_folder_parent = os.path.dirname(output_folder)
+                # self.output_folder_parent = output_folder_parent
+                # self.mothership_dir()
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+        elif not os.path.exists(self.mothership):
+            print("mothership is empty and doesn't exist")
+            try:
+                self.mothership = QFileDialog.getExistingDirectory(self, f'Previously chosen directory does not exist. Choose a different directory for {text} output', str(self.mothership))
+            # output_folder_parent = os.path.dirname(output_folder)
+            # self.output_folder_parent = output_folder_parent
+                # self.mothership_dir()
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                print("Plug your hard drive back in.")
+        output_folder_parent = os.path.join(self.mothership,f"{text}_output")
+        print(output_folder_parent)
+        print(f'mothership was empty, has been chosen, now outfitting the output folder parent')
+        if not os.path.exists(output_folder_parent):
+            print(f"trying to make {text} output folder cause it doesn't exist")
+            try:
+                print(f'making {text} output folder cause it not exists')
+                os.makedirs(output_folder_parent)
+                self.output_folder_parent = output_folder_parent
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                print("apparently os.path.exists says no but os.makedirs says yes it exists")
         else:
-            if not os.path.exists(output_folder):
-                print("trying to make output folder cause it's not empty but it still doesn't exist")
-                try:
-                    print('making output folder that is not empty but doesnt exist')
-                    os.makedirs(output_folder)
-                    self.output_folder = output_folder
-                except Exception as e:
-                    print(f'{type(e).__name__}: {e}')
-                    print(traceback.format_exc())
-                    print('apparently os.path.exists says no but os.makedirs says yes exists')
-            else:
+            self.output_folder_parent = output_folder_parent
+        output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
+        print(output_folder)
+        print('pointed out where output_folder is, now checking it exists')
+        if not os.path.exists(output_folder):
+            print("trying to make output folder cause it doesn't exist")
+            try:
+                print('making output folder cause it not exist')
+                os.makedirs(output_folder)
                 self.output_folder = output_folder
-            if any(Path(self.output_folder).iterdir()) == True:
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                print('apparently os.path.exists says no but os.makedirs says yes exists')
+        else:
+            self.output_folder = output_folder
+        if any(Path(self.output_folder).iterdir()) == True:
+            if all("config" in file for file in os.listdir(self.output_folder)):
+                print("just configs")
+            else:
                 reply = QMessageBox.question(self, f'Confirm {text} output directory', 'The current output directory has files in it that may be overwritten.\n\nWould you like to create a new output folder?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
                     output_folder_parent = os.path.dirname(output_folder)
@@ -4986,44 +4996,40 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     os.makedirs(self.output_folder)
                 elif reply == QMessageBox.No:
                     print(f"kept old output folder: {output_folder}")
-
-                    
     
     def pything_to_do(self):
         print("pything_to_do()")
         self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
         if self.output_folder != "":
             self.output_dir_py = self.output_folder
-        print(self.output_dir_py)
+            print(self.output_dir_py)
         # This conditional essentially checks whether or not a copy of the metadata already exists because if the metadat was pulled directly from Filemaker, then that function automatically makes the output py directory and places the pulled metadata in there before the launch button. I should change this and isolate the creation and copying to just the launch.
         # if self.metadata_path == "":
-        shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # self.get_parameter()
-        shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-        # if self.a.auto_df != "":
-        #     self.a.auto_df.to_csv(self.autosections,index=False)
-        if self.autosections != "":
-            shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"auto_sections_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.csv"))
-        # if self.m.manual_df != "":
-        #     self.m.manual_df.to_csv(self.mansections,index=False)
-        if self.mansections != "":
-            shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"manual_sections_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.csv"))
-        # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
-        if self.basicap != "":
-            shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-            json.dump(self.gui_config,gconfig_file)
-        shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.txt"))
-
-
-        print('pything_to_do thread id',threading.get_ident())
-        print("pything_to_do process id",os.getpid())
-        # self.thready(self.update_Pyprogress)
-        self.worker = threading.Thread(target = MainGUIworker.futurama_py(self))
-        self.worker.daemon = True
-        self.worker.start()
-        # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
-        print("worker started?")
+            shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            # self.get_parameter()
+            shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+            # if self.a.auto_df != "":
+            #     self.a.auto_df.to_csv(self.autosections,index=False)
+            if self.autosections != "":
+                shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"auto_sections_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.csv"))
+            # if self.m.manual_df != "":
+            #     self.m.manual_df.to_csv(self.mansections,index=False)
+            if self.mansections != "":
+                shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"manual_sections_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.csv"))
+            # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
+            if self.basicap != "":
+                shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                json.dump(self.gui_config,gconfig_file)
+            shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.txt"))
+            print('pything_to_do thread id',threading.get_ident())
+            print("pything_to_do process id",os.getpid())
+            # self.thready(self.update_Pyprogress)
+            self.worker = threading.Thread(target = MainGUIworker.futurama_py(self))
+            self.worker.daemon = True
+            self.worker.start()
+            # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
+            print("worker started?")
     
     def rthing_to_do(self):
         # self.hangar.append("STAGG analyzing breath files...")
@@ -5031,35 +5037,35 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
         if self.output_folder != "":
             self.output_dir_r = self.output_folder
-        print(f'after:{self.output_dir_r}')
-        if self.svg_radioButton.isChecked() == True:
-            self.image_format = ".svg"
-        elif self.jpeg_radioButton.isChecked() == True:
-            self.image_format = ".jpeg"
-        if os.path.isdir(os.path.join(self.output_dir_r,"StatResults")):
-            print("no stat results folder")
-            os.makedirs(os.path.join(self.output_dir_r,"StatResults"))
-        try:
-            print("shutil is trying to happen for configs")
-            if datetime.datetime.now().strftime('%Y%m%d_%H%M%S') == os.path.basename(self.output_dir_r).lstrip('STAGG_output'):
-                print("output folder timestamp and config timestamp are equal")
-            else:
-                print("output and config timestamp not equal:\nconfig: {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}\noutput: {os.path.basename(self.output_dir_r).lstrip('STAGG_output')}")
-            shutil.copyfile(self.variable_config, os.path.join(self.output_dir_r, f"variable_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
-            # {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}
-            shutil.copyfile(self.graph_config, os.path.join(self.output_dir_r, f"graph_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
-            shutil.copyfile(self.other_config, os.path.join(self.output_dir_r, f"other_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-            print("No variable or graph configuration files copied to STAGG output folder.")
-        print('rthing_to_do thread id',threading.get_ident())
-        print("rthing_to_do process id",os.getpid())
-        self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
-        self.worker.daemon = True
-        self.worker.start()
-        # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
-        print("worker started?")
+            print(f'after:{self.output_dir_r}')
+            if self.svg_radioButton.isChecked() == True:
+                self.image_format = ".svg"
+            elif self.jpeg_radioButton.isChecked() == True:
+                self.image_format = ".jpeg"
+            if os.path.isdir(os.path.join(self.output_dir_r,"StatResults")):
+                print("no stat results folder")
+                os.makedirs(os.path.join(self.output_dir_r,"StatResults"))
+            try:
+                print("shutil is trying to happen for configs")
+                if datetime.datetime.now().strftime('%Y%m%d_%H%M%S') == os.path.basename(self.output_dir_r).lstrip('STAGG_output'):
+                    print("output folder timestamp and config timestamp are equal")
+                else:
+                    print("output and config timestamp not equal:\nconfig: {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}\noutput: {os.path.basename(self.output_dir_r).lstrip('STAGG_output')}")
+                shutil.copyfile(self.variable_config, os.path.join(self.output_dir_r, f"variable_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
+                # {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}
+                shutil.copyfile(self.graph_config, os.path.join(self.output_dir_r, f"graph_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
+                shutil.copyfile(self.other_config, os.path.join(self.output_dir_r, f"other_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                print("No variable or graph configuration files copied to STAGG output folder.")
+            print('rthing_to_do thread id',threading.get_ident())
+            print("rthing_to_do process id",os.getpid())
+            self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
+            self.worker.daemon = True
+            self.worker.start()
+            # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
+            print("worker started?")
         # if self.renv_check.isChecked() == 1:
             # shutil.copyfile(os.path.join(self.mothership, "myEnv.RData"), os.path.join(self.output_dir_r, f"myEnv_{os.path.basename(self.output_dir_r).lstrip('r_output')}.RData"))
         # shutil.copyfile(os.path.join(self.output_dir_r,"Summary.html"), os.path.join(self.output_dir_r, f"summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
@@ -5080,7 +5086,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
         if self.output_folder != "":
             self.output_dir_r = self.output_folder
-        self.thready(self.update_Rprogress)
+            self.thready(self.update_Rprogress)
     
     def pything_to_do_single(self):
         print("pything_single thread id", threading.get_ident())
@@ -5090,22 +5096,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.output_dir_py = self.output_folder
         # This conditional essentially checks whether or not a copy of the metadata already exists because if the metadat was pulled directly from Filemaker, then that function automatically makes the output py directory and places the pulled metadata in there before the launch button. I should change this and isolate the creation and copying to just the launch.
         # if self.metadata_path == "":
-        shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # self.get_parameter()
-        shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-        # if self.a.auto_df != "":
-        #     self.a.auto_df.to_csv(self.autosections,index=False)
-        shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"autosections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # if self.m.manual_df != "":
-        #     self.m.manual_df.to_csv(self.mansections,index=False)
-        #     shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"mansections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
-        shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-            json.dump(self.gui_config,gconfig_file)
-        shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-        # self.thready(self.update_Pyprogress)
-        self.update_Pyprogress()
+            shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            # self.get_parameter()
+            shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+            # if self.a.auto_df != "":
+            #     self.a.auto_df.to_csv(self.autosections,index=False)
+            shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"autosections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            # if self.m.manual_df != "":
+            #     self.m.manual_df.to_csv(self.mansections,index=False)
+            #     shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"mansections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
+            shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                json.dump(self.gui_config,gconfig_file)
+            shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+            # self.thready(self.update_Pyprogress)
+            self.update_Pyprogress()
 
     def superthing_to_do(self):
         # self.thready(self.super_go)

@@ -1,0 +1,39 @@
+2022-02-27 20:17:37,463 | BreathCaller | INFO | Beginning Analysis
+2022-02-27 20:17:37,464 | BreathCaller | INFO | 2022-02-27T20:17:37.460274
+2022-02-27 20:17:37,464 | BreathCaller | INFO | command line argument : i : Z:/Projects/PM101_ST_APP_TTA_Longitudinal_Respiratory_Study/TMP_Files/PM101_DR_AD_1/4 months out of dox_Hypoxia
+2022-02-27 20:17:37,465 | BreathCaller | INFO | command line argument : f : ['M17903_Ply1525.txt']
+2022-02-27 20:17:37,465 | BreathCaller | INFO | command line argument : o : 
+2022-02-27 20:17:37,465 | BreathCaller | INFO | command line argument : p : C:/Users/atwit/Desktop/PAPR/PAPR Output/basics.csv
+2022-02-27 20:17:37,466 | BreathCaller | INFO | command line argument : a : C:/Users/atwit/Desktop/PAPR/PAPR Output/Alz_metadata0.csv
+2022-02-27 20:17:37,466 | BreathCaller | INFO | command line argument : m : 
+2022-02-27 20:17:37,467 | BreathCaller | INFO | command line argument : c : C:/Users/atwit/Desktop/PAPR/PAPR Output/auto_sections.csv
+2022-02-27 20:17:37,467 | BreathCaller | INFO | input paths : signal files : ['Z:/Projects/PM101_ST_APP_TTA_Longitudinal_Respiratory_Study/TMP_Files/PM101_DR_AD_1/4 months out of dox_Hypoxia\\M17903_Ply1525.txt']
+2022-02-27 20:17:37,467 | BreathCaller | INFO | input paths : output path : 
+2022-02-27 20:17:37,467 | BreathCaller | INFO | input paths : analysis parameters path : C:/Users/atwit/Desktop/PAPR/PAPR Output/basics.csv
+2022-02-27 20:17:37,467 | BreathCaller | INFO | input paths : animal metadata path : C:/Users/atwit/Desktop/PAPR/PAPR Output/Alz_metadata0.csv
+2022-02-27 20:17:37,467 | BreathCaller | INFO | input paths : manual selections path : 
+2022-02-27 20:17:37,467 | BreathCaller | INFO | input paths : auto criteria path : C:/Users/atwit/Desktop/PAPR/PAPR Output/auto_sections.csv
+2022-02-27 20:17:37,548 | BreathCaller | INFO | Z:/Projects/PM101_ST_APP_TTA_Longitudinal_Respiratory_Study/TMP_Files/PM101_DR_AD_1/4 months out of dox_Hypoxia\M17903_Ply1525.txt
+2022-02-27 20:17:37,764 | BreathCaller | INFO | Signal File has HEADER AT LINE: 0
+2022-02-27 20:19:53,572 | BreathCaller | INFO | Signal File has HEADER AT LINE: 10352656
+2022-02-27 20:22:48,205 | BreathCaller | INFO | no changes made to chamber temperature data
+2022-02-27 20:22:48,449 | BreathCaller | INFO | applying enhanced chamber temperature check
+2022-02-27 20:22:57,260 | BreathCaller | WARNING | Chamber Temperature contains out of range data, fixes applied
+2022-02-27 20:23:00,613 | BreathCaller | INFO | no midpoint body temperature present in metadata
+2022-02-27 20:23:00,613 | BreathCaller | INFO | midpoint body temp filled in with average
+2022-02-27 20:23:29,252 | BreathCaller | INFO | detection of breaths started
+2022-02-27 20:24:49,936 | BreathCaller | INFO | 57488 breaths found
+2022-02-27 20:27:35,861 | BreathCaller | INFO | 0 breaths removed from initial quality filter
+2022-02-27 20:27:37,580 | BreathCaller | WARNING | unable to calibrate CO2 - insufficient data - correction factor multiplier provided in analysis paramters used
+2022-02-27 20:27:43,778 | BreathCaller | INFO | Barometric Pressure field found [Bar_Pres] units assumed to be inHg
+2022-02-27 20:27:43,779 | BreathCaller | INFO | Calibration Volume field found [Calibration_Volume] units assumed to be uL
+2022-02-27 20:27:43,779 | BreathCaller | INFO | Flowrate field found [Rotometer_Flowrate] units converted to SLPM using std curve
+2022-02-27 20:27:43,779 | BreathCaller | INFO | Body Weight field found [Weight] units assumed to be g
+2022-02-27 20:27:43,825 | BreathCaller | INFO | Applying volumetric and respiratory calculations
+2022-02-27 20:27:50,485 | BreathCaller | INFO | Barometric Pressure field found [Bar_Pres] units assumed to be inHg
+2022-02-27 20:27:50,486 | BreathCaller | INFO | Calibration Volume field found [Calibration_Volume] units assumed to be uL
+2022-02-27 20:27:50,486 | BreathCaller | INFO | Flowrate field found [Rotometer_Flowrate] units converted to SLPM using std curve
+2022-02-27 20:27:50,486 | BreathCaller | INFO | Body Weight field found [Weight] units assumed to be g
+2022-02-27 20:27:50,817 | BreathCaller | INFO | Applying volumetric and respiratory calculations
+2022-02-27 20:28:13,142 | BreathCaller | INFO | completed file Z:/Projects/PM101_ST_APP_TTA_Longitudinal_Respiratory_Study/TMP_Files/PM101_DR_AD_1/4 months out of dox_Hypoxia\M17903_Ply1525.txt
+2022-02-27 20:28:13,143 | BreathCaller | INFO | Duration of Run : 0 hrs 10 mins 35 secs
