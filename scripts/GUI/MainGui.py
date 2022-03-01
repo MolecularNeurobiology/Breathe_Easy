@@ -6,6 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import *
 from PyQt5 import uic
+import resource
 from form import Ui_Plethysmography
 from thorbass import Ui_Thorbass
 from thumbass import Ui_Thumbass
@@ -3034,7 +3035,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # os.path.abspath(os.path.join(Path(__file__).parent.parent.parent,'scripts/GUI/resources/graphic.png'))
         # gr = os.path.abspath("../GUI/resources/graphic.png")
-        self.v.graphic.setStyleSheet("border-image:url('../scripts/GUI/resources/graphic.png')")
+        # self.v.graphic.setStyleSheet("border-image:url('../scripts/GUI/resources/graphic.png')")
+        self.v.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
 
          # Populate GUI widgets with experimental condition choices: 
         self.necessary_timestamp_box.addItems([need for need in self.stamp['Dictionaries']['Necessary_Timestamps']])

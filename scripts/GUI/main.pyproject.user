@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.4, 2022-02-21T16:33:21. -->
+<!-- Written by QtCreator 4.12.4, 2022-02-28T20:15:57. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -155,12 +155,12 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">main</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.C:/Users/atwit/Desktop/PAPR/scripts/GUI/main.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">C:/Users/atwit/Desktop/PAPR/scripts/GUI/main.py</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">main2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.C:/Users/atwit/Desktop/PAPR/BASSPRO-STAGG/scripts/GUI/main.py</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">C:/Users/atwit/Desktop/PAPR/BASSPRO-STAGG/scripts/GUI/main.py</value>
     <value type="bool" key="PythonEditor.RunConfiguation.Buffered">false</value>
     <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{5ed75f39-00fa-4eb0-a12b-9159f75077d5}</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">C:\Users\atwit\Desktop\PAPR\scripts\GUI\main.py</value>
+    <value type="QString" key="PythonEditor.RunConfiguation.Script">C:\Users\atwit\Desktop\PAPR\BASSPRO-STAGG\scripts\GUI\main.py</value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
@@ -170,7 +170,7 @@
     <value type="bool" key="RunConfiguration.UseQmlDebugger">false</value>
     <value type="bool" key="RunConfiguration.UseQmlDebuggerAuto">true</value>
     <value type="QString" key="RunConfiguration.WorkingDirectory"></value>
-    <value type="QString" key="RunConfiguration.WorkingDirectory.default"></value>
+    <value type="QString" key="RunConfiguration.WorkingDirectory.default">C:/Users/atwit/Desktop/PAPR/BASSPRO-STAGG/scripts/GUI</value>
    </valuemap>
    <value type="int" key="ProjectExplorer.Target.RunConfigurationCount">1</value>
   </valuemap>

@@ -18,6 +18,8 @@ from multiprocessing import freeze_support
 
 #region Main
 def main():
+    root = os.path.dirname(os.path.abspath(__file__))        
+    QDir.addSearchPath('resources', root)
     app = QApplication(sys.argv)
     window = MainGui.Plethysmography()
     print(window.signals)
