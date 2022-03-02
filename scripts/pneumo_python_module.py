@@ -36,7 +36,7 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.0.2'
+__version__ = '36.0.1'
 
 """
 # v36.0.0 README
@@ -3596,32 +3596,15 @@ def main():
                     logger
                     )
                 
-                if len(Output_List)<1:
-                    logger.exception(
-                        "{}_{} does not have any 'includable breaths ".format(
-                            MUID,PLYUID
-                            )+
-                        "- no JSON file will be produced."+
-                        "This is probably due to problems during "+
-                        "sample collection or settings that are not "+
-                        "appropriate for the current file"
-                        )
-                else:
-                    logger.info(
-                        "{}_{} has 'includable breaths ".format(
-                            MUID,PLYUID
-                            )+
-                        "- JSON file will be produced."
-                        )
-                    Output_List[
-                        (Output_List['AUTO_IND_INCLUDE'] == 1) |
-                        (Output_List['MAN_IND_INCLUDE'] == 1)
-                        ].to_json(
-                            os.path.join(
-                                Output_Path,
-                                '{}_{}.json'.format(MUID,PLYUID)
-                                )
+                Output_List[
+                    (Output_List['AUTO_IND_INCLUDE'] == 1) |
+                    (Output_List['MAN_IND_INCLUDE'] == 1)
+                    ].to_json(
+                        os.path.join(
+                            Output_Path,
+                            '{}_{}.json'.format(MUID,PLYUID)
                             )
+                        )
                         
                 if 'All_Breath_Output' in Analysis_Parameters:
                     if Analysis_Parameters['All_Breath_Output'] == '1':
