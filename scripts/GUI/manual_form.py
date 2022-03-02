@@ -41,7 +41,7 @@ class Ui_Manual(object):
         self.verticalLayout_6.addItem(spacerItem1)
         self.label = QtWidgets.QLabel(Manual)
         font = QtGui.QFont()
-        font.setPointSize(24)
+        font.setPointSize(16)
         self.label.setFont(font)
         self.label.setObjectName("label")
         self.verticalLayout_6.addWidget(self.label)
@@ -193,7 +193,7 @@ class Ui_Manual(object):
     def retranslateUi(self, Manual):
         _translate = QtCore.QCoreApplication.translate
         Manual.setWindowTitle(_translate("Manual", "Form"))
-        self.label.setText(_translate("Manual", "Manual Selections Configuration"))
+        self.label.setText(_translate("Manual", "BASSPRO Manual Settings"))
         self.load_manual_button.setText(_translate("Manual", "Load previous settings"))
         self.datapad_load.setText(_translate("Manual", "Load LabChart selections"))
         self.preset_menu.setItemText(0, _translate("Manual", "Select default settings:"))

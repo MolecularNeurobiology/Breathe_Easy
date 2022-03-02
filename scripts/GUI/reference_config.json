@@ -263,7 +263,7 @@
         "Definition: Minimum apnea duration (s)\nDescription: The minimum amount of time for a breath cycle to persist in order to be considered a candidate for apnea.\nDefault Values: 0.5"
         ,
         "minApsTT":
-        "Definition: Minimum apnea duration (relative to local breath cycle duration)\nDescription: The minimum fold change in breath cycle duration relative to surrounding breaths for a breath cycle to be considered a candidate for apnea.\nDefault Values: 0.5"
+        "Definition: Minimum apnea duration (relative to local breath cycle duration)\nDescription: The minimum fold change in breath cycle duration relative to surrounding breaths for a breath cycle to be considered a candidate for apnea.\nDefault Values: 2"
         ,
         "minAplTT":
         "Definition: The minimum sigh tidal volume (relative to local tidal volumes)\nDescription: The minimum fold change in tidal volume relative to surrounding breaths for a breath to be considered a sigh.\nDefault Values: 2"

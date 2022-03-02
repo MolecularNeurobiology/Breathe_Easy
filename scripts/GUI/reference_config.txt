@@ -1,0 +1,310 @@
+{"References":{
+    "Widget Labels":{
+        "Auto":{
+            "sections":{
+                "identification":["Alias","Key","Cal Seg","AUTO_IND_INCLUDE"],
+                "interruptions":["AUTO_IND_INJECTION","Startpoint","Midpoint","Endpoint"]
+            },
+            "volumegas":{
+                "calibration":["AUTO_IND_CAL","AUTO_IND_GAS_CAL","CAL_CO2","CAL_O2"]
+            },
+            "thresholds":{
+                "gas":["min_CO2","max_CO2","min_O2","max_O2","max_calibrated_TV","max_VEVO2"],
+                "time":["within_start","within_end","after_start","before_end"]
+            },
+            "inclusion":{
+                "quality":["min_TT","max_TT","max_dvtv","X","max_pX","vol_mov_avg_drift","min_TV","min_bout","include_apnea","include_sigh","include_high_chamber_temp"]
+            }
+        }
+    },
+    "GUI Labels":{
+        "Auto Settings": {
+            "Section Characterization":{
+                "Section Identification and Settings":{
+                    "Breathcaller Alias":"Alias",
+                    "User-given Name":"Key",
+                    "Calibration Section":"Cal Seg",
+                    "Include in Output?":"AUTO_IND_INCLUDE"
+                },
+                "Interruptions":{
+                    "Injection Status":"AUTO_IND_INJECTION",
+                    "Start Temperature":"Startpoint",
+                    "Midpoint Temperature":"Midpoint",
+                    "End Temperature":"Endpoint"
+                }
+            },
+            "Section Calibration": {
+                "Volume and Gas Calibrations":{
+                    "Volume Calibration":"AUTO_IND_CAL",
+                    "Gas Calibration":"AUTO_IND_GAS_CAL",
+                    "CO2 Calibration Parameters":"CAL_CO2",
+                    "O2 Calibration Parameters":"CAL_O2"
+                }
+            },
+            "Threshold Settings": {
+                "Gas Thresholds":{
+                    "Minimum CO2":"min_CO2",
+                    "Maximum CO2":"max_CO2",
+                    "Minimum O2":"min_O2",
+                    "Maximum O2":"max_O2",
+                    "Maximum tidal volume":"max_calibrated_TV",
+                    "Maximum VEVO2":"max_VEVO2"},
+                "Time Thresholds":{
+                    "Within start":"within_start",
+                    "Within end":"within_end",
+                    "After start":"after_start",
+                    "Before end":"before_end"}}, 
+            "Inclusion Criteria":{
+                "Breath Quality Standards":{
+                    "Minimum breath cycle duration (s)":"min_TT",
+                    "Maximum breath cycle duration (s)":"max_TT",
+                    "Maximum DVTV (V)":"max_dvtv",
+                    "Frequency threshold":"X",
+                    "Maximum percentage past threshold":"max_pX",
+                    "Volume moving average range":"vol_mov_avg_drift",
+                    "Minimum tidal volume":"min_TV",
+                    "Minimum bout size":"min_bout",
+                    "Include apneas":"include_apnea",
+                    "Include sighs":"include_sigh",
+                    "Include high chamber temperatures":"include_high_chamber_temp"
+                }
+            }},
+        "Basic Parameters": {
+            "Breath Calling":{
+                "Breath Identification":{
+                    "Minimum inspiratory time":"min_TI",
+                    "Minimum peak inspiratory flow":"min_PIF",
+                    "Minimum peak expiratory flow":"min_PEF"
+                },
+                "Feature Detection":{
+                    "Apnea window size":"TTwin",
+                    "Minimum apnea duration":"minApsTT",
+                    "Sigh window size":"SIGHwin",
+                    "Minimum sigh amplitude":"minAplTT"
+                }
+            },
+            "Rig Specifications":{
+                "Calibration":{
+                    "Temperature":"ConvertTemp",
+                    "O2 gas":"ConvertO2",
+                    "CO2 gas":"ConvertCO2"
+                },
+                "Flowrate":{
+                    "Derived flowrate":"Flowrate",
+                    "Rotometer readings":"Roto_x",
+                    "Rotometer flowrate":"Roto_y"
+                },
+                "Chamber Temperature":{
+                    "Units":"temp_units",
+                    "Default temperature":"temp_default",
+                    "Trim size":"temp_trim",
+                    "Narrow fix (wut?)":"temp_narrow"
+                }
+            },
+            "Breath Inclusion":{
+                "Basic Filter":{
+                    "Filter window size":"per500win",
+                    "Frequency threshold":"perX",
+                    "Maximum percentage past threshold":"maxPer500",
+                    "Maximum DVTV":"maximum_DVTV",
+                    "Smoothing filter":"apply_smoothing_filter"
+                },
+                "Retro Filters":{
+                   "Chamber temperature range":"temp_range",
+                   "Maximum tidal volume":"maxTV",
+                   "Maximum VEVO2":"maxVEVO2"
+                }
+            }
+        }
+    },
+    "Definitions":{
+        "xvar":"Definition: The independent variable of the x axis. \nDescription: Choose the independent variable that will determine the values of the x axis.",
+        "pointdodge":"Definition: pointdodge",
+        "facet1":"Definition: facet1",
+        "facet2":"Definition: facet2",
+        "feature":"Definition: Model respiratory features. \nDescription: Respiratory features such as apneas and sighs can be modeled using the same settings as the main model with the exception of apneas or sighs serving as the response variable and the inclusion of all breaths, regardless of filtering, in the respiratory features model.",
+        "poincare":"Definition: poincare shows you lag lead, showing you whether or not there's a one timesep temporal correlation. Gauges temporal correlation. Autocorrelations.",
+        "spectral":"Definition: spectral shows cyclical patterns over time. the spectral plot is a fourier transformation, so its frequency now. showing whether or not you see large fluctuations are occurring at more frequently",
+        "irregularity":"Definition: irregularity scaled version of poincare plot. smaller score means greater similarity. so it's standardized to itself (t+1 - t/abs(t)) whereas poincare is a graph is and it's relative relevance is apparent when plotted against itself.",
+        "transformation":"Definition: transformation",
+        "min_TT":"Definition: Minimum breath cycle duration (s)\nDescription: This is the minimum duration for a waveform to be considered a candidate breath. If the waveform is too short it will be considered an extension of the expiratory phase of the previous valid breath cycle.\nThis value will change depending on the species studied and the calibration methods used. For example, the minimum breath cycle duration of a human will be greater than that of a mouse, and volume calibrations done with 3 pipette presses per second will differ from that done with 1 press per 20 seconds.\nDefault Calibration Value: 0.2\nDefault Value for Mice: 0.1",
+        "max_TT":
+            "Definition: Maximum breath cycle duration (s).\nDescription: The point at which a breath is too long to reasonably be considered an appropriate measure of the phenotype of interest.\nThis value will change depending on the species studied and the calibration methods used.\nDefault Calibration Value: 1\nDefault Value for Mice: 5"
+        ,
+        "max_dvtv":
+            "Definition: Maximum DVTV (V)\nDescription: DVTV (Difference in inhaled vs exhaled Tidal Volume\nCalculated as the absolute value of the difference in inhaled versus exhaled tidal volume normalized to the average of the inhaled and exhaled tidal volume. During normal breathing inhaled and exhaled tidal volume are similar - a large DVTV may indicate motion artifacts or presence of an abnormal breathing pattern. This value may need adjustment to permit flexibility due to metabolism (i.e. increased oxygen consumption relative to carbon dioxide production in animals primarily metabolizing fatty acids), or chamber leaks permitting biased airflow.\nDefault Calibration Value: 0.2\nDefault Value for Mice: 0.25"
+        ,
+        "maximum_DVTV":
+            "Definition: Difference between inhaled vs exhaled tidal volume\nDescription: Calculated as the absolute value of the difference in inhaled versus exhaled tidal volume normalized to the average of the inhaled and exhaled tidal volume. During normal breathing inhaled and exhaled tidal volume are similar - a large DVTV may indicate motion artifacts or presence of an abnormal breathing pattern. This value may need adjustment to permit flexibility due to metabolism (i.e. increased oxygen consumption relative to carbon dioxide production in animals primarily metabolizing fatty acids), or chamber leaks permitting biased airflow.\nDefault Calibration Value: 0.2\nDefault Value for Mice: 0.25"
+        ,
+        "X":
+            "Definition: Ventilatory frequency threshold used in conjunction with maximum percentage past threshold (max_pX) to define periods of non-calm breathing\nDescription: The ventilatory frequency threshold where breathing at or above this rate is likely due to artifact or the animals in a state other than calm-quiet breathing. This value may differ depending on the organism being tested.\nDefault Values: 500"
+        ,
+        "max_pX":
+            "Definition: Maximum percentage of breaths around the current breath that can be above X breaths per minute for a breath to be considered calm breathing\nDescription: The percentage of breaths in a sliding window centered on the current breath that are above above a ventilatory frequency threshold.\nThis value is a surrogate outcome measure associated with differentiating calm vs non-calm breathing [Ward 2011, Huang 2016, Ward 2020]. The size of the sliding window is can also be tuned.\nDefault Calibration Value: 1\nDefault Value for Mice: 0.1"
+        ,
+        "vol_mov_avg_drift":
+            "Definition: Threshold for drift in the volume signal, beyond which the animal is considered to be moving or potentially obstructing the bias flow through the chamber\nDescription: Maximum deviation from 0 for the volume signal. This value is used to detect moments where the animal is obstructing the inlet or outlet flow. It is calculated as a 1-second rolling average of the volume signal.\nDefault Calibration Value: 0.5\nDefault Value for Mice: 1"
+        ,
+        "min_tv":
+            "Definition: Minimum tidal volume\nDescription: This value is used to exclude breaths that exhibit a tidal volume that is too low to be physiologically meaningful - this may include artifacts due to noise or breathing patterns that involve irregular/exaggerated exhalation.\nDefault Calibration Value: 0.5\nDefault Value for Mice: 0",
+        "min_co2":
+            "Definition: Minimum calibrated CO2 value for a section (%)\nDescription: The minimum calibrated CO2 value that a section should have to be considered as meeting its experimental condition.\nDefault Calibration Value: Hypercapnia - 4/Room Air - 1\nDefault Value for Mice: Hypercapnia - 5/Room Air - 0"
+        ,
+        "max_co2":
+            "Definition: Maximum calibrated CO2 value for a section (%)\nDescription: The maximum calibrated CO2 value that a section should have to be considered as meeting its experimental condition.\nDefault Calibration Value: Hypercapnia - 6/Room Air - 3\nDefault Value for Mice: Hypercapnia - 10/Room Air - 3"
+        ,
+        "min_o2":
+            "Definition: Minimum calibrated O2 value for a section (%)\nDescription: The minimum calibrated O2 value that a section should have to be considered as meeting its experimental condition.\nDefault Calibration Value: Hypercapnia - 19/Room Air - 19\nDefault Value for Mice: Hypercapnia - 10/Room Air - 10"
+        ,
+        "max_o2":
+            "Definition: Maximum calibrated O2 value for a section (%)\nDescription: The maximum calibrated O2 value that a section should have to be considered as meeting its experimental condition.\nDefault Calibration Value: Hypercapnia - 22/Room Air - 22\nDefault Value for Mice: Hypercapnia - 21/Room Air - 21"
+        ,
+        "min_bout":
+            "Definition: Minimum number of consecutive breaths\nDescription: Minimum number of consecutive breaths that must pass inclusion criteria for calm breathing in order to accept them as calm breathing.\nDefault Calibration Value: 10\nDefault Value for Mice: 10"
+        ,
+        "within_start":
+            "Definition: The maximum number of seconds beyond the 'key' timestamp that can be included in the block.\nDescription: This value determines the size of the window starting at the 'key' timestamp and extending forward by the value (in seconds). Breaths within this window may be considered for inclusion.\nDefault Value: Calibration - 300/Experimental - 43200"
+        ,
+        "within_end":
+            "Definition: The maximum number of seconds before the next 'key' timestamp that can be included in the block.\nDescription: This value determines the size of the window ending at the next 'key' timestamp. Breaths that occurred preceding the next 'key' timestamp within this interval may be considered for inclusion.\nDefault Value: Calibration - 300/Experimental - 43200"
+        ,
+        "after_start":
+            "Definition: The minimum number of seconds after the 'key' timestamp that are excluded before the block can begin.\nDescription: This value determines the size of the window starting at the 'key' timestamp within which breaths will be excluded. After this interval breaths may be considered for inclusion.\nDefault Value: 0"
+        ,
+        "before_end":
+        "Definition: The minimum number of seconds before the next 'key' timestamp that are excluded after the block can begin.\nDescription: This value determines the size of the window ending at the next 'key' timestamp within which breaths will be excluded. Breaths occurring before this interval may be considered for inclusion.\nDefault Value: 0"
+        ,
+        "auto_ind_gas":
+        "Definition: Specify the gas condition that is ocurring during the experimental condition (block).\nDescription: This value indicates the gas condition that occurs during the block.\nDefault Value for Mice: Hypercapnia - 5%CO2/Hypoxia - 10%O2/Room Air - RA"
+        ,
+        "auto_ind_injection":
+        "Definition: Specify the injection status of the animal during the experimental condition (block).\nDescription:This value indicates whether or not the animal received an injection during this section."
+        ,
+        "alias":
+        "The name of the experimental condition (BLOCK) that will be defined by the 'key' timestamp and the accompanying criteria filters."
+        ,
+        "key":
+        "The actual text used in the timestamp (created in LabChart) that is used as a key for defining the start of a block. This needs to match the value entered in LabChart."
+        ,
+        "cal_seg":
+        "This indicates the name of the block containing volumetric calibration information appropriate for the current block."
+        ,
+        "auto_ind_include":
+        "Definition: Indicates whether the block should be included in the output produces for later statistical analysis\nDescription: Binary (1=yes, 0=no) indicating that the experimental condition (BLOCK) described by the row should be placed in the output for STAGG (current version of STAGG only expects to receive breathing data from the animal, i.e. do not include calibration BLOCKS)."
+        ,
+        "auto_ind_cal":
+        "Definition: Indicates whether the block includes volumetric calibration information\nDescription: Binary (1=yes, 0=no) indicating that the experimental condition (BLOCK) described by the row should be used for volumetric calibration data."
+        ,
+        "auto_ind_gas_cal":
+        "Definition: Indicates whether the block includes gas concentration calibration data\nDescription: Binary (1=yes, 0=no) indicating that the experimental condition (BLOCK) described by the row should be used for gas concentration calibration (if 1, then CAL_O2 and/or CAL_CO2 should have values other than NA)."
+        ,
+        "cal_o2":
+        "Definition: Defines nominal O2 concentration, and minimum and maximum O2 Voltages anticipated for a block defining calibrated gas concentrations\nDescription: Calibration parameters: [nominal O2 concentration], [minimum valid O2 voltage], [maximum valid O2 voltage]\nWhen setting this, it may be helpful to use a signal viewed i.e. Traceviewer or LabChart to confirm the actual signal voltages that were collected.\nDefault Value: Cal 20 Room Air - [21,1,10]"
+        ,
+        "cal_co2":
+        "Definition: Defines nominal CO2 concentration, and minimum and maximum CO2 Voltages anticipated for a block defining calibrated gas concentrations\nDescription: Calibration parameters: [nominal CO2 concentration], [minimum valid CO2 voltage], [maximum valid CO2 voltage]\nWhen setting this, it may be helpful to use a signal viewed i.e. Traceviewer or Labchart to confirm the actual signal voltages that were collected.\nDefault Value: Cal 20 Room Air - [0,-0.1,0.1]/Cal 20 5% CO2 - [5,2,10]"
+        ,
+        "startpoint":
+        "Definition: Indicates that the beginning of a block also defines the beginning of the animal recording and should be matched to the starting body temperature measurement.\nDescription: Binary (1=yes, 0=no) indicating that the beginning of the experimental condition (BLOCK) is coincident with the beginning of the recording session (used for linear interpolation of body temperature)."
+        ,
+        "midpoint":
+        "Definition: Indicates that the beginning of a block also defines the beginning of the block that should be matched to the midpoint body temperature measurement.\nDescription: Binary (1=yes, 0=no) indicating that the beginning of the experimental condition (BLOCK) is coincident with the middle of the recording session (only needed if a midpoint body temperature reading was collected in the animal metadata for the linear interpolation of body temperature)."
+        ,
+        "endpoint":
+        "Definition: Indicates that the ending of the block also defines the ending of the block that should be matched to the endpoind body temperature measurement.\nDescription: Binary (1=yes, 0=no) indicating that the ending of the experimental condition (BLOCK) is coincident with the end of the recording session (indicating the location of the endpoint body temperature measurement. used for the linear interpolation of body temperature)."
+        ,
+        "minTI":
+        "Definition: Minimum duration of inspiration (s)\nDescription: The minimum duration of the inspiratory phase of breathing for a breath to be called. If not met, candidate breath will be rolled back into the previous breath's expiratory phase.\nDefault Value for Mice: 0.05"
+        ,
+        "minPIF":
+        "Definition: Minimum peak inspiratory flow (V)\nDescription: The minimum peak inspiratory flow based on uncorrected voltage, which will need to be set dependent on the recording platform. This value helps categorize the signal as transitioning to inhalation.\nDefault Value for Mice: 0.0015"
+        ,
+        "minPEF":
+        "Definition: Minimum peak expiratory flow (V)\nDescription: The minimum peak expiratory flow based on uncorrected voltage, which will need to be set dependent on the recording platform. This value helps categorize the signal as transitioning to exhalation.\nDefault Value for Mice: 0.003"
+        ,
+        "TTwin":
+        "Definition: Window size for apnea detection (number of breaths)\nDescription: An apnea is detected based on the focal breath's deviation from the moving average of the breaths within a window encompassing a set number of breaths occurring before and after the focal breath. The minimum duration of the inspiratory phase of breathing for a breath to be called. If not met, candidate breath will be rolled back into the previous breath's expiratory phase.\nDefault Value for Mice: 7"
+        ,
+        "SIGHwin":
+        "Definition: Window size for sigh detection (number of breaths)\nDescription: \nDescription: A sigh is detected based on the focal breath's deviation from the moving average of the breaths within a window encompassing a set number of breaths occurring before and after the focal breath. This value sets the number of breaths (centered on the focal breath, but excluding the focal breath) included in the window to calculate the moving average.\nDefault Value for Mice: 11"
+        ,
+        "per500win":
+        "Definition: Window size for breath inclusion using the max_perX filters (number of breaths)\nDescription: A breath is included in the output if it falls within a bout of breathing of sufficient quality and length. Each breath's characteristics are compared to the moving average of the characteristics of breaths surrounding it within this window to determine that breath's inclusion in the output. This value sets the size of that window used for the mx_perX filter. For example, the default value of 201 defines a window that includes the focal breath, 100 breaths preceding the focal breath, and 100 breaths following the focal breath.\nDefault Value: 201"
+        ,
+        "perX":
+        "Definition: The breathing rate used for maximum_percent_X calculations (i.e. the proportion of breaths above this value will be used to determine the occurance on non-calm breathing)\nDescription: This value establishes the threshold for breathing rate (breaths per minute). Breaths that are near breaths above this value may be excluded if too many neighboring breaths are above this value."
+        ,
+        "maxPer500":
+        "Definition: The maximum percentage of breaths within a window that are permitted to be above the threshold for non-calm breathing (%)\nDescription:  This value sets the maximum percentage of neighboring breaths (within the window centered on the focal breath) that are permitted to be above the threshold for calm breathing in order to be included as calm breathing.\nDefault Value: 0.1"
+        ,
+        "ConvertTemp":
+        "Definition: Voltage calibration for temperature\nDescription: This value is the factor needed to convert the voltage value of the signal to degrees Celsius to reflect the temperature of the chamber.\nDefault Value: 1000"
+        ,
+        "ConvertCO2":
+        "Definition: Voltage calibration for CO2\nDescription: This value is the factor needed to convert the voltage value of the signal to % to reflect the CO2 concentration in the chamber. This value is used if insufficient informaiton is available for at least a 2 point calibration of gas concentration\nDefault Value: 1"
+        ,
+        "ConvertO2":
+        "Definition: Voltage calibration for O2\nDescription: This value is the factor needed to convert the voltage value of the signal to % to reflect the O2 concentration in the chamber. This value is used if insufficient informaiton is available for at least a 2 point calibration of gas concentration.\nDefault Value: 10"
+        ,
+        "Flowrate":
+        "Definition: Default flowrate\nDescription: If a flowrate is not provided in the metadata, this value is used as the default (see Standard rotometer readings or Standard rotometer flowrates).\nDefault Value: 0.19811"
+        ,
+        "Roto_x":
+        "Definition: Standardized rotometer readings\nDescription: Rotometer readings that correspond to flowrates (used to create a standard curve to quantify flowrate from a rotometer reading).\nDefault Values: 50 75 80 90 95 100 110 125 150"
+        ,
+        "Roto_y":
+        "Definition: Standardized rotometer flowrates\nDescription: Flowrate corresponding to rotometer readings (used to create a standard curve to quantify flowrate from a rotometer reading).\nDefault Values: 0.0724 0.13476 0.14961 0.18137 0.19811 0.21527 0.2504 0.30329 0.38847"
+        ,
+        "apply_smoothing_filter":
+        "Definition: Indicates whether to apply a high and low pass filter to the breathing signal\nDescription: Binary (1=yes, 0=no) indicating that the signal should be processed through high and lowpass filters to help smooth the breathing signal and remove signal noise artifacts.\nDefault Value: 1"
+        ,
+        "minApSec":
+        "Definition: Minimum apnea duration (s)\nDescription: The minimum amount of time for a breath cycle to persist in order to be considered a candidate for apnea.\nDefault Values: 0.5"
+        ,
+        "minApsTT":
+        "Definition: Minimum apnea duration (relative to local breath cycle duration)\nDescription: The minimum fold change in breath cycle duration relative to surrounding breaths for a breath cycle to be considered a candidate for apnea.\nDefault Values: 0.5"
+        ,
+        "minAplTT":
+        "Definition: The minimum sigh tidal volume (relative to local tidal volumes)\nDescription: The minimum fold change in tidal volume relative to surrounding breaths for a breath to be considered a sigh.\nDefault Values: 2"
+        ,
+        "All_Breath_Output":
+        "Description:Select this flag to produce an output file annotating all detected breath cycles.\nDefault Value: 1"
+        ,
+        "Aggregate_Output":
+        "Description: Select this flag to produce an output file with values aggregated by Experiment Condition.\nDefault Value: 1"
+        ,
+        "chamber_temp_cutoffs":
+        "Definition: The minimum and maximum temperatures that reflect physiological data\nDescription: The minimum and maximum temperatures that reflect physiological data. Readings outside of this range will be filtered and treated as sensor artifacts - removed data will be replaced with data imputed from neighboring valid data.\nDefault Values: 18 35"
+        ,
+        "chamber_temperature_units":
+        "Definition: C or F \nDescription: The unit of measurement used for chamber temperature readings.\nDefault Values: C"
+        ,
+        "chamber_temperature_default":
+        "Definition: The anticipated default chamber temperature (C)\nDescription: The default chamber temperature - used if no valid chamber temperature readings are present.\nDefault Values: 28"
+        ,
+        "chamber_temperature_trim_size":
+        "Description: The number of temperature reading samples to purge when an out of range artifact was detected in the chamber temperature signal\nDefault Values: 1000"
+        ,
+        "chamber_temperature_narrow_fix":
+        "Definition: Used to define a narrower range of chamber temperatures when identifying and correcting sensor artifacts\nDescription: Used to define a narrower range of chamger temperatures based on values exceeding a multiple of the interquartile range.\nDo not use if chamber temperatures are known to be highly variable during the recording session.\nDefault Values: T"
+        ,
+        "include_apnea":
+        "Definition: Indicates whether to exclude breaths from calm breathing if they are also categorized as an apnea\nDefault Values: No"
+        ,
+        "include_sigh":
+        "Definition: Indicates whether to exclude breaths from calm breathing if they are also categorized as an sigh\nDefault Values: No"
+        ,
+        "include_high_chamber_temp":
+        "Definition: Indicates whether to include data where the chamber temperature has exceeded the body temperature of the animal\nDescription: Including such data will likely lead abberant values for Bartlett and Tennery corrected tidal volumes.\nDefault Values: No"
+        ,
+        "maxTV":
+        "Definition: Maximum tidal volume\nDescription: Maximum tidal volume for a breath to be considered a candidate of calm breathing.\nDefault Value: off"
+        ,
+        "max_VEVO2":
+        "Definition: Maximum ventilation normalized to oxygen consumption\nDescription: Any breaths with VEVO2 values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: off"
+        ,
+        "max_calibrated_TV":
+        "Definition: Maximum calibrated tidal volume\nDescription: Any breaths with tidal volumes greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: 5"
+    }
+}}

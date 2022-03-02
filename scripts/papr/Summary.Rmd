@@ -4,7 +4,6 @@ output: html_document
 header-includes:
    - \usepackage{svg}
 ---
-##R Markdown
 
 This R Markdown document includes all figures generated from this run of the Respiratory Analysis Pipeline in the form of a webpage (.html). 
 

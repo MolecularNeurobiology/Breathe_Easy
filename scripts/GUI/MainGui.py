@@ -6,6 +6,7 @@ from PyQt5.QtGui import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import *
 from PyQt5 import uic
+import resource
 from form import Ui_Plethysmography
 from thorbass import Ui_Thorbass
 from thumbass import Ui_Thumbass
@@ -19,7 +20,7 @@ from stagg_form import Ui_Stagg
 from auto_simp_form import Ui_Auto_simp
 import csv
 import glob
-import sip
+import traceback
 from pathlib import Path, PurePath
 import subprocess
 from subprocess import PIPE, Popen
@@ -138,6 +139,7 @@ class Thinbass(QDialog,Ui_Thinbass):
             self.pleth.variable_configuration()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
         self.pleth.v.show()
     
     def output(self):
@@ -153,12 +155,14 @@ class Thinbass(QDialog,Ui_Thinbass):
                 self.v.show()
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             pass
 
 #region Thumbass
-class Thumbass(QWidget, Ui_Thumbass):
+class Thumbass(QDialog, Ui_Thumbass):
     """
     Standard dialog to help protect people from themselves.
     """
@@ -176,6 +180,7 @@ class Thumbass(QWidget, Ui_Thumbass):
         print("thumbass.message_received()")
         self.setWindowTitle(title)
         self.label.setText(words)
+
         # self.browser.setPlainText(words)
 #endregion
 
@@ -404,33 +409,38 @@ class Basic(QWidget, Ui_Basic):
     def saveas_basic_path(self):
         print("basic.saveas_basic_path()")
         self.get_parameter()
-        if self.pleth.mothership == "":
-            dire = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
-        else:
-            dire = self.pleth.mothership
-        path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', dire+f"basics_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}", ".csv(*.csv))")[0]
+        # if self.pleth.mothership == "":
+        #     dire = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
+        # else:
+        #     dire = self.pleth.mothership
+        path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}", ".csv(*.csv))")[0]
         try:
             print(path)
             self.path = path
             self.actual_saving()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             print("saveas_basic_path didn't work")
 
     def save_basic_path(self):
         print("basic.save_basic_path()")
         self.get_parameter()
         # self.save_checker(self.pleth.mothership,"basics")
-        try:
-            if self.pleth.mothership == "":
-                self.path = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/basics.csv")
-                # self.saveas_basic_path()
-            else:
-                self.path = os.path.join(self.pleth.mothership, f"basics.csv")
+        if self.pleth.mothership == "":
+            path = os.path.realpath("./basics.csv")
+            print(path)
+            # self.saveas_basic_path()
+        else:
+            path = os.path.join(self.pleth.mothership, f"basics.csv")
+        if not path:
+            print("dialog cancelled")
+        else:
+            self.path = path
             self.actual_saving()
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            self.saveas_basic_path()
+        # except Exception as e:
+        #     print(f'{type(e).__name__}: {e}')
+        #     self.saveas_basic_path()
     
     def actual_saving(self):
         print("basic.actual_saving_basic()")
@@ -441,6 +451,7 @@ class Basic(QWidget, Ui_Basic):
             self.basic_df.set_index('Parameter').to_csv(self.pleth.basicap)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             print("actual saving basic to designated path (be it save or saveas) didn't work")
         
         # Copying current settings for appropriate entry in breathcaller_config:
@@ -452,7 +463,7 @@ class Basic(QWidget, Ui_Basic):
         
         print(self.pleth.breath_df)
         if self.pleth.breath_df != []:
-            self.pleth.update_breath_df()
+            self.pleth.update_breath_df("basic parameters")
         print(self.pleth.breath_df)
         if self.pleth.basicap != "":
         # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
@@ -495,6 +506,7 @@ class Basic(QWidget, Ui_Basic):
             self.populate_table(self.basic_df,self.view_tab)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file is not in the correct format. Only .csv, .xlsx, or .JSON files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.load_basic_file()
@@ -762,9 +774,15 @@ class Auto(QWidget, Ui_Auto):
 
     def save_as(self):
         print("auto.save_as()")
+        # if self.pleth.mothership == "":
+        #     dire = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
         # self.pleth.hangar.append("Saving autosections file...")
-        self.path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
-        self.save_auto_file()
+        path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
+        if not path:
+            print("dialog cancelled")
+        else:
+            self.path = path
+            self.save_auto_file()
 
     def save_checkerargs(self,folder,title):
         print("auto.save_checkerargs()")
@@ -787,9 +805,10 @@ class Auto(QWidget, Ui_Auto):
                 print("dialog cancelled")
             else:
                 self.path = path
+                self.save_auto_file()
         else:
             self.path = os.path.join(self.pleth.mothership, "auto_sections.csv")
-        self.save_auto_file()
+            self.save_auto_file()
 
     def save_auto_file(self):
         print("auto.save_auto_file()")
@@ -801,16 +820,18 @@ class Auto(QWidget, Ui_Auto):
             with open(self.pleth.autosections,'w',newline = '') as stream:
                     writer = csv.writer(stream)
                     header = []
+                    # header.append("Key")
                     for row in range(self.view_tab.rowCount()):
                         item = self.view_tab.item(row,0)
-                        print(item.text())
                         if item.text() == "nan":
                             header.append("")
-                        elif item.text() == "index":
-                            header.append("Key")
+                        # elif item.text() == "index":
+                        #     print("found index column")
                         else:
+                            print(item.text())
                             header.append(item.text())
-                    writer.writerow(header)
+                    print(header)
+                    # writer.writerow(header)
                     for column in range(self.view_tab.columnCount()):
                         coldata = []
                         for row in range(self.view_tab.rowCount()):
@@ -823,21 +844,27 @@ class Auto(QWidget, Ui_Auto):
                             else:
                                 coldata.append(item.text())
                         writer.writerow(coldata)
+            auto = pd.read_csv(self.pleth.autosections)
+            auto['Key'] = auto['Alias']
+            auto.to_csv(self.pleth.autosections,index=False)
+            print(auto)
             if self.pleth.breath_df != []:
-                self.pleth.update_breath_df()
+                self.pleth.update_breath_df("automated settings")
         # DO NOT KEEP THIS NONSENSE JUST INVERSE THE ROWS AND COLUMNS IN THE NESTING ABOVE
         # QUICK FIX
         # self.auto_df.transpose().to_csv(self.pleth.autosections)
 
             # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
-            for item in self.pleth.sections_list.findItems("auto_sections.csv",Qt.MatchEndsWith):
+            for item in self.pleth.sections_list.findItems("auto_sections",Qt.MatchContains):
                 self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
             for item in self.pleth.sections_list.findItems("not detected",Qt.MatchContains):
                 self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
             self.pleth.sections_list.addItem(self.pleth.autosections)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
-            reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
+            print(traceback.format_exc())
+            if type(e) == PermissionError:
+                reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
             # self.thumb = Thumbass()
             # self.thumb.show()
             # self.thumb.message_received("The file(s) you're working with appear to be open in another program.")
@@ -1178,6 +1205,7 @@ class Stagg(QWidget, Ui_Stagg):
                         writer.writerow(rowdata)
         except PermissionError as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
         
         # Clearing the config panel of the mainGUI and adding to it to reflect changes:
@@ -1209,7 +1237,8 @@ class Manual(QWidget, Ui_Manual):
 
     def get_datapad(self):
         print("manual.get_datapad()")
-        file = QFileDialog.getOpenFileNames(self, 'Select Labchart datapad export file', str(self.pleth.mothership))
+        # bob=os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
+        file = QFileDialog.getOpenFileNames(self, 'Select Labchart datapad export file')
         print(len(file))
         print(len(file[0]))
         # If you the file you chose sucks, the GUI won't crap out.
@@ -1217,39 +1246,69 @@ class Manual(QWidget, Ui_Manual):
             print("nope")
         else:
             dfs=[]
-            for f in file[0]:
-                if f.endswith('.csv'):
-                    df = pd.read_csv(f,header=[2])
-                    mp = os.path.basename(f).rsplit(".csv")[0]
-                elif f.endswith('.txt'):
-                    df = pd.read_csv(f,sep="\t",header=[2])
-                    mp = os.path.basename(f).rsplit(".txt")[0]
-                elif f.endswith('.xlsx'):
-                    df = pd.read_excel(f,header=[0])
-                    mp = os.path.basename(f).rsplit(".xlsx")[0]
-                if "_" in mp:
-                    df['animal id'] = mp.rsplit("_")[0]
-                    df['PLYUID'] = mp.rsplit("_")[1]
+            try:
+                for f in file[0]:
+                    try:
+                        if f.endswith('.csv'):
+                            df = pd.read_csv(f,header=[2])
+                            mp = os.path.basename(f).rsplit(".csv")[0]
+                        elif f.endswith('.txt'):
+                            df = pd.read_csv(f,sep="\t",header=[2])
+                            mp = os.path.basename(f).rsplit(".txt")[0]
+                        elif f.endswith('.xlsx'):
+                            df = pd.read_excel(f,header=[0])
+                            mp = os.path.basename(f).rsplit(".xlsx")[0]
+                    except Exception as e:
+                        print(f'{type(e).__name__}: {e}')
+                        print(traceback.format_exc())
+                        print("manual datapad load balking at suffix")
+                        pass
+                    try:
+                        if "_" in mp:
+                            df['animal id'] = mp.rsplit("_")[0]
+                            df['PLYUID'] = mp.rsplit("_")[1]
+                        else:
+                            df['animal id'] = mp
+                            df['PLYUID'] = ""
+                    except Exception as e:
+                        print(f'{type(e).__name__}: {e}')
+                        print(traceback.format_exc())
+                        print("parsing file names for muid and plyuid balked")
+                        pass
+                    dfs.append(df)
+                dc = pd.concat(dfs, ignore_index=True)
+                dc.insert(0,'PLYUID',dc.pop('PLYUID'))
+                dc.insert(0,'animal id',dc.pop('animal id'))
+                keys = dc.columns
+                mand = {}
+                for key,val in zip(keys,self.vals):
+                    mand.update({key: val})
+                dc = dc.rename(columns = mand)
+                dc['start_time'] = pd.to_timedelta(dc['start'],errors='coerce')
+                dc['start'] = dc['start_time'].dt.total_seconds()
+                dc['stop_time'] = pd.to_timedelta(dc['stop'],errors='coerce')
+                dc['stop'] = dc['stop_time'].dt.total_seconds()
+                if len(dc['start'].isna())>0:
+                    print("not cool")
+                    bob=dc[dc['start'].isna()][['animal id','PLYUID']].drop_duplicates()
+                    if self.pleth.signals != []:
+                        print("signals aren't empty")
+                        for file in self.pleth.signals:
+                            # if os.path.basename(file) == f"{bob['animal id']}_{bob['PLYUID']}.txt":
+                            print(f"{bob['animal id']}_{bob['PLYUID']}")
+                    # dc = dc.loc[(dc['start'] != "nan") & (dc['stop'] != "nan"),:]
                 else:
-                    df['animal id'] = mp
-                    df['PLYUID'] = ""
-                dfs.append(df)
-            dc = pd.concat(dfs, ignore_index=True)
-            dc.insert(0,'PLYUID',dc.pop('PLYUID'))
-            dc.insert(0,'animal id',dc.pop('animal id'))
-            keys = dc.columns
-            mand = {}
-            for key,val in zip(keys,self.vals):
-                mand.update({key: val})
-            dc = dc.rename(columns = mand)
-            dc['start_time'] = pd.to_timedelta(dc['start'])
-            dc['start'] = dc['start_time'].dt.total_seconds()
-            dc['stop_time'] = pd.to_timedelta(dc['stop'])
-            dc['stop'] = dc['stop_time'].dt.total_seconds()
-            self.datapad = dc
-            print(self.datapad)
-            self.populate_table(self.datapad, self.datapad_view)
-            self.datapad.to_csv("C:/Users/atwit/Desktop/datapad.csv")
+                    print("cool")
+                self.datapad = dc
+                self.populate_table(self.datapad, self.datapad_view)
+                self.datapad.to_csv("C:/Users/atwit/Desktop/datapad.csv")
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                self.thumb = Thumbass(self)
+                self.thumb.show()
+                self.thumb.message_received(f"{type(e).__name__}: {e}",f"Please ensure that the datapad is formatted as indicated in the documentation.\n\n{traceback.format_exc()}")
+                self.pleth.save_bug(e)
         # ou'll need to implement measures to ensure correct columns names, correct data type, etc.
 
     def get_preset(self):
@@ -1268,6 +1327,7 @@ class Manual(QWidget, Ui_Manual):
             self.populate_table(self.manual_df,self.manual_view)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             if self.datapad is None and self.preset is not None:
                 reply = QMessageBox.information(self, 'Missing datapad file', 'You need to select a LabChart datapad exported as a text file. Would you like to select a file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                 if reply == QMessageBox.Ok:
@@ -1320,7 +1380,7 @@ class Manual(QWidget, Ui_Manual):
             self.manual_df.to_csv(self.pleth.mansections,index=False)
 
             if self.pleth.breath_df != []:
-                self.pleth.update_breath_df()
+                self.pleth.update_breath_df("manual settings")
         
         # current = pd.DataFrame.to_dict(self.manual_df.set_index("index"))
         # print(current)
@@ -1333,7 +1393,7 @@ class Manual(QWidget, Ui_Manual):
         #     json.dump(self.pleth.bc_config,bconfig_file)
         
         # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
-            for item in self.pleth.sections_list.findItems("manual_sections.csv",Qt.MatchEndsWith):
+            for item in self.pleth.sections_list.findItems("manual_sections",Qt.MatchContains):
                 self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
             for item in self.pleth.sections_list.findItems("not detected",Qt.MatchContains):
                 self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
@@ -1341,6 +1401,7 @@ class Manual(QWidget, Ui_Manual):
             self.pleth.hangar.append("Manual sections file saved.")
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
     
     def load_manual_file(self):
@@ -1354,24 +1415,29 @@ class Manual(QWidget, Ui_Manual):
         #     load_path = str(self.pleth.mothership)
 
         # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select manual sections file to edit:', str(self.pleth.mothership))
+        # bob=os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
+        file = QFileDialog.getOpenFileName(self, 'Select manual sections file to edit:')
 
         # If you the file you chose sucks, the GUI won't crap out.
         if not file[0]:
             print("nope")
         else:
-            self.load_manual = pd.read_csv(file[0])
-            self.datapad = self.load_manual.loc[:,[x for x in self.vals]]
-            self.preset = self.load_manual.loc[:,[x for x in self.load_manual.columns if x not in self.datapad.columns]].drop_duplicates()
-            # self.manual_df = self.datapad.merge(self.preset,'outer',left_on=self.datapad['segment'],right_on=self.preset['Alias'])
-            # self.manual_df = self.manual_df.iloc[:,1:]
-            self.manual_df = self.load_manual
-            self.populate_table(self.manual_df,self.manual_view)
-            # self.populate_table(self.load_manual,self.manual_view)
-            self.populate_table(self.datapad, self.datapad_view)
-            self.populate_table(self.preset, self.settings_view)
-            # print(self.manual_df)
-            # print(self.load_manual)
+            try:
+                self.load_manual = pd.read_csv(file[0])
+                self.datapad = self.load_manual.loc[:,[x for x in self.vals]]
+                self.preset = self.load_manual.loc[:,[x for x in self.load_manual.columns if x not in self.datapad.columns]].drop_duplicates()
+                # self.manual_df = self.datapad.merge(self.preset,'outer',left_on=self.datapad['segment'],right_on=self.preset['Alias'])
+                # self.manual_df = self.manual_df.iloc[:,1:]
+                self.manual_df = self.load_manual
+                self.populate_table(self.manual_df,self.manual_view)
+                # self.populate_table(self.load_manual,self.manual_view)
+                self.populate_table(self.datapad, self.datapad_view)
+                self.populate_table(self.preset, self.settings_view)
+                # print(self.manual_df)
+                # print(self.load_manual)
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
 
     def load_manual_current(self):
         print("manual.load_manual_current()")
@@ -1692,9 +1758,6 @@ class Custom(QWidget, Ui_Custom):
         #     self.get_key(self.additional_dict,col).setCurrentText("Custom")
         # else:
         #     self.get_key(self.additional_dict,col).setCurrentText("None")
-        for th in self.config.custom_port:
-            for thh in self.config.custom_port[th]["Transformation"]:
-                print(thh)
         print(any(th for th in [self.config.custom_port[t]["Transformation"] for t in self.config.custom_port]))
         if any(th for th in [self.config.custom_port[t]["Transformation"] for t in self.config.custom_port])==True:
             print("hay transformation custom")
@@ -1799,7 +1862,7 @@ class Config(QWidget, Ui_Config):
         spacerItem64 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_25.addItem(spacerItem64)
         self.transform_combo = CheckableComboBox()
-        self.transform_combo.addItems(["raw","log10","ln","sqrt","Custom"])
+        self.transform_combo.addItems(["raw","log10","ln","sqrt","Custom","None"])
         self.verticalLayout_25.addWidget(self.transform_combo)
         spacerItem65 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_25.addItem(spacerItem65)
@@ -1825,7 +1888,11 @@ class Config(QWidget, Ui_Config):
         self.independent = []
         self.dependent = []
         self.covariate = []
-        self.graphic.setStyleSheet("border-image:url(graphic.png)")
+
+        # gr = os.path.abspath('../GUI/graphic.png')
+        
+        # self.graphic.setStyleSheet("border-image:url(../GUI/graphic.png)")
+        # os.path.join(Path(__file__).parent.parent.parent,"scripts/graphic.png")
 
         self.custom_dict = {}
         self.custom_port = {}
@@ -2171,44 +2238,44 @@ class Config(QWidget, Ui_Config):
         # self.show_custom()
         if self.custom_port == {}:
             print("empty custom") 
-            self.pleth.c = Custom(self)
-            self.show_custom()
+            # self.pleth.c = Custom(self)
+            # self.show_custom()
             self.pleth.c.save_custom()
-        else:
+        # else:
             # Custom.save_custom(self)
-            for cladcol in self.clades:
-                for item in self.custom_port:
-                    for col in self.custom_port[item]:
-                        if col is "Irregularity":
-                            if self.custom_port[item][col] == 1:
-                                print("irregularity is 1")
-                                # print(self.clades.loc[(self.clades["Alias"] == self.pleth.c.custom_port[item]["Alias"]),"Column"].values)
-                                print(f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}')
-                                irr = f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'
-                                print(irr)
-                                if irr in self.clades["Column"]:
-                                    print("irreg found")
-                                    self.clades.loc[(self.clades["Column"] == f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'),"Dependent"] == 1 
-                                else:
-                                    print("no irreg")
-                        elif col is "Transformation":
-                            self.custom_port[item][col] = [x.replace("raw","non") for x in self.custom_port[item][col]]
-                            self.custom_port[item][col] = [x.replace("ln","log") for x in self.custom_port[item][col]]
-                            # print(self.custom_port[item][col])
-                            # print("@".join(self.custom_port[item][col]))
-                            # if len(self.custom_port[item][col])>1:
-                            self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = "@".join(self.custom_port[item][col])
-                            # # elif len(self.custom_port[item][col])==1:
-                            # #     self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = self.custom_port[item][col][0]
-                            # else:
-                            #     # print(f'CladAlias: {self.clades["Alias"]}')
-                            #     print(f'Port Alias: {self.custom_port[item]["Alias"]}')
-                            #     print(f'Col: {self.custom_port[item][col]}')
-                            #     # print(f'Cladcol: {self.clades[cladcol]}')
-                            #     # print(self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol])
-                            #     self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]), col] = self.custom_port[item][col]
-                        else:
-                            self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),col] = self.custom_port[item][col]
+        for cladcol in self.clades:
+            for item in self.custom_port:
+                for col in self.custom_port[item]:
+                    if col is "Irregularity":
+                        if self.custom_port[item][col] == 1:
+                            print("irregularity is 1")
+                            # print(self.clades.loc[(self.clades["Alias"] == self.pleth.c.custom_port[item]["Alias"]),"Column"].values)
+                            print(f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}')
+                            irr = f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'
+                            print(irr)
+                            if irr in self.clades["Column"]:
+                                print("irreg found")
+                                self.clades.loc[(self.clades["Column"] == f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'),"Dependent"] == 1 
+                            else:
+                                print("no irreg")
+                    elif col is "Transformation":
+                        self.custom_port[item][col] = [x.replace("raw","non") for x in self.custom_port[item][col]]
+                        self.custom_port[item][col] = [x.replace("ln","log") for x in self.custom_port[item][col]]
+                        # print(self.custom_port[item][col])
+                        # print("@".join(self.custom_port[item][col]))
+                        # if len(self.custom_port[item][col])>1:
+                        self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = "@".join(self.custom_port[item][col])
+                        # # elif len(self.custom_port[item][col])==1:
+                        # #     self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = self.custom_port[item][col][0]
+                        # else:
+                        #     # print(f'CladAlias: {self.clades["Alias"]}')
+                        #     print(f'Port Alias: {self.custom_port[item]["Alias"]}')
+                        #     print(f'Col: {self.custom_port[item][col]}')
+                        #     # print(f'Cladcol: {self.clades[cladcol]}')
+                        #     # print(self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol])
+                        #     self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]), col] = self.custom_port[item][col]
+                    else:
+                        self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),col] = self.custom_port[item][col]
         
         
         # if self.irreg_combo.currentText() == "All":
@@ -2263,10 +2330,12 @@ class Config(QWidget, Ui_Config):
                     self.configs[key]["df"].to_csv(self.configs[key]["path"],index=False)
                 except PermissionError as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
                     thumbholes.append(self.configs[key]["path"])
                     pass
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
                 self.saveas_config()
             if self.pleth.mothership == "":
                 self.mothership = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output")
@@ -2279,6 +2348,7 @@ class Config(QWidget, Ui_Config):
                         self.configs[key]["df"].to_csv(os.path.join(self.pleth.mothership, f'STAGG_config/{key}.csv'),index=False)
                 except PermissionError as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
                     thumbholes.append(self.configs[key]["path"])
                     pass
     
@@ -2339,6 +2409,7 @@ class Config(QWidget, Ui_Config):
                     self.configs[key]["df"].to_csv(self.configs[key]["path"],index=False)
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
                     thumbholes.append(self.configs[key]["path"])
                     pass
                 if self.pleth.mothership == "":
@@ -2352,6 +2423,7 @@ class Config(QWidget, Ui_Config):
                             self.configs[key]["df"].to_csv(os.path.join(self.pleth.mothership, f'STAGG_config/{key}.csv'),index=False)
                     except PermissionError as e:
                         print(f'{type(e).__name__}: {e}')
+                        print(traceback.format_exc())
                         thumbholes.append(self.configs[key]["path"])
                         pass
             
@@ -2455,6 +2527,7 @@ class Config(QWidget, Ui_Config):
             self.pleth.c.populate_table(self.deps,self.pleth.c.custom_table)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             print("Apparently reset_config only knows how to land by crashing into objects like my bird. I don't understand why this except makes things work, and that makes me uncomfortable.")
 
     def to_check_load_variable_config(self):
@@ -2466,15 +2539,15 @@ class Config(QWidget, Ui_Config):
         if open_file == "yes":
         # Groping around to find a convenient directory:
         
-            if Path(os.path.join(self.pleth.mothership,'STAGG_config')).exists():
-                load_path = os.path.join(self.pleth.mothership,'STAGG_config')
-            elif Path(self.pleth.mothership).exists():
-                load_path = self.pleth.mothership
-            else:
-                load_path = str(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_config"))
+            # if Path(os.path.join(self.pleth.mothership,'STAGG_config')).exists():
+            #     load_path = os.path.join(self.pleth.mothership,'STAGG_config')
+            # elif Path(self.pleth.mothership).exists():
+            #     load_path = self.pleth.mothership
+            # else:
+            #     load_path = str(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_config"))
 
             # Opens open file dialog
-            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")))
+            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_config")))
             paths = file_name[0]
         elif open_file == "no":
             paths = [self.configs[p]["path"] for p in self.configs]
@@ -2559,11 +2632,13 @@ class Config(QWidget, Ui_Config):
                     self.pleth.variable_list.addItem(self.configs["variable_config"]['path'])
                 except KeyError as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
                     self.goodies.remove("variable_config")
                     self.baddies.append("variable_config")
                     print(f'baddies got "variable_config" because of a key error')
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
             if "graph_config" in self.goodies:
                 try:
                     self.load_graph_config()
@@ -2574,11 +2649,13 @@ class Config(QWidget, Ui_Config):
                     self.pleth.variable_list.addItem(self.configs["graph_config"]['path'])
                 except KeyError as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
                     self.goodies.remove("graph_config")
                     self.baddies.append("graph_config")
                     print(f'baddies got "graph_config" because of a key error')
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
             if "other_config" in self.goodies:
                 try:
                     self.load_other_config()
@@ -2589,11 +2666,13 @@ class Config(QWidget, Ui_Config):
                     self.pleth.variable_list.addItem(self.configs["other_config"]['path'])
                 except KeyError as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
                     self.goodies.remove("other_config")
                     self.baddies.append("other_config")
                     print(f'baddies got "other_config" because of a key error')
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
         if len(self.baddies)>0:
             print(f'baddies got something because of a key error')
             print(self.baddies)
@@ -2652,21 +2731,54 @@ class Config(QWidget, Ui_Config):
             # for v in ['Poincare','Spectral']:
             if self.vdf[k]['Poincare'] == "1":
                 self.custom_dict[k]['Poincare'].setChecked(True)
-                self.Poincare_combo.setCurrentText("Custom")
+                # self.Poincare_combo.setCurrentText("Custom")
             if self.vdf[k]['Spectral'] == "1":
                 self.custom_dict[k]['Spectral'].setChecked(True)
-                self.Spectral_combo.setCurrentText("Custom")
+                # self.Spectral_combo.setCurrentText("Custom")
             for y in ['ymin','ymax']:
                 if self.vdf[k][y] != "":
                     self.custom_dict[k][y].setText(self.vdf[k][y])
             if self.vdf[k]['Transformation'] != "":
+                # if not self.transform_combo:
+                #     print("no transform_combo")
+                #     self.setup_transform_combo()
+                # else:
+                #     print(self.transform_combo)
+                print("there is a transformation")
                 transform = [s.replace("non","raw") and s.replace("log","ln") for s in self.vdf[k]['Transformation'].split('@')]
                 transform = [z.replace("ln10","log10") for z in transform]
-                # print(transform)
+                print("transform")
                 # print(','.join([t for t in transform]))
                 self.custom_dict[k]['Transformation'].loadCustom(transform)
                 self.custom_dict[k]['Transformation'].updateText()
-                self.transform_combo.setCurrentText("Custom")
+        self.pleth.c.save_custom()
+        # for key,value in {self.Poincare_combo:"Poincare",self.Spectral_combo:"Spectral"}.items():
+        #     if all([self.custom_port[var][value] == 1 for var in self.custom_port]):
+        #         key.setCurrentText("All")
+        #     if any([self.custom_port[var][value] == 1 for var in self.custom_port]):
+        #         key.setCurrentText("Custom")
+        #     else:
+        #         key.setCurrentText("None")
+        # if any(th for th in [self.custom_port[t]["Transformation"] for t in self.custom_port])==True:
+        #     print("hay transformation custom")
+        #     self.transform_combo.setCurrentText("Custom")
+        # else:
+        #     print("no hay transformation apparently")
+        #     self.transform_combo.setCurrentText("None") 
+                
+                # self.transform_combo.setCurrentText("custom")
+
+
+        #         for th in self.config.custom_port:
+        #     for thh in self.config.custom_port[th]["Transformation"]:
+        #         print(thh)
+        # print(any(th for th in [self.config.custom_port[t]["Transformation"] for t in self.config.custom_port]))
+        # if any(th for th in [self.config.custom_port[t]["Transformation"] for t in self.config.custom_port])==True:
+        #     print("hay transformation custom")
+        #     self.config.transform_combo.setCurrentText("Custom")
+        # else:
+        #     print("no hay transformation apparently")
+        #     self.config.transform_combo.setCurrentText("None")
         
     def load_graph_config(self):
         print("loading graph config")
@@ -2681,6 +2793,7 @@ class Config(QWidget, Ui_Config):
                     c.setCurrentText([x for x in gdf.loc[(gdf['Role'] == self.settings_dict['role'][c])]['Alias'] if pd.notna(x) == True][0])
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
                     print("program can't handle nan in gdf for some reason. so if there aren't four graph roles chosen, current text doesn't indicate selections. nvm i just fixed it. it needed a hallpass")
                     pass
         else:
@@ -2694,6 +2807,7 @@ class Config(QWidget, Ui_Config):
                     c.setCurrentText([x for x in gdf.loc[(gdf['Role'] == self.settings_dict['role'][c])]['Alias'] if pd.notna(x) == True][0])
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
                     print("program can't handle nan in gdf for some reason. so if there aren't four graph roles chosen, current text doesn't indicate selections. nvm i just fixed it. it needed a hallpass")
                     pass
             try:
@@ -2702,6 +2816,7 @@ class Config(QWidget, Ui_Config):
                     c.setCurrentText([x for x in gdf.loc[(gdf['Role'] == self.settings_dict['role'][c])]['Alias'] if pd.notna(x) == True])
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
             
 
     def load_other_config(self):
@@ -2741,6 +2856,7 @@ class Config(QWidget, Ui_Config):
                     except Exception as e:
                         print("no added loop")
                         print(f'{type(e).__name__}: {e}')
+                        print(traceback.format_exc())
         # Iterating over everything and their grandmother takes forever. I should look into a more efficient way of populating the table from loaded specs.
         # toc=datetime.datetime.now()
         # print(toc-tic)
@@ -2917,6 +3033,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.b = Basic(self)
         self.g = AnnotGUI.Annot(self)
 
+        # os.path.abspath(os.path.join(Path(__file__).parent.parent.parent,'scripts/GUI/resources/graphic.png'))
+        # gr = os.path.abspath("../GUI/resources/graphic.png")
+        # self.v.graphic.setStyleSheet("border-image:url('../scripts/GUI/resources/graphic.png')")
+        self.v.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
+
          # Populate GUI widgets with experimental condition choices: 
         self.necessary_timestamp_box.addItems([need for need in self.stamp['Dictionaries']['Necessary_Timestamps']])
         self.parallel_combo.addItems([str(num) for num in list(range(1,os.cpu_count()+1))])
@@ -2928,155 +3049,37 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # for widget in [self.variable_list,self.signal_files_list,self.metadata_list,self.sections_list,self.breath_list]:
         #     self.keyPressEvent.connect(self.on_key(widget))
 
+
 #endregion
 
 #region Analysis parameters
 
-        self.AnalysisParameters={}
-        self.AnalysisParameters['minTI']=0.05
-        self.AnalysisParameters['minPIF']=0.0015
-        self.AnalysisParameters['minPEF']=-0.003
-        self.AnalysisParameters['TTwin']=7
-        self.AnalysisParameters['per500win']=201
-        self.AnalysisParameters['maxPer500']=1.0
-        self.AnalysisParameters['maxDVTV']=100
-        self.AnalysisParameters['minApSec']=0.5
-        self.AnalysisParameters['minApsTT']=2
-        self.AnalysisParameters['minAplTT']=2
-        self.AnalysisParameters['SIGHwin']=11
-        self.AnalysisParameters['SmoothFilt']='y'
-        self.AnalysisParameters['convert_temp']=1000
-        self.AnalysisParameters['convert_co2']=1
-        self.AnalysisParameters['convert_o2']=10
-        self.AnalysisParameters['flowrate']=0.19811
-        self.AnalysisParameters['roto_x']="50,75,80,90,95,100,110,125,150"
-        self.AnalysisParameters['roto_y']="0.0724,0.13476,0.14961,0.18137,0.19811,0.21527,0.2504,0.30329,0.38847"
-        # self.AnalysisParameters = self.gui_config['Dictionaries']['AP']['current']
-
-    # def reset_parameter(self):
-    #     self.AnalysisParameters = self.gui_config['Dictionaries']['AP']['default']
-    #     lineEdits = {self.lineEdit_minTI: "minTI", 
-    #                 self.lineEdit_minPIF: "minPIF",
-    #                 self.lineEdit_minPEF: "minPEF", 
-    #                 self.lineEdit_TTwin: "TTwin", 
-    #                 self.lineEdit_per500win: "per500win", 
-    #                 self.lineEdit_maxper500: "maxPer500", 
-    #                 self.lineEdit_maxDVTV: "maxDVTV",
-    #                 self.lineEdit_minApSec: "minApSec",
-    #                 self.lineEdit_minApsTT: "minApsTT",
-    #                 self.lineEdit_minAplTT: "minAplTT",
-    #                 self.lineEdit_sighwin: "SIGHwin",
-    #                 self.lineEdit_smoothfilt: "SmoothFilt",
-    #                 self.lineEdit_converttemp: "convert_temp",
-    #                 self.lineEdit_convertco2: "convert_co2",
-    #                 self.lineEdit_converto2: "convert_o2",
-    #                 self.lineEdit_flowrate: "flowrate",
-    #                 self.lineEdit_roto_x: "roto_x",
-    #                 self.lineEdit_roto_y: "roto_y"}
-
-    #     for widget in lineEdits:
-    #         widget.setText(str(self.AnalysisParameters[lineEdits[widget]]))
-
-    # def get_parameter(self):
-
-    #     minTI=self.lineEdit_minTI.text()
-    #     minPIF=self.lineEdit_minPIF.text()
-    #     minPEF=self.lineEdit_minPEF.text()
-    #     TTwin=self.lineEdit_TTwin.text()
-    #     per500win=self.lineEdit_per500win.text()
-    #     maxper500=self.lineEdit_maxper500.text()
-    #     maxDVTV=self.lineEdit_maxDVTV.text()
-    #     minApSec=self.lineEdit_minApSec.text()
-    #     minApsTT=self.lineEdit_minApsTT.text()
-    #     minAplTT=self.lineEdit_minAplTT.text()
-    #     SIGHwin=self.lineEdit_sighwin.text()
-    #     SmoothFilt=self.lineEdit_smoothfilt.text()
-    #     ConvertTemp=self.lineEdit_converttemp.text()
-    #     ConvertCO2=self.lineEdit_convertco2.text()
-    #     ConvertO2=self.lineEdit_converto2.text()
-    #     Flowrate=self.lineEdit_flowrate.text()
-    #     Roto_x=self.lineEdit_roto_x.text()
-    #     Roto_y=self.lineEdit_roto_y.text()
-
-    #     self.AnalysisParameters.update({"minTI":minTI})
-    #     self.AnalysisParameters.update({"minPIF":minPIF})
-    #     self.AnalysisParameters.update({"minPEF":minPEF})
-    #     self.AnalysisParameters.update({"TTwin":TTwin})
-    #     self.AnalysisParameters.update({"per500win":per500win})
-    #     self.AnalysisParameters.update({"maxPer500":maxper500})
-    #     self.AnalysisParameters.update({"maxDVTV":maxDVTV})
-    #     self.AnalysisParameters.update({"minApSec":minApSec})
-    #     self.AnalysisParameters.update({"minApsTT":minApsTT})
-    #     self.AnalysisParameters.update({"minAplTT":minAplTT})
-    #     self.AnalysisParameters.update({"SIGHwin":SIGHwin})
-    #     self.AnalysisParameters.update({"SmoothFilt":SmoothFilt})
-    #     self.AnalysisParameters.update({"convert_temp":ConvertTemp})
-    #     self.AnalysisParameters.update({"convert_co2":ConvertCO2})
-    #     self.AnalysisParameters.update({"convert_o2":ConvertO2})
-    #     self.AnalysisParameters.update({"flowrate":Flowrate})
-    #     self.AnalysisParameters.update({"roto_x":Roto_x})
-    #     self.AnalysisParameters.update({"roto_y":Roto_y})
-
-    #     self.gui_config['Dictionaries']['AP']['current'].update(self.AnalysisParameters)
-    
-    #     with open(f'{Path(__file__).parent}/gui_config.json','w') as config_file:
-    #         json.dump(self.gui_config, config_file)
-
-    # def print_parameters(self):
-    #     print(self.AnalysisParameters)
-    #     print(self.signals)
-    #     print(os.path.join(self.mothership, "JSON"))
-
-        # if not self.py_output_folder:
-        #     if not self.mothership:
-        #         ap_file = QFileDialog.getOpenFileNames(self, 'Select files', str(Path.home()))
-        #     else:
-        #         ap_file = QFileDialog.getOpenFileNames(self, 'Select files', str(self.mothership))
-        # else:
-        #     ap_file = QFileDialog.getOpenFileNames(self, 'Select files', str(self.py_output_folder))
-            
-        # if ap_file == ([],''):
-        #     pass
-        # else:
-        #     with open(str(ap_file),'r') as openfile:
-        #         self.AnalysisParameters = json.load(openfile)
-        #     lineEdits = {self.lineEdit_minTI: "minTI", 
-        #                 self.lineEdit_minPIF: "minPIF",
-        #                 self.lineEdit_minPEF: "minPEF", 
-        #                 self.lineEdit_TTwin: "TTwin", 
-        #                 self.lineEdit_per500win: "per500win", 
-        #                 self.lineEdit_maxper500: "maxPer500", 
-        #                 self.lineEdit_maxDVTV: "maxDVTV",
-        #                 self.lineEdit_minApSec: "minApSec",
-        #                 self.lineEdit_minApsTT: "minApsTT",
-        #                 self.lineEdit_minAplTT: "minAplTT",
-        #                 self.lineEdit_sighwin: "SIGHwin",
-        #                 self.lineEdit_smoothfilt: "SmoothFilt",
-        #                 self.lineEdit_converttemp: "convert_temp",
-        #                 self.lineEdit_convertco2: "convert_co2",
-        #                 self.lineEdit_converto2: "convert_o2",
-        #                 self.lineEdit_flowrate: "flowrate",
-        #                 self.lineEdit_roto_x: "roto_x",
-        #                 self.lineEdit_roto_y: "roto_y"}
-
-        #     for widget in lineEdits:
-        #         widget.setText(str(self.AnalysisParameters[lineEdits[widget]]))
-
-        # self.metadict = {self.metadata:id(self.metadata)}
-        # for l in list(self.metadata,self.autosections,self.mansections):
+        os.chdir(os.path.join(Path(__file__).parent.parent.parent))
             
 
 #endregion
 
+    def save_bug(self,error_name):
+        print(error_name)
+        # print(trace)
+        print(f'save bug:{traceback.format_exc()}')
+        bug_string = """
+        
+        """
+
 #region Timestamper...
 
     def timestamp_dict(self):
+        print("timestamp_dict()")
         tic=datetime.datetime.now()
         print(tic)
+        print(self.stamp['Dictionaries']['Data'])
         self.stamp['Dictionaries']['Data'] = {}
+        print(self.stamp['Dictionaries']['Data'])
+        print(self.tsbyfile)
         combo_need = self.necessary_timestamp_box.currentText()
-        if self.input_dir_py == "":
-        # if self.signals == []:
+        # if self.input_dir_py == "":
+        if self.signals == []:
             print("signals lsit empty")
             reply = QMessageBox.information(self, 'Missing signal files', 'No signal files selected.\nWould you like to select a signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
@@ -3132,17 +3135,70 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # self.hangar.append(f"{self.stamp['Dictionaries']['Data'][]}")        
             print(f"{self.stamp['Dictionaries']['Data']}")
             try:
-                with open(os.path.join(Path(self.signals[0]).parent,f"timestamp_{os.path.basename(Path(self.signals[0]).parent)}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}"),"w") as tspath:
+                tpath = os.path.join(Path(self.signals[0]).parent,f"timestamp_{os.path.basename(Path(self.signals[0]).parent)}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}")
+                with open(tpath,"w") as tspath:
                     tspath.write(json.dumps(self.stamp))
                     tspath.close()
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
                 self.thumb = Thumbass(self)
                 self.thumb.show()
-                self.thumb.message_received("Your signal files aren't vibing with the timestamp function.")
+                self.thumb.message_received(f"{type(e).__name__}: {e}",f"The timestamp file could not be written.")
+            self.hangar.append("Timestamp output saved.")
+            print(self.check)
+            miss = []
+            dup = []
+            new = []
+            # for m in self.check['files_missing_a_ts']:
+                # for w in self.check['files_missing_a_ts'][m]:
+                    # print(self.check['files_missing_a_ts'][m])
+                # print(self.check['files_missing_a_ts'][m])
+            # miss.append([[w for w in self.check['files_missing_a_ts'][m]] for m in self.check['files_missing_a_ts']])
+            # for d in self.check['files_with_dup_ts']:
+                # dup.append(self.check['files_with_dup_ts'][d])
+            # for n in self.check['new_ts']:
+                # print(self.check['new_ts'][n])
+            # new.append([[z for z in self.check['new_ts'][n]] for n in self.check['new_ts']])
+            self.hangar.append("---Timestamp Summary---")
+            self.hangar.append(f"Files with missing timestamps: {', '.join(set([w for m in self.check['files_missing_a_ts'] for w in self.check['files_missing_a_ts'][m]]))}")
+            self.hangar.append(f"Files with duplicate timestamps: {', '.join(set([y for d in self.check['files_with_dup_ts'] for y in self.check['files_with_dup_ts'][d]]))}")
+            if len(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]])) == len(self.signals):
+                self.hangar.append(f"Files with novel timestamps: all signal files")
+            else:
+                self.hangar.append(f"Files with novel timestamps: {', '.join(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]]))}")
+            try:
+                self.hangar.append(f"Full review of timestamps: {Path(tpath)}")
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+            # for m in self.check['files_missing_a_ts']:
+            #     for y in self.check['files_missing_a_ts'][m]:
+            #         print(y)
+            # self.hangar.append(f"Files with missing timestamps: {miss}\nFiles with duplicate timestamps: {dup}\nFiles with novel timestamps: {[z for z in new]}")
+            # \nFiles with duplicate timestamps: {[[', '.join(z) for z in self.check['files_with_dup_ts'][d]] for d in self.check['files_with_dup_ts']]}\nFiles with novel timestamps: {[[', '.join(w) for w in self.check['new_ts'][n]] for n in self.check['new_ts']]}")
+            # for e in epoch:
+            #     for c in condition:
+            #         for d in self.stamp['Dictionaries']['Data'][e][c]:
+            #             if d is not 'tsbyfile':
+            #                 for x in self.stamp['Dictionaries']['Data'][e][c][d]:
+            #                     if self.stamp['Dictionaries']['Data'][e][c][d][x] != {} or self.stamp['Dictionaries']['Data'][e][c][d][x] != [] or self.stamp['Dictionaries']['Data'][e][c][d][x] != 'all signal files':
+            #                         if d == 'files_missing_a_ts':
+            #                             self.hangar.append(f"Files with missing timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts'][x])}")
+            #                         elif d == 'files_with_dup_ts':
+            #                             self.hangar.append(f"Files with duplicate timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_with_dup_ts'][x])}")
+            #                         elif d == 'new_ts':
+            #                             self.hangar.append(f"Files with novel timestamps | {', '.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][x])}")
+        
+                            # self.hangar.append(f"Files with new timestamps: \n{[d+' | '+','.join(file) for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][d] for d in self.stamp['Dictionaries']['Data'][e][c]['new_ts'] for c in self.stamp['Dictionaries']['Data'][e] for e in self.stamp['Dictionaries']['Data']]}")
+                            # self.hangar.append(f"Files with missing timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts'][x])}\nFiles with duplicate timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['files_with_dup_ts'][x])}\nFiles with novel timestamps | {','.join(file for file in self.stamp['Dictionaries']['Data'][e][c]['new_ts'][x])}")
+            
+            # self.hangar.append(f"TIMESTAMP OUTPUT\nFiles with missing timestamps: \n{os.linesep.join([d for d in self.stamp['Dictionaries']['Data'][e][c]['files_missing_a_ts']])}\n{self.stamp['Dictionaries']['Data']}")
             # shutil.copy(tspath, os.path.join(os.path.join(Path(self.signals[0]).parent.parent), f"timestamp_{os.path.basename(Path(self.signals[0]).parent.parent)}"))
 
             toc=datetime.datetime.now()
+            print(self.stamp['Dictionaries']['Data'])
+            print(self.tsbyfile)
             print(toc)
             print(toc-tic) 
 
@@ -3164,6 +3220,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         errors = []
         timestamps = []
+        self.tsbyfile = {}
         
         for CurFile in self.signals:
             self.tsbyfile[CurFile]=[]
@@ -3171,7 +3228,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # try:
             with open(CurFile,'r') as opfi:
                 i=0
-                l=0
+                # l=0
                 for line in opfi:
                     if '#' in line:
                         # self.hangar.append('{} TS AT LINE: {} - {}'.format(os.path.basename(CurFile),i,line.split('#')[1][2:]))
@@ -3179,8 +3236,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         timestamps.append(line.split('#')[1][2:])
                         # self.tsbyfile[CurFile].append(line.split('#* ')[1].split(' \n')[0])
                         c = line.split('#')[1][2:].split(' \n')[0]
-                        self.tsbyfile[CurFile].append(f"{c}_{l}")
-                        l+=1
+                        self.tsbyfile[CurFile].append(f"{c}")
+                        # l+=1
                     i+=1
             # self.tsbyfile[CurFile]=[i.split(' \n')[0] for i in self.tsbyfile[CurFile]]
             # self.cur = [i.split(' \n')[0] for i in self.tsbyfile[CurFile]]
@@ -3240,10 +3297,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         for m in filesmissingts:
             if len(filesmissingts[m]) == len(self.signals):
                 filesmissingts[m] = ["all signal files"]
-            if len(goodfiles) == len(self.signals):
-                goodfiles = ["all signal files"]
+        if len(goodfiles) == len(self.signals):
+            goodfiles = ["all signal files"]
+        for n in filesextrats:
+            if len(filesextrats[n]) == len(self.signals):
+                filesextrats[n] = ["all signal files"]
+        for p in new_ts:
+            if len(new_ts[p]) == len(self.signals):
+                new_ts[p] = ["all signal files"]
         self.check = {'good_files':goodfiles,'files_missing_a_ts':filesmissingts,
             'files_with_dup_ts':filesextrats,'new_ts':new_ts}
+        print(f"miss:{filesmissingts}")
+        print(f"extra:{filesextrats}")
+        print(f"new:{new_ts}")
+        
 
 #endregion
 
@@ -3266,7 +3333,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #endregion
 
 #region Variable configuration
-    def new_variable_config(self):
+    def get_bp_reqs(self):
         if self.metadata == "":
             reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Ok:
@@ -3288,6 +3355,30 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
             # and we remove them from the widget.
                     self.sections_list.takeItem(self.sections_list.row(item))
+
+    def new_variable_config(self):
+        self.get_bp_reqs()
+        # if self.metadata == "":
+        #     reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+        #     if reply == QMessageBox.Ok:
+        #         self.get_metadata()
+        #     if reply == QMessageBox.Cancel:
+        #         self.metadata_list.clear()
+        #         # for item in self.metadata_list.findItems("file not detected.",Qt.MatchEndsWith):
+        #         # and we remove them from the widget.
+        #             # self.metadata_list.takeItem(self.metadata_list.row(item))
+        #         self.metadata_list.addItem("No metadata file selected.")
+        # if self.autosections == "" and self.mansections == "":
+        #     reply = QMessageBox.information(self, 'Missing BASSPRO settings', 'Please select BASSPRO settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+        #     if reply == QMessageBox.Ok:
+        #     #     for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
+        #     # # and we remove them from the widget.
+        #     #         self.sections_list.takeItem(self.sections_list.row(item))
+        #         self.get_autosections()
+        #     if reply == QMessageBox.Cancel:
+        #         for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
+        #     # and we remove them from the widget.
+        #             self.sections_list.takeItem(self.sections_list.row(item))
                 # I'm lazy and it's easier to just delete and add it again then check for it's presence.
                 # self.sections_list.addItem("No BASSPRO settings files selected.")
         # if self.metadata != "" and (self.mansections != "" or self.autosections != ""):
@@ -3297,10 +3388,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.variable_configuration()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
         try:
             self.v.show()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
         
         
     def show_variable_config(self):
@@ -3321,6 +3414,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         self.v.show()
                     except Exception as e:
                         print(f'{type(e).__name__}: {e}')
+                        print(traceback.format_exc())
                 # self.v.show()
             # elif self.input_dir_r != "":
             #     if os.path.isdir(self.input_dir_r)==True:
@@ -3340,6 +3434,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.v.show()
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
             else:
                 
                 # reply = QMessageBox.information(self, 'Missing source files', f"One or more of the files used to build the variable list has not been selected\nWould you like to open an existing set of variable configuration files or create a new one?", QMessageBox.New | QMessageBox.Open | QMessageBox.Cancel, QMessageBox.Cancel)
@@ -3375,7 +3470,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print("variable configuration subGUI is supposed to show")
             self.v.show()
             
-    def update_breath_df(self):
+    def update_breath_df(self,updated_file):
         print("update_breath_df()")
         self.old_bdf = self.breath_df
         print(f"breath_df: {self.breath_df}")
@@ -3392,6 +3487,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.breath_df.append(child)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             self.missing_meta.append(self.breathcaller_path)
         print(f"old bdf after: {self.old_bdf}")
         print(f"new breath_df: {self.breath_df}")
@@ -3404,7 +3500,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print(f"non_match_new: {non_match_new}")
             print(f"non_match: {non_match}")
             if len(non_match)>0:
-                reply = QMessageBox.question(self, f'Confirm variable list', 'Would you like to update the variable list in STAGG configuration settings?\n\nUnsaved changes may be lost.\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                reply = QMessageBox.question(self, f'New {updated_file} selected', 'Would you like to update the variable list in STAGG configuration settings?\n\nUnsaved changes may be lost.\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
                     print("updating config settings")
                     self.v.setup_table_config()
@@ -3453,6 +3549,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print(path)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             self.missing_meta.append(path)
 
     def test_configuration(self):
@@ -3496,6 +3593,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.breath_df.append(child)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             self.missing_meta.append(self.breathcaller_path)
         print(type(self.breath_df))
         if len(self.missing_meta)>0:
@@ -3765,22 +3863,46 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not self.mothership:
             print(f'mothership after: {self.mothership}')
         else:
+            print("bob")
+            print(self.breath_df)
           # self.breathcaller_path_list.clear()
         # self.py_output_dir_list.clear()
-            self.signal_files_list.clear()
-            self.metadata_list.clear()
-            self.sections_list.clear()
+            # self.signal_files_list.clear()
+            # self.metadata_list.clear()
+            # self.sections_list.clear()
         # self.py_go.setDisabled(False)
-            self.auto_get_output_dir_py()
-            self.auto_get_autosections()
-            self.auto_get_mansections()
-            self.auto_get_metadata()
-            # self.auto_get_breath_files()
-            self.auto_get_output_dir_r()
-            # self.auto_get_signal_files()
-            self.auto_get_variable()
-            self.auto_get_basic()
-            
+            if self.breath_df != [] or self.metadata != "" or self.autosections != "" or self.basicap != "" or self.mansections != "":
+                reply = QMessageBox.question(self, f'Input detected', 'The selected directory has recognizable input.\n\nWould you like to overwrite your current input selection?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+                if reply == QMessageBox.Yes:
+                    self.auto_get_output_dir_py()
+                    self.auto_get_autosections()
+                    self.auto_get_mansections()
+                    self.auto_get_metadata()
+                    # self.auto_get_breath_files()
+                    self.auto_get_output_dir_r()
+                    # self.auto_get_signal_files()
+                    # self.auto_get_variable()
+                    self.auto_get_basic()
+                    print(self.basicap)
+                    print(self.autosections)
+                    print(self.metadata)
+                    print(self.mansections)
+                    print(self.output_dir_py)
+                    print(self.output_dir_r)
+                    
+            else:
+                self.auto_get_output_dir_py()
+                self.auto_get_autosections()
+                self.auto_get_mansections()
+                self.auto_get_metadata()
+                # self.auto_get_breath_files()
+                self.auto_get_output_dir_r()
+                # self.auto_get_signal_files()
+                # self.auto_get_variable()
+                self.auto_get_basic()
+                if len(self.breath_df)>0:
+                    self.update_breath_df("settings")
+        
     # def auto_get_python_module(self):
     #     py_mod_path=self.gui_config['Dictionaries']['Paths']['breathcaller']
     #     # self.breathcaller_path_list.clear()
@@ -3834,11 +3956,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb = Thumbass(self)
                 self.thumb.show()
                 self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_signals])}\n\nThey will not be included.")
+            print(self.signals)
+            print(self.input_dir_py)
                 # reply = QMessageBox.information(self, 'Incorrect file format', 'One or more of the selected signal files are not text formatted: .\nWould you like to select a different signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
         else:
             if self.signals == []:
                 self.signal_files_list.clear()
-                self.signal_files_list.addItem("Signal files directory not detected.")
+                # self.signal_files_list.addItem("Signal files directory not detected.")
      
     def auto_get_metadata(self):
         print("auto_get_metadata()")
@@ -3847,46 +3971,49 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         metadata_path=os.path.join(self.mothership, 'metadata.csv')
         if Path(metadata_path).exists():
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
+            for item in self.metadata_list.findItems("metadata",Qt.MatchContains):
+            # and we remove them from the widget.
+                self.metadata_list.takeItem(self.metadata_list.row(item))
             if self.metadata == "":
                 self.metadata=metadata_path
                 self.metadata_list.addItem(self.metadata)
             else:
                 self.metadata=metadata_path
                 self.metadata_list.addItem(self.metadata)
-                if self.breath_df != []:
-                    self.update_breath_df()
-
+                # if self.breath_df != []:
+                #     self.update_breath_df("metadata")
         else:
-            self.metadata_list.clear()
-            self.metadata_list.addItem("No metadata file selected.")
-        print(id(self.metadata))
-        print(os.path.basename(self.metadata))
+            # self.metadata_list.clear()
+            # self.metadata_list.addItem("No metadata file selected.")
+            print("No metadata file selected.")
+        # print(id(self.metadata))
 
     def auto_get_basic(self):
         print("auto_get_basic()")
-        for item in self.sections_list.findItems("basic",Qt.MatchContains):
-            # and we remove them from the widget.
-            self.sections_list.takeItem(self.sections_list.row(item))
         basic_path=os.path.join(self.mothership, 'basics.csv')
         if Path(basic_path).exists():
+            for item in self.sections_list.findItems("basic",Qt.MatchContains):
+            # and we remove them from the widget.
+                self.sections_list.takeItem(self.sections_list.row(item))
             if self.basicap == "":
                 self.basicap=basic_path
                 self.sections_list.addItem(self.basicap)
             else:
                 self.basicap=basic_path
                 self.sections_list.addItem(self.basicap)
-                if not self.breath_df.empty:
-                    self.update_breath_df()
+                # if self.breath_df != []:
+                #     self.update_breath_df("basic settings")
         else:
-            self.sections_list.addItem("Basic parameters settings file not detected.")
+            # self.sections_list.addItem("Basic parameters settings file not detected.")
+            print("Basic parameters settings file not detected.")
 
     def auto_get_autosections(self):
         print("auto_get_autosections()")
-        for item in self.sections_list.findItems("auto",Qt.MatchContains):
-            # and we remove them from the widget.
-            self.sections_list.takeItem(self.sections_list.row(item))
         autosections_path=os.path.join(self.mothership, 'auto_sections.csv')
         if Path(autosections_path).exists():
+            for item in self.sections_list.findItems("auto",Qt.MatchContains):
+            # and we remove them from the widget.
+                self.sections_list.takeItem(self.sections_list.row(item))
             if self.autosections == "":
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
                 self.autosections=autosections_path
@@ -3894,18 +4021,19 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             else:
                 self.autosections=autosections_path
                 self.sections_list.addItem(self.autosections)
-                if not self.breath_df.empty:
-                    self.update_breath_df()
+                # if self.breath_df != []:
+                #     self.update_breath_df("automated settings")
         else:
-            self.sections_list.addItem("Autosection parameters file not detected.")
+            # self.sections_list.addItem("Autosection parameters file not detected.")
+            print("Autosection parameters file not detected.")
 
     def auto_get_mansections(self):
         print("auto_get_mansections()")
-        for item in self.sections_list.findItems("man",Qt.MatchContains):
-                # and we remove them from the widget.
-                self.sections_list.takeItem(self.sections_list.row(item))
         mansections_path=os.path.join(self.mothership, 'manual_sections.csv')
         if Path(mansections_path).exists():
+            for item in self.sections_list.findItems("man",Qt.MatchContains):
+                # and we remove them from the widget.
+                self.sections_list.takeItem(self.sections_list.row(item))
             if self.mansections == "":
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
                 self.mansections=mansections_path
@@ -3913,10 +4041,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             else:
                 self.mansections=mansections_path
                 self.sections_list.addItem(self.mansections)
-                if not self.breath_df.empty:
-                    self.update_breath_df()
+                # if self.breath_df != []:
+                #     self.update_breath_df("manual settings")
         else:
-            self.sections_list.addItem("Manual sections parameters file not detected.")
+            # self.sections_list.addItem("Manual sections parameters file not detected.")
+            print("Manual sections parameters file not detected.")
 
     # def auto_get_papr_module(self):
     #     papr_path=papr_path=self.gui_config['Dictionaries']['Paths']['papr']
@@ -3998,6 +4127,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if self.output_dir_py == "":
             self.breath_list.addItem("Breathcaller output directory not detected.")
         else:
+            self.breath_list.clear()
             self.breath_list.addItem(self.output_dir_py)
             self.input_dir_r = self.output_dir_py
         # breath_files_path=self.output_dir_py
@@ -4057,6 +4187,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 os.startfile(item.text())
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             pass
 
     # def open_dir(self,item):
@@ -4067,19 +4198,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not self.input_dir_py:
             if not self.mothership:
                 try:
-                    self.mothership = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output")
-                    file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.mothership))
+                    file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
-                    print('self.mothership = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output") no longer working')
+                    print(traceback.format_exc())
             else:
-                file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.mothership))
+                file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
         else:
-            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.input_dir_py))
+            file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
         if not file_name[0]:
             if self.signals == []:
                 self.signal_files_list.clear()
-                self.signal_files_list.addItem("No signal files selected.")
+                # self.signal_files_list.addItem("No signal files selected.")
         else:
             if self.signals != []:
                 reply = QMessageBox.information(self, 'Clear signal files list?', 'Would you like to keep the previously selected signal files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -4088,6 +4218,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.signals = []
             # self.signal_files_list.clear()
             bad_signals = []
+            # for item in self.sections_list.findItems("signal files selected",Qt.MatchContains):
+            #     self.sections_list.takeItem(self.sections_list.row(item))
+            self.hangar.append("Signal files selected.")
             for x in range(len(file_name[0])):
                 if file_name[0][x].endswith(".txt"):
                     self.signal_files_list.addItem(file_name[0][x])
@@ -4102,6 +4235,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             else:  
                 self.input_dir_py = os.path.dirname(self.signals[0])
             print(self.input_dir_py)
+            print(self.signals)
+        signal_dir = []
+        for s in self.signals:
+            signal_dir.append(os.path.dirname(s))
+        # if len(set(signal_dir))>1:
+        print(len(set(signal_dir)))
 
     def get_metadata(self):
         print("get_metadata()")
@@ -4111,11 +4250,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         else:
             print("not exist")
             # self.pleth.mothership = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output")
-            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output")))
+            file_name = QFileDialog.getOpenFileNames(self, 'Select metadata file')
         if not file_name[0]:
             if self.metadata == "":
                 self.metadata_list.clear()
-                self.metadata_list.addItem("No metadata file selected.")
+                # self.metadata_list.addItem("No metadata file selected.")
         else:
             self.metadata_list.clear()
             for x in range(len(file_name[0])):
@@ -4123,7 +4262,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.metadata = file_name[0][0]
             
             if len(self.breath_df)>0:
-                self.update_breath_df()
+                self.update_breath_df("metadata")
             # self.pleth.hangar.append("Metadata file saved.")
     
     def mp_parser(self):
@@ -4152,6 +4291,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                             )
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
                 self.mp_parserrors.append(file)
 
     def connect_database(self):
@@ -4173,6 +4313,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.save_filemaker()
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
                 self.metadata_list.addItem("Unable to connect to Filemaker.")
                 # if self.metadata == "":
                 reply = QMessageBox.information(self, 'Unable to connect to database', 'PAPR is unable to connect to the database.\nWould you like to select another metadata file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
@@ -4325,7 +4466,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         else:
                             plys[v] = [k]
             for w,x in plys.items():
-                self.hangar.append(f"plys.items{w}: {[x for x in plys[w]]}")
+                self.hangar.append(f"{w}: {[x for x in plys[w]]}")
                 # self.hangar.append(f"{k}: {self.metadata_warnings[k][0]}")
             #%
             p_df=pd.DataFrame(self.p_mouse_dict).transpose()
@@ -4345,6 +4486,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # print(self.assemble_df)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             new_error='unable to assemble metadata'
             meta_assemble_errors = []
             meta_assemble_errors.append(new_error)
@@ -4432,6 +4574,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # shutil.copy(self.metadata, os.path.join(self.mothership, "metadata.csv"))
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
         
         # else:
@@ -4471,16 +4614,19 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
             if not file_name[0]:
                 if self.autosections == "" and self.basicap == "" and self.mansections == "":
-                    self.sections_list.addItem("No BASSPRO settings files selected.")
+                    # self.sections_list.addItem("No BASSPRO settings files selected.")
+                    print("No BASSPRO settings files selected.")
             else:
                 # self.sections_list.clear()
                 print("files chosen")
+                n = 0
                 for x in range(len(file_name[0])):
                     if file_name[0][x].endswith('.csv'):
                         # print(file_name[0][x])
                         if os.path.basename(file_name[0][x]).startswith("auto_sections") | os.path.basename(file_name[0][x]).startswith("autosections"):
                             print(file_name[0][x])
                             self.autosections = file_name[0][x]
+                            n += 1
                             print(self.autosections)
                             for item in self.sections_list.findItems("auto_sections",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))
@@ -4488,15 +4634,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         elif os.path.basename(file_name[0][x]).startswith("manual_sections"):
                             print(file_name[0][x])
                             self.mansections = file_name[0][x]
+                            n += 1
                             for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))
                             self.sections_list.addItem(self.mansections)
                         elif os.path.basename(file_name[0][x]).startswith("basics"):
                             print(file_name[0][x])
                             self.basicap = file_name[0][x]
+                            n += 1
                             for item in self.sections_list.findItems("basics",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))
                             self.sections_list.addItem(self.basicap)
+                        if n>0:
+                            if len(self.breath_df)>0:
+                                self.update_breath_df("settings")
                     else:
                         self.thumb = Thumbass(self)
                         self.thumb.show()
@@ -4512,6 +4663,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.sections_list.takeItem(self.sections_list.row(item))
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             # reply = QMessageBox.information(self, 'File in use', 'One or more you are trying to save is open in another program.', QMessageBox.Ok)
     # def papr_directory(self):
     #     self.papr_dir = QFileDialog.getExistingDirectory(self, 'Select papr directory', str(Path.home()))
@@ -4524,22 +4676,24 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def input_directory_r(self):
         print("input_directory_r()")
-        folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/BASSPRO_output")
-        self.input_dir_r = QFileDialog.getExistingDirectory(self, 'Choose breathlist directory', str(folder))
-        if not self.input_dir_r:
-            self.breath_list.clear()
-            self.breath_list.addItem("No folder selected.")
+        # folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/BASSPRO_output")
+        input_dir_r = QFileDialog.getExistingDirectory(self, 'Choose breathlist directory', "./BASSPRO_output")
+        if not input_dir_r:
+            if self.input_dir_r == "":
+                self.breath_list.clear()
+                # self.breath_list.addItem("No folder selected.")
         else:
+            self.input_dir_r = input_dir_r
             self.breath_list.clear()
             self.breath_list.addItem(self.input_dir_r)
     
     def input_directory_r_env(self):
         print("input_directory_r_env()")
-        folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_output")
-        file_name = QFileDialog.getOpenFileNames(self, 'Select R environment', str(folder))
+        # folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_output")
+        file_name = QFileDialog.getOpenFileNames(self, 'Select R environment', "./STAGG_output")
         if not file_name[0]:
-            self.breath_list.clear()
-            self.breath_list.addItem("No file selected.")
+            if self.input_dir_r == "":
+                self.breath_list.clear()
         elif not os.path.basename(file_name[0][0]).endswith("RData"):
             self.thumb = Thumbass(self)
             self.thumb.show()
@@ -4682,13 +4836,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             time.sleep(0.2)
             # self.progressBar_r.setValue(self.completed)
 
-    def updateProgress(self):
-        print("bob")
+    # def update_Stampprogress(self):
+    #     print("stamp go")
+    #     print("Stamp progress process id",os.getpid())
+
 
     def update_Pyprogress(self):
         print("pre go")
         print('Pyprogress thread id',threading.get_ident())
         print("Pyprogress process id",os.getpid())
+        signal_dir = []
+        for s in self.signals:
+            signal_dir.append(os.path.dirname(s))
+        # if len(set(signal_dir))>1:
+        print(len(set(signal_dir)))
         self.go_py()
         print("post go")
         self.completed = 0
@@ -4720,11 +4881,16 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def py_message(self):
         print("py_message()")
         self.hangar.append("BASSPRO analyzing signal files...")
-        if self.parallel_box.isChecked() == True:
-            self.pything_to_do()
-        else:
-            self.pything_to_do_single()
-        self.auto_get_breath_files()
+        try:
+            self.get_bp_reqs()
+            if self.parallel_box.isChecked() == True:
+                self.pything_to_do()
+            else:
+                self.pything_to_do_single()
+            self.auto_get_breath_files()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
 
     def r_message(self):
         print("r_message()")
@@ -4767,116 +4933,61 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("dir_checker()")
         self.output_folder = ""
         self.output_folder_parent = ""
-        if output_folder == "":
-            if output_folder_parent == "":
-                if self.mothership == "":
-                    self.mothership = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output")
-                    print(self.mothership)
-                    print(f'no mothership so detected as: {self.mothership}')
-                    if not os.path.exists(self.mothership):
-                        print("mothership is empty and the provided default nonexistent - this shouldn't happen")
-                        try:
-                            output_folder = QFileDialog.getExistingDirectory(self, f'Choose directory for {text} output', str(self.mothership))
-                            output_folder_parent = os.path.dirname(output_folder)
-                            self.output_folder_parent = output_folder_parent
-                        except Exception as e:
-                            print(f'{type(e).__name__}: {e}')
-                            print("if you've made it this far, you're screwed")
-                    else:
-                        output_folder_parent = os.path.join(self.mothership,f"{text}_output")
-                        print(output_folder_parent)
-                        print(f'mothership is empty but the default exists, so pointing out {text} output folder')
-                        if not os.path.exists(output_folder_parent):
-                            print(f"trying to make {text} output folder cause it doesn't exist")
-                            try:
-                                print(f'making {text} output folder cause it not exists')
-                                os.makedirs(output_folder_parent)
-                                self.output_folder_parent = output_folder_parent
-                            except Exception as e:
-                                print(f'{type(e).__name__}: {e}')
-                                print("apparently os.path.exists says no but os.makedirs says yes it exists")
-                        else:
-                            self.output_folder_parent = output_folder_parent
-                        output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-                        print(output_folder)
-                        print('pointed out where output_folder is, now checking it exists')
-                        if not os.path.exists(output_folder):
-                            print("trying to make output folder cause it doesn't exist")
-                            try:
-                                print('making output folder cause it not exist')
-                                os.makedirs(output_folder)
-                                self.output_folder = output_folder
-                            except Exception as e:
-                                print(f'{type(e).__name__}: {e}')
-                                print('apparently os.path.exists says no but os.makedirs says yes exists')
-                        else:
-                            self.output_folder = output_folder
-                else:
-                    if not os.path.exists(self.mothership):
-                        print("mothership is not empty but doesn't exist")
-                        try:
-                            output_folder = QFileDialog.getExistingDirectory(self, f'Choose directory for {text} output', str(self.mothership))
-                            output_folder_parent = os.path.dirname(output_folder)
-                            self.output_folder_parent = output_folder_parent
-                            self.output_folder = output_folder
-                        except Exception as e:
-                            print(f'{type(e).__name__}: {e}')
-                            print("if you've made it this far, you're screwed")
-                    else:
-                        output_folder_parent = os.path.join(self.mothership,f"{text}_output")
-                        print(output_folder_parent)
-                        print(f'mothership exists and is not empty, so checking on the {text} output folder')
-                        if not os.path.exists(output_folder_parent):
-                            print(f"trying to make {text} output folder cause it doesn't exist")
-                            try:
-                                print(f'making {text} output folder cause it not exists')
-                                os.makedirs(output_folder_parent)
-                                self.output_folder_parent = output_folder_parent
-                            except Exception as e:
-                                print(f'{type(e).__name__}: {e}')
-                                print("apparently os.path.exists says no but os.makedirs says yes it exists")
-                        else:
-                            self.output_folder_parent = output_folder_parent
-                        output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-                        print(output_folder)
-                        print('pointed out where output_folder is, now checking it exists')
-                        if not os.path.exists(output_folder):
-                            print("trying to make output folder cause it doesn't exist")
-                            try:
-                                print('making output folder cause it not exist')
-                                os.makedirs(output_folder)
-                                self.output_folder = output_folder
-                            except Exception as e:
-                                print(f'{type(e).__name__}: {e}')
-                                print('apparently os.path.exists says no but os.makedirs says yes exists')
-                        else:
-                            self.output_folder = output_folder
-            else:
-                output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-                print(output_folder)
-                print('pointed out where output_folder is, now checking it exists')
-                if not os.path.exists(output_folder):
-                    print("trying to make output folder cause it doesn't exist")
-                    try:
-                        print('making output folder cause it not exist')
-                        os.makedirs(output_folder)
-                        self.output_folder = output_folder
-                    except Exception as e:
-                        print(f'{type(e).__name__}: {e}')
-                        print('apparently os.path.exists says no but os.makedirs says yes exists')
+        if self.mothership == "":
+            print("mothership is empty so choose a new one")
+            try:
+                self.mothership = QFileDialog.getExistingDirectory(self, f'Choose directory for {text} output', str(self.mothership))
+                # output_folder_parent = os.path.dirname(output_folder)
+                # self.output_folder_parent = output_folder_parent
+                # self.mothership_dir()
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+        elif not os.path.exists(self.mothership):
+            print("mothership is empty and doesn't exist")
+            try:
+                self.mothership = QFileDialog.getExistingDirectory(self, f'Previously chosen directory does not exist. Choose a different directory for {text} output', str(self.mothership))
+            # output_folder_parent = os.path.dirname(output_folder)
+            # self.output_folder_parent = output_folder_parent
+                # self.mothership_dir()
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                print("Plug your hard drive back in.")
+        output_folder_parent = os.path.join(self.mothership,f"{text}_output")
+        print(output_folder_parent)
+        print(f'mothership was empty, has been chosen, now outfitting the output folder parent')
+        if not os.path.exists(output_folder_parent):
+            print(f"trying to make {text} output folder cause it doesn't exist")
+            try:
+                print(f'making {text} output folder cause it not exists')
+                os.makedirs(output_folder_parent)
+                self.output_folder_parent = output_folder_parent
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                print("apparently os.path.exists says no but os.makedirs says yes it exists")
         else:
-            if not os.path.exists(output_folder):
-                print("trying to make output folder cause it's not empty but it still doesn't exist")
-                try:
-                    print('making output folder that is not empty but doesnt exist')
-                    os.makedirs(output_folder)
-                    self.output_folder = output_folder
-                except Exception as e:
-                    print(f'{type(e).__name__}: {e}')
-                    print('apparently os.path.exists says no but os.makedirs says yes exists')
-            else:
+            self.output_folder_parent = output_folder_parent
+        output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
+        print(output_folder)
+        print('pointed out where output_folder is, now checking it exists')
+        if not os.path.exists(output_folder):
+            print("trying to make output folder cause it doesn't exist")
+            try:
+                print('making output folder cause it not exist')
+                os.makedirs(output_folder)
                 self.output_folder = output_folder
-            if any(Path(self.output_folder).iterdir()) == True:
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                print('apparently os.path.exists says no but os.makedirs says yes exists')
+        else:
+            self.output_folder = output_folder
+        if any(Path(self.output_folder).iterdir()) == True:
+            if all("config" in file for file in os.listdir(self.output_folder)):
+                print("just configs")
+            else:
                 reply = QMessageBox.question(self, f'Confirm {text} output directory', 'The current output directory has files in it that may be overwritten.\n\nWould you like to create a new output folder?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
                     output_folder_parent = os.path.dirname(output_folder)
@@ -4886,45 +4997,41 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     print(self.output_folder)
                     os.makedirs(self.output_folder)
                 elif reply == QMessageBox.No:
-                    print("kept old output folder: {output_folder}")
-
-                    
+                    print(f"kept old output folder: {output_folder}")
     
     def pything_to_do(self):
         print("pything_to_do()")
         self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
         if self.output_folder != "":
             self.output_dir_py = self.output_folder
-        print(self.output_dir_py)
+            print(self.output_dir_py)
         # This conditional essentially checks whether or not a copy of the metadata already exists because if the metadat was pulled directly from Filemaker, then that function automatically makes the output py directory and places the pulled metadata in there before the launch button. I should change this and isolate the creation and copying to just the launch.
         # if self.metadata_path == "":
-        shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # self.get_parameter()
-        shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-        # if self.a.auto_df != "":
-        #     self.a.auto_df.to_csv(self.autosections,index=False)
-        if self.autosections != "":
-            shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"auto_sections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # if self.m.manual_df != "":
-        #     self.m.manual_df.to_csv(self.mansections,index=False)
-        if self.mansections != "":
-            shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"manual_sections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
-        if self.basicap != "":
-            shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-            json.dump(self.gui_config,gconfig_file)
-        shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-
-
-        print('pything_to_do thread id',threading.get_ident())
-        print("pything_to_do process id",os.getpid())
-        # self.thready(self.update_Pyprogress)
-        self.worker = threading.Thread(target = MainGUIworker.futurama_py(self))
-        self.worker.daemon = True
-        self.worker.start()
-        # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
-        print("worker started?")
+            shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            # self.get_parameter()
+            shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+            # if self.a.auto_df != "":
+            #     self.a.auto_df.to_csv(self.autosections,index=False)
+            if self.autosections != "":
+                shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"auto_sections_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.csv"))
+            # if self.m.manual_df != "":
+            #     self.m.manual_df.to_csv(self.mansections,index=False)
+            if self.mansections != "":
+                shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"manual_sections_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.csv"))
+            # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
+            if self.basicap != "":
+                shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                json.dump(self.gui_config,gconfig_file)
+            shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.txt"))
+            print('pything_to_do thread id',threading.get_ident())
+            print("pything_to_do process id",os.getpid())
+            # self.thready(self.update_Pyprogress)
+            self.worker = threading.Thread(target = MainGUIworker.futurama_py(self))
+            self.worker.daemon = True
+            self.worker.start()
+            # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
+            print("worker started?")
     
     def rthing_to_do(self):
         # self.hangar.append("STAGG analyzing breath files...")
@@ -4932,34 +5039,35 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
         if self.output_folder != "":
             self.output_dir_r = self.output_folder
-        print(f'after:{self.output_dir_r}')
-        if self.svg_radioButton.isChecked() == True:
-            self.image_format = ".svg"
-        elif self.jpeg_radioButton.isChecked() == True:
-            self.image_format = ".jpeg"
-        if os.path.isdir(os.path.join(self.output_dir_r,"StatResults")):
-            print("no stat results folder")
-            os.makedirs(os.path.join(self.output_dir_r,"StatResults"))
-        try:
-            print("shutil is trying to happen for configs")
-            if datetime.datetime.now().strftime('%Y%m%d_%H%M%S') == os.path.basename(self.output_dir_r).lstrip('STAGG_output'):
-                print("output folder timestamp and config timestamp are equal")
-            else:
-                print("output and config timestamp not equal:\nconfig: {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}\noutput: {os.path.basename(self.output_dir_r).lstrip('STAGG_output')}")
-            shutil.copyfile(self.variable_config, os.path.join(self.output_dir_r, f"variable_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
-            # {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}
-            shutil.copyfile(self.graph_config, os.path.join(self.output_dir_r, f"graph_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
-            shutil.copyfile(self.other_config, os.path.join(self.output_dir_r, f"other_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print("No variable or graph configuration files copied to STAGG output folder.")
-        print('rthing_to_do thread id',threading.get_ident())
-        print("rthing_to_do process id",os.getpid())
-        self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
-        self.worker.daemon = True
-        self.worker.start()
-        # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
-        print("worker started?")
+            print(f'after:{self.output_dir_r}')
+            if self.svg_radioButton.isChecked() == True:
+                self.image_format = ".svg"
+            elif self.jpeg_radioButton.isChecked() == True:
+                self.image_format = ".jpeg"
+            if os.path.isdir(os.path.join(self.output_dir_r,"StatResults")):
+                print("no stat results folder")
+                os.makedirs(os.path.join(self.output_dir_r,"StatResults"))
+            try:
+                print("shutil is trying to happen for configs")
+                if datetime.datetime.now().strftime('%Y%m%d_%H%M%S') == os.path.basename(self.output_dir_r).lstrip('STAGG_output'):
+                    print("output folder timestamp and config timestamp are equal")
+                else:
+                    print("output and config timestamp not equal:\nconfig: {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}\noutput: {os.path.basename(self.output_dir_r).lstrip('STAGG_output')}")
+                shutil.copyfile(self.variable_config, os.path.join(self.output_dir_r, f"variable_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
+                # {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}
+                shutil.copyfile(self.graph_config, os.path.join(self.output_dir_r, f"graph_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
+                shutil.copyfile(self.other_config, os.path.join(self.output_dir_r, f"other_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                print("No variable or graph configuration files copied to STAGG output folder.")
+            print('rthing_to_do thread id',threading.get_ident())
+            print("rthing_to_do process id",os.getpid())
+            self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
+            self.worker.daemon = True
+            self.worker.start()
+            # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
+            print("worker started?")
         # if self.renv_check.isChecked() == 1:
             # shutil.copyfile(os.path.join(self.mothership, "myEnv.RData"), os.path.join(self.output_dir_r, f"myEnv_{os.path.basename(self.output_dir_r).lstrip('r_output')}.RData"))
         # shutil.copyfile(os.path.join(self.output_dir_r,"Summary.html"), os.path.join(self.output_dir_r, f"summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
@@ -4980,7 +5088,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
         if self.output_folder != "":
             self.output_dir_r = self.output_folder
-        self.thready(self.update_Rprogress)
+            self.thready(self.update_Rprogress)
     
     def pything_to_do_single(self):
         print("pything_single thread id", threading.get_ident())
@@ -4990,22 +5098,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.output_dir_py = self.output_folder
         # This conditional essentially checks whether or not a copy of the metadata already exists because if the metadat was pulled directly from Filemaker, then that function automatically makes the output py directory and places the pulled metadata in there before the launch button. I should change this and isolate the creation and copying to just the launch.
         # if self.metadata_path == "":
-        shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # self.get_parameter()
-        shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-        # if self.a.auto_df != "":
-        #     self.a.auto_df.to_csv(self.autosections,index=False)
-        shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"autosections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # if self.m.manual_df != "":
-        #     self.m.manual_df.to_csv(self.mansections,index=False)
-        #     shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"mansections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
-        shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-            json.dump(self.gui_config,gconfig_file)
-        shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-        # self.thready(self.update_Pyprogress)
-        self.update_Pyprogress()
+            shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            # self.get_parameter()
+            shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+            # if self.a.auto_df != "":
+            #     self.a.auto_df.to_csv(self.autosections,index=False)
+            shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"autosections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            # if self.m.manual_df != "":
+            #     self.m.manual_df.to_csv(self.mansections,index=False)
+            #     shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"mansections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
+            shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+            with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                json.dump(self.gui_config,gconfig_file)
+            shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+            # self.thready(self.update_Pyprogress)
+            self.update_Pyprogress()
 
     def superthing_to_do(self):
         # self.thready(self.super_go)
@@ -5053,5 +5161,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 # see GUIv7
 
 #endregion
+
+# %%
 
 # %%

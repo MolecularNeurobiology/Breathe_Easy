@@ -1,0 +1,32 @@
+{
+    "Dictionaries": {
+        "Necessary_Timestamps": {
+            "CNO Hypercapnia":{
+                "Cal 20 Room Air":["Cal 20 Room Air_0"],
+                "Cal 20 5% CO2":["Cal 20 5% CO2_1"],
+                "Pre-CNO Room Air":["Pre-CNO Room Air_2", "Room Air_2"],
+                "Pre-CNO 5% CO2":["Pre-CNO 5% CO2_3", "5% CO2_3"],
+                "Pre-CNO Room Air 2":["Pre-CNO Room Air 2_4","Pre-CNO Room AIr 2_4","Pre-CNO Post-CO2 Recovery_4", "Room Air 2_4"],
+                "Post-CNO Room Air":["Post-CNO Room Air_5","Post-CNO Room Air _5"],
+                "Post-CNO 5% CO2":["Post-CNO 5% CO2_6","Post-CNO 5% CO2 _6"],
+                "Post-CNO Room Air 2":["Post-CNO Room Air 2_7","Post-CNO Post-CO2 Recovery_7"]
+            },
+            "Hypercapnia":{
+                "Cal 20 Room Air":["Cal 20 Room Air_0"],
+                "Cal 20 5% CO2":["Cal 20 5% CO2_1"],
+                "Room Air":["Room Air_2"],
+                "5% CO2":["5% CO2_3"],
+                "Room Air 2":["Room Air 2_4","room air 2_4"]
+            },
+            "Hypoxia":{
+                "Cal 20 Room Air":["Cal 20 Room Air_0"],
+                "Cal 20 10% O2":["Cal 20 10% O2_1"],
+                "Room Air":["Room Air_2"],
+                "10% O2":["10% O2_3"],
+                "Room Air 2":["Room Air 2_4"]
+            }
+        }  ,
+        "Data": {
+        }
+    }
+}

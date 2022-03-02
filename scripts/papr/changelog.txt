@@ -6,6 +6,11 @@ Pipeline
 Data import
   - Will only attempt to import files that have a .json extension.
   - Has a check that will skip importing files that contain "config" in filename.
+  - Added experimental capability to have multiple file paths.
+    - Currently assumes an args$JSON of the form "<filepath1>, <filepath2>, " etc.
+  - Added experimental capability to append to currently existing tibble when loading an environment.
+    - Currently assumes an args$JSON of the form "<R-env-path>, <filepath1>, <filepath2>, " etc.
+      - (Not necessarily in any particular order.)
 
 Statistical analysis
   - Does a check to see whether user wants to run the original dependent variable in the model or just transformations.

@@ -18,6 +18,8 @@ from multiprocessing import freeze_support
 
 #region Main
 def main():
+    root = os.path.dirname(os.path.abspath(__file__))        
+    QDir.addSearchPath('resources', root)
     app = QApplication(sys.argv)
     window = MainGui.Plethysmography()
     print(window.signals)
@@ -41,8 +43,18 @@ if __name__ == "__main__":
 
 # for file in os.listdir(p):
 #     print(file.split('_')[0])
+    # print(p+file.replace("_.adicht",f"_{m.loc[(m['MUID']==file.split('_')[0]) & (m['Gas 2']=='10% O2'),'PlyUID'].iloc[0]}.adicht"))
+    
 #     # print(f"{file.split('_')[0]}: {m.loc[m['MUID']==file.split('_')[0],'PlyUID'].iloc[0]}")
 #     try:
 #         os.rename(p+file,p+file.replace(".txt",f"_{m.loc[m['MUID']==file.split('.')[0],'PlyUID'].iloc[0]}.txt"))
 #     except:
 #         pass
+
+# rint(dc[dc['start'].isna()][['animal id','PLYUID']])
+
+# for file in os.listdir(p):
+#     print(file.split('_')[1])
+#     print(f"{file.split('_')[0]}: {m.loc[m['MUID']==file.split('_')[0],'PlyUID'].iloc[0]}")
+#     print(p+file.replace(f"{file.split('_')[1]}",f"_{m.loc[(m['MUID']==file.split('_')[0]) & (m['Gas 2']=='7% CO2'),'PlyUID'].iloc[0]}.adicht"))
+#     # try:

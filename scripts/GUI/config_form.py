@@ -34,7 +34,7 @@ class Ui_Config(object):
         self.horizontalLayout_5.addItem(spacerItem1)
         self.label_2 = QtWidgets.QLabel(Config)
         font = QtGui.QFont()
-        font.setPointSize(22)
+        font.setPointSize(18)
         self.label_2.setFont(font)
         self.label_2.setObjectName("label_2")
         self.horizontalLayout_5.addWidget(self.label_2)
@@ -606,8 +606,8 @@ class Ui_Config(object):
         self.verticalLayout_11.addLayout(self.verticalLayout_9)
         self.verticalLayout_13.addLayout(self.verticalLayout_11)
         self.verticalLayout_13.setStretch(0, 1)
-        self.verticalLayout_13.setStretch(1, 5)
-        self.verticalLayout_13.setStretch(2, 2)
+        self.verticalLayout_13.setStretch(1, 6)
+        self.verticalLayout_13.setStretch(2, 3)
         self.gridLayout.addLayout(self.verticalLayout_13, 0, 0, 1, 1)
 
         self.retranslateUi(Config)
@@ -632,7 +632,7 @@ class Ui_Config(object):
     def retranslateUi(self, Config):
         _translate = QtCore.QCoreApplication.translate
         Config.setWindowTitle(_translate("Config", "Form"))
-        self.label_2.setText(_translate("Config", "PAPR Variable Configuration"))
+        self.label_2.setText(_translate("Config", "STAGG Settings"))
         self.load_config.setText(_translate("Config", "Load"))
         self.clear_config.setText(_translate("Config", "Clear All"))
         self.check_ind.setText(_translate("Config", "Independent"))

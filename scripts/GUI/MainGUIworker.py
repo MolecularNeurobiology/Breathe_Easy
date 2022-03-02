@@ -91,7 +91,8 @@ def get_jobs_py(Plethysmography):
         print(file_py)
         breathcaller_cmd = 'python -u "{module}" -i "{id}" -f "{signal}" -o "{output}" -a "{metadata}" -m "{manual}" -c "{auto}" -p "{basic}"'.format(
             module = Plethysmography.breathcaller_path,
-            id = Plethysmography.input_dir_py,
+            # id = Plethysmography.input_dir_py,
+            id = os.path.dirname(file_py),
             output = Plethysmography.output_dir_py,
             signal = os.path.basename(file_py),
             metadata = Plethysmography.metadata,
@@ -122,12 +123,12 @@ def get_jobs_r(Plethysmography):
     print("get_jobs_r process id",os.getpid())
     
     if os.path.basename(Plethysmography.input_dir_r).endswith("RData"):
-        pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline_env (1).R")
+        pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline_env.R")
     else:
         pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline.R")
         
     papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
-            rscript = Plethysmography.gui_config['Dictionaries']['Paths']['rscript1'],
+            rscript = Plethysmography.gui_config['Dictionaries']['Paths']['rscript'],
             # pipeline = os.path.join(Plethysmography.papr_dir, "Pipeline.R"),
             pipeline = pipeline_des,
             d = Plethysmography.mothership,
@@ -243,7 +244,7 @@ def go_r(papr_cmd):
     print(toc)
     print(toc-tic)
     Ui_Plethysmography.hangar.append(toc-tic)
-    return py_proc
+    return r_proc
 
 def go_stamp(stamp_cmd):
     tic=datetime.datetime.now()
