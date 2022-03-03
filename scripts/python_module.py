@@ -36,7 +36,7 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.0.2'
+__version__ = '36.0.3'
 
 """
 # v36.0.0 README
@@ -3608,8 +3608,8 @@ def main():
                         )
                 else:
                     logger.info(
-                        "{}_{} has 'includable breaths ".format(
-                            MUID,PLYUID
+                        "{}_{} has 'includable breaths {}".format(
+                            MUID,PLYUID,len(Output_List)
                             )+
                         "- JSON file will be produced."
                         )
