@@ -151,8 +151,8 @@ class Thinbass(QDialog,Ui_Thinbass):
             for k in bp_output.keys():
                 self.pleth.breath_df.append(k)
             try:
-                self.variable_configuration()
-                self.v.show()
+                self.pleth.variable_configuration()
+                self.pleth.v.show()
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
@@ -3511,21 +3511,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     #         for k in dict(row):
                     #             if dict(row)[k] == "1":
                     #                 self.v.vdf.update({dict(row)['Column']:dict(row)})
-                    # try:
-                    for a in self.v.vdf:
-                        self.buttonDict_variable[a]['Alias'].setText(self.v.vdf[a]['Alias'])
-                        for k in ["Independent","Dependent","Covariate"]:
-                            if self.v.vdf[a][k] == '1':
-                                try:
-                                    self.buttonDict_variable[a][k].setChecked(True)
-                                except:
-                                    print("not checkable match")
-                                    pass
+                    try:
+                        for a in self.v.vdf:
+                            self.buttonDict_variable[a]['Alias'].setText(self.v.vdf[a]['Alias'])
+                            for k in ["Independent","Dependent","Covariate"]:
+                                if self.v.vdf[a][k] == '1':
+                                    try:
+                                        self.buttonDict_variable[a][k].setChecked(True)
+                                    except:
+                                        print("not checkable match")
+                                        pass
 
-                    self.v.load_custom_config()
-                    self.v.load_graph_config()
-
-
+                        self.v.load_custom_config()
+                        self.v.load_graph_config()
+                    except Exception as e:
+                        print(f'{type(e).__name__}: {e}')
+                        print(traceback.format_exc())
+                        pass
                 else:
                     self.breath_df = self.old_bdf
                     print(f"kept current config settings")
@@ -4757,8 +4759,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # signal = os.path.basename(file_py),
             filelist= '-f "'+'" -f "'.join([os.path.basename(i) for i in self.signals])+'"',
             metadata = self.metadata,
-            # manual = Plethysmography.mansections,
-            manual = "", 
+            manual = Plethysmography.mansections,
+            # manual = "", 
             auto = self.autosections,
             basic = self.basicap
         )
