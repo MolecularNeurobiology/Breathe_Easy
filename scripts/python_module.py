@@ -3603,7 +3603,7 @@ def main():
                             ]
                         )<1:
                     logger.exception(
-                        "{}_{} does not have any 'includable breaths ".format(
+                        "{}_{} does not have any includable breaths ".format(
                             MUID,PLYUID
                             )+
                         "- no JSON file will be produced."+
@@ -3613,7 +3613,7 @@ def main():
                         )
                 else:
                     logger.info(
-                        "{}_{} has 'includable breaths {}".format(
+                        "{}_{} has includable breaths {}".format(
                             MUID,PLYUID,len(Output_List)
                             )+
                         "- JSON file will be produced."
