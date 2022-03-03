@@ -3596,7 +3596,12 @@ def main():
                     logger
                     )
                 
-                if len(Output_List)<1:
+                if len(
+                        Output_List[
+                            (Output_List['AUTO_IND_INCLUDE'] == 1) |
+                            (Output_List['MAN_IND_INCLUDE'] == 1)
+                            ]
+                        )<1:
                     logger.exception(
                         "{}_{} does not have any 'includable breaths ".format(
                             MUID,PLYUID
