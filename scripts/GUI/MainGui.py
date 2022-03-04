@@ -2238,7 +2238,7 @@ class Config(QWidget, Ui_Config):
         # self.show_custom()
         if self.custom_port == {}:
             print("empty custom") 
-            # self.pleth.c = Custom(self)
+            self.pleth.c = Custom(self)
             # self.show_custom()
             self.pleth.c.save_custom()
         # else:
@@ -3022,6 +3022,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.row_loop = ""
         self.image_format = ""
         self.buttonDict_variable = {}
+        self.stagg_list = []
         
         self.v = Config(self)
         self.s = Stagg(self)

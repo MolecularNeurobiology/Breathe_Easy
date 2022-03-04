@@ -2237,7 +2237,7 @@ class Config(QWidget, Ui_Config):
         # self.show_custom()
         if self.custom_port == {}:
             print("empty custom") 
-            # self.pleth.c = Custom(self)
+            self.pleth.c = Custom(self)
             # self.show_custom()
             self.pleth.c.save_custom()
         # else:
@@ -3023,6 +3023,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.row_loop = ""
         self.image_format = ""
         self.buttonDict_variable = {}
+        self.stagg_list = []
         
         self.v = Config(self)
         self.s = Stagg(self)
@@ -5125,6 +5126,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         #     os.makedirs(os.path.join(self.output_dir_r,"StatResults"))
         try:
             for r in self.input_dir_r:
+                print("r for input_dir_R")
                 shutil.copyfile(r,os.path.join(self.output_dir_r,os.path.basename(r)))
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
