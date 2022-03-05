@@ -3788,6 +3788,14 @@ def main():
 
                 if 'ecg' in Signal_Data:
                     Beat_List = basicRR(Signal_Data['ecg'],Signal_Data['ts'])
+                    if len(Beat_List)>0:
+                        Beat_List.to_csv(
+                            os.path.join(
+                                Output_Path,'{}_{}_beats.csv'.format(
+                                    MUID,PLYUID
+                                    )
+                                )
+                            )
                 else:
                     pass
                 
