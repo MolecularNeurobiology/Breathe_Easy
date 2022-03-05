@@ -4,12 +4,12 @@
             "CNO Hypercapnia":{
                 "Cal 20 Room Air":["Cal 20 Room Air"],
                 "Cal 20 5% CO2":["Cal 20 5% CO2"],
-                "Pre-CNO Room Air":["Pre-CNO Room Air", "Room Air"],
+                "Pre-CNO Room Air":["Pre-CNO Room Air"],
                 "Pre-CNO 5% CO2":["Pre-CNO 5% CO2", "5% CO2"],
-                "Pre-CNO Room Air 2":["Pre-CNO Room Air 2","Pre-CNO Post-CO2 Recovery", "Room Air 2"],
+                "Pre-CNO Room Air 2":["Pre-CNO Post-CO2 Recovery"],
                 "Post-CNO Room Air":["Post-CNO Room Air"],
                 "Post-CNO 5% CO2":["Post-CNO 5% CO2"],
-                "Post-CNO Room Air 2":["Post-CNO Room Air 2","Post-CNO Post-CO2 Recovery"]
+                "Post-CNO Room Air 2":["Post-CNO Post-CO2 Recovery"]
             },
             "Hypercapnia":{
                 "Cal 20 Room Air":["Cal 20 Room Air"],

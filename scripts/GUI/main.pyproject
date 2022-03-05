@@ -1,3 +1,3 @@
 {
-    "files": ["main.py","auto_form.ui","manual_form.ui","config_form.ui","form.ui","annot_form.ui","thorbass.ui","thumbbass.ui","variable_form.ui","thinbass.ui","graph2_form.ui","auto_simp_form.ui","graph_form.ui","stagg_form.ui","thorbbass.ui","custom_config.ui","basic_form.ui","thumbass.ui","resource.qrc"]
+    "files": ["variable_form.ui","form.ui","graph_form.ui","auto_simp_form.ui","graph2_form.ui","config_form.ui","annot_form.ui","thorbbass.ui","basic_form.ui","custom_config.ui","thumbbass.ui","auto_form.ui","stagg_form.ui","thumbass.ui","thorbass.ui","thinbass.ui","main.py","resource.qrc","manual_form.ui"]
 }

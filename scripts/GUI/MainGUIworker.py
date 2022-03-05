@@ -121,16 +121,11 @@ def get_jobs_r(Plethysmography):
     print('R env route')
     print('get_jobs_r thread id',threading.get_ident())
     print("get_jobs_r process id",os.getpid())
-    
-    if os.path.basename(Plethysmography.input_dir_r).endswith("RData"):
-        pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline_env.R")
-    else:
-        pipeline_des = os.path.join(Plethysmography.papr_dir, "Pipeline.R")
-        
     papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
-            rscript = Plethysmography.gui_config['Dictionaries']['Paths']['rscript'],
+            # rscript = Plethysmography.gui_config['Dictionaries']['Paths']['rscript'],
+            rscript = Plethysmography.rscript_des,
             # pipeline = os.path.join(Plethysmography.papr_dir, "Pipeline.R"),
-            pipeline = pipeline_des,
+            pipeline = Plethysmography.pipeline_des,
             d = Plethysmography.mothership,
             # j = os.path.join(Plethysmography.mothership, "JSON"),
             j = Plethysmography.input_dir_r,

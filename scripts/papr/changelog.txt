@@ -1,28 +1,9 @@
-Pipeline
-  - Allows for choosing graph image file type for saving. 
-    - Assumes argument has the full name of the extension, e.g. ".jpeg".
-  - Failsafe for environment saving.
+- Added code comments on all the files.
+- Minor adjustments to code structure (purely aesthetic).
 
-Data import
-  - Will only attempt to import files that have a .json extension.
-  - Has a check that will skip importing files that contain "config" in filename.
-  - Added experimental capability to have multiple file paths.
-    - Currently assumes an args$JSON of the form "<filepath1>, <filepath2>, " etc.
-  - Added experimental capability to append to currently existing tibble when loading an environment.
-    - Currently assumes an args$JSON of the form "<R-env-path>, <filepath1>, <filepath2>, " etc.
-      - (Not necessarily in any particular order.)
+Data import:
+- Added error handling for creating the tibble.
+  - If empty JSON, specific warning printed and file skipped.
+  - If incompatible JSON, general warning printed and file skipped.
+  - If empty tibble after all files have been added, raises error and stops execution.
 
-Statistical analysis
-  - Does a check to see whether user wants to run the original dependent variable in the model or just transformations.
-  - Will run original variable if there is a "non" in the transform column of the R/variable config file, e.g. "log10@non," or if no transformations are provided.
-  - ATH: Added if((!is_empty(interaction_vars))) to the lmer loop so the pipeline can skip the stats if they just want a poincare or spectral, etc.
-  - ATH: Changed the way the env is saved to match the way it's saved towards the end of pipeline script with prefix myEnv_ and timestamp beginning with year
-
-Graph generator
-  - Now manually calculated y-axis ranges by default as well.
-  - (Should fix issues with lines and asterisks being cut off.)
-  - ATH: Added if((!is_empty(interaction_vars))) to the graph-making loop so the pipeline can skip the graph-making for the model if they don't have a model and just want a poincare or spectral, etc.
-  - ATH: Changed the way the env is saved to match the way it's saved towards the end of pipeline script with prefix myEnv_ and timestamp beginning with year
-
-Optional graphs
-  - Fixes error that would arise if no spectral and/or poincare plots were asked for.

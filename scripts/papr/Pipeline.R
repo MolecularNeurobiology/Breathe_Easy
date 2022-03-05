@@ -1,6 +1,6 @@
 # DESCRIPTION:
-# pipeline.r is the main wrapper of all the scripts for papr. Additionally, it 
-# provides the methods to parse the command line arguments.
+# pipeline.r is the main wrapper of all the scripts for papr. 
+# Additionally, it provides the methods to parse the command line arguments and loads all required libraries.
 print("Setting pipeline")
 library(rjson)
 library(tidyverse)
@@ -29,6 +29,8 @@ library(RColorBrewer)
 library(openxlsx)
 
 ################### Adds arguments that are inserted to the terminal for file locations ####################
+# Arguments to be defined in the command line call; these are read via the add_argument function.
+
 p <- arg_parser("Run STAGG")
 
 p <- add_argument (p, "--dir", help="Set the working directory for R, should be Mothership")
@@ -53,6 +55,7 @@ p <- add_argument (p, "--Bodytemp", help="Filepath to R code for other graphs")
 
 p <- add_argument (p, "--I", help="Type of image to output")
 
+# Arguments are imported + stored as a list with the names defined as above.
 args <- parse_args(p)
 
 

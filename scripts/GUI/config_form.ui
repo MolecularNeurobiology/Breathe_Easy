@@ -1896,22 +1896,6 @@
    </hints>
   </connection>
   <connection>
-   <sender>Facet1_combo</sender>
-   <signal>currentTextChanged(QString)</signal>
-   <receiver>Config</receiver>
-   <slot>exclude_combos()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>2299</x>
-     <y>451</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1899</x>
-     <y>999</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>custom_config_button</sender>
    <signal>clicked()</signal>
    <receiver>Config</receiver>
@@ -2124,5 +2108,10 @@
   <slot>save_config()</slot>
   <slot>saveas_config()</slot>
   <slot>minus_loop()</slot>
+  <slot>add_combos()</slot>
+  <slot>add_xvar_combo()</slot>
+  <slot>add_pointdodge_combo()</slot>
+  <slot>add_facet1_combo()</slot>
+  <slot>add_facet2_combo()</slot>
  </slots>
 </ui>

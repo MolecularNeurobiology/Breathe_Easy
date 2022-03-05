@@ -152,13 +152,6 @@
           <item>
            <widget class="QListWidget" name="variable_list_columns"/>
           </item>
-          <item>
-           <widget class="QLabel" name="label_7">
-            <property name="text">
-             <string>*NaN values detected</string>
-            </property>
-           </widget>
-          </item>
          </layout>
         </item>
         <item>

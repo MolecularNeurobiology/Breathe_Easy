@@ -2005,56 +2005,93 @@ class Config(QWidget, Ui_Config):
 
         # self.show_loops(self.loop_table,0)
     
-    def show_loops(self,table,rows):
+    def show_loops(self,table,row):
         print("config.show_loops()")
+        # self.loop_table.clear()
         self.pleth.loop_menu = {}
-        self.pleth.loop_menu.update({table:{}})
-        for row in range(rows):
-            print(rows)
-            print(row)
-            self.pleth.loop_menu[table].update({row:{}})
-            print(self.pleth.loop_menu)
-            # Creating the widgets within the above dictionary that will populate the cells of each row:
-            self.pleth.loop_menu[table][row]["Graph"] = QLineEdit()
-            self.pleth.loop_menu[table][row]["Y axis minimum"] = QLineEdit()
-            self.pleth.loop_menu[table][row]["Y axis maximum"] = QLineEdit()
-            self.pleth.loop_menu[table][row]["Inclusion"] = QComboBox()
-            self.pleth.loop_menu[table][row]["Inclusion"].addItems(["No","Yes"])
-            for role in self.role_list[1:6]:
-                self.pleth.loop_menu[table][row][role] = QComboBox()
-                self.pleth.loop_menu[table][row][role].addItems([""])
-                self.pleth.loop_menu[table][row][role].addItems([x for x in self.pleth.breath_df])
+        self.pleth.loop_menu.update({table:{row:{}}})
+        # Creating the widgets within the above dictionary that will populate the cells of each row:
+        self.pleth.loop_menu[table][row]["Graph"] = QLineEdit()
+        self.pleth.loop_menu[table][row]["Y axis minimum"] = QLineEdit()
+        self.pleth.loop_menu[table][row]["Y axis maximum"] = QLineEdit()
+        for role in self.role_list[1:6]:
+            self.pleth.loop_menu[table][row][role] = QComboBox()
+            self.pleth.loop_menu[table][row][role].addItems([""])
+            self.pleth.loop_menu[table][row][role].addItems([x for x in self.pleth.breath_df])
+        
+        # self.pleth.loop_menu[table][row]["Poincare"] = QComboBox()
+        # self.pleth.loop_menu[table][row]["Poincare"].addItems(["Yes","No"])
+        # self.pleth.loop_menu[table][row]["Y axis minimum"].addItems(["Automatic",""])
+        # self.pleth.loop_menu[table][row]["Y axis maximum"].addItems(["Automatic",""])
+        self.pleth.loop_menu[table][row]["Inclusion"] = QComboBox()
+        self.pleth.loop_menu[table][row]["Inclusion"].addItems(["No","Yes"])
+        
+        # Adding the contents based on the variable list of the drop down menus for the combo box widgets:
+        # for role in self.v.role_list:
+            # self.pleth.loop_menu[table][self.row_loop][role].addItems([""])
+            # self.pleth.loop_menu[table][self.row_loop][role].addItems([x for x in self.breath_df])
+    
+        
+        # Populating the table cells with their widget content stored in the dictionary:
+        # for n in range(0,7):
+        #     for role in role_list:
+        #         table.setCellWidget(self.row_loop,n,self.pleth.loop_menu[table][self.row_loop][role])
+        table.setCellWidget(row,0,self.pleth.loop_menu[table][row]["Graph"])
+        table.setCellWidget(row,1,self.pleth.loop_menu[table][row]["Variable"])
+        table.setCellWidget(row,2,self.pleth.loop_menu[table][row]["Xvar"])
+        table.setCellWidget(row,3,self.pleth.loop_menu[table][row]["Pointdodge"])
+        table.setCellWidget(row,4,self.pleth.loop_menu[table][row]["Facet1"])
+        table.setCellWidget(row,5,self.pleth.loop_menu[table][row]["Facet2"])
+        # table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Poincare"])
+        table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Inclusion"])
+        table.setCellWidget(row,7,self.pleth.loop_menu[table][row]["Y axis minimum"])
+        table.setCellWidget(row,8,self.pleth.loop_menu[table][row]["Y axis maximum"])
+        # for row in range(rows):
+        #     print(rows)
+        #     print(row)
+        #     self.pleth.loop_menu[table].update({row:{}})
+        #     print(self.pleth.loop_menu)
+        #     # Creating the widgets within the above dictionary that will populate the cells of each row:
+        #     self.pleth.loop_menu[table][row]["Graph"] = QLineEdit()
+        #     self.pleth.loop_menu[table][row]["Y axis minimum"] = QLineEdit()
+        #     self.pleth.loop_menu[table][row]["Y axis maximum"] = QLineEdit()
+        #     self.pleth.loop_menu[table][row]["Inclusion"] = QComboBox()
+        #     self.pleth.loop_menu[table][row]["Inclusion"].addItems(["No","Yes"])
+        #     for role in self.role_list[1:6]:
+        #         self.pleth.loop_menu[table][row][role] = QComboBox()
+        #         self.pleth.loop_menu[table][row][role].addItems([""])
+        #         self.pleth.loop_menu[table][row][role].addItems([x for x in self.pleth.breath_df])
             
-            # self.loop_menu[table][row]["Poincare"] = QComboBox()
-            # self.loop_menu[table][row]["Poincare"].addItems(["Yes","No"])
-            # self.loop_menu[table][row]["Y axis minimum"] = QComboBox()
-            # self.loop_menu[table][row]["Y axis minimum"].addItems(["Automatic",""])
-            # self.loop_menu[table][row]["Y axis maximum"] = QComboBox()
-            # self.loop_menu[table][row]["Y axis maximum"].addItems(["Automatic",""])
+        #     # self.loop_menu[table][row]["Poincare"] = QComboBox()
+        #     # self.loop_menu[table][row]["Poincare"].addItems(["Yes","No"])
+        #     # self.loop_menu[table][row]["Y axis minimum"] = QComboBox()
+        #     # self.loop_menu[table][row]["Y axis minimum"].addItems(["Automatic",""])
+        #     # self.loop_menu[table][row]["Y axis maximum"] = QComboBox()
+        #     # self.loop_menu[table][row]["Y axis maximum"].addItems(["Automatic",""])
             
             
-            # Adding the contents based on the variable list of the drop down menus for the combo box widgets:
-            # for role in self.v.role_list:
-                # self.loop_menu[table][self.row_loop][role].addItems([""])
-                # self.loop_menu[table][self.row_loop][role].addItems([x for x in self.breath_df])
+        #     # Adding the contents based on the variable list of the drop down menus for the combo box widgets:
+        #     # for role in self.v.role_list:
+        #         # self.loop_menu[table][self.row_loop][role].addItems([""])
+        #         # self.loop_menu[table][self.row_loop][role].addItems([x for x in self.breath_df])
         
             
-            # Populating the table cells with their widget content stored in the dictionary:
-            # for n in range(0,7):
-            #     for role in role_list:
-            #         table.setCellWidget(self.row_loop,n,self.loop_menu[table][self.row_loop][role])
-            table.setCellWidget(row,0,self.pleth.loop_menu[table][row]["Graph"])
-            table.setCellWidget(row,1,self.pleth.loop_menu[table][row]["Variable"])
-            table.setCellWidget(row,2,self.pleth.loop_menu[table][row]["Xvar"])
-            table.setCellWidget(row,3,self.pleth.loop_menu[table][row]["Pointdodge"])
-            table.setCellWidget(row,4,self.pleth.loop_menu[table][row]["Facet1"])
-            table.setCellWidget(row,5,self.pleth.loop_menu[table][row]["Facet2"])
-            # table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Poincare"])
-            table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Inclusion"])
-            table.setCellWidget(row,7,self.pleth.loop_menu[table][row]["Y axis minimum"])
-            table.setCellWidget(row,8,self.pleth.loop_menu[table][row]["Y axis maximum"])
+        #     # Populating the table cells with their widget content stored in the dictionary:
+        #     # for n in range(0,7):
+        #     #     for role in role_list:
+        #     #         table.setCellWidget(self.row_loop,n,self.loop_menu[table][self.row_loop][role])
+        #     table.setCellWidget(row,0,self.pleth.loop_menu[table][row]["Graph"])
+        #     table.setCellWidget(row,1,self.pleth.loop_menu[table][row]["Variable"])
+        #     table.setCellWidget(row,2,self.pleth.loop_menu[table][row]["Xvar"])
+        #     table.setCellWidget(row,3,self.pleth.loop_menu[table][row]["Pointdodge"])
+        #     table.setCellWidget(row,4,self.pleth.loop_menu[table][row]["Facet1"])
+        #     table.setCellWidget(row,5,self.pleth.loop_menu[table][row]["Facet2"])
+        #     # table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Poincare"])
+        #     table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Inclusion"])
+        #     table.setCellWidget(row,7,self.pleth.loop_menu[table][row]["Y axis minimum"])
+        #     table.setCellWidget(row,8,self.pleth.loop_menu[table][row]["Y axis maximum"])
 
-            print(self.pleth.loop_menu)
+        #     print(self.pleth.loop_menu)
             # if table == self.loop_table:
             #     self.loop_menu[table][row]["poincare"] = QComboBox()
             #     self.loop_menu[table][row]["poincare"].addItems(["","Yes","No"])
@@ -2151,7 +2188,35 @@ class Config(QWidget, Ui_Config):
             c.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
             # c.setCurrentText(current[c])
         # print([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
+
+    def add_xvar_combo(self):
+        print("add_xvar_combo()")
+        self.classy()
+        self.Xvar_combo.clear()
+        self.Xvar_combo.addItem("Select variable:")
+        self.Xvar_combo.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
     
+    def add_pointdodge_combo(self):
+        print("add_pointdodge_combo()")
+        self.classy()
+        self.Pointdodge_combo.clear()
+        self.Pointdodge_combo.addItem("Select variable:")
+        self.Pointdodge_combo.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
+
+    def add_facet1_combo(self):
+        print("add_pointdodge_combo()")
+        self.classy()
+        self.Facet1_combo.clear()
+        self.Facet1_combo.addItem("Select variable:")
+        self.Facet1_combo.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
+    
+    def add_facet2_combo(self):
+        print("add_pointdodge_combo()")
+        self.classy()
+        self.Facet2_combo.clear()
+        self.Facet2_combo.addItem("Select variable:")
+        self.Facet2_combo.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
+
     def exclude_combos(self):
         print("exclude_combos()")
         for c in self.settings_dict['role'].keys():
@@ -2185,12 +2250,12 @@ class Config(QWidget, Ui_Config):
                 clades_other_dict[row]['Inclusion'] = 0   
         # print(clades_other_dict)
         self.clades_other = pd.DataFrame.from_dict(clades_other_dict)
-        # print(self.clades_other)
+        # self.clades_other.dropna
         self.clades_other = self.clades_other.transpose()
         if self.feature_combo.currentText() != "None":
             if self.feature_combo.currentText() == "All":
-                self.clades_other.at[self.loop_table.rowCount()-1,"Graph"] = "Apneas"
-                self.clades_other.at[self.loop_table.rowCount(),"Graph"] = "Sighs"
+                self.clades_other.at[self.loop_table.rowCount(),"Graph"] = "Apneas"
+                self.clades_other.at[self.loop_table.rowCount()+1,"Graph"] = "Sighs"
             else:
                 self.clades_other.at[self.loop_table.rowCount()-1,"Graph"] = self.feature_combo.currentText()
         print(f'other clades:{self.clades_other.columns}')
@@ -2512,7 +2577,9 @@ class Config(QWidget, Ui_Config):
         try:
             self.setup_variables_config()
             self.setup_table_config()
+            print(self.pleth.loop_menu)
             self.show_loops(self.loop_table,0)
+            print(self.pleth.loop_menu)
             for s in self.settings_dict['role']:
                 s.clear()
                 s.addItem("Select variable:")
@@ -2523,8 +2590,9 @@ class Config(QWidget, Ui_Config):
             # self.configs = {self.pleth.variable_config:self.clades,self.pleth.graph_config:self.clades_graph,self.pleth.other_config:self.clades_other}
             # self.custom_dict = {}
             self.deps = []
+            self.classy()
             self.deps = self.clades.loc[(self.clades["Dependent"] == 1)]["Alias"]
-            self.pleth.c.populate_table(self.deps,self.pleth.c.custom_table)
+            # self.pleth.c.populate_table(self.deps,self.pleth.c.custom_table)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -2832,6 +2900,9 @@ class Config(QWidget, Ui_Config):
         if ("Apneas" and "Sighs") in set(odf["Graph"]):
             # print("All")
             self.feature_combo.setCurrentText("All")
+        print(f"odf before: {odf}")
+        odf = odf[odf["Graph"] != "Apneas" or odf["Graph"] != "Sighs"]
+        print(f"odf after:{odf}")
         self.show_loops(self.loop_table,len(odf))
         if len(odf)>1:
             
@@ -2975,8 +3046,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print(self.gui_config['Dictionaries']['Paths']['breathcaller'])
         self.gui_config['Dictionaries']['Paths'].update({'papr':str(Path(f'{Path(__file__).parent.parent}/papr'))})
         print(self.gui_config['Dictionaries']['Paths']['papr'])
-        self.gui_config['Dictionaries']['Paths'].update({'rscript1':str(Path(f'{Path(__file__).parent.parent}/R-Portable-3-6-3/App/R-Portable/bin/Rscript.exe'))})
-        print(self.gui_config['Dictionaries']['Paths']['rscript1'])
+        # self.gui_config['Dictionaries']['Paths'].update({'rscript1':str(Path(f'{Path(__file__).parent.parent}/R-Portable-3-6-3/App/R-Portable/bin/Rscript.exe'))})
+        # print(self.gui_config['Dictionaries']['Paths']['rscript'])
         
 
         # # Populate GUI widgets with experimental condition choices: 
@@ -3023,7 +3094,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.image_format = ""
         self.buttonDict_variable = {}
         self.stagg_list = []
-        
+        self.rscript_des = ""
+        self.pipeline_des = ""
+
         self.v = Config(self)
         self.s = Stagg(self)
         self.p = Auto(self)
@@ -3049,8 +3122,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # for widget in [self.variable_list,self.signal_files_list,self.metadata_list,self.sections_list,self.breath_list]:
         #     self.keyPressEvent.connect(self.on_key(widget))
-
-
+        
 #endregion
 
 #region Analysis parameters
@@ -3688,6 +3760,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # The first two columns are the text of the variable name. Alias should be text editable.
             self.buttonDict_variable[item]["orig"] = QTableWidgetItem(item)
             self.buttonDict_variable[item]["Alias"] = QTableWidgetItem(item)
+            # self.buttonDict_variable[item]["Alias"] = QLineEdit(item)
 
             # Creating the radio buttons that will populate the cells in each row:
             self.buttonDict_variable[item]["Independent"] = QRadioButton("Independent")
@@ -3728,8 +3801,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # self.buttonDict_variable[item]["role"].activated.connect(self.v.replace)
             self.buttonDict_variable[item]["Independent"].toggled.connect(self.v.add_combos)
             self.buttonDict_variable[item]["Covariate"].toggled.connect(self.v.add_combos)
+        # for item_1 in self.breath_df:
+            # self.buttonDict_variable[item_1]["Alias"].textEdited(self.v.add_combos)
             # self.v.variable_table.itemChanged.connect(self.v.update_alias)
             # self.buttonDict_variable[item]["Covariate"].toggled.connect(self.v.populate_combos(self.buttonDict_variable[item].))
+        # self.v.variable_table.cellChanged.connect(self.v.add_combos)
         # Creating the dictionary that will store the cells' statuses based on user selection. The table's need separate dictionaries because they'll be yielding separate csvs:
         self.loop_menu = {}
         # self.v.transform_combo = CheckableComboBox()
@@ -4727,8 +4803,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def go_r(self):
         print("go_r()")
         papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}"'.format(
-            rscript = self.gui_config['Dictionaries']['Paths']['rscript1'],
-            pipeline = os.path.join(self.papr_dir, "pipeline.R"),
+            rscript = self.rscript_des,
+            pipeline = self.pipeline_des,
             d = self.mothership,
             # j = os.path.join(self.mothership, "JSON"),
             j = self.input_dir_r,
@@ -4918,19 +4994,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     # self.variable_config = "None"
                     # self.graph_config = "None"
                     # self.other_config = "None"
-                    if self.parallel_r.isChecked() == True:
-                        self.rthing_to_do_single()
-                    else:
-                        self.rthing_to_do()
+                    self.rthing_to_do()
             else:
                 self.thumb = Thumbass(self)
                 self.thumb.show()
-                self.thumb.message_received("No variable or graphing configuration files were selected - please choose or create configuration files. You may also select a previously built R environment that includes such settings.")
+                self.thumb.message_received("No STAGG settings","No variable or graphing configuration files were selected - please choose or create configuration files.\nYou may also select a previously built R environment that includes such settings.")
         else:
-            if self.parallel_r.isChecked() == True:
-                self.rthing_to_do_single()
-            else:
-                self.rthing_to_do()
+            self.rthing_to_do()
 
     def dir_checker(self,output_folder,output_folder_parent,text):
         print("dir_checker()")
@@ -5047,9 +5117,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.image_format = ".svg"
             elif self.jpeg_radioButton.isChecked() == True:
                 self.image_format = ".jpeg"
-            if os.path.isdir(os.path.join(self.output_dir_r,"StatResults")):
-                print("no stat results folder")
-                os.makedirs(os.path.join(self.output_dir_r,"StatResults"))
+            # if os.path.isdir(os.path.join(self.output_dir_r,"StatResults")):
+            #     print("no stat results folder")
+            #     os.makedirs(os.path.join(self.output_dir_r,"StatResults"))
             try:
                 print("shutil is trying to happen for configs")
                 if datetime.datetime.now().strftime('%Y%m%d_%H%M%S') == os.path.basename(self.output_dir_r).lstrip('STAGG_output'):
@@ -5064,13 +5134,99 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
                 print("No variable or graph configuration files copied to STAGG output folder.")
-            print('rthing_to_do thread id',threading.get_ident())
-            print("rthing_to_do process id",os.getpid())
-            self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
-            self.worker.daemon = True
-            self.worker.start()
-            # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
-            print("worker started?")
+            if os.path.basename(self.input_dir_r).endswith("RData"):
+                self.pipeline_des = os.path.join(self.papr_dir, "Pipeline_env.R")
+            else:
+                self.pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
+            if Path(self.pipeline_des).is_file():
+                print("pipeline des is a real boy")
+                print(shutil.which(self.gui_config['Dictionaries']['Paths']['rscript']))
+                # if shutil.which(self.gui_config['Dictionaries']['Paths']['rscript']) != None:
+                if os.path.basename(self.gui_config['Dictionaries']['Paths']['rscript']) == "Rscript.exe":
+                    if os.path.exists(self.gui_config['Dictionaries']['Paths']['rscript']):
+                        self.rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
+                        print('rthing_to_do thread id',threading.get_ident())
+                        print("rthing_to_do process id",os.getpid())
+                        # if self.parallel_r.isChecked() == True:
+                        #     print("rthing_to_do_single() is happening")
+                        #     print('rthing_single thread id',threading.get_ident())
+                        #     print("rthing_single process id",os.getpid())
+                        #     self.thready(self.update_Rprogress)
+                        # else:
+                        self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
+                        self.worker.daemon = True
+                        self.worker.start()
+                        # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
+                        print("worker started?")
+                # elif shutil.which(self.gui_config['Dictionaries']['Paths']['rscript1']) != None:
+                # elif self.gui_config['Dictionaries']['Paths']['rscript1'].endswith("exe"):
+                #     self.rscript_des = self.gui_config['Dictionaries']['Paths']['rscript1']
+                #     print('rthing_to_do thread id',threading.get_ident())
+                #     print("rthing_to_do process id",os.getpid())
+                #     # if self.parallel_r.isChecked() == True:
+                #     #     print("rthing_to_do_single() is happening")
+                #     #     print('rthing_single thread id',threading.get_ident())
+                #     #     print("rthing_single process id",os.getpid())
+                #     #     self.thready(self.update_Rprogress)
+                #     # else:
+                #     self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
+                #     self.worker.daemon = True
+                #     self.worker.start()
+                #     # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
+                #     print("worker started?")
+                    else:
+                        reply = QMessageBox.information(self, 'Rscript not found', 'Rscript.exe path not defined. Would you like to select the R executable?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+                        if reply == QMessageBox.Ok:
+                            pre_des = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.mothership))
+                            if os.path.basename(pre_des[0]) == "Rscript.exe":
+                                self.rscript_des = pre_des[0]
+                                self.gui_config['Dictionaries']['Paths']['rscript'] = pre_des[0]
+                                with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                                    json.dump(self.gui_config,gconfig_file)
+                                print('rthing_to_do thread id',threading.get_ident())
+                                print("rthing_to_do process id",os.getpid())
+                                # if self.parallel_r.isChecked() == True:
+                                #     print("rthing_to_do_single() is happening")
+                                #     print('rthing_single thread id',threading.get_ident())
+                                #     print("rthing_single process id",os.getpid())
+                                #     self.thready(self.update_Rprogress)
+                                # else:
+                                self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
+                                self.worker.daemon = True
+                                self.worker.start()
+                                # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
+                                print("worker started?")
+                else:
+                    reply = QMessageBox.information(self, 'Rscript not found', 'Rscript.exe path not defined. Would you like to select the R executable?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+                    if reply == QMessageBox.Ok:
+                        pre_des = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.mothership))
+                        if os.path.basename(pre_des[0]) == "Rscript.exe":
+                            self.rscript_des = pre_des[0]
+                            self.gui_config['Dictionaries']['Paths']['rscript'] = pre_des[0]
+                            with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                                json.dump(self.gui_config,gconfig_file)
+                            print('rthing_to_do thread id',threading.get_ident())
+                            print("rthing_to_do process id",os.getpid())
+                            # if self.parallel_r.isChecked() == True:
+                            #     print("rthing_to_do_single() is happening")
+                            #     print('rthing_single thread id',threading.get_ident())
+                            #     print("rthing_single process id",os.getpid())
+                            #     self.thready(self.update_Rprogress)
+                            # else:
+                            self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
+                            self.worker.daemon = True
+                            self.worker.start()
+                            # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
+                            print("worker started?")
+            else:
+                reply = QMessageBox.information(self, 'STAGG scripts not found', 'BASSPRO-STAGG cannot find the scripts for STAGG. Check the BASSPRO-STAGG folder for missing files or directories.', QMessageBox.Ok, QMessageBox.Ok)
+            # print('rthing_to_do thread id',threading.get_ident())
+            # print("rthing_to_do process id",os.getpid())
+            # self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
+            # self.worker.daemon = True
+            # self.worker.start()
+            # # shutil.copyfile(os.path.join(self.mothership,"Summary.html"),os.path.join(self.output_dir_r, f"Summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
+            # print("worker started?")
         # if self.renv_check.isChecked() == 1:
             # shutil.copyfile(os.path.join(self.mothership, "myEnv.RData"), os.path.join(self.output_dir_r, f"myEnv_{os.path.basename(self.output_dir_r).lstrip('r_output')}.RData"))
         # shutil.copyfile(os.path.join(self.output_dir_r,"Summary.html"), os.path.join(self.output_dir_r, f"summary_{os.path.basename(self.output_dir_r).lstrip('r_output')}.html"))
@@ -5085,13 +5241,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("worker started?")
 
     def rthing_to_do_single(self):
-        print("rthing_to_do is happening")
-        print('rthing_single thread id',threading.get_ident())
-        print("rthing_single process id",os.getpid())
-        self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
-        if self.output_folder != "":
-            self.output_dir_r = self.output_folder
-            self.thready(self.update_Rprogress)
+        try:
+            print("rthing_to_do is happening")
+            print('rthing_single thread id',threading.get_ident())
+            print("rthing_single process id",os.getpid())
+            self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
+            if self.output_folder != "":
+                self.output_dir_r = self.output_folder
+                self.thready(self.update_Rprogress)
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
     
     def pything_to_do_single(self):
         print("pything_single thread id", threading.get_ident())
@@ -5101,22 +5261,30 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.output_dir_py = self.output_folder
         # This conditional essentially checks whether or not a copy of the metadata already exists because if the metadat was pulled directly from Filemaker, then that function automatically makes the output py directory and places the pulled metadata in there before the launch button. I should change this and isolate the creation and copying to just the launch.
         # if self.metadata_path == "":
-            shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-            # self.get_parameter()
-            shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-            # if self.a.auto_df != "":
-            #     self.a.auto_df.to_csv(self.autosections,index=False)
-            shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"autosections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-            # if self.m.manual_df != "":
-            #     self.m.manual_df.to_csv(self.mansections,index=False)
-            #     shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"mansections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-            # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
-            shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-            with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-                json.dump(self.gui_config,gconfig_file)
-            shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+            try:
+                shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+                # self.get_parameter()
+                shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+                # if self.a.auto_df != "":
+                #     self.a.auto_df.to_csv(self.autosections,index=False)
+                shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"autosections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+                # if self.m.manual_df != "":
+                #     self.m.manual_df.to_csv(self.mansections,index=False)
+                #     shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"mansections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+                # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
+                shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
+                with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                    json.dump(self.gui_config,gconfig_file)
+                shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
             # self.thready(self.update_Pyprogress)
-            self.update_Pyprogress()
+            try:
+                self.update_Pyprogress()
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
 
     def superthing_to_do(self):
         # self.thready(self.super_go)

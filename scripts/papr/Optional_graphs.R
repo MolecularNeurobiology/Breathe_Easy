@@ -11,9 +11,19 @@ cPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", 
 sighs <- FALSE
 apneas <- FALSE
 
-
+# Runs the statistical modeling when mixed effects is not appropriate.
+## Inputs:
+### resp_var: character string, name of dependent variable.
+### inter_vars: character vector, names of independent variables.
+### cov_vars: character vector, names of covariates.
+### run_data: data frame, data to fit model on
+### inc_filter: boolean, whether breath inclusion filter should be used.
+## Outputs (saved in list):
+### rel_comp: data frame, pairwise comparison results for biologically relevant comparisons
+### lm: data frame, coefficient estimates from the model for each of the interaction groups
 stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE){
   
+  # Removes rows with NAs and breath inclusion filter.
   if(inc_filt){
     run_data <- run_data %>% drop_na(any_of(inter_vars)) %>% dplyr::filter(Breath_Inclusion_Filter == 1)
   } else {
@@ -30,33 +40,43 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   }
   
   return_values <- list()
-  #Create interaction variable string
+  # Create interaction variable string
   interact_string <- paste0("run_data$interact <- with(run_data, interaction(", paste(inter_vars, collapse = ", "), "))")
-  #Create covariates
-  covar_formula_string <- paste(c(1, cov_vars), collapse = "+")
   eval(parse(text = interact_string))
+  # Create covariates
+  covar_formula_string <- paste(c(1, cov_vars), collapse = "+")
+  # Create full formula string for modeling.
   form <- as.formula(paste0(resp_var, " ~ interact + ", covar_formula_string))
+  
+  # Run model
   temp_mod <- lm(form, data = run_data)
   
+  # Create all relevant comparisons for pairwise comparison testing.
+  ## Find all interaction groups in model.
   all_names <- names(fixef(temp_mod)) %>% str_replace_all("interact", "")
-  # Keep relevant comparisons
+  ## Create all possible pairwise comparisons.
   comb_list <- c()
   for(rr in 2:(length(all_names) - 1)){
     for(ss in (rr+1):length(all_names)){
       comb_list <- c(comb_list, paste0(all_names[rr], " - ", all_names[ss]))
     }
   }
+  ## Keep only biologically relevant pairwise comparisons
+  ## I.e., where there is only one difference between two interaction variables among all variables that comprise them.
   comparison_names <- lapply(strsplit(comb_list, "-"), trimws)
   row_mismatches <- rep(NA, length(comparison_names))
   for(jj in 1:length(comparison_names)){
     comp_row <- strsplit(comparison_names[[jj]], split = "\\.")
     row_mismatches[jj] <- sum(comp_row[[1]] != comp_row[[2]])
   }
+  ## Make names of biologically relevant comparisons for glht function
   comp_list <- comb_list[which(row_mismatches == 1)]
+  ## Create output table
   for(qq in 1:length(comp_list)){
     comp_list[qq] <- paste0(comp_list[qq], " = 0")
   }
   
+  ## Make names of biologically relevant comparisons for glht function
   temp_tukey <- glht(temp_mod , linfct = mcp(interact = comp_list))
   vt <- summary(temp_tukey)$test
   mytest <- cbind(vt$coefficients, vt$sigma, vt$tstat, vt$pvalues)
@@ -70,24 +90,9 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   vttukey <- as.data.frame(xtable(mytest))
   colnames(vttukey) <- c("Estimate", "StdError", "zvalue", "pvalue")
   
-  # Make + save residual plots
-  # g1 <- ggplot() +
-  #   geom_point(aes(x = fitted(temp_mod), y = resid(temp_mod))) +
-  #   labs(x = "Fitted", y = "Residual") + 
-  #   geom_abline(slope = 0, intercept = 0) +
-  #   theme_few() 
-  # 
-  # g2 <- ggplot() +
-  #   geom_qq(aes(sample = resid(temp_mod))) +
-  #   labs(x = "Empirical Quantile", y = "Theoretical Quantile") + 
-  #   geom_qq_line(aes(sample = resid(temp_mod))) +
-  #   theme_few() 
-  
   # Create return values
   return_values$rel_comp <- vttukey
   return_values$lm <- summary(temp_mod)$coef
-  # return_values$residplot <- g1
-  # return_values$qqplot <- g2
   
   return(return_values)
 }
@@ -96,6 +101,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
 ####### THE LOOP ################
 #################################
 
+# Iterate through each of the rows in the config file.
 if(nrow(other_config) > 0){
   print("Making optional graphs")
   print((paste0("Making optional plot ", ii, "/", nrow(other_config))))
@@ -103,6 +109,7 @@ if(nrow(other_config) > 0){
     other_config_row <- other_config[ii, ]
     other_config_row <- other_config_row[which(!is.na(other_config_row))]
     
+    # Tags for specific sets of plots.
     if(is.null(other_config_row$Graph)) {
       next
     }
@@ -116,7 +123,7 @@ if(nrow(other_config) > 0){
       next
     }
     
-    # Graphing variables
+    # Set graphing variables
     ocr2_wu <- c(other_config_row$Variable,
                  ifelse(is.null(other_config_row$Xvar), "", other_config_row$Xvar),
                  ifelse(is.null(other_config_row$Pointdodge), "", other_config_row$Pointdodge),
@@ -124,10 +131,11 @@ if(nrow(other_config) > 0){
                  ifelse(is.null(other_config_row$Facet2), "", other_config_row$Facet2))
     names(ocr2_wu) <- c("Resp", "Xvar", "Pointdodge", "Facet1", "Facet2")
     
+    # Get names of variables without units for internal usage.
     ocr2 <- sapply(ocr2_wu, wu_convert)
     names(ocr2) <- c("Resp", "Xvar", "Pointdodge", "Facet1", "Facet2")
     
-    # Correct for user settings
+    # Checks on user settings
     for(jj in ocr2[-1]){
       if(typeof(tbl0[[jj]]) == "numeric"){
         tbl0[[jj]] <- as.character(tbl0[[jj]])
@@ -138,12 +146,14 @@ if(nrow(other_config) > 0){
       }
     }
     
+    # Whether to use the breath inclusion filter
     if((!is.null(other_config_row$Filter)) && (other_config_row$Filter == 0)){
       inclusion_filter <- FALSE
     } else {
       inclusion_filter <- TRUE
     }
     
+    # Optional y-axis settings
     if((!is.null(other_config_row$ymin))) {
       ymins <- as.numeric(other_config_row$ymin)
     } else {
@@ -167,6 +177,7 @@ if(nrow(other_config) > 0){
         next
       }
       
+      # Set graphing variables as a vector.
       box_vars <- c(xvar, pointdodge, facet1, facet2)
       box_vars <- box_vars[box_vars != ""]
       if(length(box_vars) == 0){ next }
@@ -203,7 +214,7 @@ if(nrow(other_config) > 0){
         other_covars <- character(0)
       }
       
-      #Organizes data collected above for graphing.
+      # Organizes data collected above for graphing.
       other_df <- tbl0 %>%
         group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
         dplyr::summarise_at(bw_vars, mean, na.rm = TRUE) %>%
@@ -213,6 +224,7 @@ if(nrow(other_config) > 0){
         dplyr::summarise_at(bw_vars, mean, na.rm = TRUE) %>%
         ungroup() %>% na.omit()
       
+      # Check that variables are factors; set in order of appearance in data.
       for(jj in box_vars){
         other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
       }
@@ -226,6 +238,7 @@ if(nrow(other_config) > 0){
         other_mod_res <- stat_run(bw_vars, other_inter_vars, other_covars, other_df, FALSE)
       }
       
+      # Make graph + save
       graph_make(bw_vars, as.character(xvar), as.character(pointdodge), 
                  as.character(facet1), as.character(facet2), other_graph_df, 
                  other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
@@ -248,6 +261,7 @@ if(nrow(other_config) > 0){
         next
       }
       
+      # Set graphing variables as a vector.
       temp_vars <- c(pointdodge, facet1, facet2)
       temp_vars <- temp_vars[temp_vars != ""]
       names(temp_vars) <- NULL
@@ -297,6 +311,7 @@ if(nrow(other_config) > 0){
       melt_bt_df <- reshape2::melt(bodytemp_df, id=c(temp_vars, "MUID"))
       melt_bt_graph_df <- reshape2::melt(bodytemp_graph_df, id=c(temp_vars, "MUID"))
       
+      # Set ordering of body temp variables.
       levels(melt_bt_graph_df$variable) <- c((var_names$Alias[which(var_names$Start.Body.Temp == 1)]), 
                                              (var_names$Alias[which(var_names$Mid.Body.Temp == 1)]), 
                                              (var_names$Alias[which(var_names$End.Body.Temp == 1)]), 
@@ -306,11 +321,13 @@ if(nrow(other_config) > 0){
                                              (var_names$Alias[which(var_names$End.Body.Temp == 1)]), 
                                              (var_names$Alias[which(var_names$Post.Body.Temp == 1)]))
       
+      # Check that variables are factors; set in order of appearance in data.
       for(jj in temp_vars){
         melt_bt_graph_df[[jj]] <- factor(melt_bt_graph_df[[jj]], levels = unique(tbl0[[jj]]))
         melt_bt_df[[jj]] <- factor(melt_bt_df[[jj]], levels = unique(tbl0[[jj]]))
       }
       
+      # Rename variables
       setnames(melt_bt_graph_df, old = c("value", "variable"), new = c("Temp", "State"), skip_absent = TRUE)
       temp_vars <- c("State", temp_vars)
       
@@ -319,6 +336,7 @@ if(nrow(other_config) > 0){
       # Assumes temperature is a mouse-level measurement.
       other_mod_res <- stat_run("Temp", other_inter_vars, other_covars, melt_bt_df, FALSE)
       
+      # Make graph + save
       graph_make("Temp", "State", as.character(pointdodge), 
                  as.character(facet1), as.character(facet2), melt_bt_graph_df, 
                  other_mod_res$rel_comp, temp_vars, graph_file, other = TRUE,
@@ -330,6 +348,7 @@ if(nrow(other_config) > 0){
     } else {
       if(ocr2["Resp"] %in% colnames(tbl0)) {
         
+        # Set graphing variables as a vector.
         box_vars <- c(xvar, pointdodge, facet1, facet2)
         box_vars <- box_vars[box_vars != ""]
         if(length(box_vars) == 0){ next }
@@ -389,7 +408,7 @@ if(nrow(other_config) > 0){
             ungroup() %>% na.omit()
         }
         
-        
+        # Check that variables are factors; set in order of appearance in data.
         for(jj in box_vars){
           other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
         }
@@ -403,6 +422,7 @@ if(nrow(other_config) > 0){
           other_mod_res <- stat_run(as.character(ocr2["Resp"]), other_inter_vars, other_covars, other_df, FALSE)
         }
         
+        # Make graph + save
         graph_make(as.character(ocr2["Resp"]), as.character(xvar), as.character(pointdodge), 
                    as.character(facet1), as.character(facet2), other_graph_df, 
                    other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
@@ -425,30 +445,33 @@ if(nrow(other_config) > 0){
 ##### Apneas & Sighs ##################
 #######################################
 
+# Functionality to make graphs for sigh and apnea rates.
 if(sighs || apneas){
   print("Making apnea and sigh graphs")
   tbl0$measure_breaks <- as.logical(c(FALSE, tbl0$Mouse_And_Session_ID[1:(nrow(tbl0) - 1)] != tbl0$Mouse_And_Session_ID[2:(nrow(tbl0))]))
   
+  # Set graphing variables as a vector.
   box_vars <- c(xvar, pointdodge, facet1, facet2)
   box_vars <- box_vars[box_vars != ""]
   
+  # Summarize data by mouse for plotting.
   timetab <- tbl0 %>%
     dplyr::filter(!measure_breaks) %>%
     group_by_at(c(box_vars, "MUID")) %>%
     dplyr::summarise(measuretime = sum(Breath_Cycle_Duration))
-  
   eventtab <- tbl0 %>%
     dplyr::filter(!measure_breaks) %>%
     group_by_at(c(box_vars, "MUID")) %>%
     dplyr::summarise(sighs = sum(Sigh), apneas = sum(Apnea))
-  
   eventtab_join <- inner_join(eventtab, timetab, by = c(box_vars, "MUID")) %>%
     mutate(SighRate = sighs/measuretime*60, ApneaRate = apneas/measuretime*60)
   
+  # By default, set categories in order of appearance in data.
   for(ii in box_vars){
     eventtab_join[[ii]] <- factor(eventtab_join[[ii]], levels = unique(tbl0[-c(measure_breaks), ][[ii]]))
   }
   
+  # Set label + internal variable names.
   r_vars <- c()
   r_vars_wu <- c()
   if(sighs){
@@ -466,6 +489,7 @@ if(sighs || apneas){
     # Stats only using graphing variables.
     other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
     
+    # Make graph + save
     graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join, 
                other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
                r_vars_wu[ii], xvar_wu, pointdodge_wu)
@@ -476,6 +500,18 @@ if(sighs || apneas){
 ########## Poincare plots #############
 #######################################
 
+# Function to make poincare plots.
+## Inputs:
+### resp_var: character string, name of dependent variable.
+### graph_data: data frame, data used for graphing.
+### xvar: character string, variable to separate different plots.
+### pointdodge: character string, variable to separate points to different colors.
+### facet1: character string, variable for row panels.
+### facet2: character string, variable for column panels.
+### pointdodge_name: character string, desired legend title for color.
+### inclusion_filter: boolean, whether to exclude points by the breath filter.
+## Outputs:
+### Saves generated plot; otherwise no return value.
 poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1, 
                            facet2, pointdodge_name = "", inclusion_filter = TRUE) {
   
@@ -484,10 +520,13 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     return()
   }
   
+  # Create lead/lag data for plotting
   poincare_df <- data.frame(lag = graph_data[[resp_var]][-nrow(graph_data)], 
                             lead = graph_data[[resp_var]][-1],
                             Breath_Inclusion_Filter = graph_data$Breath_Inclusion_Filter[-nrow(graph_data)])
   
+  # Settings for graphing variables
+  ## Point color
   if(pointdodge != ""){
     poincare_df$pc <- factor(graph_data[[pointdodge]][-nrow(graph_data)], 
                              levels = unique(graph_data[[pointdodge]]))
@@ -496,6 +535,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     pointdodge_g <- NULL
   }
   
+  ## Rowpanels.
   if(facet1 != ""){
     poincare_df$facet1 <- factor(graph_data[[facet1]][-nrow(graph_data)], 
                                  levels = unique(graph_data[[facet1]]))
@@ -504,6 +544,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     facet1_g <- "."
   }
   
+  ## Column panels.
   if(facet2 != ""){
     poincare_df$facet2 <- factor(graph_data[[facet2]][-nrow(graph_data)], 
                                  levels = unique(graph_data[[facet2]]))
@@ -512,6 +553,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     facet2_g <- "."
   }
   
+  ## Different files
   if(xvar != ""){
     if(is.numeric(graph_data[[xvar]])){
       print(paste0("Invalid Xvar for poincare plot ", xvar))
@@ -529,6 +571,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     poincare_df <- poincare_df[-c(measure_breaks), ]
   }
   
+  # Are filtered breaths included?
   if(inclusion_filter){
     poincare_df <- poincare_df %>% dplyr::filter(Breath_Inclusion_Filter == 1)
   } 
@@ -539,6 +582,8 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
   if(xvar != ""){
     for(ll in unique(poincare_df[["xvar"]])) {
       poincare_df_sub <- poincare_df[which(poincare_df[["xvar"]] == ll),]
+      
+      # Make graph + save
       p <- ggplot() +
         geom_point(aes_string(x = "lag", y = "lead", color = pointdodge_g), data = poincare_df_sub) +
         geom_abline(slope = 1, intercept = 0) +
@@ -552,6 +597,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     }
     
   } else {
+    # Make graph + save
     p <- ggplot() +
       geom_point(aes_string(x = "lag", y = "lead", color = pointdodge_g), data = poincare_df) +
       geom_abline(slope = 1, intercept = 0) +
@@ -566,6 +612,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
   return()
 }
 
+# Run poincare graph function
 if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
   for(ii in 1:length(poincare_vars)){
     print((paste0("Making Poincare plot ", ii, "/", length(poincare_vars))))
@@ -578,8 +625,17 @@ if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
 ##### Power spectral plots ############
 #######################################
 
+# Function to make Spectral plots.
+## Input:
+### resp_var: character string, name of dependent variable.
+### graph_data: data frame, data used for graphing.
+### pointdodge: character string, variable to separate different plots.
+### inclusion_filter: boolean, whether to exclude points by the breath filter.
+## Outputs:
+### Saves generated plot; otherwise no return value.
 spec_graph <- function(resp_var, graph_data, pointdodge) {
   
+  # Calculate range of frequencies to graph.
   avg_breath_len <- mean(graph_data[["Breath_Cycle_Duration"]], na.rm = TRUE)
   max_hz <- min(max(2, floor(60/avg_breath_len)), min(table(graph_data[[pointdodge]])) / 2)
   if(is.nan(avg_breath_len)){avg_breath_len <- 0.15}
@@ -595,6 +651,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     psd_df <-  reshape2::melt(as.data.frame(psd_list))
     psd_df$tt <- rep(2:max_hz, length(unique(graph_data[[pointdodge]])))
     
+    # Make graph + save
     psd_p <- ggplot(data = psd_df) +
       geom_path(aes(x = tt, y = value)) +
       facet_grid(rows = vars(variable), scales = "free_y") +
@@ -608,6 +665,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     graph_data_sub <- graph_data[which(!is.na(graph_data[[resp_var]])), ]
     psd <- Mod(fft(graph_data_sub[[resp_var]]))[2:max_hz] * 2
     
+    # Make graph + save
     psd_p <- ggplot() +
       geom_path(aes(x = 2:max_hz, y = psd[2:max_hz])) +
       labs(x = "Hz", y = "Magnitude") +
@@ -619,6 +677,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
   return()
 }
 
+# Run spectral graph function
 if((!is.na(spec_vars)) && (length(spec_vars) != 0)){
   for(ii in 1:length(spec_vars)){
     print((paste0("Making spectral plot ", ii, "/", length(spec_vars))))
