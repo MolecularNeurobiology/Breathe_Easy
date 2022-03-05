@@ -36,7 +36,7 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.0.1'
+__version__ = '36.0.3'
 
 """
 # v36.0.0 README
@@ -569,7 +569,7 @@ def load_signal_data(filename, local_logger):
     return signal_data_assembled
 
 
-def extract_header_type(filename):
+def extract_header_type(filename,rows_to_check = 20):
     """
     gathers information regarding the header format/column contents present
     in an exported lab chart signal file (assumes set-up is in line with
@@ -587,38 +587,59 @@ def extract_header_type(filename):
 
     """
     
-    with open(filename) as opfi:
-        # check 1st ten rows to see if header is expected to include
-        # date column with data
-        for i in range(10):
-            if "DateFormat=	M/d/yyyy" in opfi.readline():
-                header_tuples = [
-                   ('ts', float),
-                   ('date', str),
-                   ('vol', float),
-                   ('o2', float),
-                   ('co2', float),
-                   ('temp', float),
-                   ('ch5', float),
-                   ('ch6', float),
-                   ('ch7', float),
-                   ('ch8', float),
-                   ('comment', str)
-                   ]
-                break
+    with open(filename,'r') as opfi:
+        # check 1st [rows_to_check] rows to see if header is expected to 
+        # include date column with data as well as data containing columns
+    
+        ts_columns = ['ts']
+        for i in range(rows_to_check):
+            cur_line = opfi.readline()
+            if "DateFormat=	M/d/yyyy" in cur_line:
+                ts_columns = ['ts','date']
             else:
-                header_tuples = [
-                   ('ts', float),
-                   ('vol', float),
-                   ('o2', float),
-                   ('co2', float),
-                   ('temp', float),
-                   ('ch5', float),
-                   ('ch6', float),
-                   ('ch7', float),
-                   ('ch8', float),
-                   ('comment', str)
-                   ]
+                pass
+                
+            if "ChannelTitle=" in cur_line:
+                header_columns = \
+                    cur_line.lower().replace('\n','').split('\t')[1:]
+                while '' in header_columns:
+                    header_columns.remove('')
+            else:
+                pass
+            
+    # special_columns describe columns that should not be 
+    # processed as float
+    special_columns = {'date':str,'comment':str}
+    
+    # rename_columns describe columns that use a different alias when
+    # handled by this script in subsequent steps
+    rename_columns = {
+        'breathing':'vol',
+        'oxygen':'o2',
+        'oxygen ':'o2',
+        'co2':'co2',
+        'tchamber':'temp',
+        'channel 5':'ch5',
+        'channel 6':'ch6',
+        'channel 7':'ch7',
+        'channel 8':'ch8',
+        'vent flow':'flow'
+        }
+    
+    combined_columns = ts_columns+\
+        [
+            rename_columns[j] if j in rename_columns else j \
+            for j in header_columns
+        ]+\
+        ['comment']
+    
+    header_tuples = [
+                (j.lower(),str) \
+                if j in special_columns \
+                else (j.lower(),float) \
+                for j in combined_columns
+                ]
+
     return header_tuples
 
 
@@ -770,7 +791,12 @@ def merge_signal_data_pieces(df_list):
     return merged_data
 
 
-def apply_voltage_corrections(input_df, factor_dict, column_tuples):
+def apply_voltage_corrections(
+        input_df, 
+        factor_dict, 
+        column_tuples,
+        local_logger=None
+        ):
     """
 
     Parameters
@@ -785,6 +811,7 @@ def apply_voltage_corrections(input_df, factor_dict, column_tuples):
             [destination column in input_df],
             [key in factor_dict for factor]
              )]
+    local_logger : instance of logging.logger (optional)
 
     Returns
     -------
@@ -794,8 +821,15 @@ def apply_voltage_corrections(input_df, factor_dict, column_tuples):
     df = input_df.copy()
 
     for source_column, dest_column, factor_key in column_tuples:
-        df[dest_column] = df[source_column] * \
-            float(factor_dict[factor_key])
+        if source_column in df:
+            df[dest_column] = df[source_column] * \
+                float(factor_dict[factor_key])
+        else:
+            if local_logger is not None:
+                local_logger.info(
+                    f'{source_column} not present in signal data '+\
+                    '- no voltage correction applied'
+                    )
     return df
 
 
@@ -880,7 +914,24 @@ def repair_temperature(
 
     """
     
-    
+    if 'corrected_temp' not in signal_data:
+        if local_logger is not None:
+            local_logger.warning(
+                'corrected_temp not in signal data, replacing with default'
+                )
+        df = signal_data.copy()
+        df['corrected_temp'] = float(
+            check_animal_metadata_and_analysis_parameters(
+                animal_metadata,
+                plyuid,
+                analysis_parameters,
+                'corrected_temp_default',
+                '35',
+                local_logger=local_logger
+                )
+            )
+        
+        return df['corrected_temp']
     df = pandas.DataFrame()
     df['corrected_temp'] = signal_data['corrected_temp'].copy()
 
@@ -1301,6 +1352,7 @@ def extract_body_temperature_timings(
 
 
 def apply_smoothing_filter(signal_data,
+                           column,
                            high_pass=0.1,
                            high_pass_order=2,
                            low_pass=50,
@@ -1336,9 +1388,11 @@ def apply_smoothing_filter(signal_data,
 
     hpf_b, hpf_a = signal.butter(
         high_pass_order, high_pass/(sampleHz/2), 'high')
-    hpf_signal = signal.filtfilt(hpf_b, hpf_a, signal_data['flow'])
+    
+    hpf_signal = signal.filtfilt(hpf_b, hpf_a, signal_data[column])
 
     lpf_b, lpf_a = signal.bessel(low_pass_order, low_pass/(sampleHz/2), 'low')
+    
     lpf_hpf_signal = signal.filtfilt(lpf_b, lpf_a, hpf_signal)
 
     return lpf_hpf_signal
@@ -1596,6 +1650,64 @@ def calculate_moving_average(input_series, window, include_current=True):
     return moving_average
 
 
+def basicRR(
+        CT,
+        TS,
+        noisecutoff = 75,
+        threshfactor = 4,
+        absthresh = 0.3,
+        minRR = 0.05):
+    """
+    simple RR peak caller based on relative signal to noise thresholding
+    CT = signal
+    noisecutoff = perrcentile within signal to consider as noise
+    threshfactor = multiple of the noisecutoff to use for beat detaction
+    minRR = minimum RR in samples (1000BPM ~ 60 ms RR, minRR ~60 @1000Hz)
+    **CV and Rvolt to thresh ratios may help for QC
+    signal filtering is helpful (recommend butter highpass and notch filters)
+    """
+    
+    #get above thresh
+    noise_level=numpy.percentile(CT,noisecutoff)
+    thresh=max(noise_level*threshfactor,absthresh)
+    beats={}
+    index_crosses=[]
+    for i in range(len(CT)-1):
+        if CT[i+1]>=thresh and CT[i]<thresh:
+            index_crosses.append(i+1)
+    
+    if len(index_crosses)==0:
+    
+        return beats#pass #no beats
+    
+    prevJ=0
+    #prevRR=0
+    for i in index_crosses[:-1]:
+        maxR=CT[i]
+        
+        TS_R=TS[i]
+        for j in range(i,len(CT),1):
+            if CT[j]<thresh:
+                break
+            if j>=index_crosses[-1]:
+                break
+            elif CT[j]>maxR:
+                maxR=CT[j]
+        #        indexR=j
+        if j-prevJ>=minRR:
+            #beats[TS_R]={'Rvolt':maxR,'indexR':indexR,'RR':TS[j]-TS[prevJ], 'CV': ((j-prevJ)-prevRR)/(((j-prevJ)+prevRR)/2),'thresh':thresh}
+            beats[TS_R]={'RR':TS[j]-TS[prevJ]}
+            if prevJ==0: 
+                beats[TS_R]['first']=True
+            else: beats[TS_R]['first']=False
+            prevJ=j
+            #prevRR=TS[j]-TS[prevJ]
+    beat_df = pandas.DataFrame(beats).transpose()
+    beat_df.index.name = 'ts'
+    beat_df.reset_index()
+    return beat_df
+
+
 def calculate_basic_breath_parameters(
     signal_data,
     filtered_breaths,
@@ -1693,18 +1805,7 @@ def calculate_basic_breath_parameters(
             float(analysis_parameters['minimum_sigh_amplitude_x_local_VT'])
             )
         ).astype(int)
-
-    breath_parameters['corrected_o2'] = get_avg_by_2_index(
-        signal_data['corrected_o2'],
-        filtered_breaths['il_inhale'],
-        filtered_breaths['il_end']
-        )
-
-    breath_parameters['corrected_co2'] = get_avg_by_2_index(
-        signal_data['corrected_co2'],
-        filtered_breaths['il_inhale'],
-        filtered_breaths['il_end']
-        )
+    
 
     breath_parameters['o2'] = get_avg_by_2_index(
         signal_data['o2'],
@@ -1717,7 +1818,19 @@ def calculate_basic_breath_parameters(
         filtered_breaths['il_inhale'],
         filtered_breaths['il_end']
         )
-    
+
+    breath_parameters['corrected_o2'] = get_avg_by_2_index(
+        signal_data['corrected_o2'],
+        filtered_breaths['il_inhale'],
+        filtered_breaths['il_end']
+        )
+
+    breath_parameters['corrected_co2'] = get_avg_by_2_index(
+        signal_data['corrected_co2'],
+        filtered_breaths['il_inhale'],
+        filtered_breaths['il_end']
+        )        
+        
     breath_parameters['temp'] = get_avg_by_2_index(
         signal_data['temp'],
         filtered_breaths['il_inhale'],
@@ -1729,6 +1842,7 @@ def calculate_basic_breath_parameters(
         filtered_breaths['il_inhale'],
         filtered_breaths['il_end']
         )
+
 
     breath_parameters['Body_Temperature'] = get_avg_by_2_index(
         signal_data['Body_Temperature'],
@@ -2383,10 +2497,17 @@ def create_filters_for_automated_selections(
             str)+auto_keys['Alias'].copy().astype(str)
 
     reverse_timestamp_dict = {}
-    for k in timestamp_dict:
-        if timestamp_dict[k][3:-1] in all_keys:
-            reverse_timestamp_dict[timestamp_dict[k][3:-1]] = k
+    
+    if analysis_parameters.get('Pneumo_Mode') == '1':
+        for k in timestamp_dict:
+            if timestamp_dict[k][3:] in all_keys:
+                reverse_timestamp_dict[timestamp_dict[k][3:]] = k
 
+    else:
+        
+        for k in timestamp_dict:
+            if timestamp_dict[k][3:-1] in all_keys:
+                reverse_timestamp_dict[timestamp_dict[k][3:-1]] = k
     
 
     for key_and_alias in auto_keys['key_and_alias']:
@@ -2420,6 +2541,7 @@ def create_filters_for_automated_selections(
             block_start + float(current_auto_criteria['within_start'])
             )
 
+        
         high_chamber_temp_filter = breath_list['Body_Temperature'] < \
             breath_list['corrected_temp']
         
@@ -2734,6 +2856,18 @@ def collect_calibration_parameters(
 
 
 def getvaporpressure(temperature):
+    """
+    Parameters
+    ----------
+    temperature : Float
+        Temperature in degrees Celsius
+
+    Returns
+    -------
+    Float
+        Vapor Pressure of Water
+
+    """
     return \
         (
             1.142 + (0.8017 * temperature) -
@@ -2742,10 +2876,44 @@ def getvaporpressure(temperature):
 
 
 def getK(C):
+    """
+        Parameters
+    ----------
+    C : Float
+        Temperature in degrees Celsius
+
+    Returns
+    -------
+    Float
+        Temperature in Kelvin
+
+    """
     return (C+273.15)
 
 
 def get_BT_TV_K(tv, calv, act_calv, t_body, t_chamb, room_pressure):
+    """
+    Parameters
+    ----------
+    tv : Float
+        uncorrected tidal volume (V)
+    calv : Float
+        uncorrected tidal volume from calibration period (V)
+    act_calv : Float
+        nominal calibration volume (mL)
+    t_body : Float
+        Body Temperature (Celsius)
+    t_chamb : Float
+        Chamber Temperature (Celsius)
+    room_pressure : Float
+        Room Barometric Pressure (mmHg)
+
+    Returns
+    -------
+    Float
+        corrected tidal volume (mL)
+
+    """
     return \
         (tv/calv) * (act_calv) * \
         (getK(t_body) * (room_pressure-getvaporpressure(t_chamb))) / \
@@ -2754,6 +2922,26 @@ def get_BT_TV_K(tv, calv, act_calv, t_body, t_chamb, room_pressure):
                 getK(t_body) * (room_pressure - getvaporpressure(t_chamb))
                 ) -
                 getK(t_chamb) * (room_pressure - getvaporpressure(t_body)))
+
+
+def get_pneumo_TV(tv,calv,act_calv):
+    """
+        Parameters
+    ----------
+    tv : Float
+        uncorrected tidal volume (V)
+    calv : Float
+        uncorrected tidal volume from calibration period (V)
+    act_calv : Float
+        nominal calibration volume (mL)
+
+    Returns
+    -------
+    Float
+        corrected tidal volume (mL)
+
+    """
+    return tv / calv * act_calv
 
 
 def get_VO2(o2_in, o2_out, flowrate):
@@ -2777,6 +2965,7 @@ def apply_volumetric_and_respiratory_calculations(
         calibration_parameters,
         automated_selections_filters,
         manual_selections_filters,
+        analysis_parameters,
         local_logger
         ):
     local_logger.info('Applying volumetric and respiratory calculations')
@@ -2787,11 +2976,80 @@ def apply_volumetric_and_respiratory_calculations(
         manual_selections_filters, 
         local_logger
         )
-    enhanced_volume_list = calculate_calibrated_volume_and_respiration(
+    if analysis_parameters.get('Pneumo_Mode') == '1':
+        enhanced_volume_list = \
+            calculate_calibrated_pneumo_volume_and_respiration(
+                breath_list,
+                basic_volume_list,
+                calibration_parameters
+                )
+    else:
+        enhanced_volume_list = calculate_calibrated_volume_and_respiration(
+            breath_list,
+            basic_volume_list,
+            calibration_parameters
+            )
+    return enhanced_volume_list
+
+def calculate_calibrated_pneumo_volume_and_respiration(
         breath_list,
-        basic_volume_list,
+        volume_list,
         calibration_parameters
+        ):
+
+    enhanced_volume_list = volume_list.copy()
+    
+    enhanced_volume_list['calibrated_TV'] = get_pneumo_TV(
+        breath_list['iTV'],
+        volume_list['base_tv'],
+        calibration_parameters['cal_vol_mL'],
         )
+
+    enhanced_volume_list['calibrated_PIF'] = get_pneumo_TV(
+        breath_list['PIF'],
+        volume_list['base_tv'],
+        calibration_parameters['cal_vol_mL'],
+        )
+
+    enhanced_volume_list['calibrated_PEF'] = get_pneumo_TV(
+        breath_list['PEF'],
+        volume_list['base_tv'],
+        calibration_parameters['cal_vol_mL'],
+        )
+
+    enhanced_volume_list['VO2'] = get_VO2(
+        volume_list['base_o2'],
+        breath_list['o2'],
+        calibration_parameters['Flowrate (SLPM)']
+        )
+
+    enhanced_volume_list['VCO2'] = get_VCO2(
+        volume_list['base_co2'],
+        breath_list['co2'],
+        calibration_parameters['Flowrate (SLPM)']
+        )
+    
+    enhanced_volume_list['VE'] = breath_list['BPM'] * \
+        enhanced_volume_list['calibrated_TV']
+    enhanced_volume_list['VE_per_VO2'] = enhanced_volume_list['VE'] / \
+        enhanced_volume_list['VO2']
+    enhanced_volume_list['RER'] = enhanced_volume_list['VCO2'] / \
+        enhanced_volume_list['VO2']
+    enhanced_volume_list['calibrated_TV_per_gram'] = enhanced_volume_list[
+        'calibrated_TV'] / calibration_parameters['Weight']
+    enhanced_volume_list['VE_per_gram'] = enhanced_volume_list[
+        'VE'] / calibration_parameters['Weight']
+    enhanced_volume_list['VO2_per_gram'] = enhanced_volume_list[
+        'VO2'] / calibration_parameters['Weight']
+    enhanced_volume_list['VCO2_per_gram'] = enhanced_volume_list[
+        'VCO2'] / calibration_parameters['Weight']
+    enhanced_volume_list['TT_per_TV'] = breath_list['TT'] / \
+        enhanced_volume_list['calibrated_TV']
+    enhanced_volume_list['TT_per_TVpg'] = breath_list['TT'] / \
+        enhanced_volume_list['calibrated_TV_per_gram']
+    enhanced_volume_list['O2_per_Air'] = enhanced_volume_list[
+        'VO2'] * breath_list['TT'] / 60 / enhanced_volume_list['calibrated_TV']
+
     return enhanced_volume_list
 
 def populate_baseline_values_for_calibration_calculations(
@@ -2879,7 +3137,8 @@ def populate_baseline_values_for_calibration_calculations(
 def calculate_calibrated_volume_and_respiration(
         breath_list,
         volume_list,
-        calibration_parameters
+        calibration_parameters,
+        analysis_parameters
         ):
     
     enhanced_volume_list = volume_list.copy()
@@ -3406,7 +3665,10 @@ def main():
                     )
 
                 # load current signal file
-                Signal_Data = load_signal_data(File, logger)
+                Signal_Data = load_signal_data(
+                    File, 
+                    logger
+                    )
 
                 # apply basic voltage corrections to gas and temperature values
                 Signal_Data = apply_voltage_corrections(
@@ -3420,7 +3682,8 @@ def main():
                             'corrected_temp',
                             'temperature_calibration_factor'
                             )
-                        ]
+                        ],
+                    logger
                     )
 
                 # repair chamber temperature if needed
@@ -3431,6 +3694,32 @@ def main():
                     Analysis_Parameters,
                     local_logger=logger
                     )
+                
+                if Analysis_Parameters.get('Pneumo_Mode') == '1':
+                    purge_columns = []
+                    if 'temp' not in Signal_Data:
+                        Signal_Data['temp'] = Signal_Data['corrected_temp']
+                        purge_columns.append('temp','corrected_temp')
+                        
+                    if 'corrected_co2' not in Signal_Data:
+                        Signal_Data['corrected_co2'] = \
+                          Analysis_Parameters.get('calibrated_co2_default') if\
+                          Analysis_Parameters.get('calibrated_co2_default') \
+                          else -1
+                        Signal_Data['co2'] = \
+                            Signal_Data['corrected_co2']
+                        purge_columns.append('calibrated_co2_default')
+                        logger.warning('CO2 data not in signal data')
+                        
+                    if 'corrected_o2' not in Signal_Data:
+                        Signal_Data['corrected_o2'] = \
+                          Analysis_Parameters.get('calibrated_o2_default') if\
+                          Analysis_Parameters.get('calibrated_o2_default') \
+                          else -1
+                        Signal_Data['o2'] = \
+                            Signal_Data['corrected_o2']
+                        purge_columns.append('calibrated_o2_default')
+                        logger.warning('O2 data not in signal data')
 
                 # collect time stamps
                 Timestamp_Dict = dict(
@@ -3456,13 +3745,28 @@ def main():
                     )
 
                 # differentiate breathing signal to 'derived flow'
-                Signal_Data['flow'] = Signal_Data['vol'].diff().fillna(1.0)
+                if 'flow' not in Signal_Data:
+                    Signal_Data['flow'] = Signal_Data['vol'].diff().fillna(1.0)
+                    logger.info('calculating flow from vol data')
+                else:
+                    logger.info('flow data present in signal data')
+
+                if 'vol' not in Signal_Data:
+                    Signal_Data['vol'] = Signal_Data['flow'].cumsum()
+                    Signal_Data['vol'] = apply_smoothing_filter(
+                        Signal_Data,
+                        'vol'
+                        )
+                    logger.info('calculating vol data from flow data')
+                else:                
+                    logger.info('vol data present in signal data')
 
                 # calculate sampling rate (expected to be 1000Hz)
                 sampleHz = round(1/(Signal_Data['ts'][2]-Signal_Data['ts'][1]))
 
                 # calculate moving average of vol signal to use for QC
                 # (1sec centered mov avg)
+                    
                 Signal_Data['mov_avg_vol'] = Signal_Data['vol'].rolling(
                     int(sampleHz), center=True
                     ).mean()
@@ -3470,7 +3774,10 @@ def main():
                 # smooth data with high and low pass filter if option selected
                 if int(Analysis_Parameters['apply_smoothing_filter']) == 1:
                     Signal_Data['original_flow'] = Signal_Data['flow'].copy()
-                    Signal_Data['flow'] = apply_smoothing_filter(Signal_Data)
+                    Signal_Data['flow'] = apply_smoothing_filter(
+                        Signal_Data,
+                        'flow'
+                        )
 
                 # call breaths
                 Breath_List = breath_caller(
@@ -3479,6 +3786,12 @@ def main():
                     logger
                     )
 
+                if 'ecg' in Signal_Data:
+                    Beat_List = basicRR(Signal_Data['ecg'],Signal_Data['ts'])
+                else:
+                    pass
+                
+                
                 # recalibrate gas concentration
                 Signal_Data['calibrated_o2'], Signal_Data['calibrated_co2'], \
                 Breath_List['calibrated_o2'], Breath_List['calibrated_co2'] = \
@@ -3529,7 +3842,8 @@ def main():
                         Breath_List, 
                         Calibration_Parameters, 
                         Automated_Selections_Filters, 
-                        Manual_Selections_Filters, 
+                        Manual_Selections_Filters,
+                        Analysis_Parameters,
                         logger)
 
                 Revised_Automated_Selections_Filters = \
@@ -3572,6 +3886,7 @@ def main():
                         Revised_Calibration_Parameters, 
                         Revised_Automated_Selections_Filters, 
                         Manual_Selections_Filters, 
+                        Analysis_Parameters,
                         logger)
 
 
@@ -3596,15 +3911,37 @@ def main():
                     logger
                     )
                 
-                Output_List[
-                    (Output_List['AUTO_IND_INCLUDE'] == 1) |
-                    (Output_List['MAN_IND_INCLUDE'] == 1)
-                    ].to_json(
-                        os.path.join(
-                            Output_Path,
-                            '{}_{}.json'.format(MUID,PLYUID)
-                            )
+                if len(
+                        Output_List[
+                            (Output_List['AUTO_IND_INCLUDE'] == 1) |
+                            (Output_List['MAN_IND_INCLUDE'] == 1)
+                            ]
+                        )<1:
+                    logger.exception(
+                        "{}_{} does not have any includable breaths ".format(
+                            MUID,PLYUID
+                            )+
+                        "- no JSON file will be produced."+
+                        "This is probably due to problems during "+
+                        "sample collection or settings that are not "+
+                        "appropriate for the current file"
                         )
+                else:
+                    logger.info(
+                        "{}_{} has includable breaths {}".format(
+                            MUID,PLYUID,len(Output_List)
+                            )+
+                        "- JSON file will be produced."
+                        )
+                    Output_List[
+                        (Output_List['AUTO_IND_INCLUDE'] == 1) |
+                        (Output_List['MAN_IND_INCLUDE'] == 1)
+                        ].to_json(
+                            os.path.join(
+                                Output_Path,
+                                '{}_{}.json'.format(MUID,PLYUID)
+                                )
+                            )
                         
                 if 'All_Breath_Output' in Analysis_Parameters:
                     if Analysis_Parameters['All_Breath_Output'] == '1':
