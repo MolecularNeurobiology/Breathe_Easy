@@ -3088,6 +3088,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.p_mouse_dict={}
         self.m_mouse_dict={}
         self.metadata_warnings = {}
+        self.metadata_pm_warnings = {}
         self.metadata_passlist = []
         self.tsbyfile = {}
         self.row_loop = ""
@@ -4036,7 +4037,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb.show()
                 self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_signals])}\n\nThey will not be included.")
             print(self.signals)
-            print(self.input_dir_py)
                 # reply = QMessageBox.information(self, 'Incorrect file format', 'One or more of the selected signal files are not text formatted: .\nWould you like to select a different signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
         else:
             if self.signals == []:
@@ -4203,12 +4203,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def auto_get_breath_files(self):
         print("auto_get_breath_files()")
-        if self.output_dir_py == "":
-            self.breath_list.addItem("Breathcaller output directory not detected.")
-        else:
-            self.breath_list.clear()
-            self.breath_list.addItem(self.output_dir_py)
-            self.input_dir_r = self.output_dir_py
+        # if self.output_dir_py == "":
+        #     if self.stagg_list == []:
+        #         self.breath_list.addItem("Breathcaller output directory not detected.")
+        # else:
+        if self.stagg_list != []:
+            reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.No:
+                self.breath_list.clear()
+                self.stagg_list = []
+            # self.breath_list.addItem(self.output_dir_py)
+            # self.input_dir_r = self.output_dir_py
+        self.stagg_list = [os.path.join(self.output_dir_py,file) for file in os.listdir(self.output_dir_py) if file.endswith(".json")==True]
+        for x in self.stagg_list:
+            self.breath_list.addItem(x)
+        print(self.stagg_list)
+            # self.signal_files_list.clear()
+           
         # breath_files_path=self.output_dir_py
         # self.breath_list.clear()
         # if not breath_files_path:
@@ -4274,17 +4285,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def get_signal_files(self):
         print("get_signal_files()")
-        if not self.input_dir_py:
-            if not self.mothership:
-                try:
-                    file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
-                except Exception as e:
-                    print(f'{type(e).__name__}: {e}')
-                    print(traceback.format_exc())
-            else:
-                file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
-        else:
-            file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
+        # if not self.input_dir_py:
+        #     if not self.mothership:
+        #         try:
+        #             file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
+        #         except Exception as e:
+        #             print(f'{type(e).__name__}: {e}')
+        #             print(traceback.format_exc())
+        #     else:
+        #         file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
+        # else:
+        file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
         if not file_name[0]:
             if self.signals == []:
                 self.signal_files_list.clear()
@@ -4311,15 +4322,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb = Thumbass(self)
                 self.thumb.show()
                 self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_signals])}\n\nThey will not be included.")
-            else:  
-                self.input_dir_py = os.path.dirname(self.signals[0])
-            print(self.input_dir_py)
+            # self.input_dir_py = os.path.dirname(self.signals[0])
             print(self.signals)
-        signal_dir = []
-        for s in self.signals:
-            signal_dir.append(os.path.dirname(s))
-        # if len(set(signal_dir))>1:
-        print(len(set(signal_dir)))
 
     def get_metadata(self):
         print("get_metadata()")
@@ -4375,12 +4379,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def connect_database(self):
         print("connect_database()")
-        if self.input_dir_py == "":
+        if self.signals == []:
             reply = QMessageBox.information(self, 'Unable to connect to database', 'No signal files selected.\nWould you like to select a signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.get_signal_files()
         else:
             self.metadata_warnings={}
+            self.metadata_pm_warnings={}
             self.metadata_list.addItem("Gauging Filemaker connection...")
             try:
                 dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
@@ -4389,7 +4394,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.mp_parser()
                 self.get_study()
                 self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
-                self.save_filemaker()
+                self.metadata_list.clear()
+                if os.path.exists(self.mothership):
+                    self.save_filemaker()
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
@@ -4398,6 +4405,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 reply = QMessageBox.information(self, 'Unable to connect to database', 'PAPR is unable to connect to the database.\nWould you like to select another metadata file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                 if reply == QMessageBox.Ok:
                     self.get_metadata()
+                
                 # if reply == QMessageBox.Cancel:
                     # self.metadata_list.clear()
                     # for item in self.metadata_list.findItems("file not detected.",Qt.MatchEndsWith):
@@ -4535,6 +4543,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 if self.p_mouse_dict[z]['Mid_body_temperature'] == 0.0:
                     self.p_mouse_dict[z]['Mid_body_temperature'] = None
             #%
+            print(self.m_mouse_dict)
+            print(self.p_mouse_dict)
             self.metadata_checker_filemaker()
             plys={}
             for k in self.metadata_warnings:
@@ -4546,6 +4556,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                             plys[v] = [k]
             for w,x in plys.items():
                 self.hangar.append(f"{w}: {[x for x in plys[w]]}")
+            for u in self.metadata_pm_warnings:
+                self.hangar.append(f"{self.metadata_pm_warnings[u][0]}")
                 # self.hangar.append(f"{k}: {self.metadata_warnings[k][0]}")
             #%
             p_df=pd.DataFrame(self.p_mouse_dict).transpose()
@@ -4584,10 +4596,21 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 # (We check for the MUID in the m_mouse_dict because its populated regardless of the status of 
                 # a MUID's associated PlyUID)
                 if f"M{m}" not in self.m_mouse_dict:
-                    self.metadata_warnings[f"Ply{p}"] = [f"Neither Ply{p} nor M{m} were found in metadata."]
+                    self.metadata_pm_warnings[f"Ply{p}"] = [f"Neither Ply{p} nor M{m} were found in metadata."]
                 # If the PlyUID isn't in the metadata, but its associated MUID is:
                 else:
-                    self.metadata_warnings[f"Ply{p}"] = [f"Ply{p} of M{m} not found in metadata."]
+                    if p != "":
+                        self.metadata_pm_warnings[f"Ply{p}"] = [f"Ply{p} of M{m} not found in metadata."]
+                    else:
+                        if self.metadata_pm_warnings[f"Ply{p}"] == []:
+                            self.metadata_pm_warnings[f"Ply{p}"] = [f"Missing PlyUID for M{m}."]
+                        else:
+                            self.metadata_pm_warnings[f"Ply{p}"].append(f"Missing PlyUID for M{m}.")
+                        mice = [self.p_mouse_dict[d]['MUID'] for d in self.p_mouse_dict]
+                        for c in mice:
+                            if mice.count(c)>1:
+                                self.metadata_pm_warnings[f"Ply{p}"].append(f"More than one PlyUID was found for the following metadata: {[c for c in set(mice) if mice.count(c)>1]}")
+
                     # Should we consider showing what PlyUIDs are associated with that MUID?
             else:
                 # Check if the MUID of the signal file matches that found in the metadata:
@@ -4756,15 +4779,28 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def input_directory_r(self):
         print("input_directory_r()")
         # folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/BASSPRO_output")
-        input_dir_r = QFileDialog.getExistingDirectory(self, 'Choose breathlist directory', "./BASSPRO_output")
-        if not input_dir_r:
-            if self.input_dir_r == "":
-                self.breath_list.clear()
+        input_dir_r = QFileDialog.getOpenFileNames(self, 'Choose JSON files from BASSPRO output', "./BASSPRO_output")
+        # if not input_dir_r:
+        #     if self.input_dir_r == "":
+        #         self.breath_list.clear()
                 # self.breath_list.addItem("No folder selected.")
-        else:
-            self.input_dir_r = input_dir_r
-            self.breath_list.clear()
-            self.breath_list.addItem(self.input_dir_r)
+        # else:
+        if self.stagg_list != []:
+            reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.No:
+                self.breath_list.clear()
+                self.stagg_list = []
+            # self.breath_list.addItem(self.output_dir_py)
+        # self.input_dir_r = self.output_dir_py
+        self.stagg_list = [file for file in input_dir_r[0]  if file.endswith(".json")==True]
+        for x in self.stagg_list:
+            self.breath_list.addItem(x)
+        print(self.stagg_list)
+        # if os.path.exists(input_dir_r):
+        #     self.st
+        #     self.input_dir_r = input_dir_r
+        #     self.breath_list.clear()
+        #     self.breath_list.addItem(self.input_dir_r)
     
     def input_directory_r_env(self):
         print("input_directory_r_env()")
@@ -4828,25 +4864,26 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
      
     def go_py(self):
         print("go_py()")
-        # log=os.path.join(self.output_dir_py,'log_"{bob}"'.format(bob=os.path.basename(os.path.normpath(self.output_dir_py))))
-        breathcaller_cmd = 'python -u "{module}" -i "{id}" {filelist} -o "{output}" -a "{metadata}" -m "{manual}" -c "{auto}" -p "{basic}"'.format(
-            module = self.breathcaller_path,
-            id = self.input_dir_py,
-            output = self.output_dir_py,
-            # signal = os.path.basename(file_py),
-            filelist= '-f "'+'" -f "'.join([os.path.basename(i) for i in self.signals])+'"',
-            metadata = self.metadata,
-            manual = Plethysmography.mansections,
-            # manual = "", 
-            auto = self.autosections,
-            basic = self.basicap
-        )
+        for d in self.signal_dict:
+            # log=os.path.join(self.output_dir_py,'log_"{bob}"'.format(bob=os.path.basename(os.path.normpath(self.output_dir_py))))
+            breathcaller_cmd = 'python -u "{module}" -i "{id}" {filelist} -o "{output}" -a "{metadata}" -m "{manual}" -c "{auto}" -p "{basic}"'.format(
+                module = self.breathcaller_path,
+                id = d,
+                output = self.output_dir_py,
+                # signal = os.path.basename(file_py),
+                filelist= '-f "'+'" -f "'.join([os.path.basename(i) for i in self.signal_dict[d]])+'"',
+                metadata = self.metadata,
+                manual = self.mansections,
+                # manual = "", 
+                auto = self.autosections,
+                basic = self.basicap
+            )
 
-        print(breathcaller_cmd)
-        self.hangar.append("Breathcaller command: "+breathcaller_cmd)
-        print('go_py thread id',threading.get_ident())
-        print("go_py process id",os.getpid())
-        self.py_proc=subprocess.Popen(breathcaller_cmd, stdout= subprocess.PIPE, stderr = subprocess.STDOUT)
+            print(breathcaller_cmd)
+            self.hangar.append("Breathcaller command: "+breathcaller_cmd)
+            print('go_py thread id',threading.get_ident())
+            print("go_py process id",os.getpid())
+            self.py_proc=subprocess.Popen(breathcaller_cmd, stdout= subprocess.PIPE, stderr = subprocess.STDOUT)
 
     def go_super(self):
         print("super!")
@@ -4925,10 +4962,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print('Pyprogress thread id',threading.get_ident())
         print("Pyprogress process id",os.getpid())
         signal_dir = []
+        self.signal_dict = {}
         for s in self.signals:
             signal_dir.append(os.path.dirname(s))
         # if len(set(signal_dir))>1:
-        print(len(set(signal_dir)))
+        for d in set(signal_dir):
+            self.signal_dict.update({d:[]})
+            for l in self.signals:
+                if os.path.dirname(l) == d:
+                    self.signal_dict[d].append(l)
         self.go_py()
         print("post go")
         self.completed = 0
@@ -5105,7 +5147,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.worker.start()
             # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
             print("worker started?")
-    
+            self.output_check()
+
+    def output_check(self):
+        if len(self.stagg_list) != len(self.signals):
+            stagg = []
+            bass = []
+            for s in self.stagg_list:
+                stagg.append(os.path.basename(s).split('.')[0])
+            for b in self.signals:
+                bass.append(os.path.basename(b).split('.')[0])
+            diff = bass - stagg
+            print(diff)
+            self.hangar.append(f"The following signal files did not yield output: {','.join(x for x in list(diff.elements()))} \nConsider checking the original LabChart file or the metadata for anomalies.") 
+
     def rthing_to_do(self):
         # self.hangar.append("STAGG analyzing breath files...")
         print("rthing_to_do()")
