@@ -7,12 +7,11 @@ print("Importing data")
 #########################
 #####JSON LOCATION#######
 #########################
-#Sets working directory to the Mothership so arguments in command line that indicate file locations are 
-#understood and found by R.
-# setwd("~/") 
+# Sets working directory to the Mothership so arguments in command line that indicate file locations are 
+# understood and found by R.
 setwd(args$dir)
 
-#Imports all JSON files in file location indicated in args$JSON.
+# Imports all JSON files in file location indicated in args$JSON.
 full_dirs <- unlist(strsplit(args$JSON, ","))
 filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE), 
                grep("\\.json", full_dirs, value = TRUE))
@@ -20,28 +19,40 @@ filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, rec
 #########################
 #####IMPORT JSONS########
 #########################
-#Function that imports all JSON files in the indicated folder and appends them into one tibble. 
+
+# Function that imports all JSON files in the indicated folder and merges them into one tibble. 
+## Inputs:
+### fp: vector of filepaths for all desired JSON files for analysis.
+## Outputs:
+### breath_df: the full data as a single data frame.
 import_data <- function(fp){
-  #Function to convert NULL and "" values in the raw json to NA (necessitated by R handling of NULL values)
+  #Function to convert "" values in the raw json to NA (necessitated by R handling of NULL values)
   blank_to_na <- function(xx){
     new_xx <- unlist(lapply(xx, function(x) ifelse(((x == "")|(is.na(x))|(x == "NA")), NA, x)))
     return(new_xx)
   }
   
+  #Function to convert NULL values in the raw json to NA (necessitated by R handling of NULL values)
   null_to_na <- function(xx){
     new_xx <- unlist(lapply(xx, function(x) ifelse(is.null(x), NA, x)))
     return(new_xx)
   }
   
-  #For each mouse, import and attach to overall tbl.
+  #For each individual data file, import and attach to overall data frame.
   for(ii in fp){
     if(grepl("config", ii)) {next}
     print(paste0("Adding file:", ii))
     
-    #Raw import
+    # Raw import
     temp_json <- rjson::fromJSON(file = ii, simplify = FALSE)
     
-    #Convert NULL to NA
+    # Empty file
+    if(all((unlist(lapply(temp_json, length)) == 0), na.rm = TRUE)){
+      print(paste0("File '", ii, "' has no valid breaths."))
+      next
+    }
+    
+    # Convert NULL to NA
     temp_list <- lapply(temp_json, null_to_na)
     temp_list <- lapply(temp_list, blank_to_na)
     
@@ -49,24 +60,38 @@ import_data <- function(fp){
     temp_df <- as_tibble(temp_list)
     
     if(!exists("breath_df")){
-      # Create breath_df
+      # Create breath_df for the first file
       breath_df <- temp_df 
     } else {
-      # Check if types match
+      # Attaching data from subsequent files to existing data frame.
+      ## Assumes all data files have the same column names to reference the same type of information.
+      ## Check if data type for each column from new file matches existing data.
       for(col_num in 1:ncol(breath_df)){
         col_name <- colnames(breath_df)[col_num]
+        # If non-match, convert everything to character.
         if((!is.null(temp_df[[col_name]])) & (class(breath_df[[col_name]]) != class(temp_df[[col_name]]))) {
           breath_df[[col_name]] <- as.character(breath_df[[col_name]])
           temp_df[[col_name]] <- as.character(temp_df[[col_name]])
         }
       }
-      # Attach to overall tbl.
-      breath_df <- bind_rows(breath_df, temp_df)
+      # Try to attach to overall tbl.
+      df_test <- try(breath_df <- bind_rows(breath_df, temp_df))
+      ## Error handling
+      if(class(df_test) == "try-error"){
+        print(paste0("Unable to attach file '", ii, "'."))
+      }
     }
     
   }
   
+  # No valid files: stop all execution.
+  if(!exists("breath_df")){
+    print("Error: no valid files. Stopping StAGG execution.")
+    stop()
+  }
+  
   # Check if character column should be numeric
+  ## Assumes that all numbers-like data are supposed to be numeric.
   for(col_num in 1:ncol(breath_df)){
     suppressWarnings(temp_comp <- as.numeric(breath_df[[col_num]]))
     if(sum(is.na(breath_df[[col_num]])) == sum(is.na(temp_comp))) {
@@ -77,10 +102,21 @@ import_data <- function(fp){
   return(breath_df)
 } 
 
-#Performs the above function and loads in all JSON files as one tibble.
+# Calls the above function and loads in all JSON files as one data frame.
 tbl0 <- import_data(filepaths)
 
-# Converts column names to names without units.
+
+#########################
+#### R CONFIGURATION ####
+#########################
+
+
+# Converts column names to names without units, to be used internally to avoid eval/parse issues.
+## Assumes that units are denoted inside of parentheses at end of desired column name.
+## Inputs:
+### colname: name of column
+## Outputs:
+### New column name, with parentheses removed.
 wu_convert <- function(colname) {
   if(is.na(colname)){
     return("")
@@ -92,18 +128,13 @@ wu_convert <- function(colname) {
   }
 }
 
-#########################
-#### R CONFIGURATION ####
-#########################
-
 print("Loading variable configuration")
 
-#Loads R configuration file. This file has settings for independent, dependent, and covariate variables;
-#body weight and temperature; and alias assignment if a variable name change is desired by the user.
+# Loads R configuration file. This file has settings for independent, dependent, and covariate variables;
+# body weight and temperature; and alias assignment if a variable name change is desired by the user.
 var_names <- read.csv(args$R_config, stringsAsFactors=FALSE, na.strings = c("NA", "", " "))
-# var_names <- read.csv("/D/Resp/papr_6_20/papr_7_4/R_config/r_config3.csv", stringsAsFactors=FALSE)
 
-#Convert to names without units.
+#Convert raw names to names without units, to be used internally.
 var_names$With_units <- var_names$Alias
 var_names$Alias <- sapply(var_names$With_units, wu_convert)
 
@@ -116,11 +147,11 @@ response_vars <- var_names$Alias[which(var_names$Dependent != 0)]
 covariates <- var_names$Alias[which(var_names$Covariate != 0)]
 interaction_vars <- var_names$Alias[which(var_names$Independent != 0)]
 
-#Custom graph ranges
+# Set custom graph ranges
 ymins <- as.numeric(var_names$ymin[which(var_names$Dependent != 0)])
 ymaxes <- as.numeric(var_names$ymax[which(var_names$Dependent != 0)])
 
-# Correct for user settings
+# Check user settings for potential issues; print warnings.
 for(jj in interaction_vars){
   if(typeof(tbl0[[jj]]) == "numeric"){
     tbl0[[jj]] <- as.character(tbl0[[jj]])
@@ -139,9 +170,12 @@ for(jj in covariates){
   }
 }
 
-#Determines if extra graphs are plotted per user choices.
+# Determines which extra optional graphs are plotted and models are run per user choices.
+## Spectral plots.
 spec_vars <- var_names$Alias[which(var_names$Spectral != 0)]
+## Poincare plots.
 poincare_vars <- var_names$Alias[which(var_names$Poincare != 0)]
+## Transformation variables for modeling
 transform_set <- var_names$Transformation[which(var_names$Dependent != 0)]
   
 #########################
@@ -149,23 +183,24 @@ transform_set <- var_names$Transformation[which(var_names$Dependent != 0)]
 #########################
 
 
-#Load Graph configuration file.
+# Loads graph configuration file. This file has settings for which independent variables are to be displayed in plot aesthetics.
+
 print("Loading graph settings")
 graph_vars <- read.csv(args$Graph, stringsAsFactors = FALSE)
-# graph_vars <- read.csv("/D/Resp/Mothership_5-20-2021/G_config/graph_config4.csv")
 graph_vars$Alias <- as.character(graph_vars$Alias)
 graph_vars$Role <- as.numeric(graph_vars$Role)
 
-#Convert to names without units.
+# Convert aliases to names without units.
 graph_vars$With_units <- as.character(graph_vars$Alias)
 graph_vars$Alias <- sapply(graph_vars$With_units, wu_convert)
 
-#Sets statistical values for dependent, independent, and covariate variables based on R_config file.
+# Sets statistical values for dependent, independent, and covariate variables based on R_config file.
+## The names with units are used for plot display.
 xvar_wu <- graph_vars$With_units[which(graph_vars$Role == 1)]
 pointdodge_wu <- graph_vars$With_units[which(graph_vars$Role == 2)]
 facet1_wu <- graph_vars$With_units[which(graph_vars$Role == 3)]
 facet2_wu <- graph_vars$With_units[which(graph_vars$Role == 4)]
-
+## The names without units are for internal usage.
 xvar <- graph_vars$Alias[which(graph_vars$Role == 1)]
 pointdodge <- graph_vars$Alias[which(graph_vars$Role == 2)]
 facet1 <- graph_vars$Alias[which(graph_vars$Role == 3)]
@@ -184,7 +219,9 @@ for(gg in c(xvar, pointdodge, facet1, facet2)){
 
 print("Loading optional graph settings")
 
+# Load optional graph settings.
 other_config <- read.csv(args$Foxtrot, stringsAsFactors = FALSE, na.strings = c("", " ", "NA"))
+## Default to svg image files.
 if(is.null(args$I)){
   args$I <- ".svg"
 }
@@ -193,6 +230,7 @@ if(is.null(args$I)){
 ## Character Conversion ##
 ##########################
 
+# Truncate long column names
 for(ii in 1:ncol(tbl0)){
   if(typeof(tbl0[[ii]]) == "character"){
     tbl0[[ii]] <- str_trunc(tbl0[[ii]], 25, side = "center", ellipsis = "___")
@@ -201,5 +239,6 @@ for(ii in 1:ncol(tbl0)){
 
 
 # Savepoint
-save.image(file = paste0(args$Output, "/", format(Sys.time(), "%m%d%y_%H%M%S"), ".RData"))
+save_atp <- try(save.image(file=paste0(args$Output, "/myEnv_",format(Sys.time(),'%Y%m%d_%H%M%S'),".RData")))
+if(class(save_atp) == "try-error") {save.image(file=paste0("./myEnv_", format(Sys.time(),'%Y%m%d_%H%M%S'),".RData"))}
 
