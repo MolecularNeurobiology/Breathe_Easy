@@ -5164,7 +5164,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.worker.start()
             # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
             print("worker started?")
-            self.output_check()
+            try:
+                self.output_check()
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
 
     def output_check(self):
         if len(self.stagg_list) != len(self.signals):
