@@ -92,9 +92,9 @@ class Ui_Custom(object):
         self.gridLayout.addLayout(self.verticalLayout, 0, 0, 1, 1)
 
         self.retranslateUi(Custom)
-        self.buttonBox.accepted.connect(Custom.hide)
         self.buttonBox.rejected.connect(Custom.close)
         self.buttonBox.accepted.connect(Custom.save_custom)
+        self.buttonBox.accepted.connect(Custom.hide)
         QtCore.QMetaObject.connectSlotsByName(Custom)
 
     def retranslateUi(self, Custom):

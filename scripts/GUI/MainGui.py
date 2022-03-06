@@ -1714,57 +1714,61 @@ class Custom(QWidget, Ui_Custom):
         # print(f'{self.config.custom_port}')
         # print(f'dict before: ID {id(self.config.custom_dict)}')
         # print(f'{self.config.custom_dict}')
-        for item in self.config.custom_dict:
-            for col in self.config.custom_dict[item]:
-                # print(col.value)
-                # print(str(type(self.config.custom_port[item][col])))
-                if "QTableWidgetItem" in str(type(self.config.custom_dict[item][col])):
-                    self.config.custom_port[item].update({col:self.config.custom_dict[item][col].text()})
-                elif "QCheckBox" in str(type(self.config.custom_dict[item][col])):
-                    self.config.custom_port[item].update({col:int(self.config.custom_dict[item][col].isChecked())})
-                elif "QComboBox" in str(type(self.config.custom_dict[item][col])):
-                    self.config.custom_port[item].update({col:self.config.custom_dict[item][col].currentText()})
-                elif "CheckableComboBox" in str(type(self.config.custom_dict[item][col])):
-                    # print(self.config.custom_dict[item][col].currentData())
-                    # print(self.config.custom_dict[item][col].currentData()[0])
-                    # tran = self.config.custom_dict[item][col].currentData()
-                    self.config.custom_port[item].update({col:self.config.custom_dict[item][col].currentData()})
+        try:
+            for item in self.config.custom_dict:
+                for col in self.config.custom_dict[item]:
+                    # print(col.value)
+                    # print(str(type(self.config.custom_port[item][col])))
+                    if "QTableWidgetItem" in str(type(self.config.custom_dict[item][col])):
+                        self.config.custom_port[item].update({col:self.config.custom_dict[item][col].text()})
+                    elif "QCheckBox" in str(type(self.config.custom_dict[item][col])):
+                        self.config.custom_port[item].update({col:int(self.config.custom_dict[item][col].isChecked())})
+                    elif "QComboBox" in str(type(self.config.custom_dict[item][col])):
+                        self.config.custom_port[item].update({col:self.config.custom_dict[item][col].currentText()})
+                    elif "CheckableComboBox" in str(type(self.config.custom_dict[item][col])):
+                        # print(self.config.custom_dict[item][col].currentData())
+                        # print(self.config.custom_dict[item][col].currentData()[0])
+                        # tran = self.config.custom_dict[item][col].currentData()
+                        self.config.custom_port[item].update({col:self.config.custom_dict[item][col].currentData()})
+                    else:
+                        print("wibblecol")
+                # self.ymin.append(self.custom_dict[item]["ymin"].text())
+                # self.ymax.append(self.custom_dict[item]["ymax"].text())
+                # self.custom_transform.append(self.custom_dict[item]["Transformation"].currentText())
+                # self.custom_poincare.append(self.config.custom_port[item]["Poincare"])
+                # self.custom_spectral.append(self.config.custom_port[item]["Spectral"])
+                # self.custom_irreg.append(self.config.custom_port[item]["Irregularity"])
+            # if any(self.custom_irreg) == 1:
+                # self.config.irreg_combo.setCurrentText("Custom")
+            # if any(self.custom_spectral) == 1:
+            # if any(self.config.custom_port[])
+            #     self.config.Spectral_combo.setCurrentText("Custom")
+            # if any(self.custom_poincare) == 1:
+            #     self.config.Poincare_combo.setCurrentText("Custom")
+            for key,value in {self.config.Poincare_combo:"Poincare",self.config.Spectral_combo:"Spectral"}.items():
+                if all([self.config.custom_port[var][value] == 1 for var in self.config.custom_port]):
+                    key.setCurrentText("All")
+                if any([self.config.custom_port[var][value] == 1 for var in self.config.custom_port]):
+                    key.setCurrentText("Custom")
                 else:
-                    print("wibblecol")
-            # self.ymin.append(self.custom_dict[item]["ymin"].text())
-            # self.ymax.append(self.custom_dict[item]["ymax"].text())
-            # self.custom_transform.append(self.custom_dict[item]["Transformation"].currentText())
-            # self.custom_poincare.append(self.config.custom_port[item]["Poincare"])
-            # self.custom_spectral.append(self.config.custom_port[item]["Spectral"])
-            # self.custom_irreg.append(self.config.custom_port[item]["Irregularity"])
-        # if any(self.custom_irreg) == 1:
-            # self.config.irreg_combo.setCurrentText("Custom")
-        # if any(self.custom_spectral) == 1:
-        # if any(self.config.custom_port[])
-        #     self.config.Spectral_combo.setCurrentText("Custom")
-        # if any(self.custom_poincare) == 1:
-        #     self.config.Poincare_combo.setCurrentText("Custom")
-        for key,value in {self.config.Poincare_combo:"Poincare",self.config.Spectral_combo:"Spectral"}.items():
-            if all([self.config.custom_port[var][value] == 1 for var in self.config.custom_port]):
-                key.setCurrentText("All")
-            if any([self.config.custom_port[var][value] == 1 for var in self.config.custom_port]):
-                key.setCurrentText("Custom")
+                    key.setCurrentText("None")
+                
+            # if all(self.config.custom_port[item][col]) == 1:
+            #     self.get_key(self.additional_dict,col).setCurrentText("All")
+            # elif any(self.config.custom_port[item][col]) == 1:
+            #     self.get_key(self.additional_dict,col).setCurrentText("Custom")
+            # else:
+            #     self.get_key(self.additional_dict,col).setCurrentText("None")
+            print(any(th for th in [self.config.custom_port[t]["Transformation"] for t in self.config.custom_port]))
+            if any(th for th in [self.config.custom_port[t]["Transformation"] for t in self.config.custom_port])==True:
+                print("hay transformation custom")
+                self.config.transform_combo.setCurrentText("Custom")
             else:
-                key.setCurrentText("None")
-               
-        # if all(self.config.custom_port[item][col]) == 1:
-        #     self.get_key(self.additional_dict,col).setCurrentText("All")
-        # elif any(self.config.custom_port[item][col]) == 1:
-        #     self.get_key(self.additional_dict,col).setCurrentText("Custom")
-        # else:
-        #     self.get_key(self.additional_dict,col).setCurrentText("None")
-        print(any(th for th in [self.config.custom_port[t]["Transformation"] for t in self.config.custom_port]))
-        if any(th for th in [self.config.custom_port[t]["Transformation"] for t in self.config.custom_port])==True:
-            print("hay transformation custom")
-            self.config.transform_combo.setCurrentText("Custom")
-        else:
-            print("no hay transformation apparently")
-            self.config.transform_combo.setCurrentText("None")
+                print("no hay transformation apparently")
+                self.config.transform_combo.setCurrentText("None")
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
         # print(f'port after: ID {id(self.config.custom_port)}')
         # print(f'{self.config.custom_port}')
         # print(f'dict after: ID {id(self.config.custom_dict)}')
@@ -1772,6 +1776,11 @@ class Custom(QWidget, Ui_Custom):
         # self.custom_dict[k]['Transformation'].loadCustom(transform)
         # self.custom_dict[k]['Transformation'].updateText()
         # self.transform_combo.setCurrentText("Custom")
+        try:
+            self.hide()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
             
 #endregion
 
@@ -2010,6 +2019,7 @@ class Config(QWidget, Ui_Config):
         # self.loop_table.clear()
         self.pleth.loop_menu = {}
         self.pleth.loop_menu.update({table:{row:{}}})
+        print(self.pleth.loop_menu)
         # Creating the widgets within the above dictionary that will populate the cells of each row:
         self.pleth.loop_menu[table][row]["Graph"] = QLineEdit()
         self.pleth.loop_menu[table][row]["Y axis minimum"] = QLineEdit()
@@ -2025,7 +2035,7 @@ class Config(QWidget, Ui_Config):
         # self.pleth.loop_menu[table][row]["Y axis maximum"].addItems(["Automatic",""])
         self.pleth.loop_menu[table][row]["Inclusion"] = QComboBox()
         self.pleth.loop_menu[table][row]["Inclusion"].addItems(["No","Yes"])
-        
+        print(self.pleth.loop_menu)
         # Adding the contents based on the variable list of the drop down menus for the combo box widgets:
         # for role in self.v.role_list:
             # self.pleth.loop_menu[table][self.row_loop][role].addItems([""])
@@ -2258,6 +2268,7 @@ class Config(QWidget, Ui_Config):
                 self.clades_other.at[self.loop_table.rowCount()+1,"Graph"] = "Sighs"
             else:
                 self.clades_other.at[self.loop_table.rowCount()-1,"Graph"] = self.feature_combo.currentText()
+        self.clades_other.drop(self.clades_other.loc[(self.clades_other["Graph"]=="") & (self.clades_other["Variable"]=="")].index, inplace=True)
         print(f'other clades:{self.clades_other.columns}')
         # self.clades_graph.columns = ['Alias','Role']
         # if self.feature_combo.currentText() == "All":
@@ -2901,11 +2912,12 @@ class Config(QWidget, Ui_Config):
             # print("All")
             self.feature_combo.setCurrentText("All")
         print(f"odf before: {odf}")
-        odf = odf[odf["Graph"] != "Apneas" or odf["Graph"] != "Sighs"]
+        # odf = odf[odf["Graph"] != "Apneas" or odf["Graph"] != "Sighs"]
+        odf.drop(odf.loc[(odf["Graph"]=="Apneas") | (odf["Graph"]=="Sighs")].index, inplace = True)
         print(f"odf after:{odf}")
         self.show_loops(self.loop_table,len(odf))
+        print(self.pleth.loop_menu)
         if len(odf)>1:
-            
             print(len(odf))
             # self.loop_table.setRowCount(len(odf))
             for row_1 in range(len(odf)):
@@ -3097,6 +3109,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stagg_list = []
         self.rscript_des = ""
         self.pipeline_des = ""
+        self.loop_menu = {}
 
         self.v = Config(self)
         self.s = Stagg(self)
@@ -5008,6 +5021,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.pything_to_do()
             else:
                 self.pything_to_do_single()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+        try:
             self.auto_get_breath_files()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')

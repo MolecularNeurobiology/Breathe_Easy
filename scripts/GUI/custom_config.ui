@@ -243,22 +243,6 @@
  <connections>
   <connection>
    <sender>buttonBox</sender>
-   <signal>accepted()</signal>
-   <receiver>Custom</receiver>
-   <slot>hide()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>1432</x>
-     <y>1130</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>899</x>
-     <y>599</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>buttonBox</sender>
    <signal>rejected()</signal>
    <receiver>Custom</receiver>
    <slot>close()</slot>
@@ -278,6 +262,22 @@
    <signal>accepted()</signal>
    <receiver>Custom</receiver>
    <slot>save_custom()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1432</x>
+     <y>1130</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>899</x>
+     <y>599</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>buttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>Custom</receiver>
+   <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>1432</x>
