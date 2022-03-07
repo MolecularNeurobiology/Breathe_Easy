@@ -2334,24 +2334,29 @@ class Config(QWidget, Ui_Config):
                     #             self.clades.loc[(self.clades["Column"] == f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'),"Dependent"] == 1 
                     #         else:
                     #             print("no irreg")
-                    if col is "Transformation":
-                        self.custom_port[item][col] = [x.replace("raw","non") for x in self.custom_port[item][col]]
-                        self.custom_port[item][col] = [x.replace("ln","log") for x in self.custom_port[item][col]]
-                        # print(self.custom_port[item][col])
-                        # print("@".join(self.custom_port[item][col]))
-                        # if len(self.custom_port[item][col])>1:
-                        self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = "@".join(self.custom_port[item][col])
-                        # # elif len(self.custom_port[item][col])==1:
-                        # #     self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = self.custom_port[item][col][0]
-                        # else:
-                        #     # print(f'CladAlias: {self.clades["Alias"]}')
-                        #     print(f'Port Alias: {self.custom_port[item]["Alias"]}')
-                        #     print(f'Col: {self.custom_port[item][col]}')
-                        #     # print(f'Cladcol: {self.clades[cladcol]}')
-                        #     # print(self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol])
-                        #     self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]), col] = self.custom_port[item][col]
-                    else:
-                        self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),col] = self.custom_port[item][col]
+                    try:
+                        if self.custom_port[item][col] != None:
+                            if col is "Transformation":
+                                self.custom_port[item][col] = [x.replace("raw","non") for x in self.custom_port[item][col]]
+                                self.custom_port[item][col] = [x.replace("ln","log") for x in self.custom_port[item][col]]
+                                # print(self.custom_port[item][col])
+                                # print("@".join(self.custom_port[item][col]))
+                                # if len(self.custom_port[item][col])>1:
+                                self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = "@".join(self.custom_port[item][col])
+                            # # elif len(self.custom_port[item][col])==1:
+                            # #     self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = self.custom_port[item][col][0]
+                            # else:
+                            #     # print(f'CladAlias: {self.clades["Alias"]}')
+                            #     print(f'Port Alias: {self.custom_port[item]["Alias"]}')
+                            #     print(f'Col: {self.custom_port[item][col]}')
+                            #     # print(f'Cladcol: {self.clades[cladcol]}')
+                            #     # print(self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol])
+                            #     self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]), col] = self.custom_port[item][col]
+                            else:
+                                self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),col] = self.custom_port[item][col]
+                    except Exception as e:
+                        print(f'{type(e).__name__}: {e}')
+                        print(traceback.format_exc())
         
         
         # if self.irreg_combo.currentText() == "All":
@@ -4823,7 +4828,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_output")
         file_name = QFileDialog.getOpenFileNames(self, 'Select R environment', "./STAGG_output")
         if not file_name[0]:
-            if self.input_dir_r == "":
+            if self.stagg_list == []:
                 self.breath_list.clear()
         elif not os.path.basename(file_name[0][0]).endswith("RData"):
             self.thumb = Thumbass(self)
@@ -4833,7 +4838,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.breath_list.clear()
             for x in range(len(file_name[0])):
                 self.breath_list.addItem(file_name[0][x])
-            self.input_dir_r = file_name[0][0]
+                self.stagg_list.append(file_name[0][x])
 
     # def output_directory_r(self):
     #     if Path(self.mothership).exists():
@@ -5186,6 +5191,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 stagg.append(os.path.basename(s).split('.')[0])
             for b in self.signals:
                 bass.append(os.path.basename(b).split('.')[0])
+            print(f"bass: {bass}")
+            print(f"stagg: {stagg}")
             diff = list(set(bass) - set(stagg))
             print(diff)
             self.hangar.append(f"The following signal files did not yield output: {','.join(x for x in diff)} \nConsider checking the original LabChart file or the metadata for anomalies.") 

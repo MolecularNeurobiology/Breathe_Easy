@@ -62,7 +62,7 @@ import_data <- function(fp){
       # Create breath_df for the first file
       breath_df <- temp_df 
     } else {
-      # Attaching data from subsequent files toexisting data frame.
+      # Attaching data from subsequent files to existing data frame.
       ## Assumes all data files have the same column names to reference the same type of information.
       ## Check if data type for each column from new file matches existing data.
       for(col_num in 1:ncol(breath_df)){
@@ -104,6 +104,10 @@ import_data <- function(fp){
 # Calls the above function and loads in all JSON files as one data frame.
 tbl0 <- import_data(filepaths)
 
+#########################
+#### R CONFIGURATION ####
+#########################
+
 # Converts column names to names without units, to be used internally to avoid eval/parse issues.
 ## Assumes that units are denoted inside of parentheses at end of desired column name.
 ## Inputs:
@@ -120,10 +124,6 @@ wu_convert <- function(colname) {
              str_replace_all(" ", "")))
   }
 }
-
-#########################
-#### R CONFIGURATION ####
-#########################
 
 print("Loading variable configuration")
 

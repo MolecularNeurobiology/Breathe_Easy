@@ -67,12 +67,14 @@ print("Loading data")
 #########################
 #####JSON LOCATION#######
 #########################
-#Sets working directory to the Mothership so arguments in command line that indicate file locations are 
-#understood and found by R.
-# setwd("~/") 
+# Sets working directory to the Mothership so arguments in command line that indicate file locations are 
+# understood and found by R.
 setwd(args2$dir)
 
+# Load environment
 load(args2$JSON)
+
+# Remove conflicting arguments.
 args <- args2
 rm(args2)
 

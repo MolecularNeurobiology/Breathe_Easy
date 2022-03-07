@@ -121,14 +121,81 @@ def get_jobs_r(Plethysmography):
     print('R env route')
     print('get_jobs_r thread id',threading.get_ident())
     print("get_jobs_r process id",os.getpid())
-    papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
+    if len(Plethysmography.stagg_list)>100:
+        print("there are more than 100 files in stagg_list")
+        if len(set([os.path.dirname(y) for y in Plethysmography.stagg_list]))>1:
+            print("hay more than one directory in stagg_list")
+            for p in set([os.path.dirname(y) for y in Plethysmography.stagg_list]):
+                papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
+                        # rscript = Plethysmography.gui_config['Dictionaries']['Paths']['rscript'],
+                        rscript = Plethysmography.rscript_des,
+                        # pipeline = os.path.join(Plethysmography.papr_dir, "Pipeline.R"),
+                        pipeline = Plethysmography.pipeline_des,
+                        d = Plethysmography.mothership,
+                        # j = os.path.join(Plethysmography.mothership, "JSON"),
+                        j = p,
+                        r = Plethysmography.variable_config,
+                        # r = Plethysmography.v.configs["variable_config"]["path"],
+                        # r = "C:/Users/atwit/Desktop/Mothership/R_config/variable_config.csv",
+                        # r = "D:/BCM/Man4_Monte Carlo/STAGG inputs/r_config.csv",
+                        # g = Plethysmography.v.configs["graph_config"]["path"],
+                        g = Plethysmography.graph_config,
+                        # g = "D:/BCM/Man4_Monte Carlo/STAGG inputs/g_config.csv",
+                        # f = "C:/Users/atwit/Desktop/Mothership/R_config/o_config.csv",
+                        f = Plethysmography.other_config,
+                        # f = Plethysmography.v.configs["other_config"]["path"],
+                        # o = "C:/Users/atwit/Desktop/PAPR/PAPR Output/STAGG_output/STAGG_output_20220124_160750",
+                        # o = os.path.join(self.mothership, "Output"),
+                        o = Plethysmography.output_dir_r,
+                        t = os.path.join(Plethysmography.papr_dir, "Data_import_multi.R"),
+                        s = os.path.join(Plethysmography.papr_dir, "Statistical_analysis.R"),
+                        m = os.path.join(Plethysmography.papr_dir, "Graph_generator.R"),
+                        b = os.path.join(Plethysmography.papr_dir, "Optional_graphs.R"),
+                        i = Plethysmography.image_format
+                )
+                yield papr_cmd
+        else:
+            print("there is only one directory in stagg_list")
+            ii = os.path.dirname(Plethysmography.stagg_list[0])
+            papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
             # rscript = Plethysmography.gui_config['Dictionaries']['Paths']['rscript'],
             rscript = Plethysmography.rscript_des,
             # pipeline = os.path.join(Plethysmography.papr_dir, "Pipeline.R"),
             pipeline = Plethysmography.pipeline_des,
             d = Plethysmography.mothership,
             # j = os.path.join(Plethysmography.mothership, "JSON"),
-            j = ','.join(item for item in Plethysmography.stagg_list),
+            j = ii,
+            r = Plethysmography.variable_config,
+            # r = Plethysmography.v.configs["variable_config"]["path"],
+            # r = "C:/Users/atwit/Desktop/Mothership/R_config/variable_config.csv",
+            # r = "D:/BCM/Man4_Monte Carlo/STAGG inputs/r_config.csv",
+            # g = Plethysmography.v.configs["graph_config"]["path"],
+            g = Plethysmography.graph_config,
+            # g = "D:/BCM/Man4_Monte Carlo/STAGG inputs/g_config.csv",
+            # f = "C:/Users/atwit/Desktop/Mothership/R_config/o_config.csv",
+            f = Plethysmography.other_config,
+            # f = Plethysmography.v.configs["other_config"]["path"],
+            # o = "C:/Users/atwit/Desktop/PAPR/PAPR Output/STAGG_output/STAGG_output_20220124_160750",
+            # o = os.path.join(self.mothership, "Output"),
+            o = Plethysmography.output_dir_r,
+            t = os.path.join(Plethysmography.papr_dir, "Data_import_multi.R"),
+            s = os.path.join(Plethysmography.papr_dir, "Statistical_analysis.R"),
+            m = os.path.join(Plethysmography.papr_dir, "Graph_generator.R"),
+            b = os.path.join(Plethysmography.papr_dir, "Optional_graphs.R"),
+            i = Plethysmography.image_format
+        )
+        yield papr_cmd
+    else:
+        print("there are fewer than 100 files in stagg_list")
+        kk = ','.join(item for item in Plethysmography.stagg_list)
+        papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
+            # rscript = Plethysmography.gui_config['Dictionaries']['Paths']['rscript'],
+            rscript = Plethysmography.rscript_des,
+            # pipeline = os.path.join(Plethysmography.papr_dir, "Pipeline.R"),
+            pipeline = Plethysmography.pipeline_des,
+            d = Plethysmography.mothership,
+            # j = os.path.join(Plethysmography.mothership, "JSON"),
+            j = kk,
             r = Plethysmography.variable_config,
             # r = Plethysmography.v.configs["variable_config"]["path"],
             # r = "C:/Users/atwit/Desktop/Mothership/R_config/variable_config.csv",
@@ -149,7 +216,6 @@ def get_jobs_r(Plethysmography):
             i = Plethysmography.image_format
     )
     yield papr_cmd
-    
       
 def get_jobs_stamp(Plethysmography):
     print('get_jobs_stamp thread id',threading.get_ident())

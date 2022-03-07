@@ -458,7 +458,8 @@ if(sighs || apneas){
   timetab <- tbl0 %>%
     dplyr::filter(!measure_breaks) %>%
     group_by_at(c(box_vars, "MUID")) %>%
-    dplyr::summarise(measuretime = sum(Breath_Cycle_Duration))
+    dplyr::summarise_at(var_names$Alias[which(var_names$Column == "Breath_Cycle_Duration")], sum, na.rm = TRUE)
+  colnames(timetab)[ncol(timetab)] <- "measuretime"  
   eventtab <- tbl0 %>%
     dplyr::filter(!measure_breaks) %>%
     group_by_at(c(box_vars, "MUID")) %>%
