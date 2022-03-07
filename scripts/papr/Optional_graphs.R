@@ -61,6 +61,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
       comb_list <- c(comb_list, paste0(all_names[rr], " - ", all_names[ss]))
     }
   }
+  
   ## Keep only biologically relevant pairwise comparisons
   ## I.e., where there is only one difference between two interaction variables among all variables that comprise them.
   comparison_names <- lapply(strsplit(comb_list, "-"), trimws)
@@ -76,7 +77,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
     comp_list[qq] <- paste0(comp_list[qq], " = 0")
   }
   
-  ## Make names of biologically relevant comparisons for glht function
+  ## Run model, save tables
   temp_tukey <- glht(temp_mod , linfct = mcp(interact = comp_list))
   vt <- summary(temp_tukey)$test
   mytest <- cbind(vt$coefficients, vt$sigma, vt$tstat, vt$pvalues)
@@ -216,13 +217,13 @@ if(nrow(other_config) > 0){
       
       # Organizes data collected above for graphing.
       other_df <- tbl0 %>%
-        group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
+        dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
         dplyr::summarise_at(bw_vars, mean, na.rm = TRUE) %>%
-        ungroup() %>% na.omit()
+        dplyr::ungroup() %>% na.omit()
       other_graph_df <- tbl0 %>%
-        group_by_at(c(box_vars, "MUID")) %>%
+        dplyr::group_by_at(c(box_vars, "MUID")) %>%
         dplyr::summarise_at(bw_vars, mean, na.rm = TRUE) %>%
-        ungroup() %>% na.omit()
+        dplyr::ungroup() %>% na.omit()
       
       # Check that variables are factors; set in order of appearance in data.
       for(jj in box_vars){
@@ -299,13 +300,13 @@ if(nrow(other_config) > 0){
       
       #Organizes data collected above for graphing.
       bodytemp_df <- tbl0 %>%
-        group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
+        dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
         dplyr::summarise_at(bt_vars, mean, na.rm = TRUE) %>%
-        ungroup()
+        dplyr::ungroup()
       bodytemp_graph_df <- tbl0 %>%
-        group_by_at(c(temp_vars, "MUID")) %>%
+        dplyr::group_by_at(c(temp_vars, "MUID")) %>%
         dplyr::summarise_at(bt_vars, mean, na.rm = TRUE) %>%
-        ungroup()
+        dplyr::ungroup()
       
       #Organizes data collected above for graphing.
       melt_bt_df <- reshape2::melt(bodytemp_df, id=c(temp_vars, "MUID"))
@@ -388,24 +389,24 @@ if(nrow(other_config) > 0){
         #Organizes data collected above for graphing.
         if(inclusion_filter) {
           other_df <- tbl0 %>%
-            group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
+            dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
             dplyr::filter(Breath_Inclusion_Filter == 1) %>%
             #dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-            ungroup() %>% na.omit()
+            dplyr::ungroup() %>% na.omit()
           other_graph_df <- tbl0 %>%
             dplyr::filter(Breath_Inclusion_Filter == 1) %>%
-            group_by_at(c(box_vars, "MUID")) %>%
+            dplyr::group_by_at(c(box_vars, "MUID")) %>%
             dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-            ungroup() %>% na.omit()
+            dplyr::ungroup() %>% na.omit()
         } else {
           other_df <- tbl0 %>%
-            group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
+            dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
             #dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-            ungroup() %>% na.omit()
+            dplyr::ungroup() %>% na.omit()
           other_graph_df <- tbl0 %>%
-            group_by_at(c(box_vars, "MUID")) %>%
+            dplyr::group_by_at(c(box_vars, "MUID")) %>%
             dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-            ungroup() %>% na.omit()
+            dplyr::ungroup() %>% na.omit()
         }
         
         # Check that variables are factors; set in order of appearance in data.
@@ -415,6 +416,7 @@ if(nrow(other_config) > 0){
         
         graph_file <- paste0(other_config_row$Variable, "_", other_config_row$Graph, args$I)
         
+        # Runs stat modeling
         # Assumes that each individual observation is relevant (and not mouse-level statistic.)
         if(length(unique(other_graph_df$MUID)) == nrow(other_graph_df)){
           other_mod_res <- stat_run_other(as.character(ocr2["Resp"]), other_inter_vars, other_covars, other_df, FALSE)
@@ -455,15 +457,18 @@ if(sighs || apneas){
   box_vars <- box_vars[box_vars != ""]
   
   # Summarize data by mouse for plotting.
+  ## Find total measurement time for each interaction group + mouse.
   timetab <- tbl0 %>%
     dplyr::filter(!measure_breaks) %>%
-    group_by_at(c(box_vars, "MUID")) %>%
+    dplyr::group_by_at(c(box_vars, "MUID")) %>%
     dplyr::summarise_at(var_names$Alias[which(var_names$Column == "Breath_Cycle_Duration")], sum, na.rm = TRUE)
   colnames(timetab)[ncol(timetab)] <- "measuretime"  
+  ## Find number of sighs/apneas for each interaction group + mouse.
   eventtab <- tbl0 %>%
     dplyr::filter(!measure_breaks) %>%
-    group_by_at(c(box_vars, "MUID")) %>%
+    dplyr::group_by_at(c(box_vars, "MUID")) %>%
     dplyr::summarise(sighs = sum(Sigh), apneas = sum(Apnea))
+  ## Join tables to calculate rates.
   eventtab_join <- inner_join(eventtab, timetab, by = c(box_vars, "MUID")) %>%
     mutate(SighRate = sighs/measuretime*60, ApneaRate = apneas/measuretime*60)
   
@@ -641,14 +646,18 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
   max_hz <- min(max(2, floor(60/avg_breath_len)), min(table(graph_data[[pointdodge]])) / 2)
   if(is.nan(avg_breath_len)){avg_breath_len <- 0.15}
   
+  # If pointdodge is specified, create separate plots per category.
   if(pointdodge != ""){
     psd_list <- list()
     for(vv in unique(graph_data[[pointdodge]])){
+      # Create subdata; remove NAs
       graph_data_sub <- graph_data[which(graph_data[[pointdodge]] == vv), ]
       graph_data_sub <- graph_data_sub[which(!is.na(graph_data_sub[[resp_var]])), ]
+      # Calculate spectral
       psd_list[[vv]] <- Mod(fft(graph_data_sub[[resp_var]]))[2:max_hz] * 2
     }
     
+    # Turn results to data frame for plotting
     psd_df <-  reshape2::melt(as.data.frame(psd_list))
     psd_df$tt <- rep(2:max_hz, length(unique(graph_data[[pointdodge]])))
     
@@ -663,7 +672,9 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2 * length(unique(graph_data[[pointdodge]])), units = "in")
     
   } else {
+    # Remove NAs
     graph_data_sub <- graph_data[which(!is.na(graph_data[[resp_var]])), ]
+    # Calculate spectral
     psd <- Mod(fft(graph_data_sub[[resp_var]]))[2:max_hz] * 2
     
     # Make graph + save

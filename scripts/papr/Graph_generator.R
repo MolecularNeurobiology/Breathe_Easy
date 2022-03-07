@@ -134,7 +134,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                   alpha = 0.5) 
   
   # Find locations for statistical significance indicator features on graph.
-  ## Locations for each pointdodge category.
+  ## Plotting locations for each pointdodge category.
   pd_line_vars <- c(xvar, facet1, facet2)
   pd_line_vars <- pd_line_vars[pd_line_vars != ""]
   
@@ -156,7 +156,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   }
   
   ## Calculate where lines and asterisks should go on y-axis for each pointdodge category.
-  pd_line_graph_df$yline <- pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) + max(pd_line_graph_df$ymax - pd_line_graph_df$ymin) * 0.08
+  pd_line_graph_df$yline <- pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) + 
+    max(pd_line_graph_df$ymax - pd_line_graph_df$ymin) * 0.08
   pd_line_graph_df$asty <- pd_line_graph_df$yline + max(pd_line_graph_df$ymax - pd_line_graph_df$ymin) * 0.05 
   
   ## Draw line seperating statistical significance indicators from rest of plot.
@@ -164,7 +165,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     geom_segment(aes(x = xmin, xend = xmax, y = yline, yend = yline), data = pd_line_graph_df,
                  color = "grey") 
   
-  ## Locations for each xvar category.
+  ## Plotting locations for each xvar category.
   facet_vars <-  c(facet1, facet2)
   facet_vars <- facet_vars[facet_vars != ""]
   if(length(facet_vars) > 0){
@@ -222,7 +223,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     comp_rows <- lapply(tukey_names, strsplit, split = "\\.")
     
     # Function to determine if row from multiple comparison results table involves
-    # a specific variable category in interactions.
+    ### changing/comparing on a specific variable category in interactions.
     ## Inputs:
     ### comp_names: name of the pairwise comparison tests.
     ### comp_ind: numeric, index of desired variable in interaction group naming convention.
@@ -235,11 +236,17 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     relevant_row_find <- function(comp_names, comp_ind, curr_ind, sum_df, comp_var, match_var_names){
       # Remove special characters and spaces in interaction variables categories. Necessary for relevant category finding below.
       for(vv in match_var_names){
-        sum_df[[vv]] <- sum_df[[vv]] %>% as.character() %>% str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")
+        sum_df[[vv]] <- sum_df[[vv]] %>% as.character() %>% stringr::str_replace_all("[[:punct:]]", "") %>% stringr::str_replace_all(" ", "")
         sum_df[[vv]] <- sapply(sum_df[[vv]], X_num) %>% unname()
       }
       
+      # Ensure all data are characters and not factors.
       char_df <- data.frame(lapply(sum_df, as.character), stringsAsFactors=FALSE)
+      # Check if the row in the Tukey table is a biologically relevant comparison 
+      ## involving the comp_ind-th unique category of comp_var.
+      ### Are all categories for all other variables on LHS the same?
+      ### Are all categories for all other variables on RHS the same?
+      ### Is there exactly one of the LHS and RHS that involve the category in question?
       rel_bool <- (sum((char_df[curr_ind, match_var_names][-which(match_var_names == comp_var)] %in% comp_names[[1]][- comp_ind])) ==
                      (length(match_var_names) - 1)) & 
         (sum((char_df[curr_ind, match_var_names][-which(match_var_names == comp_var)] %in% comp_names[[2]][- comp_ind])) ==
@@ -262,7 +269,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     match_row_find <- function(comp_names, curr_ind, sum_df, match_var_names){
       # Remove special characters and spaces in interaction variables categories. Necessary for relevant category finding below.
       for(vv in match_var_names){
-        sum_df[[vv]] <- sum_df[[vv]] %>% as.character() %>% str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")
+        sum_df[[vv]] <- sum_df[[vv]] %>% as.character() %>% stringr::str_replace_all("[[:punct:]]", "") %>% 
+          stringr::str_replace_all(" ", "")
         sum_df[[vv]] <- sapply(sum_df[[vv]], X_num) %>% unname()
       }
       
@@ -317,7 +325,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
           x_lines_df <- bind_cols(x_lines_df, x_var_names)
           ## Draw dotted lines connecting significantly different pairs.
           if(pointdodge != ""){
-            suppressWarnings(eval(parse(text = paste0("x_lines_df <- left_join(x_lines_df, colorframe, by = c('", pointdodge, "' = 'val'))" ))))
+            suppressWarnings(eval(parse(text = paste0("x_lines_df <- left_join(x_lines_df, colorframe, by = c('", 
+                                                      pointdodge, "' = 'val'))" ))))
             p <- p + 
               geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend", color = "color"), 
                            data = x_lines_df, show.legend = FALSE,
@@ -447,7 +456,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
         ungroup() %>% na.omit()
       
       # Set order of categories in variables as specified by the user, if specified.
-      ## If not, keep current order.
+      ## If not, order by first appearance.
       for(mm in 1:length(graph_v)){
         v_ind <- which(graph_vars$Alias == graph_v[mm])
         if(!(is.null(graph_vars$Alias[v_ind])) && !(is.na(graph_vars$Alias[v_ind])) && (graph_vars$Alias[v_ind] != "")){
@@ -458,12 +467,15 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
             f_levels <- str_trunc(f_levels, 25, side = "center", ellipsis = "___")
             ### Check if factors are correctly specified.
             if(all(f_levels %in% graph_df[[graph_vars$Alias[v_ind]]])) {
+              # Set factor levels
               graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], levels = f_levels)
             } else {
+              # If error, set categories in order of appearance in data.
               graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], 
                                                             levels = unique(tbl0[[graph_vars$Alias[v_ind]]]))
             }
           } else {
+            # By default, set categories in order of appearance in data.
             graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], 
                                                           levels = unique(tbl0[[graph_vars$Alias[v_ind]]]))
           }
@@ -472,7 +484,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
         }
       }
       
-      # Run graph make.
+      # Run graph maker.
       graph_file  <- paste0(response_vars[ii], args$I)
       graph_make(response_vars[ii], xvar, pointdodge, facet1, 
                  facet2, graph_df, tukey_res_list[[response_vars[ii]]], 
@@ -512,9 +524,10 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
                 f_levels <- str_trunc(f_levels, 25, side = "center", ellipsis = "___")
                 ### Check if factors are correctly specified.
                 if(all(f_levels %in% graph_df[[graph_vars$Alias[v_ind]]])) {
+                  # Set factor levels
                   graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], levels = f_levels)
                 } else {
-                  # By default, set categories in order of appearance in data.
+                  # If error, set categories in order of appearance in data.
                   graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], 
                                                                 levels = unique(tbl0[[graph_vars$Alias[v_ind]]]))
                 }
