@@ -1596,7 +1596,7 @@
             </spacer>
            </item>
            <item>
-            <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,0,6,0,0,1">
+            <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,0,0,10,0,0,1">
              <item>
               <spacer name="horizontalSpacer_4">
                <property name="orientation">
@@ -1682,7 +1682,7 @@
                </column>
                <column>
                 <property name="text">
-                 <string>Include all breaths</string>
+                 <string>Covariates</string>
                 </property>
                </column>
                <column>
@@ -1693,6 +1693,11 @@
                <column>
                 <property name="text">
                  <string>Y axis maximum</string>
+                </property>
+               </column>
+               <column>
+                <property name="text">
+                 <string>Include all breaths</string>
                 </property>
                </column>
                <item row="0" column="4">
