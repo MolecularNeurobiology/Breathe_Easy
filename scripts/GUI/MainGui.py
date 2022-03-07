@@ -1665,16 +1665,16 @@ class Custom(QWidget, Ui_Custom):
             for item_1 in diff:
                 self.config.custom_dict[item_1] = {}
                 # The first two columns are the name of the dependent variables selected and empty strings for ymin and ymax:
-                self.config.custom_dict[item_1]["Alias"]=QTableWidgetitem_1(item_1)
-                self.config.custom_dict[item_1]["ymin"]=QTableWidgetitem_1("")
-                self.config.custom_dict[item_1]["ymax"]=QTableWidgetitem_1("")
+                self.config.custom_dict[item_1]["Alias"]=QTableWidgetItem(item_1)
+                self.config.custom_dict[item_1]["ymin"]=QTableWidgetItem("")
+                self.config.custom_dict[item_1]["ymax"]=QTableWidgetItem("")
                 # Creating the radio buttons that will populate the cells in each row:
                 self.config.custom_dict[item_1]["Poincare"]=QCheckBox()
                 self.config.custom_dict[item_1]["Spectral"]=QCheckBox()
                 # self.custom_dict[item_1]["Inclusive"].setAlignment(Qt.AlignHCenter)
                 # Creating the combo boxes that will populate the cells in each row:
                 self.config.custom_dict[item_1]["Transformation"]=CheckableComboBox()
-                self.config.custom_dict[item_1]["Transformation"].additems(["raw","log10","ln","sqrt"])
+                self.config.custom_dict[item_1]["Transformation"].addItems(["raw","log10","ln","sqrt"])
         for entry in self.config.custom_dict:    
             print("setting widgets in table")
             table.setItem(row,0,self.config.custom_dict[entry]["Alias"])
@@ -1703,6 +1703,19 @@ class Custom(QWidget, Ui_Custom):
                 if self.config.custom_port[entry]["Transformation"] != []:
                     self.config.custom_dict[entry]["Transformation"].loadCustom(self.config.custom_port[entry]["Transformation"])
                     self.config.custom_dict[entry]["Transformation"].updateText()
+            else:
+                if list(self.config.clades.loc[(self.config.clades["Alias"] == entry)]["Column"])[0] in self.config.custom_port:
+                    self.config.custom_port[entry] = self.config.custom_port.pop(list(self.config.clades.loc[(self.config.clades["Alias"] == entry)]["Column"])[0])
+                    if self.config.custom_port[entry]["Poincare"] == 1:
+                        self.config.custom_dict[entry]["Poincare"].setChecked(True)
+                    if self.config.custom_port[entry]["Spectral"] == 1:
+                        self.config.custom_dict[entry]["Spectral"].setChecked(True)
+                    for y in ['ymin','ymax']:
+                        if self.config.custom_port[entry][y] != "":
+                            self.config.custom_dict[entry][y].setText(self.config.custom_port[entry][y])
+                    if self.config.custom_port[entry]["Transformation"] != []:
+                        self.config.custom_dict[entry]["Transformation"].loadCustom(self.config.custom_port[entry]["Transformation"])
+                        self.config.custom_dict[entry]["Transformation"].updateText()
             row += 1
         # self.view_tab.cellChanged.connect(self.update_tabs)
         table.resizeColumnsToContents()
@@ -2352,19 +2365,19 @@ class Config(QWidget, Ui_Config):
         for cladcol in self.clades:
             for item in self.custom_port:
                 for col in self.custom_port[item]:
-                    if col is "Irregularity":
-                        if self.custom_port[item][col] == 1:
-                            print("irregularity is 1")
-                            # print(self.clades.loc[(self.clades["Alias"] == self.pleth.c.custom_port[item]["Alias"]),"Column"].values)
-                            print(f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}')
-                            irr = f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'
-                            print(irr)
-                            if irr in self.clades["Column"]:
-                                print("irreg found")
-                                self.clades.loc[(self.clades["Column"] == f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'),"Dependent"] == 1 
-                            else:
-                                print("no irreg")
-                    elif col is "Transformation":
+                    # if col is "Irregularity":
+                    #     if self.custom_port[item][col] == 1:
+                    #         print("irregularity is 1")
+                    #         # print(self.clades.loc[(self.clades["Alias"] == self.pleth.c.custom_port[item]["Alias"]),"Column"].values)
+                    #         print(f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}')
+                    #         irr = f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'
+                    #         print(irr)
+                    #         if irr in self.clades["Column"]:
+                    #             print("irreg found")
+                    #             self.clades.loc[(self.clades["Column"] == f'Irreg_Score_{self.clades.loc[(self.clades["Alias"] == self.custom_port[item]["Alias"]),"Column"].values[0]}'),"Dependent"] == 1 
+                    #         else:
+                    #             print("no irreg")
+                    if col is "Transformation":
                         self.custom_port[item][col] = [x.replace("raw","non") for x in self.custom_port[item][col]]
                         self.custom_port[item][col] = [x.replace("ln","log") for x in self.custom_port[item][col]]
                         # print(self.custom_port[item][col])

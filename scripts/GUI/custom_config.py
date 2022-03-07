@@ -113,7 +113,7 @@ class Ui_Custom(object):
         Custom.setWindowTitle(_translate("Custom", "Dialog"))
         self.label.setText(_translate("Custom", "Custom Graph Settings"))
         item = self.custom_table.horizontalHeaderItem(0)
-        item.setText(_translate("Custom", "Alias"))
+        item.setText(_translate("Custom", "Variable"))
         item = self.custom_table.horizontalHeaderItem(1)
         item.setText(_translate("Custom", "Y axis minimum"))
         item = self.custom_table.horizontalHeaderItem(2)
