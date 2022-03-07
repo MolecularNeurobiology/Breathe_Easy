@@ -1974,9 +1974,9 @@ class Config(QWidget, Ui_Config):
         # for header_col in range(0,6):
         #     header.setSectionResizeMode(header_col,QHeaderView.Stretch)
 
-        header_loop = self.loop_table.horizontalHeader()
-        for header_loop_col in range(0,6):
-            header_loop.setSectionResizeMode(header_loop_col,QHeaderView.Stretch)
+        # header_loop = self.loop_table.horizontalHeader()
+        # for header_loop_col in range(0,6):
+        #     header_loop.setSectionResizeMode(header_loop_col,QHeaderView.Stretch)
 
         # header_upper_loop = self.v.upper_loop_table.horizontalHeader()
         # for header_upper_loop_col in range(0,6):
@@ -3769,9 +3769,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # for header_col in range(0,6):
         #     header.setSectionResizeMode(header_col,QHeaderView.Stretch)
 
-        header_loop = self.v.loop_table.horizontalHeader()
-        for header_loop_col in range(0,6):
-            header_loop.setSectionResizeMode(header_loop_col,QHeaderView.Stretch)
+        # header_loop = self.v.loop_table.horizontalHeader()
+        # for header_loop_col in range(0,6):
+        #     header_loop.setSectionResizeMode(header_loop_col,QHeaderView.Stretch)
 
         # header_upper_loop = self.v.upper_loop_table.horizontalHeader()
         # for header_upper_loop_col in range(0,6):
