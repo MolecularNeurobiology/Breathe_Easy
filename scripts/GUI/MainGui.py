@@ -1721,18 +1721,7 @@ class Custom(QWidget, Ui_Custom):
         table.resizeColumnsToContents()
         table.resizeRowsToContents()
         print("custom finished populating table")
-        
-        # print(f'after: {self.config.custom_dict}')
-# for role in self.role_list[1:6]:
-#     self.pleth.loop_menu[self.loop_table][loop_row][role] = QComboBox()
-#     self.pleth.loop_menu[self.loop_table][loop_row][role].addItems([""])
-#     self.pleth.loop_menu[self.loop_table][loop_row][role].addItems([x for x in self.pleth.breath_df])
 
-# self.loop_table.setCellWidget(loop_row,1,self.pleth.loop_menu[self.loop_table][loop_row]["Variable"])
-# self.loop_table.setCellWidget(loop_row,2,self.pleth.loop_menu[self.loop_table][loop_row]["Xvar"])
-# self.loop_table.setCellWidget(loop_row,3,self.pleth.loop_menu[self.loop_table][loop_row]["Pointdodge"])
-# self.loop_table.setCellWidget(loop_row,4,self.pleth.loop_menu[self.loop_table][loop_row]["Facet1"])
-# self.loop_table.setCellWidget(loop_row,5,self.pleth.loop_menu[self.loop_table][loop_row]["Facet2"])
     def get_key(self,dic,val):
         print("custom.get_key()")
         for key,value in dic.items():
@@ -1904,6 +1893,10 @@ class Config(QWidget, Ui_Config):
             for vv in v:
                 if vv.objectName() == str(butt):
                     k.setPlainText(self.pleth.rc_config['References']['Definitions'][butt.replace("help_","")])
+
+    # def no_duplicates(self):
+    #     if self.variable_table.currentItem().text() in self.deps:
+
 
     def setup_transform_combo(self):
         spacerItem64 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -3144,7 +3137,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.p_mouse_dict={}
         self.m_mouse_dict={}
         self.metadata_warnings = {}
-        self.metadata_pm_warnings = {}
+        self.metadata_pm_warnings = []
+        self.missing_plyuids = []
         self.metadata_passlist = []
         self.tsbyfile = {}
         self.row_loop = ""
@@ -4442,7 +4436,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.get_signal_files()
         else:
             self.metadata_warnings={}
-            self.metadata_pm_warnings={}
+            self.metadata_pm_warnings=[]
+            self.missing_plyuids=[]
             self.metadata_list.addItem("Gauging Filemaker connection...")
             try:
                 dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
@@ -4612,9 +4607,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         else:
                             plys[v] = [k]
             for w,x in plys.items():
-                self.hangar.append(f"{w}: {[x for x in plys[w]]}")
-            for u in self.metadata_pm_warnings:
-                self.hangar.append(f"{self.metadata_pm_warnings[u][0]}")
+                self.hangar.append(f"{w}: {', '.join(x for x in plys[w])}")
+            for u in set(self.metadata_pm_warnings):
+                self.hangar.append(u)
+            if len(self.missing_plyuids)>0:
+                self.hangar.append(f"Missing PlyUIDs for {', '.join(m for m in set(self.missing_plyuids))}.")
                 # self.hangar.append(f"{k}: {self.metadata_warnings[k][0]}")
             #%
             p_df=pd.DataFrame(self.p_mouse_dict).transpose()
@@ -4626,7 +4623,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 p_df['Experimental_Date']=pd.to_datetime(p_df['Experimental_Date'], errors='coerce')
                 m_df['MUID']='M'+m_df['MUID'].astype(int).astype(str)
                 m_df['Date of Birth']=pd.to_datetime(m_df['Date of Birth'], errors='coerce')
-                
                 
             self.assemble_df=pd.merge(p_df,m_df, how='left', 
                             left_on='MUID', right_on='MUID')
@@ -4653,20 +4649,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 # (We check for the MUID in the m_mouse_dict because its populated regardless of the status of 
                 # a MUID's associated PlyUID)
                 if f"M{m}" not in self.m_mouse_dict:
-                    self.metadata_pm_warnings[f"Ply{p}"] = [f"Neither Ply{p} nor M{m} were found in metadata."]
+                    self.metadata_pm_warnings.append(f"Neither Ply{p} nor M{m} were found in metadata.")
                 # If the PlyUID isn't in the metadata, but its associated MUID is:
                 else:
                     if p != "":
-                        self.metadata_pm_warnings[f"Ply{p}"] = [f"Ply{p} of M{m} not found in metadata."]
+                        self.metadata_pm_warnings.append(f"Ply{p} of M{m} not found in metadata.")
                     else:
-                        if self.metadata_pm_warnings[f"Ply{p}"] == []:
-                            self.metadata_pm_warnings[f"Ply{p}"] = [f"Missing PlyUID for M{m}."]
-                        else:
-                            self.metadata_pm_warnings[f"Ply{p}"].append(f"Missing PlyUID for M{m}.")
-                        mice = [self.p_mouse_dict[d]['MUID'] for d in self.p_mouse_dict]
-                        for c in mice:
-                            if mice.count(c)>1:
-                                self.metadata_pm_warnings[f"Ply{p}"].append(f"More than one PlyUID was found for the following metadata: {[c for c in set(mice) if mice.count(c)>1]}")
+                        self.missing_plyuids.append(f"M{m}")
+                    mice = [self.p_mouse_dict[d]['MUID'] for d in self.p_mouse_dict]
+                    for c in mice:
+                        if mice.count(c)>1:
+                            self.metadata_pm_warnings.append(f"More than one PlyUID was found for the following metadata: {', '.join(c for c in set(mice) if mice.count(c)>1)}")
+                            
 
                     # Should we consider showing what PlyUIDs are associated with that MUID?
             else:
@@ -4686,25 +4680,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     for fm in self.essential_fields["mouse"]:
                         if fm not in self.m_mouse_dict[f"M{m}"].keys():
                             if f"Ply{p}" in self.metadata_warnings.keys():
-                                self.metadata_warnings[f"Ply{p}"].append(f"Missing metadata for {fm}.")
+                                self.metadata_warnings[f"Ply{p}"].append(f"Missing metadata for {fm}")
                             else:
-                                self.metadata_warnings[f"Ply{p}"] = [f"Missing metadata for {fm}."]
+                                self.metadata_warnings[f"Ply{p}"] = [f"Missing metadata for {fm}"]
                         elif self.m_mouse_dict[f"M{m}"][fm] == None:
                             if f"Ply{p}" in self.metadata_warnings.keys():
-                                self.metadata_warnings[f"Ply{p}"].append(f"Empty metadata for {fm}.")
+                                self.metadata_warnings[f"Ply{p}"].append(f"Empty metadata for {fm}")
                             else:
-                                self.metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fm}."]
+                                self.metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fm}"]
                     for fp in self.essential_fields["pleth"]:
                         if fp not in self.p_mouse_dict[f"Ply{p}"].keys():
                             if f"Ply{p}" in self.metadata_warnings.keys():
-                                self.metadata_warnings[f"Ply{p}"].append(f"Missing metadata for {fp}.")
+                                self.metadata_warnings[f"Ply{p}"].append(f"Missing metadata for {fp}")
                             else:
-                                self.metadata_warnings[f"Ply{p}"] = [f"Missing metadata for {fp}."]
+                                self.metadata_warnings[f"Ply{p}"] = [f"Missing metadata for {fp}"]
                         elif self.p_mouse_dict[f"Ply{p}"][fp] == None:
                             if f"Ply{p}" in self.metadata_warnings.keys():
-                                self.metadata_warnings[f"Ply{p}"].append(f"Empty metadata for {fp}.")
+                                self.metadata_warnings[f"Ply{p}"].append(f"Empty metadata for {fp}")
                             else:
-                                self.metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fp}."]
+                                self.metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fp}"]
             if f"Ply{p}" not in self.metadata_warnings.keys(): 
                 self.metadata_passlist.append(f"M{m}_Ply{p}")
      
