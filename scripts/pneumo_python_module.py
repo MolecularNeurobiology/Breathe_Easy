@@ -36,7 +36,7 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.0.3'
+__version__ = '36.0.4'
 
 """
 # v36.0.0 README
@@ -106,7 +106,7 @@ ClassName()
 
 
 !!!
-Automated Selection of Breaths for Analysis
+Automated Selection of Breaths for Analysis - Heirarchy
 Timestamp_Intervals
 Blocks
 Sections
@@ -115,14 +115,6 @@ Segments
 
 
 !!!
-Changes requiring updates to input data and files
-
-*Analysis Parameters to be provided as an input file
-*Revise Autocriteria to use Timestamp and Condition (instead of Key and Alias)
-
-
-!!!
-# TODO
 List of Expected Output Columns
 
 <BREATHCALLER_OUTPUTS>
@@ -202,7 +194,7 @@ List of Expected Output Columns
     <p>Irreg_Score_Chamber_Temp_uncalibrated</p>
     <p>Body_Temperature_Linear</p>
     <p>Irreg_Score_Body_Temperature_Linear</p>
-1</BREATHCALLER_OUTPUTS>
+</BREATHCALLER_OUTPUTS>
 
 """
 
@@ -212,8 +204,6 @@ import re
 import datetime
 import numpy
 import pandas
-#from pandas.api.types import is_string_dtype
-#from pandas.api.types import is_numeric_dtype
 import argparse
 from scipy import stats
 from scipy import signal
@@ -229,13 +219,24 @@ import sys
 
 def gui_open_filename(kwargs={}):
     """
-    Returns the path to the file selected by the GUI.
-    *Function calls on tkFileDialog and uses those arguments
+    
+
+    Parameters
+    ----------
+    kwargs : Dict, optional
+        The default is {}.
+        *Function calls on tkFileDialog and uses those arguments
       ......
       (declare as a dictionairy)
       {"defaultextension":'',"filetypes":'',"initialdir":'',...
       "initialfile":'',"multiple":'',"message":'',"parent":'',"title":''}
       ......
+
+    Returns
+    -------
+    output_text : String
+        String describing the path to the file selected by the GUI.
+        
     """
 
     root = tkinter.Tk()
@@ -247,13 +248,24 @@ def gui_open_filename(kwargs={}):
 
 def gui_open_filenames(kwargs={}):
     """
-    Returns the path to the files selected by the GUI.
-    *Function calls on tkFileDialog and uses those arguments
+    
+
+    Parameters
+    ----------
+    kwargs : Dict, optional
+        The default is {}.
+        *Function calls on tkFileDialog and uses those arguments
       ......
       (declare as a dictionairy)
       {"defaultextension":'',"filetypes":'',"initialdir":'',...
       "initialfile":'',"multiple":'',"message":'',"parent":'',"title":''}
       ......
+
+    Returns
+    -------
+    output_text : List of Strings
+        List of Strings describing the paths to the files selected by the GUI.
+    
     """
 
     root = tkinter.Tk()
@@ -266,13 +278,22 @@ def gui_open_filenames(kwargs={}):
 
 def gui_directory(kwargs={}):
     """
-    Returns the directory path selected by the GUI.
-    *Function calls on tkFileDialog and uses those arguments
-      ......
-      (declare as a dictionairy)
-      {"defaultextension":'',"filetypes":'',"initialdir":'',...
-      "initialfile":'',"multiple":'',"message":'',"parent":'',"title":''}
-      ......
+        Parameters
+    ----------
+    kwargs : Dict, optional
+        The default is {}.
+        *Function calls on tkFileDialog and uses those arguments
+          ......
+          (declare as a dictionairy)
+          {"defaultextension":'',"filetypes":'',"initialdir":'',...
+          "initialfile":'',"multiple":'',"message":'',"parent":'',"title":''}
+          ......
+
+    Returns
+    -------
+    output_text : String
+        Returns the directory path selected by the GUI.
+
     """
 
     root = tkinter.Tk()
@@ -1038,18 +1059,28 @@ def filter_and_replace_temperature(
         local_logger=None
         ):
     """
-    takes a list of temperature values as input and attempts to repair the
-    series if outliers (too high) are found.
+    
 
-    cutoff indicates the absolute threshold to determine a value as an outlier
+    Parameters
+    ----------
+    input_series : DataSeries of Floats
+        list of temperature values being screened for filtering/replacement
+    cutoffs : tuple of Floats
+        Boundary temperatures to use, values outside of this range are 
+        identified and replaced
+    default : Float, optional
+        Temperature Value to use if temperature cannot be imputed from 
+        neighboring measurements. The default is 26.
+    trim_size : int, optional
+        Number of samples to trim the data from the regio with the out of range
+        value. The default is 1000.
+    local_logger : instance of logging.logger (optional)
 
-    trim_size indicate the number of timepoints to trim the data back in case
-    the anomoly is not instantanious
+    Returns
+    -------
+    temperature_series : DataSeries of Floats
+        list of 'repaired' temperatures
 
-    default is the value to use if the data is beyond repair
-
-    the function will return a series that has been repaired if needed along
-    with a status code indicating if a repair was performed
     """
 
     temperature_series = input_series.copy()
@@ -1096,6 +1127,32 @@ def calculate_body_temperature(
         auto_criteria,
         local_logger
         ):
+    """
+    
+
+    Parameters
+    ----------
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    plyuid : string
+        serial identifier for data collection event 
+    timestamp_dict : Dict
+        Dictionairy containing timestamps and text used to describe them. 
+        Captured from the commends in the signal_data
+    animal_metadata : dict
+        dict indexed by 'PlyUID' containing animal metadata
+    manual_selection : TYPE
+        DESCRIPTION.
+    auto_criteria : TYPE
+        DESCRIPTION.
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    DataSeries of Floats
+        Series of Floats describing body temperature
+
+    """
 
     start_body_temp, \
         mid_body_temp, \
@@ -1166,6 +1223,31 @@ def extract_body_temperature_from_metadata(
         plyuid,
         local_logger,
         default=37.5):
+    """
+    
+
+    Parameters
+    ----------
+    animal_metadata : dict
+        dict indexed by 'PlyUID' containing animal metadata
+    plyuid : string
+        serial identifier for data collection event 
+        (plethysmography session id)
+    local_logger : instance of logging.logger (optional)
+    default : Float, optional
+        Default body temperature to use if no data available. 
+        The default is 37.5.
+
+    Returns
+    -------
+    start_body_temp : Float
+        Body Temperature of the animal at the beginning of the recording
+    mid_body_temp : Float
+        Body Temperature of the animal at the 'middle' of the recording
+    end_body_temp : Fload
+        Body Temperature of the animal at the end of the recording
+
+    """
     try:
         start_body_temp = float(
             animal_metadata[plyuid]['Start_body_temperature']
@@ -1257,16 +1339,16 @@ def extract_body_temperature_timings(
 
     Parameters
     ----------
-    plyuid : TYPE
-        DESCRIPTION.
+    plyuid : string
+        serial identifier for data collection event
     manual_selection : TYPE
         DESCRIPTION.
     auto_criteria : TYPE
         DESCRIPTION.
-    timestamp_dict : TYPE
-        DESCRIPTION.
-    local_logger : TYPE
-        DESCRIPTION.
+    timestamp_dict : Dict
+        Dictionairy containing timestamps and text used to describe them. 
+        Captured from the commends in the signal_data
+    local_logger : instance of logging.logger (optional)
 
     Returns
     -------
@@ -1359,27 +1441,25 @@ def apply_smoothing_filter(signal_data,
                            low_pass_order=10,
                            ):
     """
-
-
     Parameters
     ----------
-    signal_data : TYPE
-        DESCRIPTION.
-    high_pass : TYPE, optional
-        DESCRIPTION. The default is 0.1.
-    high_pass_order : TYPE, optional
-        DESCRIPTION. The default is 2.
-    low_pass : TYPE, optional
-        DESCRIPTION. The default is 50.
-    low_pass_order : TYPE, optional
-        DESCRIPTION. The default is 10.
-     : TYPE
-        DESCRIPTION.
-
+    signal_data : pandas.DataFrame
+        data to be smoothed
+    column : 'String'
+        The name of the 
+    high_pass : Float, optional
+        Frequency cutoff (Hz) for the highpass filter. The default is 0.1.
+    high_pass_order : Integer, optional
+        order value for the high pass filter. The default is 2.
+    low_pass : Float, optional
+        Frequency cutoff (Hz) for the low_pass filter. The default is 50.
+    low_pass_order : Integer, optional
+        order value for the low pass filter. The default is 10.
+     
     Returns
     -------
-    lpf_hpf_signal : TYPE
-        DESCRIPTION.
+    lpf_hpf_signal : List, DataSeries of Floats
+        smoothed data
 
     """
     sampleHz = round(
@@ -1400,6 +1480,18 @@ def apply_smoothing_filter(signal_data,
 
 def getmaxbyindex(inputlist, indexlist):
     """
+    inputlist : list
+        list to extract average from
+    indexlist : int
+        list of index values specifying start of unit to screen within, n+1 
+        specifies ent of unit
+
+    Returns
+    -------
+    maxbyindexlist : Float
+        min of the values specified by the index boundaries
+
+
     can get PIF calcs using flow data and transition times
     note that cross ref of indexlist with Ti vs Te timestamps
     is needed for segregation of the data
@@ -1411,6 +1503,21 @@ def getmaxbyindex(inputlist, indexlist):
 
 def getminbyindex(inputlist, indexlist):
     """
+    inputlist : list
+        list to extract average from
+    indexlist : int
+        list of index values specifying start of unit to screen within, n+1 
+        specifies ent of unit
+
+    Returns
+    -------
+    minbyindexlist : Float
+        min of the values specified by the index boundaries
+
+    can get calcs using signal and transition times
+    note that cross ref of indexlist with timestamps
+    is needed for segregation of the data
+
     can get PEF calcs using flow data and transition times
     note that cross ref of indexlist with Ti vs Te timestamps
     is needed for segregation of the data
@@ -1422,6 +1529,19 @@ def getminbyindex(inputlist, indexlist):
 
 def getsumby2index(inputlist, index1, index2):
     """
+    inputlist : list
+        list to extract average from
+    index1 : int
+        lower bound of index for range of entries to average
+    index2 : int
+        upper bound of index for range of entries to average
+
+    Returns
+    -------
+    sumbyindexlist : Float
+        sum of the values specified by the index boundaries
+
+    
     can get TV calcs using flow data and transition times
     note that cross ref of indexlist with Ti vs Te timestamps
     is needed for segregation of the data
@@ -1435,9 +1555,25 @@ def getsumby2index(inputlist, index1, index2):
 
 def getmaxby2index(inputlist, index1, index2):
     """
-    can get PIF calcs using flow data and transition times
-    note that cross ref of indexlist with Ti vs Te timestamps
-    is needed for segregation of the data
+    
+
+    Parameters
+    ----------
+    inputlist : list
+        list to extract average from
+    index1 : int
+        lower bound of index for range of entries to average
+    index2 : int
+        upper bound of index for range of entries to average
+
+    Returns
+    -------
+    maxbyindexlist : Float
+        maximum of the values specified by the index boundaries
+
+    can get calcs using signal and transition times
+    note that cross ref of indexlist with timestamps
+    is needed for segregation of the data. Useful for PIF/PEF calculations.
     """
     maxbyindexlist = [max(
         inputlist[index1[i]:index2[i]]
@@ -1448,6 +1584,20 @@ def getmaxby2index(inputlist, index1, index2):
 
 def get_avg_by_2_index(inputlist, index1, index2):
     """
+    Parameters
+    ----------
+    inputlist : list
+        list to extract average from
+    index1 : int
+        lower bound of index for range of entries to average
+    index2 : int
+        upper bound of index for range of entries to average
+
+    Returns
+    -------
+    avgbyindexlist : Float
+        average of the values specified by the index boundaries
+
     can get calcs using signal and transition times
     note that cross ref of indexlist with timestamps
     is needed for segregation of the data
@@ -1465,13 +1615,14 @@ def extract_candidate_breath_transitions(signal_data):
 
     Parameters
     ----------
-    signal_data : TYPE
-        DESCRIPTION.
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
 
     Returns
     -------
-    candidate_breath_transitions : TYPE
-        DESCRIPTION.
+    candidate_breath_transitions : Pandas.DataFrame
+        DataFrame with additional columns describing candidate breath 
+        parameters
 
     """
     candidate_breath_transitions = pandas.DataFrame()
@@ -1502,26 +1653,24 @@ def extract_filtered_breaths_from_candidates(
         local_logger
         ):
     """
-    
-
     Parameters
     ----------
-    candidate_breath_transitions : TYPE
-        DESCRIPTION.
-    analysis_parameters : TYPE
-        DESCRIPTION.
-    local_logger : TYPE
-        DESCRIPTION.
+    candidate_breath_transitions : Pandas.DataFrame
+        DataFrame containing annotated transitions between breaths
+    analysis_parameters : Dict
+        Dict of settings to use for analysis
+    local_logger : instance of logging.logger (optional)
 
     Raises
     ------
     Exception
-        DESCRIPTION.
+        Raised is fewer than 30 breaths meet PIF PEF and TI criteria
 
     Returns
     -------
-    filtered_breaths : TYPE
-        DESCRIPTION.
+    filtered_breaths : Pandas.DataFrame
+        DataFrame describing, per breath, the parameters of the filtered 
+        breaths
 
     """
 
@@ -1603,12 +1752,23 @@ def extract_filtered_breaths_from_candidates(
 
 def calculate_irreg_score(input_series):
     """
-    takes a numpy compatible series and calculates an irregularity score
-    using the formula |x[n]-X[n-1]| / X[n-1]
+    Parameters
+    ----------
+    input_series : Pandas.DataSeries of Floats
+        Data to use for Irreg Score Calculation
 
-    first value will be zero as it has no comparison to change from
+    Returns
+    -------
+    output_series : Pandas.DataSeries of Floats
+        Series of Irreg Scores, paired to input_series
 
-    a series of the irregularity scores will be returned
+        ...
+        takes a numpy compatible series and calculates an irregularity score
+        using the formula |x[n]-X[n-1]| / X[n-1]
+    
+        first value will be zero as it has no comparison to change from
+    
+        a series of the irregularity scores will be returned
     """
     output_series = numpy.insert(
         numpy.divide(
@@ -1623,6 +1783,23 @@ def calculate_irreg_score(input_series):
 
 
 def calculate_moving_average(input_series, window, include_current=True):
+    """
+    Parameters
+    ----------
+    input_series : Pandas.DataSeries of Floats
+        Data to use for moving average calculation
+    window : Int
+        number of samples to use for moving average
+    include_current : Boolean, optional
+        include the 'middle' breath in the moving average True/False. 
+        The default is True.
+
+    Returns
+    -------
+    moving_average : Pandas.DataSeries of Floats
+        moving average smoothed series paired to the input_series
+
+    """
     if include_current == False:
         moving_average = (
             input_series.rolling(
@@ -1658,6 +1835,33 @@ def basicRR(
         absthresh = 0.3,
         minRR = 0.05):
     """
+    
+
+    Parameters
+    ----------
+    CT : Pandas.DataSeries or List of Floats
+        Series of voltage data
+    TS : Pandas.DataSeries or List of Floats
+        Series of timestamps paired to voltage data
+    noisecutoff : Float, optional
+        percentile of signal amplitude to use to set the 'noise level'. 
+        The default is 75.
+    threshfactor : Float, optional
+        fold change above noisecutoff to use for peak detection. 
+        The default is 4.
+    absthresh : Float, optional
+        absolute minimum voltage to use for peak detection. The default is 0.3.
+    minRR : Float, optional
+        minimum duration of heartbeat to be considered a valid beat. 
+        The default is 0.05.
+
+    Returns
+    -------
+    beat_df : Pandas.DataFrame
+        DataFrame containing baseg heart beat parameters (timestamp, 'RR')
+
+    """
+    """
     simple RR peak caller based on relative signal to noise thresholding
     CT = signal
     noisecutoff = perrcentile within signal to consider as noise
@@ -1667,7 +1871,7 @@ def basicRR(
     signal filtering is helpful (recommend butter highpass and notch filters)
     """
     
-    #get above thresh
+    # get above thresh
     noise_level=numpy.percentile(CT,noisecutoff)
     thresh=max(noise_level*threshfactor,absthresh)
     beats={}
@@ -1678,10 +1882,10 @@ def basicRR(
     
     if len(index_crosses)==0:
     
-        return beats#pass #no beats
+        return beats #pass no beats
     
     prevJ=0
-    #prevRR=0
+    
     for i in index_crosses[:-1]:
         maxR=CT[i]
         
@@ -1693,15 +1897,14 @@ def basicRR(
                 break
             elif CT[j]>maxR:
                 maxR=CT[j]
-        #        indexR=j
+        
         if j-prevJ>=minRR:
-            #beats[TS_R]={'Rvolt':maxR,'indexR':indexR,'RR':TS[j]-TS[prevJ], 'CV': ((j-prevJ)-prevRR)/(((j-prevJ)+prevRR)/2),'thresh':thresh}
             beats[TS_R]={'RR':TS[j]-TS[prevJ]}
             if prevJ==0: 
                 beats[TS_R]['first']=True
             else: beats[TS_R]['first']=False
             prevJ=j
-            #prevRR=TS[j]-TS[prevJ]
+            
     beat_df = pandas.DataFrame(beats).transpose()
     beat_df.index.name = 'ts'
     beat_df.reset_index()
@@ -1714,6 +1917,25 @@ def calculate_basic_breath_parameters(
     analysis_parameters,
     local_logger
     ):
+    """
+    
+
+    Parameters
+    ----------
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    filtered_breaths : Pandas.DataFrame
+        DataFrame containing filtered list of candidate breaths
+    analysis_parameters : dict
+        dictionary containing settings for analysis
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    breath_parameters : Pandas.DataFrame
+        DataFrame containing annotated paramters for candidate breaths
+
+    """
 
     breath_parameters = filtered_breaths.copy()
     breath_parameters['TI'] = filtered_breaths['ts_exhale'] - \
@@ -1896,17 +2118,16 @@ def breath_caller(
 
     Parameters
     ----------
-    signal_data : TYPE
-        DESCRIPTION.
-    analysis_parameters : TYPE
-        DESCRIPTION.
-    local_logger : TYPE
-        DESCRIPTION.
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    analysis_parameters : dict
+        dictionary containing settings for analysis
+    local_logger : instance of logging.logger (optional)
 
     Returns
     -------
-    basic_breath_parameters : TYPE
-        DESCRIPTION.
+    basic_breath_parameters : Pandas.DataFrame
+        DataFrame containing annotated breaths
 
     """
     local_logger.info('detection of breaths started')
@@ -1938,7 +2159,29 @@ def create_auto_calibration_dict(
         timestamp_dict,
         local_logger
         ):
+    """
+    
 
+    Parameters
+    ----------
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    auto_criteria : Dict
+        Dict with info describing criteria for automated selection of breathing
+        for 'calm quiet' breathing
+    timestamp_dict : Dict
+        Dictionairy containing timestamps and text used to describe them. 
+        Captured from the commends in the signal_data
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    auto_calibration_dict : Dict
+        Dict describing baseline measures and parameters for calibration
+
+    """
     if auto_criteria is None:
         return None
 
@@ -2107,18 +2350,17 @@ def create_auto_calibration_dict(
 
 def extract_block_bounds(signal_data, reverse_timestamp_dict, all_keys, key):
     """
-
-
     Parameters
     ----------
-    signal_data : TYPE
-        DESCRIPTION.
-    reverse_timestamp_dict : TYPE
-        DESCRIPTION.
-    all_keys : TYPE
-        DESCRIPTION.
-    key : TYPE
-        DESCRIPTION.
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    reverse_timestamp_dict : Dict
+        Dictionairy containing text used to describe timstamps and the 
+        acutal timestamps themselvs. Built from timestamp_dict. 
+    all_keys : List
+        keys from reverse_timestamp_dict (not used)
+    key : ...
+        key to test in reverse_timestamp_dict
 
     Returns
     -------
@@ -2145,6 +2387,26 @@ def create_man_calibration_dict(
         manual_selection,
         plyuid
         ):
+    """
+    
+
+    Parameters
+    ----------
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    manual_selection : Dict
+        Dict with info describing manually selected start and stop points for
+        breathing of interest
+    plyuid : string
+        serial identifier for data collection event
+
+    Returns
+    -------
+    man_calibration_dict : Dict
+        Dict describing baseline measures and parameters for calibration from
+        manual selection
+
+    """
     if manual_selection is None:
         return None
 
@@ -2207,8 +2469,21 @@ def create_man_calibration_dict(
 
 def get_the_chunks(chunkable_list, value, min_chunk):
     """
-    input is a list, the value that is being searched for, and a minimum chunk size
-    returns a list of tuples describing the indexes of chunks with the value that meet the minumum chunk size
+    Parameters
+    ----------
+    chunkable_list : List
+        List containing values to search through
+    value : ...
+        value that is being searched for in the chunkable list
+    min_chunk : Int
+        Integer minimum chunk size (consecutive list entries matching value)
+
+    Returns
+    -------
+    chunks : List of tuples
+        returns a list of tuples describing the indexes of chunks with the 
+        value that meet the minumum chunk size
+
     """
     status = 0
     chunks = []
@@ -2235,6 +2510,18 @@ def get_the_chunks(chunkable_list, value, min_chunk):
 
 
 def get_the_biggest_chunk(chunk_list):
+    """
+        Parameters
+    ----------
+    chunk_list : list of tuples of Ints (or Floats)
+        list of Tuples of Ints describing indexes of selections
+
+    Returns
+    -------
+    biggest_chunk : Tuple of Ints (or Floats)
+        Tuple describing the boundary of the largest 'chunk' in the chunk_list
+
+    """
     biggest_chunk = []
     if len(chunk_list) == 0:
         return biggest_chunk
@@ -2253,6 +2540,25 @@ def reconcile_calibration_selections(
         man_calibration_dict,
         local_logger
         ):
+    """
+    Parameters
+    ----------
+    auto_calibration_dict : Dict
+        Dict describing baseline measures and parameters to use for calibration
+        from autmated selection
+    man_calibration_dict : Dict
+        Dict describing baseline measures and parameters to use for calibration
+        from manual selection
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    o2_cal_dict : Dict
+        Dict describing baseline measures and parameters to use for calibration
+    co2_cal_dict : Dict
+        Dict describing baseline measures and parameters to use for calibration
+
+    """
     o2_cal_dict = {}
     temp_o2_cal_dict = {}
     co2_cal_dict = {}
@@ -2331,6 +2637,33 @@ def apply_gas_calibration(
         co2_cal_dict,
         local_logger
         ):
+    """
+    
+
+    Parameters
+    ----------
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    o2_cal_dict : Dict
+        Dict describing O2 Calibration Parameters
+    co2_cal_dict : Dict
+        Dict describing CO2 Calbration Parameters
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    signal_calibrated_o2 : Pandas.DataSeries
+        Calibrated O2 matched to signal_data
+    signal_calibrated_co2 : Pandas.DataSeries
+        Calibrated CO2 matched to signal_data
+    breath_list_calibrated_o2 : Pandas.DataSeries
+        Calibrated O2 matched to breath_list
+    breath_list_calibrated_co2 : Pandas.DataSeries
+        Calibrated CO2 matched to breath_list
+
+    """
 
     if 0 not in o2_cal_dict and 0 < len(o2_cal_dict) < 2:
         local_logger.warning(
@@ -2397,6 +2730,40 @@ def calibrate_gas(
         timestamp_dict,
         local_logger
         ):
+    """
+    
+
+    Parameters
+    ----------
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    auto_criteria : Dict
+        Dict with info describing criteria for automated selection of breathing
+        for 'calm quiet' breathing
+    manual_selection : Dict
+        Dict with info describing manually selected start and stop points for
+        breathing of interest
+    plyuid : string
+        serial identifier for data collection event
+    timestamp_dict : Dict
+        Dictionairy containing timestamps and text used to describe them. 
+        Captured from the commends in the signal_data
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    signal_calibrated_o2 : Pandas.DataSeries
+        Calibrated O2 matched to signal_data
+    signal_calibrated_co2 : Pandas.DataSeries
+        Calibrated CO2 matched to signal_data
+    breath_list_calibrated_o2 : Pandas.DataSeries
+        Calibrated O2 matched to breath_list
+    breath_list_calibrated_co2 : Pandas.DataSeries
+        Calibrated CO2 matched to breath_list
+
+    """
 
     auto_calibration_dict = create_auto_calibration_dict(
         signal_data,
@@ -2433,6 +2800,26 @@ def calibrate_gas(
 
 
 def make_filter_from_chunk_list(ts_inhale_and_ts_end, chunk_list):
+    """
+    
+
+    Parameters
+    ----------
+    ts_inhale_and_ts_end : Pandas.DataFrame
+        DataFrame describing transition times for inhalation and end of breath
+    chunk_list : List of tuples of Ints
+        List of Tuples of Floats describing Indexes that should be included 
+        in the filter
+
+    Returns
+    -------
+    df_inhale_and_end['filter'] : Pandas.DataSeries
+        Binary filter based on the input timelist
+    
+    df_inhale_and_end['selection_id'] : Pandas.DataSeries
+        Selection ID metadata for the input timelist
+
+    """
     df_inhale_and_end = pandas.DataFrame(ts_inhale_and_ts_end.copy())
     df_inhale_and_end['filter'] = 0
     df_inhale_and_end['selection_id'] = ""
@@ -2455,6 +2842,27 @@ def make_filter_from_chunk_list(ts_inhale_and_ts_end, chunk_list):
 
 
 def make_filter_from_time_list(ts_inhale_and_ts_end, time_list):
+    """
+    
+
+    Parameters
+    ----------
+    ts_inhale_and_ts_end : Pandas.DataFrame
+        DataFrame describing transition times for inhalation and end of breath
+    time_list : List of tuples of Floats
+        List of Tuples of Floats describing beginning and ending of timestamps
+        that should be included in the filter
+
+    Returns
+    -------
+    df_inhale_and_end['filter'] : Pandas.DataSeries
+        Binary filter based on the input timelist
+    
+    df_inhale_and_end['selection_id'] : Pandas.DataSeries
+        Selection ID metadata for the input timelist
+    
+
+    """
     df_inhale_and_end = pandas.DataFrame(ts_inhale_and_ts_end.copy())
     df_inhale_and_end['filter'] = 0
     df_inhale_and_end['selection_id'] = ""
@@ -2480,7 +2888,33 @@ def create_filters_for_automated_selections(
         analysis_parameters,
         local_logger
         ):
+    """
     
+
+    Parameters
+    ----------
+    signal_data : Pandas.DataFrame
+        DataFrame containing signal data
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    auto_criteria : Dict
+        Dict with info describing criteria for automated selection of breathing
+        for 'calm quiet' breathing
+    timestamp_dict : Dict
+        Dictionairy containing timestamps and text used to describe them. 
+        Captured from the commends in the signal_data
+    analysis_parameters : Dict
+        Dict of settings to use for analysis
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    block_dict : Nested Dict
+        Nested Dict describing boundaries of selected blocks and related 
+        information such as a filter indicating member breaths, timestamp 
+        boundaries, etc.
+
+    """
     block_dict = {}
     if auto_criteria is None:
         return block_dict
@@ -2642,6 +3076,29 @@ def create_filters_for_manual_selections(
         plyuid,
         logger
         ):
+    """
+    
+
+    Parameters
+    ----------
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    manual_selection : Dict
+        Dict with info describing manually selected start and stop points for
+        breathing of interest
+    plyuid : string
+        serial identifier for data collection event 
+        (plethysmography session id)
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    block_dict : Nested Dict
+        Nested Dict describing boundaries of selected blocks and related 
+        information such as a filter indicating member breaths, timestamp 
+        boundaries, etc.
+
+    """
 
     block_dict = {}
     if manual_selection is None:
@@ -2684,6 +3141,41 @@ def collect_calibration_parameters(
         manual_selections_filters,
         local_logger
         ):
+    """
+
+    Parameters
+    ----------
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    analysis_parameters : dict
+        dictionary containing settings for analysis
+    animal_metadata : dict
+        dict indexed by 'PlyUID' containing animal metadata
+    plyuid : string
+        serial identifier for data collection event 
+        (plethysmography session id)
+    auto_criteria : Dict
+        Dict with info describing criteria for automated selection of breathing
+        for 'calm quiet' breathing
+    manual_selection : Dict
+        Dict with info describing manually selected start and stop points for
+        breathing of interest
+    automated_selections_filters : Nested Dict with Lists
+        Nested Dict with binary lists describing which breaths are associated
+        with passing/failing particular filters
+    manual_selections_filters : Nested Dict with Lists
+        Nested Dict with binary lists describing which breaths are associated 
+        with passing/failing particular filters
+    local_logger : instance of logging.logger
+
+    Returns
+    -------
+    calibration_dict : Nested Dict
+        Nested Dict containing calibration parameters to be applied to 
+        automated of manually selected breaths
+
+    """
+    
     calibration_dict = {}
 
     if 'Bar_Pres' in animal_metadata[plyuid]:
@@ -2877,7 +3369,7 @@ def getvaporpressure(temperature):
 
 def getK(C):
     """
-        Parameters
+    Parameters
     ----------
     C : Float
         Temperature in degrees Celsius
@@ -2926,7 +3418,7 @@ def get_BT_TV_K(tv, calv, act_calv, t_body, t_chamb, room_pressure):
 
 def get_pneumo_TV(tv,calv,act_calv):
     """
-        Parameters
+    Parameters
     ----------
     tv : Float
         uncorrected tidal volume (V)
@@ -2941,22 +3433,52 @@ def get_pneumo_TV(tv,calv,act_calv):
         corrected tidal volume (mL)
 
     """
+    
     return tv / calv * act_calv
 
 
 def get_VO2(o2_in, o2_out, flowrate):
     """
     calculates Volume of O2 (mL) consumed per minute
-    o2_in = O2 concentration (%)
-    o2_out = O2 concentration (%)
-    flowrate = air flow in LPM (this is converted to mLPM)
-    weight = body weight of animal, if set at 1, will provide non-normalized VO2
+
+    Parameters
+    ----------
+    o2_in : Float
+        O2 concentration (%) into the chamber
+    o2_out : Float
+        O2 concentration (%) out of the chamber
+    flowrate : Float
+        flowrate (mL) of air through the chamber
+
+    Returns
+    -------
+    Float
+        Volume of O2 (mL) consumed per minute.
 
     """
+    
     return (flowrate*1000*o2_in/100-flowrate*1000*o2_out/100)
 
 
 def get_VCO2(co2_in, co2_out, flowrate):
+    """
+    calculates Volume of CO2 (mL) produced per minute
+
+    Parameters
+    ----------
+    co2_in : Float
+        CO2 concentration (%) into the chamber
+    co2_out : Float
+        CO2 concentration (%) out of the chamber
+    flowrate : Float
+        flowrate (mL) of air through the chamber
+
+    Returns
+    -------
+    Float
+        Volume of CO2 (mL) produced per minute.    
+    """
+    
     return (flowrate*1000*co2_out/100-flowrate*1000*co2_in/100)
 
 
@@ -2996,6 +3518,25 @@ def calculate_calibrated_pneumo_volume_and_respiration(
         volume_list,
         calibration_parameters
         ):
+    """
+    
+
+    Parameters
+    ----------
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    volume_list : Pandas.DataFrame
+        DataFrame related to breath_list, but with baseline volume data placed
+        for later use in calculations
+    calibration_parameters : Dict
+        Dict containing parameters needed for calculating calibrated volumes
+
+    Returns
+    -------
+    enhanced_volume_list : Pandas.DataFrame
+        DataFrame describing calibrated volume and respiratory data
+
+    """
 
     enhanced_volume_list = volume_list.copy()
     
@@ -3059,6 +3600,30 @@ def populate_baseline_values_for_calibration_calculations(
         manual_selections_filters,
         local_logger
         ):
+    """
+
+    Parameters
+    ----------
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    calibration_parameters : Dict
+        Dict containing parameters needed for calculating calibrated volumes
+    automated_selections_filters : Nested Dict with Lists
+        Nested Dict with binary lists describing which breaths are associated
+        with passing/failing particular filters
+    manual_selections_filters : Nested Dict with Lists
+        Nested Dict with binary lists describing which breaths are associated 
+        with passing/failing particular filters
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    volume_list : Pandas.DataFrame
+        DataFrame related to breath_list, but with baseline volume data placed
+        for later use in calculations
+
+    """
+    
     volume_list = pandas.DataFrame(breath_list['ts_inhale'].copy())
     
     volume_list['base_selection'] = numpy.nan
@@ -3140,6 +3705,27 @@ def calculate_calibrated_volume_and_respiration(
         calibration_parameters,
         analysis_parameters
         ):
+    """
+    
+
+    Parameters
+    ----------
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    volume_list : Pandas.DataFrame
+        DataFrame related to breath_list, but with baseline volume data placed
+        for later use in calculations
+    calibration_parameters : Dict
+        Dict containing parameters needed for calculating calibrated volumes
+    analysis_parameters : Dict
+        Dict of settings to use for analysis
+
+    Returns
+    -------
+    enhanced_volume_list : Pandas.DataFrame
+        DataFrame describing calibrated volume and respiratory data
+
+    """
     
     enhanced_volume_list = volume_list.copy()
     enhanced_volume_list['calibrated_TV'] = get_BT_TV_K(
@@ -3207,7 +3793,6 @@ def calculate_calibrated_volume_and_respiration(
 
 
 def create_output(
-        
         breath_list,
         analysis_parameters,
         animal_metadata,
@@ -3219,6 +3804,45 @@ def create_output(
         column_dictionary,
         local_logger
         ):                
+    """
+    
+
+    Parameters
+    ----------
+    breath_list : Pandas.DataFrame
+        DataFrame containing annotated breaths
+    analysis_parameters : Dict
+        Dict of settings to use for analysis
+    animal_metadata : Dict
+        Dict of metadata information for an animal
+    auto_criteria : Dict
+        Dict with info describing criteria for automated selection of breathing
+        for 'calm quiet' breathing
+    manual_selection : Dict
+        Dict with info describing manually selected start and stop points for
+        breathing of interest
+    plyuid : string
+        serial identifier for data collection event 
+        (plethysmography session id)
+    automated_selections_filters : Nested Dict with Lists
+        Nested Dict with binary lists describing which breaths are associated
+        with passing/failing particular filters
+    manual_selections_filters : Nested Dict with Lists
+        Nested Dict with binary lists describing which breaths are associated 
+        with passing/failing particular filters
+        DESCRIPTION.
+    column_dictionary : Dict
+        Dict that indicates translation of current 'column names' for output
+        to match the current preferred style
+    local_logger : instance of logging.logger (optional)
+
+    Returns
+    -------
+    output_list : Pandas DataFrame
+        STAGG ready output, contains a breathlist and associated parameters 
+        and metadata for subsequent statistical analysis
+
+    """
     
     output_list = breath_list.copy()
     
@@ -3404,12 +4028,6 @@ def create_output(
     output_list.loc[:,'Exp_Condition'] = \
         output_list['Auto_Condition'].astype(str) + \
         output_list['Man_Condition'].astype(str)
-    
-    # print(
-    #     '<p>'+'</p>\n<p>'.join(
-    #         [k for k in column_list]
-    #         )+'</p>'
-    #     )
     
     return output_list
 
@@ -3853,7 +4471,9 @@ def main():
                         Manual_Selections_Filters,
                         Analysis_Parameters,
                         logger)
-
+                
+                # review/revise automated filters in case volumetric 
+                # calibration changes inclusion                
                 Revised_Automated_Selections_Filters = \
                     create_filters_for_automated_selections(
                         Signal_Data,
@@ -3897,13 +4517,14 @@ def main():
                         Analysis_Parameters,
                         logger)
 
-
+                # merge values for calibrated volumes into the Breath_List
                 Breath_List = Breath_List.merge(
                     Revised_Advanced_Breath_Parameters, 
                     on = 'ts_inhale',
                     how = 'left',
                     )
                 
+                # Include the version of this script as an Analysis Parameter
                 Analysis_Parameters['Version'] = __version__
                 
                 Output_List = create_output(
@@ -3919,6 +4540,7 @@ def main():
                     logger
                     )
                 
+                # Prepare the output for STAGG - only generate if not empty
                 if len(
                         Output_List[
                             (Output_List['AUTO_IND_INCLUDE'] == 1) |
@@ -3950,7 +4572,8 @@ def main():
                                 '{}_{}.json'.format(MUID,PLYUID)
                                 )
                             )
-                        
+                
+                # provide 'all breath' breathlist if requested
                 if 'All_Breath_Output' in Analysis_Parameters:
                     if Analysis_Parameters['All_Breath_Output'] == '1':
                         Output_List.to_csv(
@@ -3959,6 +4582,7 @@ def main():
                                 )
                             )
                 
+                # provide 'aggregated breath data' output if requested
                 if 'Aggregate_Output' in Analysis_Parameters:
                     if Auto_Criteria is not None:
                         if Analysis_Parameters['Aggregate_Output'] != '':
@@ -4061,17 +4685,6 @@ def main():
                     exc_info=True
                     )
                 continue
-            # generate summary output if needed
-                
-                
-                
-                
-                
-                
-                
-            
-            
-        
             
             
     except Exception as e:
@@ -4088,7 +4701,7 @@ def main():
             )
         )
        
-# %%       
+# %% Run the Main Program
 if __name__ == '__main__':
     main()
 
