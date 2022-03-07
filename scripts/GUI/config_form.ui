@@ -285,7 +285,7 @@
              <item>
               <widget class="QTableWidget" name="variable_table">
                <property name="sizeAdjustPolicy">
-                <enum>QAbstractScrollArea::AdjustToContentsOnFirstShow</enum>
+                <enum>QAbstractScrollArea::AdjustToContents</enum>
                </property>
                <property name="selectionMode">
                 <enum>QAbstractItemView::ExtendedSelection</enum>
@@ -1639,6 +1639,9 @@
              </item>
              <item>
               <widget class="QTableWidget" name="loop_table">
+               <property name="sizeAdjustPolicy">
+                <enum>QAbstractScrollArea::AdjustToContents</enum>
+               </property>
                <attribute name="horizontalHeaderStretchLastSection">
                 <bool>true</bool>
                </attribute>
@@ -1679,7 +1682,7 @@
                </column>
                <column>
                 <property name="text">
-                 <string>Include filtered breaths:</string>
+                 <string>Include all breaths</string>
                 </property>
                </column>
                <column>

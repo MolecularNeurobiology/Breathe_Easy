@@ -145,8 +145,8 @@ class Thinbass(QDialog,Ui_Thinbass):
     def output(self):
         print("thinbass.output()")
         try:
-            first = next(file for file in glob.glob(f'{self.pleth.input_dir_r}/*.json'))
-            with open(first) as first_json:
+            # first = next(file for file in glob.glob(f'{self.pleth.input_dir_r}/*.json'))
+            with open(self.pleth.stagg_list[0]) as first_json:
                 bp_output = json.load(first_json)
             for k in bp_output.keys():
                 self.pleth.breath_df.append(k)
@@ -1894,9 +1894,12 @@ class Config(QWidget, Ui_Config):
                 if vv.objectName() == str(butt):
                     k.setPlainText(self.pleth.rc_config['References']['Definitions'][butt.replace("help_","")])
 
-    # def no_duplicates(self):
-    #     if self.variable_table.currentItem().text() in self.deps:
-
+    def no_duplicates(self):
+        for row in range(self.variable_table.rowCount()):
+            if row != self.variable_table.currentRow():
+                if self.variable_table.item(row,1).text() == self.variable_table.currentItem().text():
+                    self.n += 1
+                    self.variable_table.item(row,1).setText(f"{self.variable_table.item(row,1).text()}_{self.n}")
 
     def setup_transform_combo(self):
         spacerItem64 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -1954,9 +1957,9 @@ class Config(QWidget, Ui_Config):
         print("config.setup_table_config()")
         self.stack = []
         # The following "header" stanzas make the columns within the tables of equal width.
-        header = self.variable_table.horizontalHeader()
-        for header_col in range(0,6):
-            header.setSectionResizeMode(header_col,QHeaderView.Stretch)
+        # header = self.variable_table.horizontalHeader()
+        # for header_col in range(0,6):
+        #     header.setSectionResizeMode(header_col,QHeaderView.Stretch)
 
         header_loop = self.loop_table.horizontalHeader()
         for header_loop_col in range(0,6):
@@ -2038,7 +2041,12 @@ class Config(QWidget, Ui_Config):
             # self.buttonDict_variable[item]["role"].activated.connect(self.v.replace)
             self.pleth.buttonDict_variable[item]["Independent"].toggled.connect(self.add_combos)
             self.pleth.buttonDict_variable[item]["Covariate"].toggled.connect(self.add_combos)
-            # self.pleth.buttonDict_variable[item]["Alias"].textChanged.connect(self.update_alias)
+        self.n = 0
+        self.variable_table.cellChanged.connect(self.no_duplicates)
+        self.variable_table.resizeColumnsToContents()
+        self.variable_table.resizeRowsToContents()
+        # for item_1 in self.pleth.breath_df:
+            # self.pleth.buttonDict_variable[item_1]["Alias"].textEdited.connect(self.no_duplicates)
             # self.buttonDict_variable[item]["Covariate"].toggled.connect(self.v.populate_combos(self.buttonDict_variable[item].))
         # Creating the dictionary that will store the cells' statuses based on user selection. The table's need separate dictionaries because they'll be yielding separate csvs:
         # self.loop_menu = {}
@@ -2066,7 +2074,6 @@ class Config(QWidget, Ui_Config):
         # self.pleth.loop_menu[table][row]["Y axis maximum"].addItems(["Automatic",""])
         self.pleth.loop_menu[table][row]["Inclusion"] = QComboBox()
         self.pleth.loop_menu[table][row]["Inclusion"].addItems(["No","Yes"])
-        print(self.pleth.loop_menu)
         # Adding the contents based on the variable list of the drop down menus for the combo box widgets:
         # for role in self.v.role_list:
             # self.pleth.loop_menu[table][self.row_loop][role].addItems([""])
@@ -2087,56 +2094,9 @@ class Config(QWidget, Ui_Config):
         table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Inclusion"])
         table.setCellWidget(row,7,self.pleth.loop_menu[table][row]["Y axis minimum"])
         table.setCellWidget(row,8,self.pleth.loop_menu[table][row]["Y axis maximum"])
-        # for row in range(rows):
-        #     print(rows)
-        #     print(row)
-        #     self.pleth.loop_menu[table].update({row:{}})
-        #     print(self.pleth.loop_menu)
-        #     # Creating the widgets within the above dictionary that will populate the cells of each row:
-        #     self.pleth.loop_menu[table][row]["Graph"] = QLineEdit()
-        #     self.pleth.loop_menu[table][row]["Y axis minimum"] = QLineEdit()
-        #     self.pleth.loop_menu[table][row]["Y axis maximum"] = QLineEdit()
-        #     self.pleth.loop_menu[table][row]["Inclusion"] = QComboBox()
-        #     self.pleth.loop_menu[table][row]["Inclusion"].addItems(["No","Yes"])
-        #     for role in self.role_list[1:6]:
-        #         self.pleth.loop_menu[table][row][role] = QComboBox()
-        #         self.pleth.loop_menu[table][row][role].addItems([""])
-        #         self.pleth.loop_menu[table][row][role].addItems([x for x in self.pleth.breath_df])
-            
-        #     # self.loop_menu[table][row]["Poincare"] = QComboBox()
-        #     # self.loop_menu[table][row]["Poincare"].addItems(["Yes","No"])
-        #     # self.loop_menu[table][row]["Y axis minimum"] = QComboBox()
-        #     # self.loop_menu[table][row]["Y axis minimum"].addItems(["Automatic",""])
-        #     # self.loop_menu[table][row]["Y axis maximum"] = QComboBox()
-        #     # self.loop_menu[table][row]["Y axis maximum"].addItems(["Automatic",""])
-            
-            
-        #     # Adding the contents based on the variable list of the drop down menus for the combo box widgets:
-        #     # for role in self.v.role_list:
-        #         # self.loop_menu[table][self.row_loop][role].addItems([""])
-        #         # self.loop_menu[table][self.row_loop][role].addItems([x for x in self.breath_df])
         
-            
-        #     # Populating the table cells with their widget content stored in the dictionary:
-        #     # for n in range(0,7):
-        #     #     for role in role_list:
-        #     #         table.setCellWidget(self.row_loop,n,self.loop_menu[table][self.row_loop][role])
-        #     table.setCellWidget(row,0,self.pleth.loop_menu[table][row]["Graph"])
-        #     table.setCellWidget(row,1,self.pleth.loop_menu[table][row]["Variable"])
-        #     table.setCellWidget(row,2,self.pleth.loop_menu[table][row]["Xvar"])
-        #     table.setCellWidget(row,3,self.pleth.loop_menu[table][row]["Pointdodge"])
-        #     table.setCellWidget(row,4,self.pleth.loop_menu[table][row]["Facet1"])
-        #     table.setCellWidget(row,5,self.pleth.loop_menu[table][row]["Facet2"])
-        #     # table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Poincare"])
-        #     table.setCellWidget(row,6,self.pleth.loop_menu[table][row]["Inclusion"])
-        #     table.setCellWidget(row,7,self.pleth.loop_menu[table][row]["Y axis minimum"])
-        #     table.setCellWidget(row,8,self.pleth.loop_menu[table][row]["Y axis maximum"])
-
-        #     print(self.pleth.loop_menu)
-            # if table == self.loop_table:
-            #     self.loop_menu[table][row]["poincare"] = QComboBox()
-            #     self.loop_menu[table][row]["poincare"].addItems(["","Yes","No"])
-            #     table.setCellWidget(row,6,self.loop_menu[table][row]["poincare"])
+        table.resizeColumnsToContents()
+        table.resizeRowsToContents()
 
     def show_custom(self):
         print("config.show_custom()")
@@ -3528,7 +3488,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if self.v.configs["variable_config"]["path"] != "":
                 self.v.check_load_variable_config("no")
                 self.v.show()
-            elif self.input_dir_r != "" and os.path.isdir(self.input_dir_r)==True:
+            elif self.stagg_list != [] and os.path.isdir(self.stagg_list[0])==True:
                 if self.metadata != "" and (self.autosections != "" or self.mansections != ""):
                     self.thinb = Thinbass(self)
                     self.thinb.show()
@@ -3768,9 +3728,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stack = []
 
         # The following "header" stanzas make the columns within the tables of equal width.
-        header = self.v.variable_table.horizontalHeader()
-        for header_col in range(0,6):
-            header.setSectionResizeMode(header_col,QHeaderView.Stretch)
+        # header = self.v.variable_table.horizontalHeader()
+        # for header_col in range(0,6):
+        #     header.setSectionResizeMode(header_col,QHeaderView.Stretch)
 
         header_loop = self.v.loop_table.horizontalHeader()
         for header_loop_col in range(0,6):
@@ -3854,11 +3814,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.buttonDict_variable[item]["Independent"].toggled.connect(self.v.add_combos)
             self.buttonDict_variable[item]["Covariate"].toggled.connect(self.v.add_combos)
         # for item_1 in self.breath_df:
-            # self.buttonDict_variable[item_1]["Alias"].textEdited(self.v.add_combos)
+        #     self.buttonDict_variable[item_1]["Alias"].textEdited(self.v.no_duplicates)
             # self.v.variable_table.itemChanged.connect(self.v.update_alias)
             # self.buttonDict_variable[item]["Covariate"].toggled.connect(self.v.populate_combos(self.buttonDict_variable[item].))
         # self.v.variable_table.cellChanged.connect(self.v.add_combos)
         # Creating the dictionary that will store the cells' statuses based on user selection. The table's need separate dictionaries because they'll be yielding separate csvs:
+        self.v.n = 0
+        self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
+        self.v.variable_table.resizeColumnsToContents()
+        self.v.variable_table.resizeRowsToContents()
         self.loop_menu = {}
         # self.v.transform_combo = CheckableComboBox()
         # self.v.transform_combo.addItems(["raw","log10","ln","sqrt"])
@@ -3936,11 +3900,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         table.setCellWidget(row,7,self.loop_menu[table][row]["Y axis minimum"])
         table.setCellWidget(row,8,self.loop_menu[table][row]["Y axis maximum"])
 
-        # if table == self.v.loop_table:
-            # self.loop_menu[table][row]["poincare"] = QComboBox()
-            # self.loop_menu[table][row]["poincare"].addItems(["","Yes","No"])
-            # table.setCellWidget(row,6,self.loop_menu[table][row]["poincare"])
-
+        table.resizeColumnsToContents()
+        table.resizeRowsToContents()
 
 
         # self.v.loop_table.setCellWidget(self.row_loop,0,self.loop_menu[self.row_loop]["graph"])
