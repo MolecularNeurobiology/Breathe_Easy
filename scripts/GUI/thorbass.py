@@ -14,6 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Thorbass(object):
     def setupUi(self, Thorbass):
         Thorbass.setObjectName("Thorbass")
+        Thorbass.setWindowModality(QtCore.Qt.WindowModal)
         Thorbass.resize(407, 216)
         self.gridLayout = QtWidgets.QGridLayout(Thorbass)
         self.gridLayout.setObjectName("gridLayout")

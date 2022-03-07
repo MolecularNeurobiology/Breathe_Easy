@@ -1011,7 +1011,7 @@ class Ui_Auto(object):
         self.frame_tab = QtWidgets.QWidget()
         self.frame_tab.setObjectName("frame_tab")
         self.view_tab = QtWidgets.QTableWidget(self.frame_tab)
-        self.view_tab.setGeometry(QtCore.QRect(0, 0, 1921, 1211))
+        self.view_tab.setGeometry(QtCore.QRect(0, 0, 2701, 1251))
         self.view_tab.setObjectName("view_tab")
         self.view_tab.setColumnCount(0)
         self.view_tab.setRowCount(0)
@@ -1057,7 +1057,7 @@ class Ui_Auto(object):
         self.gridLayout.addLayout(self.verticalLayout_4, 0, 0, 1, 1)
 
         self.retranslateUi(Auto)
-        self.autotabs.setCurrentIndex(0)
+        self.autotabs.setCurrentIndex(4)
         self.auto_setting_combo.currentIndexChanged['int'].connect(Auto.choose_dict)
         self.load_auto_button.clicked.connect(Auto.load_auto_file)
         self.save_auto_button.clicked.connect(Auto.save_as)

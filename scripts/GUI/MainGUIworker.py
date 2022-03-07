@@ -128,7 +128,7 @@ def get_jobs_r(Plethysmography):
             pipeline = Plethysmography.pipeline_des,
             d = Plethysmography.mothership,
             # j = os.path.join(Plethysmography.mothership, "JSON"),
-            j = Plethysmography.input_dir_r,
+            j = Plethysmography.stagg_list,
             r = Plethysmography.variable_config,
             # r = Plethysmography.v.configs["variable_config"]["path"],
             # r = "C:/Users/atwit/Desktop/Mothership/R_config/variable_config.csv",

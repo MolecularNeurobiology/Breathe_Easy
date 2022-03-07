@@ -213,7 +213,7 @@
          <item>
           <widget class="QTabWidget" name="autotabs">
            <property name="currentIndex">
-            <number>0</number>
+            <number>4</number>
            </property>
            <widget class="QWidget" name="sections_tab">
             <attribute name="title">
@@ -3316,8 +3316,8 @@ average range</string>
               <rect>
                <x>0</x>
                <y>0</y>
-               <width>1921</width>
-               <height>1211</height>
+               <width>2701</width>
+               <height>1251</height>
               </rect>
              </property>
             </widget>

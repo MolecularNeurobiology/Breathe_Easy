@@ -749,6 +749,8 @@ class Auto(QWidget, Ui_Auto):
             for row in range(table.rowCount()):
                 table.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
         table.setHorizontalHeaderLabels(frame.columns)
+        table.resizeColumnsToContents()
+        table.resizeRowsToContents()
         # table.setVerticalHeaderLabels()
 
     def populate_table_load(self,frame,table):
@@ -761,6 +763,8 @@ class Auto(QWidget, Ui_Auto):
             for row in range(table.rowCount()):
                 table.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
         table.setHorizontalHeaderLabels(frame.columns)
+        table.resizeColumnsToContents()
+        table.resizeRowsToContents()
     
     def collate_dfs(self,table):
         print("auto.collate_dfs()")
@@ -1079,7 +1083,7 @@ class Stagg(QWidget, Ui_Stagg):
                 else:
                     self.thumb = Thumbass(self)
                     self.thumb.show()
-                    self.thumb.message_received("Please name the configuration files so that their file basename begins with variable_config, graph_config, and other_config. Otherwise, please load the settings files individually.")
+                    self.thumb.message_received("Naming","Please name the configuration files so that their file basename begins with variable_config, graph_config, and other_config. Otherwise, please load the settings files individually.")
 
     def populate_table(self,frame,view):
         # Populate tablewidgets with views of uploaded csv. Currently editable.
@@ -1580,6 +1584,7 @@ class Custom(QWidget, Ui_Custom):
         super(Custom, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Custom graph settings configuration")
+        # self.adjustSize()
         # self.pleth = Plethysmography
         self.config = Config
         # self.thumb = Thumbass
@@ -1619,6 +1624,7 @@ class Custom(QWidget, Ui_Custom):
             # self.thumb.message_received("Please select the response variables to be modeled.")
         else:
             self.populate_table(self.config.deps,self.custom_table)
+            self.adjustSize()
             self.show()
     
 
@@ -1640,55 +1646,69 @@ class Custom(QWidget, Ui_Custom):
         # print(f'before: {self.config.custom_dict}')
         table.setRowCount(len(frame))
         row = 0
-        for item in frame:
-            print("making first level")
-            self.config.custom_dict[item] = {}
-            # The first two columns are the name of the dependent variables selected and empty strings for ymin and ymax:
-            print("making alias")
-            self.config.custom_dict[item]["Alias"]=QTableWidgetItem(item)
-            print("making ymin/max")
-            self.config.custom_dict[item]["ymin"]=QTableWidgetItem("")
-            self.config.custom_dict[item]["ymax"]=QTableWidgetItem("")
-            # Creating the radio buttons that will populate the cells in each row:
-            # self.custom_dict[item]["Filter"]=QCheckBox()
-            print("making poincare/spectral")
-            self.config.custom_dict[item]["Poincare"]=QCheckBox()
-            self.config.custom_dict[item]["Spectral"]=QCheckBox()
-            # self.config.custom_dict[item]["Irregularity"]=QCheckBox()
-            # self.config.custom_dict[item]["Inclusive"]=QCheckBox()
-            # self.custom_dict[item]["Inclusive"].setAlignment(Qt.AlignHCenter)
-            # Creating the combo boxes that will populate the cells in each row:
-            # self.custom_dict[item]["Filter"]=QCheckBox()
-            print("making transform")
-            self.config.custom_dict[item]["Transformation"]=CheckableComboBox()
-            print("checkalbe transform made")
-            
-            self.config.custom_dict[item]["Transformation"].addItems(["raw","log10","ln","sqrt"])
-            # self.custom_dict[item]["Transformation"].addItem("log10")
-        # table.setColumnCount(len(frame.columns))
-        # print(self.custom_dict)
-        # for row in range(table.rowCount()):
-        #     for k in self.custom_dict:
-        #         print(k)
+        if self.config.custom_dict == {}:
+            for item in frame:
+                self.config.custom_dict[item] = {}
+                # The first two columns are the name of the dependent variables selected and empty strings for ymin and ymax:
+                self.config.custom_dict[item]["Alias"]=QTableWidgetItem(item)
+                self.config.custom_dict[item]["ymin"]=QTableWidgetItem("")
+                self.config.custom_dict[item]["ymax"]=QTableWidgetItem("")
+                # Creating the radio buttons that will populate the cells in each row:
+                self.config.custom_dict[item]["Poincare"]=QCheckBox()
+                self.config.custom_dict[item]["Spectral"]=QCheckBox()
+                # self.custom_dict[item]["Inclusive"].setAlignment(Qt.AlignHCenter)
+                # Creating the combo boxes that will populate the cells in each row:
+                self.config.custom_dict[item]["Transformation"]=CheckableComboBox()
+                self.config.custom_dict[item]["Transformation"].addItems(["raw","log10","ln","sqrt"])
+        else:
+            diff = list(set(self.deps) - set(self.old_deps))
+            for item_1 in diff:
+                self.config.custom_dict[item_1] = {}
+                # The first two columns are the name of the dependent variables selected and empty strings for ymin and ymax:
+                self.config.custom_dict[item_1]["Alias"]=QTableWidgetitem_1(item_1)
+                self.config.custom_dict[item_1]["ymin"]=QTableWidgetitem_1("")
+                self.config.custom_dict[item_1]["ymax"]=QTableWidgetitem_1("")
+                # Creating the radio buttons that will populate the cells in each row:
+                self.config.custom_dict[item_1]["Poincare"]=QCheckBox()
+                self.config.custom_dict[item_1]["Spectral"]=QCheckBox()
+                # self.custom_dict[item_1]["Inclusive"].setAlignment(Qt.AlignHCenter)
+                # Creating the combo boxes that will populate the cells in each row:
+                self.config.custom_dict[item_1]["Transformation"]=CheckableComboBox()
+                self.config.custom_dict[item_1]["Transformation"].additems(["raw","log10","ln","sqrt"])
+        for entry in self.config.custom_dict:    
             print("setting widgets in table")
-            table.setItem(row,0,self.config.custom_dict[item]["Alias"])
-            # table.item(row,0).setFlags(Qt.ItemIsEditable)
+            table.setItem(row,0,self.config.custom_dict[entry]["Alias"])
+            table.item(row,0).setFlags(table.item(row,0).flags() ^ Qt.ItemIsEditable)
             # for col in range(table.columnCount()):
                 # Populating the table widget with the row:
-            table.setItem(row,1,self.config.custom_dict[item]["ymin"])
-            table.setItem(row,2,self.config.custom_dict[item]["ymax"])
-
+            table.setItem(row,1,self.config.custom_dict[entry]["ymin"])
+            table.setItem(row,2,self.config.custom_dict[entry]["ymax"])
+            
             # table.setCellWidget(row,3,self.custom_dict[item]["Filter"])
-            table.setCellWidget(row,3,self.config.custom_dict[item]["Transformation"])
+            table.setCellWidget(row,3,self.config.custom_dict[entry]["Transformation"])
             # table.setCellWidget(row,4,self.config.custom_dict[item]["Inclusive"])
-            table.setCellWidget(row,4,self.config.custom_dict[item]["Poincare"])
-            table.setCellWidget(row,5,self.config.custom_dict[item]["Spectral"])
+            table.setCellWidget(row,4,self.config.custom_dict[entry]["Poincare"])
+            table.setCellWidget(row,5,self.config.custom_dict[entry]["Spectral"])
             # table.setCellWidget(row,6,self.config.custom_dict[item]["Irregularity"])
                 # table.item(row,0).setFlags(Qt.ItemIsEditable)
         # table.setHorizontalHeaderLabels(frame.columns)
+            if entry in self.config.custom_port:
+                if self.config.custom_port[entry]["Poincare"] == 1:
+                    self.config.custom_dict[entry]["Poincare"].setChecked(True)
+                if self.config.custom_port[entry]["Spectral"] == 1:
+                    self.config.custom_dict[entry]["Spectral"].setChecked(True)
+                for y in ['ymin','ymax']:
+                    if self.config.custom_port[entry][y] != "":
+                        self.config.custom_dict[entry][y].setText(self.config.custom_port[entry][y])
+                if self.config.custom_port[entry]["Transformation"] != []:
+                    self.config.custom_dict[entry]["Transformation"].loadCustom(self.config.custom_port[entry]["Transformation"])
+                    self.config.custom_dict[entry]["Transformation"].updateText()
             row += 1
         # self.view_tab.cellChanged.connect(self.update_tabs)
+        table.resizeColumnsToContents()
+        table.resizeRowsToContents()
         print("custom finished populating table")
+        
         # print(f'after: {self.config.custom_dict}')
 # for role in self.role_list[1:6]:
 #     self.pleth.loop_menu[self.loop_table][loop_row][role] = QComboBox()
@@ -1781,6 +1801,7 @@ class Custom(QWidget, Ui_Custom):
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
+        print(f"save_custom: {self.config.custom_port}")
             
 #endregion
 
@@ -1842,7 +1863,11 @@ class Config(QWidget, Ui_Config):
     
     def minus_loop(self):
         print("config.minus_loop()")
-        self.loop_table.removeRow(self.loop_table.currentRow())
+        try:
+            self.loop_table.removeRow(self.loop_table.currentRow())
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
 
     def combo_event(self):
         print("combo_event()")
@@ -2121,6 +2146,10 @@ class Config(QWidget, Ui_Config):
             # self.pleth.c.show()
         elif set(self.deps) != set(self.old_deps):
             print("custom dict is not empty but new variables chosen")
+            d = [c for c in self.custom_dict]
+            for c in d:
+                if c not in self.deps:
+                    self.custom_dict.pop(c,None)
             self.pleth.c = Custom(self)
             self.pleth.c.extract_variable()
             # self.pleth.c.show()
@@ -2303,6 +2332,7 @@ class Config(QWidget, Ui_Config):
         
     def classy_save(self):
         print("config.classy_save()")
+        print(f"custom port: {self.custom_port}")
         # print(f'cons: {self.pleth.cons}')
         # print(f'configs: {self.configs}')
         # print(f'v:{self.pleth.variable_config}')
@@ -2372,6 +2402,7 @@ class Config(QWidget, Ui_Config):
         # print(f'clades:{self.clades.columns}')
         # having columns named true or false will fuck up our code
         # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
+        print(f"custom port: {self.custom_port}")
         
     def save_config(self):
         print("config.save_config()")
@@ -4766,7 +4797,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     else:
                         self.thumb = Thumbass(self)
                         self.thumb.show()
-                        self.thumb.message_received("The settings files for BASSPRO must be in csv format. Please convert your settings files or choose another file.")
+                        self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. Please convert your settings files or choose another file.")
                 
                         
 
@@ -4825,7 +4856,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         elif not os.path.basename(file_name[0][0]).endswith("RData"):
             self.thumb = Thumbass(self)
             self.thumb.show()
-            self.thumb.message_received("The file you selected is not the correct format for an R environment (.RData). Please check the format of your file or choose another one.")
+            self.thumb.message_received("Incorrect file format","The file you selected is not the correct format for an R environment (.RData). Please check the format of your file or choose another one.")
         else:
             self.breath_list.clear()
             for x in range(len(file_name[0])):
@@ -5178,9 +5209,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 stagg.append(os.path.basename(s).split('.')[0])
             for b in self.signals:
                 bass.append(os.path.basename(b).split('.')[0])
-            diff = bass - stagg
+            diff = list(set(bass) - set(stagg))
             print(diff)
-            self.hangar.append(f"The following signal files did not yield output: {','.join(x for x in list(diff.elements()))} \nConsider checking the original LabChart file or the metadata for anomalies.") 
+            self.hangar.append(f"The following signal files did not yield output: {','.join(x for x in diff)} \nConsider checking the original LabChart file or the metadata for anomalies.") 
 
     def rthing_to_do(self):
         # self.hangar.append("STAGG analyzing breath files...")

@@ -6,14 +6,23 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1800</width>
-    <height>1200</height>
+    <width>2200</width>
+    <height>800</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
+   <property name="sizeConstraint">
+    <enum>QLayout::SetNoConstraint</enum>
+   </property>
    <item row="0" column="0">
     <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,8,0,0,0">
      <item>
@@ -86,6 +95,9 @@
      </item>
      <item>
       <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,8,0">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetNoConstraint</enum>
+       </property>
        <item>
         <spacer name="horizontalSpacer_3">
          <property name="orientation">
@@ -101,6 +113,14 @@
        </item>
        <item>
         <widget class="QTableWidget" name="custom_table">
+         <property name="font">
+          <font>
+           <pointsize>10</pointsize>
+          </font>
+         </property>
+         <property name="sizeAdjustPolicy">
+          <enum>QAbstractScrollArea::AdjustToContents</enum>
+         </property>
          <attribute name="horizontalHeaderCascadingSectionResizes">
           <bool>true</bool>
          </attribute>

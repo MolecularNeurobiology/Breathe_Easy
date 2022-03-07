@@ -14,6 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Thumbass(object):
     def setupUi(self, Thumbass):
         Thumbass.setObjectName("Thumbass")
+        Thumbass.setWindowModality(QtCore.Qt.WindowModal)
         Thumbass.resize(400, 300)
         self.gridLayout = QtWidgets.QGridLayout(Thumbass)
         self.gridLayout.setObjectName("gridLayout")
