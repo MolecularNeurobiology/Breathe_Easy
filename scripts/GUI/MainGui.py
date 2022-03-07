@@ -1895,11 +1895,15 @@ class Config(QWidget, Ui_Config):
                     k.setPlainText(self.pleth.rc_config['References']['Definitions'][butt.replace("help_","")])
 
     def no_duplicates(self):
-        for row in range(self.variable_table.rowCount()):
-            if row != self.variable_table.currentRow():
-                if self.variable_table.item(row,1).text() == self.variable_table.currentItem().text():
-                    self.n += 1
-                    self.variable_table.item(row,1).setText(f"{self.variable_table.item(row,1).text()}_{self.n}")
+        try:
+            for row in range(self.variable_table.rowCount()):
+                if row != self.variable_table.currentRow():
+                    if self.variable_table.item(row,1).text() == self.variable_table.currentItem().text():
+                        self.n += 1
+                        self.variable_table.item(row,1).setText(f"{self.variable_table.item(row,1).text()}_{self.n}")
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
 
     def setup_transform_combo(self):
         spacerItem64 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -5025,6 +5029,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print(traceback.format_exc())
         try:
             self.auto_get_breath_files()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+        try:
+            self.output_check()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
