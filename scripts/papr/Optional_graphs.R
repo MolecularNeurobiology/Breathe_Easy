@@ -105,8 +105,8 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
 # Iterate through each of the rows in the config file.
 if(nrow(other_config) > 0){
   print("Making optional graphs")
-  print((paste0("Making optional plot ", ii, "/", nrow(other_config))))
   for(ii in 1:nrow(other_config)){
+    print((paste0("Making optional plot ", ii, "/", nrow(other_config))))
     other_config_row <- other_config[ii, ]
     other_config_row <- other_config_row[which(!is.na(other_config_row))]
     
@@ -123,6 +123,7 @@ if(nrow(other_config) > 0){
       apneas <- TRUE
       next
     }
+    
     
     # Set graphing variables
     ocr2_wu <- c(other_config_row$Variable,
@@ -432,7 +433,7 @@ if(nrow(other_config) > 0){
                    ymins, ymaxes)
         
       } else {
-        print(paste0("Unable to make graph ", other_config_row$Graph), "; unexpected response variable.")
+        print(paste0("Unable to make graph ", other_config_row$Graph, "; unexpected response variable."))
         next
       }
     }
