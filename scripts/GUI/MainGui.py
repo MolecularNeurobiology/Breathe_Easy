@@ -718,19 +718,19 @@ class Auto(QWidget, Ui_Auto):
         sbutton = self.sender()
         self.update_table(sbutton.objectName())
 
-    # def update_table(self,donor):
-    #     for l in self.lineEdits:
-    #         if donor == l.objectName():
-    #             d = l
-    #     for row in range(self.view_tab.rowCount()):
-    #         if self.view_tab.item(row,0).text() == donor.replace("lineEdit_",""):
-    #             self.view_tab.item(row,1).setText(d.text())
+    def update_table(self,donor):
+        for l in self.lineEdits:
+            if donor == l.objectName():
+                d = l
+        for row in range(self.view_tab.rowCount()):
+            if self.view_tab.item(row,0).text() == donor.replace("lineEdit_",""):
+                self.view_tab.item(row,1).setText(d.text())
         
-    # def update_tabs(self):
-    #     for row in range(self.view_tab.rowCount()):
-    #         for l in self.lineEdits:
-    #             if self.view_tab.item(row,0).text() == l.objectName().replace("lineEdit_",""):
-    #                 l.setText(self.view_tab.item(row,1).text())
+    def update_tabs(self):
+        for row in range(self.view_tab.rowCount()):
+            for l in self.lineEdits:
+                if self.view_tab.item(row,0).text() == l.objectName().replace("lineEdit_",""):
+                    l.setText(self.view_tab.item(row,1).text())
 
     def populate_reference(self,butt):
         # for k in self.pleth.rc_config['References']['Definitions'].keys():
@@ -3508,14 +3508,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Ok:
                 self.get_metadata()
-            if reply == QMessageBox.Cancel:
-                self.metadata_list.clear()
-                # for item in self.metadata_list.findItems("file not detected.",Qt.MatchEndsWith):
-                # and we remove them from the widget.
-                    # self.metadata_list.takeItem(self.metadata_list.row(item))
-                self.metadata_list.addItem("No metadata file selected.")
         if self.autosections == "" and self.mansections == "":
-            reply = QMessageBox.information(self, 'Missing BASSPRO settings', 'Please select BASSPRO settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+            reply = QMessageBox.information(self, 'Missing BASSPRO automated/manual settings', 'Please select BASSPRO automated or manual settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+            if reply == QMessageBox.Ok:
+            #     for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
+            # # and we remove them from the widget.
+            #         self.sections_list.takeItem(self.sections_list.row(item))
+                self.get_autosections()
+        if self.basicap == "":
+            reply = QMessageBox.information(self, 'Missing BASSPRO basic settings', 'Please select BASSPRO basic settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Ok:
             #     for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
             # # and we remove them from the widget.
@@ -3787,11 +3788,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         reply = QMessageBox.information(self, 'Missing BASSPRO settings', 'Please select BASSPRO settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                         if reply == QMessageBox.Ok:
                             self.get_autosections()
-                        if reply == QMessageBox.Cancel:
-                            for item in self.sections_list.findItems("settings files selected.",Qt.MatchEndsWith):
-                        # and we remove them from the widget.
-                                self.sections_list.takeItem(self.sections_list.row(item))
-                            self.sections_list.addItem("No BASSPRO settings files selected.")
                     if m is self.breathcaller_path:
                         reply = QMessageBox.information(self, "How is this program even running?", f"The program cannot find the following file: \n{self.breathcaller_path}\nYou honestly shouldn't even see this error because I don't think the program runs without this file. If you are seeing this message, congratulations! Now undo whatever you did, or download a new breathcaller_config.json file from the GitHub or just go ahead and download the whole program again. Or just plug in your external drive that has the program on it and restart it.", QMessageBox.Ok)
 
@@ -4854,16 +4850,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     else:
                         self.thumb = Thumbass(self)
                         self.thumb.show()
-                        self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. Please convert your settings files or choose another file.")
-                
-                        
-
-            
-            # for p in [self.autosections,self.mansections,self.basicap]:
-            #     self.sections_list.clear()
-            #     self.sections_list.addItem(p)
-            for item in self.sections_list.findItems("settings files selected",Qt.MatchContains):
-                self.sections_list.takeItem(self.sections_list.row(item))
+                        self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. \nPlease convert your settings files or choose another file.")
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -5310,7 +5297,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
                 print("No variable or graph configuration files copied to STAGG output folder.")
-            if any(os.path.basename(b).endswith("RData") in self.stagg_list):
+            if any(os.path.basename(b).endswith("RData") for b in self.stagg_list):
                 self.pipeline_des = os.path.join(self.papr_dir, "Pipeline_env_multi.R")
             else:
                 self.pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
