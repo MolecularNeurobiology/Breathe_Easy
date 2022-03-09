@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Thinbass(object):
     def setupUi(self, Thinbass):
         Thinbass.setObjectName("Thinbass")
-        Thinbass.setWindowModality(QtCore.Qt.WindowModal)
+        Thinbass.setWindowModality(QtCore.Qt.ApplicationModal)
         Thinbass.resize(412, 240)
         self.gridLayout = QtWidgets.QGridLayout(Thinbass)
         self.gridLayout.setObjectName("gridLayout")

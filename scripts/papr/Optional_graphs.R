@@ -186,21 +186,26 @@ if(nrow(other_config) > 0){
       names(box_vars) <- NULL
       
       # Check user settings
-      for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
-        if(typeof(tbl0[[jj]]) == "numeric"){
-          tbl0[[jj]] <- as.character(tbl0[[jj]])
-        }
-        if(length(unique(tbl0[[jj]])) == 1){
-          warning(paste0("Independent variable ", jj, " has only one unique value. Results may be unreliable."))
-        }
-        if(length(unique(tbl0[[jj]])) > 20){
-          warning(paste0("Independent variable ", jj, 
-                         " has many unique values; this may cause memory issues. Should this be a covariate?"))
+      if((!is.null(other_config_row$Independent)) && (!is.na(other_config_row$Independent))){
+        for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
+          if(typeof(tbl0[[jj]]) == "numeric"){
+            tbl0[[jj]] <- as.character(tbl0[[jj]])
+          }
+          if(length(unique(tbl0[[jj]])) == 1){
+            warning(paste0("Independent variable ", jj, " has only one unique value. Results may be unreliable."))
+          }
+          if(length(unique(tbl0[[jj]])) > 20){
+            warning(paste0("Independent variable ", jj, 
+                           " has many unique values; this may cause memory issues. Should this be a covariate?"))
+          }
         }
       }
-      for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
-        if(length(unique(tbl0[[jj]])) == 1){
-          warning(paste0("Covariate ", jj, " has only one unique value. Results may be unreliable."))
+      
+      if((!is.null(other_config_row$Covariate)) && (!is.na(other_config_row$Covariate))){
+        for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
+          if(length(unique(tbl0[[jj]])) == 1){
+            warning(paste0("Covariate ", jj, " has only one unique value. Results may be unreliable."))
+          }
         }
       }
       
@@ -269,21 +274,26 @@ if(nrow(other_config) > 0){
       names(temp_vars) <- NULL
       
       # Check user settings
-      for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
-        if(typeof(tbl0[[jj]]) == "numeric"){
-          tbl0[[jj]] <- as.character(tbl0[[jj]])
-        }
-        if(length(unique(tbl0[[jj]])) == 1){
-          warning(paste0("Independent variable ", jj, " has only one unique value. Results may be unreliable."))
-        }
-        if(length(unique(tbl0[[jj]])) > 20){
-          warning(paste0("Independent variable ", jj, 
-                         " has many unique values; this may cause memory issues. Should this be a covariate?"))
+      if((!is.null(other_config_row$Independent)) && (!is.na(other_config_row$Independent))){
+        for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
+          if(typeof(tbl0[[jj]]) == "numeric"){
+            tbl0[[jj]] <- as.character(tbl0[[jj]])
+          }
+          if(length(unique(tbl0[[jj]])) == 1){
+            warning(paste0("Independent variable ", jj, " has only one unique value. Results may be unreliable."))
+          }
+          if(length(unique(tbl0[[jj]])) > 20){
+            warning(paste0("Independent variable ", jj, 
+                           " has many unique values; this may cause memory issues. Should this be a covariate?"))
+          }
         }
       }
-      for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
-        if(length(unique(tbl0[[jj]])) == 1){
-          warning(paste0("Covariate ", jj, " has only one unique value. Results may be unreliable."))
+      
+      if((!is.null(other_config_row$Covariate)) && (!is.na(other_config_row$Covariate))){
+        for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
+          if(length(unique(tbl0[[jj]])) == 1){
+            warning(paste0("Covariate ", jj, " has only one unique value. Results may be unreliable."))
+          }
         }
       }
       
@@ -357,24 +367,29 @@ if(nrow(other_config) > 0){
         names(box_vars) <- NULL
         
         # Check user settings
-        for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
-          if(typeof(tbl0[[jj]]) == "numeric"){
-            tbl0[[jj]] <- as.character(tbl0[[jj]])
-          }
-          if(length(unique(tbl0[[jj]])) == 1){
-            warning(paste0("Independent variable ", jj, " has only one unique value. Results may be unreliable."))
-          }
-          if(length(unique(tbl0[[jj]])) > 20){
-            warning(paste0("Independent variable ", jj, 
-                           " has many unique values; this may cause memory issues. Should this be a covariate?"))
-          }
-        }
-        for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
-          if(length(unique(tbl0[[jj]])) == 1){
-            warning(paste0("Covariate ", jj, " has only one unique value. Results may be unreliable."))
+        if((!is.null(other_config_row$Independent)) && (!is.na(other_config_row$Independent))){
+          for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
+            if(typeof(tbl0[[jj]]) == "numeric"){
+              tbl0[[jj]] <- as.character(tbl0[[jj]])
+            }
+            if(length(unique(tbl0[[jj]])) == 1){
+              warning(paste0("Independent variable ", jj, " has only one unique value. Results may be unreliable."))
+            }
+            if(length(unique(tbl0[[jj]])) > 20){
+              warning(paste0("Independent variable ", jj, 
+                             " has many unique values; this may cause memory issues. Should this be a covariate?"))
+            }
           }
         }
         
+        if((!is.null(other_config_row$Covariate)) && (!is.na(other_config_row$Covariate))){
+          for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
+            if(length(unique(tbl0[[jj]])) == 1){
+              warning(paste0("Covariate ", jj, " has only one unique value. Results may be unreliable."))
+            }
+          }
+        }
+
         # Build stat modeling variable vector.
         if((!is.null(other_config_row$Independent)) && (!is.na(other_config_row$Independent))){
           other_inter_vars <- unique(c(box_vars, unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert)))

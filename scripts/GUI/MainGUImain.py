@@ -22,6 +22,7 @@ def main():
     QDir.addSearchPath('resources', root)
     app = QApplication(sys.argv)
     window = MainGui.Plethysmography()
+    # app.aboutToQuit.connect(MainGui.Plethysmography.x_button)
     print(window.signals)
     print('GUI thread id',threading.get_ident()) 
     print("GUI process id",os.getpid())

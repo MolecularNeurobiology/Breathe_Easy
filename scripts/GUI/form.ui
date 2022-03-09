@@ -227,7 +227,7 @@ from database</string>
              </spacer>
             </item>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,0,0,0,0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,0,0,0,0,0,0,0">
               <item>
                <widget class="QPushButton" name="signal_segments">
                 <property name="font">
@@ -238,6 +238,13 @@ from database</string>
                 <property name="text">
                  <string>Select BASSPRO
  settings files</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="delete_sections">
+                <property name="text">
+                 <string>Delete</string>
                 </property>
                </widget>
               </item>
@@ -381,7 +388,7 @@ from database</string>
              <enum>QLayout::SetDefaultConstraint</enum>
             </property>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,0,4,0,0,0,4">
+             <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,0,4,0,4">
               <property name="sizeConstraint">
                <enum>QLayout::SetDefaultConstraint</enum>
               </property>
@@ -431,30 +438,8 @@ from database</string>
                  </font>
                 </property>
                 <property name="text">
-                 <string>Select BASSPRO
-output directory</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_3">
-                <property name="text">
-                 <string>or</string>
-                </property>
-                <property name="alignment">
-                 <set>Qt::AlignCenter</set>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QPushButton" name="env_file">
-                <property name="font">
-                 <font>
-                  <pointsize>10</pointsize>
-                 </font>
-                </property>
-                <property name="text">
-                 <string>Select R environment</string>
+                 <string>Select STAGG
+ input files</string>
                 </property>
                </widget>
               </item>
@@ -1010,22 +995,6 @@ output directory</string>
    </hints>
   </connection>
   <connection>
-   <sender>env_file</sender>
-   <signal>clicked()</signal>
-   <receiver>Plethysmography</receiver>
-   <slot>input_directory_r_env()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>3736</x>
-     <y>643</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>1919</x>
-     <y>1079</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
    <sender>metadata_list</sender>
    <signal>itemDoubleClicked(QListWidgetItem*)</signal>
    <receiver>Plethysmography</receiver>
@@ -1146,5 +1115,6 @@ output directory</string>
   <slot>set_mothership()</slot>
   <slot>open_click()</slot>
   <slot>connect_database()</slot>
+  <slot>delete()</slot>
  </slots>
 </ui>
