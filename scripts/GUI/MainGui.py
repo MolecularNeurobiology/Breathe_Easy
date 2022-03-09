@@ -572,8 +572,9 @@ class Auto(QWidget, Ui_Auto):
             self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default'][self.auto_setting_combo.currentText()]
             # print(self.auto_dict)
         else:
-            self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['Hypercapnia']
+            self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['5% Hypercapnia']
             print("generic dictionary accessed")
+            self.auto_setting_combo.setCurrentText('5% Hypercapnia')
         self.frame = pd.DataFrame(self.auto_dict).reset_index()
         # if (verticalLayout in globals()) == True:
         #     self.verticalLayout.setParent(None)
@@ -1895,6 +1896,7 @@ class Config(QWidget, Ui_Config):
                     k.setPlainText(self.pleth.rc_config['References']['Definitions'][butt.replace("help_","")])
 
     def no_duplicates(self):
+        print("config.no_duplicates()")
         try:
             for row in range(self.variable_table.rowCount()):
                 if row != self.variable_table.currentRow():
@@ -1904,15 +1906,56 @@ class Config(QWidget, Ui_Config):
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
+    
+    def update_loop(self):
+        print("config.update_loop()")
+        print(f"before: {self.deps}")
         try:
-            
-            self.old_deps = self.deps
             self.classy()
-            self.deps = self.clades.loc[(self.clades["Dependent"] == 1)]["Alias"]
-            
+            self.deps = self.clades["Alias"]
+            print(f"after: {self.deps}")
+            print(f"before loop table rowcount: {self.loop_table.rowCount()}")
+            for row in range(self.loop_table.rowCount()):
+                self.clades_other_dict.update({row:{}})
+                self.clades_other_dict[row].update({"Graph": self.pleth.loop_menu[self.loop_table][row]["Graph"].text()})
+                self.clades_other_dict[row].update({"Variable": self.pleth.loop_menu[self.loop_table][row]["Variable"].currentText()})
+                self.clades_other_dict[row].update({"Xvar": self.pleth.loop_menu[self.loop_table][row]["Xvar"].currentText()})
+                self.clades_other_dict[row].update({"Pointdodge": self.pleth.loop_menu[self.loop_table][row]["Pointdodge"].currentText()})
+                self.clades_other_dict[row].update({"Facet1": self.pleth.loop_menu[self.loop_table][row]["Facet1"].currentText()})
+                self.clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
+                self.clades_other_dict[row].update({"Covariates": '@'.join(self.pleth.loop_menu[self.loop_table][row]["Covariates"].currentData())})
+                self.clades_other_dict[row].update({"Inclusion": self.pleth.loop_menu[self.loop_table][row]["Inclusion"].currentText()})
+                # if self.clades_other_dict[row]['Inclusion'] == 'Yes':
+                #     self.clades_other_dict[row]['Inclusion'] = 1
+                # else:
+                #     self.clades_other_dict[row]['Inclusion'] = 0  
+                self.clades_other_dict[row].update({"Y axis minimum": self.pleth.loop_menu[self.loop_table][row]["Y axis minimum"].text()})
+                self.clades_other_dict[row].update({"Y axis maximum": self.pleth.loop_menu[self.loop_table][row]["Y axis maximum"].text()})
+            print(f"other dict:{self.clades_other_dict}")
+            print(len(self.clades_other_dict))
+            self.show_loops(self.loop_table,len(self.clades_other_dict))
+            for row_1 in range(len(self.clades_other_dict)):
+                self.loop_table.cellWidget(row_1,0).setText(self.clades_other_dict[row_1]['Graph'])
+                self.loop_table.cellWidget(row_1,7).setText(self.clades_other_dict[row_1]['Y axis minimum'])
+                self.loop_table.cellWidget(row_1,8).setText(self.clades_other_dict[row_1]['Y axis maximum'])
+                self.loop_table.cellWidget(row_1,1).setCurrentText(self.clades_other_dict[row_1]['Variable'])
+                self.loop_table.cellWidget(row_1,2).setCurrentText(self.clades_other_dict[row_1]['Xvar'])
+                self.loop_table.cellWidget(row_1,3).setCurrentText(self.clades_other_dict[row_1]['Pointdodge'])
+                self.loop_table.cellWidget(row_1,4).setCurrentText(self.clades_other_dict[row_1]['Facet1'])
+                self.loop_table.cellWidget(row_1,5).setCurrentText(self.clades_other_dict[row_1]['Facet2'])
+                # if odf.at[row_1,'Inclusion'] == 1:
+                #     self.loop_table.cellWidget(row_1,9).setCurrentText("Yes")
+                # else:
+                #     self.loop_table.cellWidget(row_1,9).setCurrentText("No")
+                if self.clades_other_dict[row_1]['Covariates'] != "":
+                    # if self.deps != []:
+                    self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].loadCustom([w for w in self.clades_other_dict[row_1]['Covariates'].split('@')])
+                    self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].updateText()
+        
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
+        print(f"after after: {self.deps}")
 
     def setup_transform_combo(self):
         spacerItem64 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -1952,6 +1995,7 @@ class Config(QWidget, Ui_Config):
 
         self.custom_dict = {}
         self.custom_port = {}
+        self.clades_other_dict = {}
         self.clades = []
         self.clades_graph = []
         self.clades_other = []
@@ -2056,6 +2100,7 @@ class Config(QWidget, Ui_Config):
             self.pleth.buttonDict_variable[item]["Covariate"].toggled.connect(self.add_combos)
         self.n = 0
         self.variable_table.cellChanged.connect(self.no_duplicates)
+        self.variable_table.cellChanged.connect(self.update_loop)
         
         # self.variable_table.resizeColumnsToContents()
         # self.variable_table.resizeRowsToContents()
@@ -2080,7 +2125,7 @@ class Config(QWidget, Ui_Config):
             for role in self.role_list[1:6]:
                 self.pleth.loop_menu[table][row][role] = QComboBox()
                 self.pleth.loop_menu[table][row][role].addItems([""])
-                self.pleth.loop_menu[table][row][role].addItems([x for x in self.pleth.breath_df])
+                self.pleth.loop_menu[table][row][role].addItems([x for x in self.deps])
             
             # self.pleth.loop_menu[table][row]["Poincare"] = QComboBox()
             # self.pleth.loop_menu[table][row]["Poincare"].addItems(["Yes","No"])
@@ -2089,7 +2134,7 @@ class Config(QWidget, Ui_Config):
             self.pleth.loop_menu[table][row]["Inclusion"] = QComboBox()
             self.pleth.loop_menu[table][row]["Inclusion"].addItems(["No","Yes"])
             self.pleth.loop_menu[table][row]["Covariates"] = CheckableComboBox()
-            self.pleth.loop_menu[table][row]["Covariates"].addItems([b for b in self.pleth.breath_df])
+            self.pleth.loop_menu[table][row]["Covariates"].addItems([b for b in self.deps])
             # Adding the contents based on the variable list of the drop down menus for the combo box widgets:
             # for role in self.v.role_list:
                 # self.pleth.loop_menu[table][self.row_loop][role].addItems([""])
@@ -2259,28 +2304,28 @@ class Config(QWidget, Ui_Config):
     
     def othery(self):
         print("config.othery()")
-        clades_other_dict = {}
+        self.clades_other_dict = {}
         for row in range(self.loop_table.rowCount()):
             print(row)
-            clades_other_dict.update({row:{}})
-            clades_other_dict[row].update({"Graph": self.pleth.loop_menu[self.loop_table][row]["Graph"].text()})
-            clades_other_dict[row].update({"Variable": self.pleth.loop_menu[self.loop_table][row]["Variable"].currentText()})
-            clades_other_dict[row].update({"Xvar": self.pleth.loop_menu[self.loop_table][row]["Xvar"].currentText()})
-            clades_other_dict[row].update({"Pointdodge": self.pleth.loop_menu[self.loop_table][row]["Pointdodge"].currentText()})
-            clades_other_dict[row].update({"Facet1": self.pleth.loop_menu[self.loop_table][row]["Facet1"].currentText()})
-            clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
-            clades_other_dict[row].update({"Covariates": '@'.join(self.pleth.loop_menu[self.loop_table][row]["Covariates"].currentData())})
-            clades_other_dict[row].update({"Inclusion": self.pleth.loop_menu[self.loop_table][row]["Inclusion"].currentText()})
-            if clades_other_dict[row]['Inclusion'] == 'Yes':
-                clades_other_dict[row]['Inclusion'] = 1
+            self.clades_other_dict.update({row:{}})
+            self.clades_other_dict[row].update({"Graph": self.pleth.loop_menu[self.loop_table][row]["Graph"].text()})
+            self.clades_other_dict[row].update({"Variable": self.pleth.loop_menu[self.loop_table][row]["Variable"].currentText()})
+            self.clades_other_dict[row].update({"Xvar": self.pleth.loop_menu[self.loop_table][row]["Xvar"].currentText()})
+            self.clades_other_dict[row].update({"Pointdodge": self.pleth.loop_menu[self.loop_table][row]["Pointdodge"].currentText()})
+            self.clades_other_dict[row].update({"Facet1": self.pleth.loop_menu[self.loop_table][row]["Facet1"].currentText()})
+            self.clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
+            self.clades_other_dict[row].update({"Covariates": '@'.join(self.pleth.loop_menu[self.loop_table][row]["Covariates"].currentData())})
+            self.clades_other_dict[row].update({"Inclusion": self.pleth.loop_menu[self.loop_table][row]["Inclusion"].currentText()})
+            if self.clades_other_dict[row]['Inclusion'] == 'Yes':
+                self.clades_other_dict[row]['Inclusion'] = 1
             else:
-                clades_other_dict[row]['Inclusion'] = 0  
-            clades_other_dict[row].update({"Y axis minimum": self.pleth.loop_menu[self.loop_table][row]["Y axis minimum"].text()})
-            clades_other_dict[row].update({"Y axis maximum": self.pleth.loop_menu[self.loop_table][row]["Y axis maximum"].text()})
+                self.clades_other_dict[row]['Inclusion'] = 0  
+            self.clades_other_dict[row].update({"Y axis minimum": self.pleth.loop_menu[self.loop_table][row]["Y axis minimum"].text()})
+            self.clades_other_dict[row].update({"Y axis maximum": self.pleth.loop_menu[self.loop_table][row]["Y axis maximum"].text()})
             
         
-        print(clades_other_dict)
-        self.clades_other = pd.DataFrame.from_dict(clades_other_dict)
+        print(self.clades_other_dict)
+        self.clades_other = pd.DataFrame.from_dict(self.clades_other_dict)
         print(self.clades_other)
         # self.clades_other.dropna
         self.clades_other = self.clades_other.transpose()
@@ -2605,7 +2650,7 @@ class Config(QWidget, Ui_Config):
             self.setup_variables_config()
             self.setup_table_config()
             print(self.pleth.loop_menu)
-            self.show_loops(self.loop_table,1)
+            self.pleth.show_loops(self.loop_table,1)
             print(self.pleth.loop_menu)
             for s in self.settings_dict['role']:
                 s.clear()
@@ -2934,7 +2979,7 @@ class Config(QWidget, Ui_Config):
         print(len(odf))
         self.show_loops(self.loop_table,len(odf))
         print(self.pleth.loop_menu)
-        # clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
+        # self.clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
         if len(odf)>0:
             print(len(odf))
             print(odf.at[0,'Graph'])
@@ -3162,7 +3207,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.v.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
 
          # Populate GUI widgets with experimental condition choices: 
-        self.necessary_timestamp_box.addItems([need for need in self.stamp['Dictionaries']['Necessary_Timestamps']])
+        # self.necessary_timestamp_box.addItems([need for need in self.stamp['Dictionaries']['Necessary_Timestamps']])
+        self.necessary_timestamp_box.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
         self.parallel_combo.addItems([str(num) for num in list(range(1,os.cpu_count()+1))])
 
         # Populate GUI widgets with experimental condition choices:
@@ -3244,7 +3290,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         self.stamp['Dictionaries']['Data'][e] = {}
                         self.stamp['Dictionaries']['Data'][e][c] = {}
 
-            self.need = self.stamp['Dictionaries']['Necessary_Timestamps'][combo_need]
+            # self.need = self.stamp['Dictionaries']['Necessary_Timestamps'][combo_need]
+            self.need = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
+            print(self.need)
 
             self.grabTimeStamps()
             self.checkFileTimeStamps()
@@ -3858,6 +3906,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Creating the dictionary that will store the cells' statuses based on user selection. The table's need separate dictionaries because they'll be yielding separate csvs:
         self.v.n = 0
         self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
+        self.v.variable_table.cellChanged.connect(self.v.update_loop)
         self.v.variable_table.resizeColumnsToContents()
         self.v.variable_table.resizeRowsToContents()
         self.loop_menu = {}
@@ -4857,16 +4906,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def input_directory_r_env(self):
         print("input_directory_r_env()")
         # folder = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_output")
-        file_name = QFileDialog.getOpenFileNames(self, 'Select R environment', "./STAGG_output")
-        if not file_name[0]:
-            if self.stagg_list == []:
+        file_name = QFileDialog.getOpenFileName(self, 'Select R environment', "./STAGG_output")
+        if self.stagg_list != []:
+            reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+            if reply == QMessageBox.No:
                 self.breath_list.clear()
-        elif not os.path.basename(file_name[0][0]).endswith("RData"):
+                self.stagg_list = []
+        if not os.path.basename(file_name[0][0]).endswith("RData"):
             self.thumb = Thumbass(self)
             self.thumb.show()
-            self.thumb.message_received("Incorrect file format","The file you selected is not the correct format for an R environment (.RData). Please check the format of your file or choose another one.")
+            self.thumb.message_received("Incorrect file format","The file you selected is not the correct format for an R environment (.RData).\nPlease check the format of your file or choose another one.")
         else:
-            self.breath_list.clear()
             for x in range(len(file_name[0])):
                 self.breath_list.addItem(file_name[0][x])
                 self.stagg_list.append(file_name[0][x])
@@ -5076,7 +5126,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def r_message(self):
         print("r_message()")
-        self.hangar.append("STAGG analyzing BASSPRO output...")
+        # self.hangar.append("STAGG analyzing BASSPRO output...")
         print(f'configs: {self.v.configs}')
         print(f'v:{self.variable_config}')
         print(f'g:{self.graph_config}')
@@ -5086,22 +5136,26 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.other_config = self.v.configs["other_config"]["path"]
         # if self.variable_config == "" or self.graph_config == "" or self.other_config == "":
         if any([self.v.configs[key]['path'] == "" for key in self.v.configs]):
-            if os.path.basename(self.input_dir_r).endswith("RData"):
-                reply = QMessageBox.question(self, 'Configuration settings', 'One or more configuration settings files not provided.\n\nWould you like to continue?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                if reply == QMessageBox.Yes:
-                    for key in self.v.configs:
-                        if self.v.configs[key]["path"] == "":
-                            print("r_config path is empty")
-                            self.v.configs[key]["path"] == "None"
-                            print(self.v.configs[key]["path"])
-                    # self.variable_config = "None"
-                    # self.graph_config = "None"
-                    # self.other_config = "None"
-                    self.rthing_to_do()
+            if self.stagg_list == []:
+                print("no stagg for you")
             else:
-                self.thumb = Thumbass(self)
-                self.thumb.show()
-                self.thumb.message_received("No STAGG settings","No variable or graphing configuration files were selected - please choose or create configuration files.\nYou may also select a previously built R environment that includes such settings.")
+                QMessageBox.question(self, 'Missing STAGG settings', f"One or more STAGG settings files are missing.", QMessageBox.OK, QMessageBox.OK)
+                # \n\n{key.split(' ')[0]}_{key.split(' ')[1]}.csv
+                
+            # if reply == QMessageBox.Yes:
+            #     for key in self.v.configs:
+            #         if self.v.configs[key]["path"] == "":
+            #             print("r_config path is empty")
+            #             self.v.configs[key]["path"] == "None"
+            #             print(self.v.configs[key]["path"])
+            #     # self.variable_config = "None"
+            #     # self.graph_config = "None"
+            #     # self.other_config = "None"
+            #     self.rthing_to_do()
+            # else:
+            #     self.thumb = Thumbass(self)
+            #     self.thumb.show()
+            #     self.thumb.message_received("Missing STAGG settings","One or more STAGG settings files are missing.")
         else:
             self.rthing_to_do()
 
@@ -5226,7 +5280,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print(f"stagg: {stagg}")
             diff = list(set(bass) - set(stagg))
             print(diff)
-            self.hangar.append(f"The following signal files did not yield output: {','.join(x for x in diff)} \nConsider checking the original LabChart file or the metadata for anomalies.") 
+            self.hangar.append(f"The following signal files did not yield output: {', '.join(x for x in diff)} \nConsider checking the original LabChart file or the metadata for anomalies.") 
 
     def rthing_to_do(self):
         # self.hangar.append("STAGG analyzing breath files...")
@@ -5256,8 +5310,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
                 print("No variable or graph configuration files copied to STAGG output folder.")
-            if os.path.basename(self.input_dir_r).endswith("RData"):
-                self.pipeline_des = os.path.join(self.papr_dir, "Pipeline_env.R")
+            if any(os.path.basename(b).endswith("RData") in self.stagg_list):
+                self.pipeline_des = os.path.join(self.papr_dir, "Pipeline_env_multi.R")
             else:
                 self.pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
             if len(self.stagg_list)>200:
