@@ -29,19 +29,25 @@ import logging
 import asyncio
 
 #endregion
-class Worker(QObject):
-    # create the signals that the Worker can submit
+
+class WorkerSignals(QObject):
+    # create signals to be used by the worker
     finished = pyqtSignal(int)
     progress = pyqtSignal(int)
     
+class Worker(QRunnable):
+       
     def __init__(self,path_to_script,i,worker_queue,pleth):
         super(Worker, self).__init__()
         self.path_to_script = path_to_script
         self.i = i
         self.worker_queue = worker_queue
         self.pleth = pleth
+        self.signals = WorkerSignals()
+        self.finished = self.signals.finished
+        self.progress = self.signals.progress
     
-    def run_external(self):
+    def run(self):
         # use subprocess.Popen to run a seperate program in a new process
         # stdout will be captured by the variable self.echo and extracted below
         self.echo = subprocess.Popen(
