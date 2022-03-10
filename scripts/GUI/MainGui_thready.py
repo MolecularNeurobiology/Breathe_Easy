@@ -3152,6 +3152,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.q = queue.Queue()
         self.counter = 0
         self.finished_count = 0
+        self.qthreadpool = QThreadPool()
+        self.qthreadpool.setMaxThreadCount(1)
         self.threads = {}
         self.workers = {}
 
@@ -3265,9 +3267,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     # a seperate thread...B_run is triggered by the worker's 'progress' signal
     @pyqtSlot(int)
     def B_run(self,worker_id):
-        while not self.q.empty():
+        if not self.q.empty():
             self.hangar.append(f'{worker_id} : {self.q.get_nowait()}')
-    
+            """
+            note that if multiple workers are emitting their signals it is not
+            clear which one will trigger the B_run method, though there should 
+            be one trigger of the B_run method for each emission. It appears as
+            though the emissions collect in a queue as well.
+            If we care about matching the worker-id to the emission/queue 
+            contents, I recommend loading the queue with tuples that include
+            the worker id and the text contents
+            """
+            
     # method with slot decorator to receive signals from the worker running in
     # a seperate thread...B_Done is triggered by the worker's 'finished' signal
     @pyqtSlot(int)
@@ -5389,21 +5400,42 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print('launch_worker thread id',threading.get_ident())
         print("launch_worker process id",os.getpid())
         for job in MainGUIworker_thready.get_jobs_py(self):
-            # create a QThread object
-            self.threads[self.counter] = QThread()
             # create a Worker
-            self.workers[self.counter] = MainGUIworker_thready.Worker(job,self.counter,self.q,self)
-            # move worker to thread
-            self.workers[self.counter].moveToThread(self.threads[self.counter])
-            # connect signals and slots
-            self.threads[self.counter].started.connect(self.workers[self.counter].run_external)
-            self.workers[self.counter].finished.connect(self.threads[self.counter].quit)
-            self.workers[self.counter].finished.connect(self.workers[self.counter].deleteLater)
-            self.threads[self.counter].finished.connect(self.threads[self.counter].deleteLater)
+            self.workers[self.counter] = MainGUIworker_thready.Worker(
+                job,
+                self.counter,
+                self.q,
+                self
+                )
             self.workers[self.counter].progress.connect(self.B_run)
             self.workers[self.counter].finished.connect(self.B_Done)
-            # start the thread
-            self.threads[self.counter].start()
+            # adjust thread limit for the qthreadpool
+            self.qthreadpool.setMaxThreadCount(int(self.parallel_combo.currentText()))
+            # Add the 'QRunnable' worker to the threadpool which will manage how
+            # many are started at a time
+            self.qthreadpool.start(self.workers[self.counter])
+            # advance the counter - used to test launching multiple threads
+            self.counter+=1
+        
+    def launch_r_worker(self):
+        print("worker started?")
+        print('launch_worker thread id',threading.get_ident())
+        print("launch_worker process id",os.getpid())
+        for job in MainGUIworker_thready.get_jobs_r(self):
+            # create a Worker
+            self.workers[self.counter] = MainGUIworker_thready.Worker(
+                job,
+                self.counter,
+                self.q,
+                self
+                )
+            self.workers[self.counter].progress.connect(self.B_run)
+            self.workers[self.counter].finished.connect(self.B_Done)
+            # adjust thread limit for the qthreadpool
+            self.qthreadpool.setMaxThreadCount(1)
+            # Add the 'QRunnable' worker to the threadpool which will manage how
+            # many are started at a time
+            self.qthreadpool.start(self.workers[self.counter])
             # advance the counter - used to test launching multiple threads
             self.counter+=1
 
@@ -5517,9 +5549,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             try:
                 print('rthing_to_do thread id',threading.get_ident())
                 print("rthing_to_do process id",os.getpid())
-                self.worker = threading.Thread(target = MainGUIworker.futurama_r(self))
-                self.worker.daemon = True
-                self.worker.start()
+                self.launch_r_worker()
+                
+                # self.worker = threading.Thread(target = MainGUIworker_thready.futurama_r(self))
+                # self.worker.daemon = True
+                # self.worker.start()
                 print("worker started?")
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
