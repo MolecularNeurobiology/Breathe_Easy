@@ -43,13 +43,14 @@ import threading
 import re
 # import asyncio
 import multiprocessing
-import MainGUIworker
+import MainGUIworker_thready
 import AnnotGUI
 from bs4 import BeautifulSoup as bs
 
 #endregion
 
 #%%
+
 #region classes
 class AlignDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
@@ -3108,6 +3109,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.setupUi(self)
 
         self.q = queue.Queue()
+        self.counter = 0
+        self.finished_count = 0
+        self.threads = {}
+        self.workers = {}
 
         self.setWindowTitle("Plethysmography Analysis Pipeline")
         self.isActiveWindow()
@@ -3214,7 +3219,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #region Analysis parameters
 
         os.chdir(os.path.join(Path(__file__).parent.parent.parent))
-            
+
+    # method with slot decorator to receive signals from the worker running in
+    # a seperate thread...B_run is triggered by the worker's 'progress' signal
+    @pyqtSlot(int)
+    def B_run(self,worker_id):
+        while not self.q.empty():
+            self.hangar.append(f'{worker_id} : {self.q.get_nowait()}')
+    
+    # method with slot decorator to receive signals from the worker running in
+    # a seperate thread...B_Done is triggered by the worker's 'finished' signal
+    @pyqtSlot(int)
+    def B_Done(self,worker_id):
+        self.hangar.append('Worker_{} finished'.format(worker_id))
+        self.finished_count += 1   
 
 #endregion
 
@@ -5304,45 +5322,63 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print('pything_to_do thread id',threading.get_ident())
             print("pything_to_do process id",os.getpid())
             # self.thready(self.update_Pyprogress)
-            self.worker = threading.Thread(target = MainGUIworker.futurama_py(self))
-            self.worker.daemon = True
-            self.worker.start()
-            # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
-            print("worker started?")
+            self.launch_worker()
             try:
                 self.output_check()
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
 
+    def launch_worker(self):
+        print("worker started?")
+        print('launch_worker thread id',threading.get_ident())
+        print("launch_worker process id",os.getpid())
+        for job in MainGUIworker_thready.get_jobs_py(self):
+            # create a QThread object
+            self.threads[self.counter] = QThread()
+            # create a Worker
+            self.workers[self.counter] = MainGUIworker_thready.Worker(job,self.counter,self.q,self)
+            # move worker to thread
+            self.workers[self.counter].moveToThread(self.threads[self.counter])
+            # connect signals and slots
+            self.threads[self.counter].started.connect(self.workers[self.counter].run_external)
+            self.workers[self.counter].finished.connect(self.threads[self.counter].quit)
+            self.workers[self.counter].finished.connect(self.workers[self.counter].deleteLater)
+            self.threads[self.counter].finished.connect(self.threads[self.counter].deleteLater)
+            self.workers[self.counter].progress.connect(self.B_run)
+            self.workers[self.counter].finished.connect(self.B_Done)
+            # start the thread
+            self.threads[self.counter].start()
+            # advance the counter - used to test launching multiple threads
+            self.counter+=1
+
     def output_check(self):
         if len(self.stagg_list) != len(self.signals):
-            stagg = []
-            bass = []
+            goodies = []
             baddies = []
-            # for s in self.stagg_list:
-            #     stagg.append(os.path.basename(s).split('.')[0])
-            # for b in self.signals:
-            #     bass.append(os.path.basename(b).split('.')[0])
+            # for g in self.stagg_list:
+            #     stagg.append(os.path.basename(g).split('_')[0])
             for s in self.signals:
                 name = os.path.basename(s).split('.')[0]
-                if '_' in name:
-                    if any(os.path.basename(g).split('.')[0] == name for g in self.stagg_list
-                    )len(meta.loc[(meta['MUID'] == name.split('_')[0])])==0:
-                        baddies.append(s)
-                    elif len(meta.loc[(meta['PlyUID'] == name.split('_')[1])])==0:
-                        baddies.append(s)
-                elif len(meta.loc[(meta['MUID'] == name)])==0:
-                    baddies.append(s)
+                for g in self.stagg_list:
+                    if '_' in name:
+                        if os.path.basename(g).split('.')[0] == name:
+                            goodies.append(name)
+                    else:
+                        if os.path.basename(g).split('_')[0] == name:
+                            goodies.append(name)
+                if name not in goodies:
+                    baddies.append(name)
         if len(baddies)>0:
-            self.thumb = Thumbass(self)
-            self.thumb.show()
-            self.thumb.message_received("Metadata and signal files mismatch",f"The following signals files were not found in the selected metadata file:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
+            # self.thumb = Thumbass(self)
+            # self.thumb.show()
+            # self.thumb.message_received("Missing output",f"The following signals files did not pass BASSPRO:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
+            self.hangar.append(f"\nThe following signals files did not pass BASSPRO:\n\n{', '.join([os.path.basename(thumb) for thumb in baddies])}\n")
 
-            print(f"bass: {bass}")
-            print(f"stagg: {stagg}")
-            diff = list(set(bass) - set(stagg))
-            print(diff)
+        #     print(f"bass: {bass}")
+        #     print(f"stagg: {stagg}")
+        #     diff = list(set(bass) - set(stagg))
+        #     print(diff)
             # self.hangar.append(f"The following signal files did not yield output: {', '.join(x for x in diff)} \nConsider checking the original LabChart file or the metadata for anomalies.") 
 
     def rthing_to_do(self):

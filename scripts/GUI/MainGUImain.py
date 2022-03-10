@@ -11,7 +11,7 @@ import sys
 import os
 import threading
 import logging
-import MainGui
+import MainGui_thready
 from multiprocessing import freeze_support
 
 #endregion
@@ -21,7 +21,7 @@ def main():
     root = os.path.dirname(os.path.abspath(__file__))        
     QDir.addSearchPath('resources', root)
     app = QApplication(sys.argv)
-    window = MainGui.Plethysmography()
+    window = MainGui_thready.Plethysmography()
     # app.aboutToQuit.connect(MainGui.Plethysmography.x_button)
     print(window.signals)
     print('GUI thread id',threading.get_ident()) 

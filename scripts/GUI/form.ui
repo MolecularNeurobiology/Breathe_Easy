@@ -565,7 +565,7 @@ from database</string>
          <widget class="QTextEdit" name="hangar">
           <property name="font">
            <font>
-            <pointsize>14</pointsize>
+            <pointsize>10</pointsize>
            </font>
           </property>
          </widget>

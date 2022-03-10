@@ -257,7 +257,7 @@ class Ui_Plethysmography(object):
         self.horizontalLayout_7.addLayout(self.verticalLayout_10)
         self.hangar = QtWidgets.QTextEdit(self.centralwidget)
         font = QtGui.QFont()
-        font.setPointSize(14)
+        font.setPointSize(10)
         self.hangar.setFont(font)
         self.hangar.setObjectName("hangar")
         self.horizontalLayout_7.addWidget(self.hangar)
