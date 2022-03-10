@@ -2095,6 +2095,70 @@
     </hint>
    </hints>
   </connection>
+  <connection>
+   <sender>Xvar_combo</sender>
+   <signal>activated(QString)</signal>
+   <receiver>Config</receiver>
+   <slot>update_current_combo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3175</x>
+     <y>360</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1899</x>
+     <y>999</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Pointdodge_combo</sender>
+   <signal>activated(QString)</signal>
+   <receiver>Config</receiver>
+   <slot>update_current_combo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3175</x>
+     <y>431</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1899</x>
+     <y>999</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Facet1_combo</sender>
+   <signal>activated(QString)</signal>
+   <receiver>Config</receiver>
+   <slot>update_current_combo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3175</x>
+     <y>503</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1899</x>
+     <y>999</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>Facet2_combo</sender>
+   <signal>activated(QString)</signal>
+   <receiver>Config</receiver>
+   <slot>update_current_combo()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3175</x>
+     <y>574</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1899</x>
+     <y>999</y>
+    </hint>
+   </hints>
+  </connection>
  </connections>
  <slots>
   <slot>checkable_ind()</slot>
@@ -2121,5 +2185,6 @@
   <slot>add_pointdodge_combo()</slot>
   <slot>add_facet1_combo()</slot>
   <slot>add_facet2_combo()</slot>
+  <slot>update_current_combo()</slot>
  </slots>
 </ui>
