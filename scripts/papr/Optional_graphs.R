@@ -149,7 +149,7 @@ if(nrow(other_config) > 0){
     }
     
     # Whether to use the breath inclusion filter
-    if((!is.null(other_config_row$Filter)) && (other_config_row$Filter == 0)){
+    if((!is.null(other_config_row$Inclusion)) && (other_config_row$Inclusion == 0)){
       inclusion_filter <- FALSE
     } else {
       inclusion_filter <- TRUE
@@ -225,11 +225,11 @@ if(nrow(other_config) > 0){
       other_df <- tbl0 %>%
         dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
         dplyr::summarise_at(bw_vars, mean, na.rm = TRUE) %>%
-        dplyr::ungroup() %>% na.omit()
+        dplyr::ungroup()
       other_graph_df <- tbl0 %>%
         dplyr::group_by_at(c(box_vars, "MUID")) %>%
         dplyr::summarise_at(bw_vars, mean, na.rm = TRUE) %>%
-        dplyr::ungroup() %>% na.omit()
+        dplyr::ungroup()
       
       # Check that variables are factors; set in order of appearance in data.
       for(jj in box_vars){
@@ -408,21 +408,21 @@ if(nrow(other_config) > 0){
             dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
             dplyr::filter(Breath_Inclusion_Filter == 1) %>%
             #dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-            dplyr::ungroup() %>% na.omit()
+            dplyr::ungroup()
           other_graph_df <- tbl0 %>%
             dplyr::filter(Breath_Inclusion_Filter == 1) %>%
             dplyr::group_by_at(c(box_vars, "MUID")) %>%
             dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-            dplyr::ungroup() %>% na.omit()
+            dplyr::ungroup()
         } else {
           other_df <- tbl0 %>%
             dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
             #dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-            dplyr::ungroup() %>% na.omit()
+            dplyr::ungroup()
           other_graph_df <- tbl0 %>%
             dplyr::group_by_at(c(box_vars, "MUID")) %>%
             dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-            dplyr::ungroup() %>% na.omit()
+            dplyr::ungroup()
         }
         
         # Check that variables are factors; set in order of appearance in data.
