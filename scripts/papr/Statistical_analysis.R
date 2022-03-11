@@ -43,12 +43,13 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE)
   }
   
   # Remove special characters and spaces in interaction variables categories. Necessary for relevant category finding below.
-  # Should be processed in graph generator as well.
+  # Needs to be processed in the same manner in the graph_maker function as well.
   for(vv in inter_vars){
       run_data[[vv]] <- run_data[[vv]] %>% as.character() %>% str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")
       run_data[[vv]] <- sapply(run_data[[vv]], X_num) %>% unname()
   }
   
+  # Create list for function output.
   return_values <- list()
   # Create interaction variable string
   interact_string <- paste0("run_data$interact <- with(run_data, interaction(", paste(inter_vars, collapse = ", "), "))")
@@ -89,6 +90,7 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE)
   temp_tukey <- glht(temp_mod , linfct = mcp(interact = comp_list))
   
   ## Create output table
+  ### Contains coefficient estimate, standard error, t-statistic, and p-value.
   vt <- summary(temp_tukey)$test
   mytest <- cbind(vt$coefficients, vt$sigma, vt$tstat, vt$pvalues)
   error <- attr(vt$pvalues, "error") 
@@ -97,16 +99,18 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE)
                   greater=paste("Pr(>", ifelse(temp_tukey$df == 0, "z", "t"), ")", sep = ""),
                   two.sided=paste("Pr(>|", ifelse(temp_tukey$df == 0, "z", "t"), "|)", sep = ""))
   colnames(mytest) <- c("Estimate", "Std. Error", ifelse(temp_tukey$df == 0, "z value", "t value"), pname)
-  vttukey <- as.data.frame(xtable(mytest))
-  colnames(vttukey) <- c("Estimate", "StdError", "zvalue", "pvalue")
+  vttukey <- as.data.frame(xtable::xtable(mytest))
+  colnames(vttukey) <- c("Estimate", "StdError", "tvalue", "pvalue")
   
-  # Make + save residual plots
+  # Make residual plots
+  ## Raw residual plot
   g1 <- ggplot() +
     geom_point(aes(x = fitted(temp_mod), y = resid(temp_mod))) +
     labs(x = "Fitted", y = "Residual") + 
     geom_abline(slope = 0, intercept = 0) +
     theme_few() 
   
+  ## Q-Q plot
   g2 <- ggplot() +
     geom_qq(aes(sample = resid(temp_mod))) +
     labs(x = "Empirical Quantile", y = "Theoretical Quantile") + 
@@ -133,10 +137,12 @@ if(!dir.exists(stat_dir)){
 mod_res_list <- list()
 ## Saves Tukey test results
 tukey_res_list <- list()
+
 if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_vars)) && (!is_empty(interaction_vars))){ 
+  # For each response variable, run on original variable, then on all desired transformations.
   for(ii in 1:length(response_vars)){
     
-    # Runs the model on the original, non-transformed dependent variable.
+    # Runs the model on the original, non-transformed dependent variable (if selected by user)
     if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || ("non" %in% transform_set[ii]))){
       print(paste0("Running model for ", response_vars[ii]))
       ## Run models
@@ -153,8 +159,9 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
       }
     }
     
-    # Runs stat models for desired transformations
+    # Runs stat models for desired transformations (if selected by user)
     if((!is.na(transform_set[ii])) && (transform_set[ii] != "")){
+      ## Assumes desired transformation are concatenated as a character string, with separator character '@'.
       transforms_resp <- unlist(strsplit(transform_set[ii], "@"))
       if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
         ## Most transformations require non-negative variables.
@@ -216,6 +223,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/StatResults/tukey_res.xlsx"), row.names=TRUE))
     try(openxlsx::write.xlsx(b_stat, file=paste0(args$Output, "/StatResults/stat_basic.xlsx"), row.names=TRUE))
   }
+  # Memory clearing
   rm(mod_res_list_save)
   rm(tukey_res_list_save)
   rm(b_stat)
