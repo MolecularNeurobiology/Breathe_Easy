@@ -1876,7 +1876,14 @@ class Config(QWidget, Ui_Config):
     def minus_loop(self):
         print("config.minus_loop()")
         try:
+            print(f"minus before: {self.pleth.loop_menu}")
+            print(self.loop_table.currentRow())
+            self.pleth.loop_menu[self.loop_table].pop(self.loop_table.currentRow())
+            for p in self.pleth.loop_menu[self.loop_table]:
+                if p > self.loop_table.currentRow():
+                    self.pleth.loop_menu[self.loop_table][p-1] = self.pleth.loop_menu[self.loop_table].pop(p)
             self.loop_table.removeRow(self.loop_table.currentRow())
+            print(f"minus after: {self.pleth.loop_menu}")
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -2344,7 +2351,7 @@ class Config(QWidget, Ui_Config):
     
     def othery(self):
         print("config.othery()")
-        # self.clades_other_dict = {}
+        self.clades_other_dict = {}
         for row in range(self.loop_table.rowCount()):
             print(row)
             print(self.pleth.loop_menu)
@@ -2649,6 +2656,8 @@ class Config(QWidget, Ui_Config):
 
     def add_loop(self):
         print("config.add_loop()")
+        for item in self.pleth.buttonDict_variable:
+            self.alias.append(self.pleth.buttonDict_variable[item]["Alias"].text())
         # It isn't working and I think the issue is that self.Pleth.row_loop is tied to the dictionary so when you're using the dictionary you're asking for a row that doesn't exist as a key:
         loop_row = self.loop_table.rowCount()
         self.loop_table.insertRow(loop_row)
@@ -2669,13 +2678,13 @@ class Config(QWidget, Ui_Config):
         self.pleth.loop_menu[self.loop_table][loop_row]["Inclusion"].addItems(["No","Yes"])
         self.loop_table.setCellWidget(loop_row,9,self.pleth.loop_menu[self.loop_table][loop_row]["Inclusion"])
         self.pleth.loop_menu[self.loop_table][loop_row].update({"Covariates": CheckableComboBox()})
-        self.pleth.loop_menu[self.loop_table][loop_row]["Covariates"].addItems([b for b in self.pleth.breath_df])
+        self.pleth.loop_menu[self.loop_table][loop_row]["Covariates"].addItems([b for b in self.alias])
         self.loop_table.setCellWidget(loop_row,6,self.pleth.loop_menu[self.loop_table][loop_row]["Covariates"])
 
-        for role in self.role_list[1:6]:
+        for role in ["Variable","Xvar","Pointdodge","Facet1","Facet2"]:
             self.pleth.loop_menu[self.loop_table][loop_row][role] = QComboBox()
             self.pleth.loop_menu[self.loop_table][loop_row][role].addItems([""])
-            self.pleth.loop_menu[self.loop_table][loop_row][role].addItems([x for x in self.pleth.breath_df])
+            self.pleth.loop_menu[self.loop_table][loop_row][role].addItems([x for x in self.alias])
         
         self.loop_table.setCellWidget(loop_row,1,self.pleth.loop_menu[self.loop_table][loop_row]["Variable"])
         self.loop_table.setCellWidget(loop_row,2,self.pleth.loop_menu[self.loop_table][loop_row]["Xvar"])
@@ -3072,6 +3081,7 @@ class Config(QWidget, Ui_Config):
         odf.drop(odf.loc[(odf["Graph"]=="Apneas") | (odf["Graph"]=="Sighs")].index, inplace = True)
         # self.show_loops(self.loop_table,len(odf))
         print(self.pleth.loop_menu)
+        # odf = odf.fillna("",inplace = True)
         # self.clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
         if len(odf)>0:
             print(len(odf))
