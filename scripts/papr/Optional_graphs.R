@@ -103,6 +103,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
 #################################
 
 # Iterate through each of the rows in the config file.
+## Create the desired plot for each row
 if(nrow(other_config) > 0){
   print("Making optional graphs")
   for(ii in 1:nrow(other_config)){
@@ -274,6 +275,7 @@ if(nrow(other_config) > 0){
       names(temp_vars) <- NULL
       
       # Check user settings
+      ## Print warnings if possible issues.
       if((!is.null(other_config_row$Independent)) && (!is.na(other_config_row$Independent))){
         for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
           if(typeof(tbl0[[jj]]) == "numeric"){
@@ -288,7 +290,6 @@ if(nrow(other_config) > 0){
           }
         }
       }
-      
       if((!is.null(other_config_row$Covariate)) && (!is.na(other_config_row$Covariate))){
         for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
           if(length(unique(tbl0[[jj]])) == 1){
@@ -367,6 +368,7 @@ if(nrow(other_config) > 0){
         names(box_vars) <- NULL
         
         # Check user settings
+        ## Print warnings if possible issues.
         if((!is.null(other_config_row$Independent)) && (!is.na(other_config_row$Independent))){
           for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
             if(typeof(tbl0[[jj]]) == "numeric"){
@@ -381,7 +383,6 @@ if(nrow(other_config) > 0){
             }
           }
         }
-        
         if((!is.null(other_config_row$Covariate)) && (!is.na(other_config_row$Covariate))){
           for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
             if(length(unique(tbl0[[jj]])) == 1){
@@ -402,23 +403,27 @@ if(nrow(other_config) > 0){
           other_covars <- character(0)
         }
         
-        #Organizes data collected above for graphing.
+        # Organizes data collected above for graphing.
         if(inclusion_filter) {
+          ## Data frame for stat modeling
           other_df <- tbl0 %>%
             dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
             dplyr::filter(Breath_Inclusion_Filter == 1) %>%
             #dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
             dplyr::ungroup()
+          ## Data frame for plotting
           other_graph_df <- tbl0 %>%
             dplyr::filter(Breath_Inclusion_Filter == 1) %>%
             dplyr::group_by_at(c(box_vars, "MUID")) %>%
             dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
             dplyr::ungroup()
         } else {
+          ## Data frame for stat modeling
           other_df <- tbl0 %>%
             dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
             #dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
             dplyr::ungroup()
+          ## Data frame for plotting
           other_graph_df <- tbl0 %>%
             dplyr::group_by_at(c(box_vars, "MUID")) %>%
             dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
@@ -448,6 +453,7 @@ if(nrow(other_config) > 0){
                    ymins, ymaxes)
         
       } else {
+        ## If the response variable doesn't exist, skip.
         print(paste0("Unable to make graph ", other_config_row$Graph, "; unexpected response variable."))
         next
       }
@@ -494,6 +500,7 @@ if(sighs || apneas){
   }
   
   # Set label + internal variable names.
+  ## Depending on if sighs and/or apneas are desired.
   r_vars <- c()
   r_vars_wu <- c()
   if(sighs){
@@ -504,11 +511,12 @@ if(sighs || apneas){
     r_vars <- c(r_vars, "ApneaRate")
     r_vars_wu <- c(r_vars_wu, "Apnea Rate (1/min)")
   }
-
+  
+  # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
     graph_file <- paste0(r_vars[ii],args$I)
     
-    # Stats only using graphing variables.
+    # Stat modeling, calculated ONLY using graphing variables as independent variables.
     other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
     
     # Make graph + save
@@ -526,7 +534,7 @@ if(sighs || apneas){
 ## Inputs:
 ### resp_var: character string, name of dependent variable.
 ### graph_data: data frame, data used for graphing.
-### xvar: character string, variable to separate different plots.
+### xvar: character string, variable to separate data to different plots by categories of corresponding variable.
 ### pointdodge: character string, variable to separate points to different colors.
 ### facet1: character string, variable for row panels.
 ### facet2: character string, variable for column panels.
