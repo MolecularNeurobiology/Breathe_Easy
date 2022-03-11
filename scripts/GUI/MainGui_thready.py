@@ -1919,10 +1919,11 @@ class Config(QWidget, Ui_Config):
     
     def update_loop(self):
         print("config.update_loop()")
+        print(self.pleth.loop_menu)
+        print(self.clades_other_dict)
         try:
             if self.pleth.loop_ready == 1:
                 for row in range(self.loop_table.rowCount()):
-                    print(self.pleth.loop_menu[self.loop_table][row]["Covariates"].currentData())
                     self.clades_other_dict.update({row:{"Graph":"","Variable":"","Xvar":"","Pointdodge":"","Facet1":"","Facet2":"","Covariates":[],"Inclusion":"","Y axis minimum":"","Y axis maximum":""}})
                     if self.pleth.loop_menu[self.loop_table][row]["Graph"].text() != "":
                         self.clades_other_dict[row].update({"Graph": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Graph"].text(),'Column'].values[0]})
@@ -2132,8 +2133,8 @@ class Config(QWidget, Ui_Config):
         # self.variable_table.cellChanged.connect(self.no_duplicates)
         # self.variable_table.cellChanged.connect(self.update_loop)
         
-        # self.variable_table.resizeColumnsToContents()
-        # self.variable_table.resizeRowsToContents()
+        self.variable_table.resizeColumnsToContents()
+        self.variable_table.resizeRowsToContents()
         # for item_1 in self.pleth.breath_df:
             # self.pleth.buttonDict_variable[item_1]["Alias"].textEdited.connect(self.no_duplicates)
             # self.buttonDict_variable[item]["Covariate"].toggled.connect(self.v.populate_combos(self.buttonDict_variable[item].))
@@ -2186,7 +2187,7 @@ class Config(QWidget, Ui_Config):
             table.setCellWidget(row,8,self.pleth.loop_menu[table][row]["Y axis maximum"])
             table.setCellWidget(row,9,self.pleth.loop_menu[table][row]["Inclusion"])
         
-        # table.resizeColumnsToContents()
+        table.resizeColumnsToContents()
         table.resizeRowsToContents()
 
     def show_custom(self):
@@ -2276,6 +2277,7 @@ class Config(QWidget, Ui_Config):
         print("config.update_current_combo()")
         for c in self.settings_dict['role'].keys():
             if c.currentText() != "Select variable:":
+                print(self.clades.loc[self.clades['Alias']==c.currentText(),'Column'].values[0])
                 self.combo_current.update({c:self.clades.loc[self.clades['Alias']==c.currentText(),'Column'].values[0]})
             else:
                 self.combo_current.update({c:"Select variable:"})
@@ -2283,15 +2285,16 @@ class Config(QWidget, Ui_Config):
     def update_combos(self):
         print("config.update_combos()")
         if self.pleth.loop_ready == 1:
-            self.classy()
-            for c in self.settings_dict['role'].keys():
-                c.clear()
-                c.addItem("Select variable:")
-                c.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
-                if self.combo_current[c] != "Select variable:":
-                    c.setCurrentText(self.clades.loc[self.clades['Column']==self.combo_current[c],'Alias'].values[0])
-                else:
-                    c.setCurrentText(self.combo_current[c])
+            if self.combo_current != {}:
+                self.classy()
+                for c in self.settings_dict['role'].keys():
+                    c.clear()
+                    c.addItem("Select variable:")
+                    c.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
+                    if self.combo_current[c] != "Select variable:":
+                        c.setCurrentText(self.clades.loc[self.clades['Column']==self.combo_current[c],'Alias'].values[0])
+                    else:
+                        c.setCurrentText(self.combo_current[c])
 
     def add_xvar_combo(self):
         print("add_xvar_combo()")
@@ -2328,7 +2331,7 @@ class Config(QWidget, Ui_Config):
 
     def graphy(self):
         print("config.graphy()")
-        # self.clades_role_dict = {}
+        self.clades_role_dict = {}
         for col in self.role_list[2:6]:
             if self.settings_dict["rel"][col].currentText() == "Select variable:":
                 self.clades_role_dict.update({self.settings_dict["role"][self.settings_dict["rel"][col]]:""})
@@ -2691,9 +2694,7 @@ class Config(QWidget, Ui_Config):
             self.variable_table.itemChanged.connect(self.no_duplicates)
             self.variable_table.itemChanged.connect(self.update_loop)
             self.variable_table.itemChanged.connect(self.update_combos)
-            print(self.pleth.loop_menu)
             self.pleth.show_loops(self.loop_table,1)
-            print(self.pleth.loop_menu)
             for s in self.settings_dict['role']:
                 s.clear()
                 s.addItem("Select variable:")
@@ -2794,6 +2795,20 @@ class Config(QWidget, Ui_Config):
                                 self.thumb.message_received("Files not found", f"One or more of the files selected cannot be found:\n{os.linesep.join([b for b in self.baddies])}")
             print(f'goodies: {self.goodies}')
             print(f'baddies: {self.baddies}')
+            # try:
+            #     self.pleth.loop_ready = 0
+            #     self.pleth.variable_configuration()
+            #     self.n = 0
+            #     self.pleth.loop_ready = 1
+            #     self.variable_table.itemChanged.connect(self.no_duplicates)
+            #     self.variable_table.itemChanged.connect(self.update_loop)
+            #     self.variable_table.itemChanged.connect(self.update_combos)
+
+            # except Exception as e:
+            #     print(f'{type(e).__name__}: {e}')
+            #     print(traceback.format_exc())
+            # self.pleth.variable_configuration()
+            # self.load_configs()
             if "variable_config" in self.goodies:
                 try:
                     self.load_variable_config()
@@ -2859,6 +2874,32 @@ class Config(QWidget, Ui_Config):
         # self.load_variable_config()     
         print("self.check_load_variable_config() has finished")
 
+    # def load_configs(self):
+    #     if self.configs["variable_config"]["path"].endswith(".xlsx"):
+    #         xl = pd.read_excel(self.configs["variable_config"]["path"])
+    #         xl.to_csv(f'{os.path.splitext(self.configs["variable_config"]["path"])[0]}.csv')
+    #     self.pleth.breath_df = pd.read_csv(f'{os.path.splitext(self.configs["variable_config"]["path"])[0]}.csv')['Column'].tolist()
+    #     self.pleth.loop_ready = 0
+    #     self.pleth.variable_configuration()
+    #     self.pleth.show_loops(self.loop_table,1)
+    #     self.n = 0
+    #     self.pleth.loop_ready = 1
+    #     try:
+    #         self.variable_table.itemChanged.connect(self.no_duplicates)
+    #     except Exception as e:
+    #         print(f'{type(e).__name__}: {e}')
+    #         print(traceback.format_exc())
+    #     try:
+    #         self.variable_table.itemChanged.connect(self.update_loop)
+    #     except Exception as e:
+    #         print(f'{type(e).__name__}: {e}')
+    #         print(traceback.format_exc())
+    #     try:
+    #         self.variable_table.itemChanged.connect(self.update_combos)
+    #     except Exception as e:
+    #         print(f'{type(e).__name__}: {e}')
+    #         print(traceback.format_exc())
+
     def load_variable_config(self):
         print("loading variable config")
         if self.configs["variable_config"]["path"].endswith(".xlsx"):
@@ -2866,12 +2907,25 @@ class Config(QWidget, Ui_Config):
             xl.to_csv(f'{os.path.splitext(self.configs["variable_config"]["path"])[0]}.csv')
         self.pleth.breath_df = pd.read_csv(f'{os.path.splitext(self.configs["variable_config"]["path"])[0]}.csv')['Column'].tolist()
         self.pleth.loop_ready = 0
-        self.setup_table_config()
+        self.pleth.variable_configuration()
+        self.pleth.show_loops(self.loop_table,1)
         self.n = 0
         self.pleth.loop_ready = 1
-        self.variable_table.itemChanged.connect(self.no_duplicates)
-        self.variable_table.itemChanged.connect(self.update_loop)
-        self.variable_table.itemChanged.connect(self.update_combos)
+        try:
+            self.variable_table.itemChanged.connect(self.no_duplicates)
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+        try:
+            self.variable_table.itemChanged.connect(self.update_loop)
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+        try:
+            self.variable_table.itemChanged.connect(self.update_combos)
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
         self.vdf = {}
         with open(self.configs["variable_config"]["path"],'r') as f:
             r = csv.DictReader(f)
@@ -3000,7 +3054,6 @@ class Config(QWidget, Ui_Config):
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
             
-
     def load_other_config(self):
         print("loading other config")
         print(self.pleth.loop_menu)
@@ -3028,7 +3081,10 @@ class Config(QWidget, Ui_Config):
             except:
                 print("nope")
             # self.loop_table.setRowCount(len(odf))
+            print(range(len(odf)-1))
             for row_1 in range(len(odf)):
+                print(f"row_1: {row_1}")
+                
                 # self.pleth.loop_menu[self.loop_table][row_1]["Graph"].setText(str(odf.at[row_1,'Graph']))
                 # self.loop_table.setCellWidget(row_1,0,self.pleth.loop_menu[self.loop_table][row_1]["Graph"])
                 # self.pleth.loop_menu[self.loop_table][row_1]["Y axis minimum"].setText(str(odf.at[row_1,'Y axis minimum']))
@@ -3052,13 +3108,13 @@ class Config(QWidget, Ui_Config):
                         self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].loadCustom([w for w in odf.at[row_1, 'Covariates'].split('@')])
                         self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].updateText()
                         
-                if row_1 < (len(odf)-1):
-                    try:
-                        self.add_loop()
-                    except Exception as e:
-                        print("no added loop")
-                        print(f'{type(e).__name__}: {e}')
-                        print(traceback.format_exc())
+                # if row_1 < (len(odf)):
+                try:
+                    self.add_loop()
+                except Exception as e:
+                    print("no added loop")
+                    print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
         # Iterating over everything and their grandmother takes forever. I should look into a more efficient way of populating the table from loaded specs.
         # toc=datetime.datetime.now()
         # print(toc-tic)
@@ -5388,34 +5444,55 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print('pything_to_do thread id',threading.get_ident())
             print("pything_to_do process id",os.getpid())
             # self.thready(self.update_Pyprogress)
-            self.launch_worker()
+            self.launch_worker("py")
             try:
                 self.output_check()
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
 
-    def launch_worker(self):
+    def launch_worker(self,branch):
         print("worker started?")
         print('launch_worker thread id',threading.get_ident())
         print("launch_worker process id",os.getpid())
-        for job in MainGUIworker_thready.get_jobs_py(self):
-            # create a Worker
-            self.workers[self.counter] = MainGUIworker_thready.Worker(
-                job,
-                self.counter,
-                self.q,
-                self
-                )
-            self.workers[self.counter].progress.connect(self.B_run)
-            self.workers[self.counter].finished.connect(self.B_Done)
-            # adjust thread limit for the qthreadpool
-            self.qthreadpool.setMaxThreadCount(int(self.parallel_combo.currentText()))
-            # Add the 'QRunnable' worker to the threadpool which will manage how
-            # many are started at a time
-            self.qthreadpool.start(self.workers[self.counter])
-            # advance the counter - used to test launching multiple threads
-            self.counter+=1
+        if branch == "py":
+            for job in MainGUIworker_thready.get_jobs_py(self):
+                # create a Worker
+                self.workers[self.counter] = MainGUIworker_thready.Worker(
+                    job,
+                    self.counter,
+                    self.q,
+                    self
+                    )
+                self.workers[self.counter].progress.connect(self.B_run)
+                self.workers[self.counter].finished.connect(self.B_Done)
+                # adjust thread limit for the qthreadpool
+                self.qthreadpool.setMaxThreadCount(int(self.parallel_combo.currentText()))
+                # Add the 'QRunnable' worker to the threadpool which will manage how
+                # many are started at a time
+                self.qthreadpool.start(self.workers[self.counter])
+                # advance the counter - used to test launching multiple threads
+                self.counter+=1
+        elif branch == "r":
+            for job in MainGUIworker_thready.get_jobs_r(self):
+                # create a Worker
+                self.workers[self.counter] = MainGUIworker_thready.Worker(
+                    job,
+                    self.counter,
+                    self.q,
+                    self
+                    )
+                self.workers[self.counter].progress.connect(self.B_run)
+                self.workers[self.counter].finished.connect(self.B_Done)
+                # adjust thread limit for the qthreadpool
+                self.qthreadpool.setMaxThreadCount(int(self.parallel_combo.currentText()))
+                # Add the 'QRunnable' worker to the threadpool which will manage how
+                # many are started at a time
+                self.qthreadpool.start(self.workers[self.counter])
+                # advance the counter - used to test launching multiple threads
+                self.counter+=1
+        elif branch == "stamp":
+            print("stamp")
         
     def launch_r_worker(self):
         print("worker started?")
@@ -5549,7 +5626,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             try:
                 print('rthing_to_do thread id',threading.get_ident())
                 print("rthing_to_do process id",os.getpid())
-                self.launch_r_worker()
+                # self.launch_r_worker()
+                self.launch_worker("r")
                 
                 # self.worker = threading.Thread(target = MainGUIworker_thready.futurama_r(self))
                 # self.worker.daemon = True
@@ -5574,9 +5652,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def stamp_to_do(self):
         print('stamp_to_do thread id',threading.get_ident())
         print("stamp_to_do process id",os.getpid())
-        worker = threading.Thread(target = MainGUIworker.futurama_stamp(self))
-        worker.daemon = True
-        worker.start()
+        self.launch_worker("stamp")
         # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
         print("worker started?")
 
