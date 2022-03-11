@@ -53,7 +53,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   
   # Create all relevant comparisons for pairwise comparison testing.
   ## Find all interaction groups in model.
-  all_names <- names(fixef(temp_mod)) %>% str_replace_all("interact", "")
+  all_names <- names(coef(temp_mod)) %>% str_replace_all("interact", "")
   ## Create all possible pairwise comparisons.
   comb_list <- c()
   for(rr in 2:(length(all_names) - 1)){
@@ -240,7 +240,7 @@ if(nrow(other_config) > 0){
       graph_file <- paste0("BodyWeight_", other_config_row$Graph, args$I)
       
       # Assumes weight is a mouse-level measurement.
-      if(length(unique(other_graph_df$MUID)) == nrow(other_graph_df)){
+      if(length(unique(other_df$MUID)) == nrow(other_df)){
         other_mod_res <- stat_run_other(bw_vars, other_inter_vars, other_covars, other_df, FALSE)
       } else {
         other_mod_res <- stat_run(bw_vars, other_inter_vars, other_covars, other_df, FALSE)
@@ -439,7 +439,7 @@ if(nrow(other_config) > 0){
         
         # Runs stat modeling
         # Assumes that each individual observation is relevant (and not mouse-level statistic.)
-        if(length(unique(other_graph_df$MUID)) == nrow(other_graph_df)){
+        if(length(unique(other_df$MUID)) == nrow(other_df)){
           other_mod_res <- stat_run_other(as.character(ocr2["Resp"]), other_inter_vars, other_covars, other_df, FALSE)
         } else {
           other_mod_res <- stat_run(as.character(ocr2["Resp"]), other_inter_vars, other_covars, other_df, FALSE)
