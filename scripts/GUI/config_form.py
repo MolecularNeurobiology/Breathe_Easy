@@ -627,10 +627,6 @@ class Ui_Config(object):
         self.check_dep.clicked.connect(Config.checkable_dep)
         self.check_ign.clicked.connect(Config.checkable_ign)
         self.check_ind.clicked.connect(Config.checkable_ind)
-        self.Xvar_combo.activated['QString'].connect(Config.update_current_combo)
-        self.Pointdodge_combo.activated['QString'].connect(Config.update_current_combo)
-        self.Facet1_combo.activated['QString'].connect(Config.update_current_combo)
-        self.Facet2_combo.activated['QString'].connect(Config.update_current_combo)
         QtCore.QMetaObject.connectSlotsByName(Config)
 
     def retranslateUi(self, Config):

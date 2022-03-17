@@ -50,6 +50,7 @@ from bs4 import BeautifulSoup as bs
 #endregion
 
 #%%
+
 #region classes
 class AlignDelegate(QStyledItemDelegate):
     def initStyleOption(self, option, index):
@@ -139,10 +140,13 @@ class Thinbass(QDialog,Ui_Thinbass):
         print("thinbass.settings()")
         self.pleth.test_configuration()
         try:
+            self.pleth.loop_ready = 0
             self.pleth.variable_configuration()
             self.n = 0
-            self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.no_duplicates)
-            self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.update_loop)
+            self.pleth.loop_ready = 1
+            self.pleth.v.variable_table.itemChanged.connect(self.pleth.v.no_duplicates)
+            self.pleth.v.variable_table.itemChanged.connect(self.pleth.v.update_loop)
+            self.pleth.v.variable_table.itemChanged.connect(self.pleth.v.update_combos)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -157,10 +161,13 @@ class Thinbass(QDialog,Ui_Thinbass):
             for k in bp_output.keys():
                 self.pleth.breath_df.append(k)
             try:
+                self.pleth.loop_ready = 0
                 self.pleth.variable_configuration()
                 self.n = 0
-                self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.no_duplicates)
-                self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.update_loop)
+                self.pleth.loop_ready = 1
+                self.pleth.v.variable_table.itemChanged.connect(self.pleth.v.no_duplicates)
+                self.pleth.v.variable_table.itemChanged.connect(self.pleth.v.update_loop)
+                self.pleth.v.variable_table.itemChanged.connect(self.pleth.v.update_combos)
                 self.pleth.v.show()
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
@@ -1840,6 +1847,7 @@ class Config(QWidget, Ui_Config):
         # self.isActiveWindow()
         self.isMaximized()
         self.deps = []
+        self.combo_current = {}
         
         # self.role_list = ["Graph","Variable","Xvar","Pointdodge","Facet1","Facet2","Poincare","Y axis minimum","Y axis maximum","Inclusion"]
         # self.graph_role = []
@@ -1906,64 +1914,83 @@ class Config(QWidget, Ui_Config):
     def no_duplicates(self):
         print("config.no_duplicates()")
         try:
-            for row in range(self.variable_table.rowCount()):
-                if row != self.variable_table.currentRow():
-                    if self.variable_table.item(row,1).text() == self.variable_table.currentItem().text():
-                        self.n += 1
-                        self.variable_table.item(row,1).setText(f"{self.variable_table.item(row,1).text()}_{self.n}")
+            if self.pleth.loop_ready == 1:
+                for row in range(self.variable_table.rowCount()):
+                    if row != self.variable_table.currentRow():
+                        if self.variable_table.item(row,1).text() == self.variable_table.currentItem().text():
+                            self.n += 1
+                            self.variable_table.item(row,1).setText(f"{self.variable_table.item(row,1).text()}_{self.n}")
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
     
     def update_loop(self):
         print("config.update_loop()")
-        print(f"before: {self.deps}")
+        print(self.pleth.loop_menu)
+        print(self.clades_other_dict)
         try:
-            self.classy()
-            self.deps = self.clades["Alias"]
-            print(f"after: {self.deps}")
-            print(f"before loop table rowcount: {self.loop_table.rowCount()}")
-            for row in range(self.loop_table.rowCount()):
-                self.clades_other_dict.update({row:{}})
-                self.clades_other_dict[row].update({"Graph": self.pleth.loop_menu[self.loop_table][row]["Graph"].text()})
-                self.clades_other_dict[row].update({"Variable": self.pleth.loop_menu[self.loop_table][row]["Variable"].currentText()})
-                self.clades_other_dict[row].update({"Xvar": self.pleth.loop_menu[self.loop_table][row]["Xvar"].currentText()})
-                self.clades_other_dict[row].update({"Pointdodge": self.pleth.loop_menu[self.loop_table][row]["Pointdodge"].currentText()})
-                self.clades_other_dict[row].update({"Facet1": self.pleth.loop_menu[self.loop_table][row]["Facet1"].currentText()})
-                self.clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
-                self.clades_other_dict[row].update({"Covariates": '@'.join(self.pleth.loop_menu[self.loop_table][row]["Covariates"].currentData())})
-                self.clades_other_dict[row].update({"Inclusion": self.pleth.loop_menu[self.loop_table][row]["Inclusion"].currentText()})
-                # if self.clades_other_dict[row]['Inclusion'] == 'Yes':
-                #     self.clades_other_dict[row]['Inclusion'] = 1
-                # else:
-                #     self.clades_other_dict[row]['Inclusion'] = 0  
-                self.clades_other_dict[row].update({"Y axis minimum": self.pleth.loop_menu[self.loop_table][row]["Y axis minimum"].text()})
-                self.clades_other_dict[row].update({"Y axis maximum": self.pleth.loop_menu[self.loop_table][row]["Y axis maximum"].text()})
-            print(f"other dict:{self.clades_other_dict}")
-            print(len(self.clades_other_dict))
-            self.show_loops(self.loop_table,len(self.clades_other_dict))
-            for row_1 in range(len(self.clades_other_dict)):
-                self.loop_table.cellWidget(row_1,0).setText(self.clades_other_dict[row_1]['Graph'])
-                self.loop_table.cellWidget(row_1,7).setText(self.clades_other_dict[row_1]['Y axis minimum'])
-                self.loop_table.cellWidget(row_1,8).setText(self.clades_other_dict[row_1]['Y axis maximum'])
-                self.loop_table.cellWidget(row_1,1).setCurrentText(self.clades_other_dict[row_1]['Variable'])
-                self.loop_table.cellWidget(row_1,2).setCurrentText(self.clades_other_dict[row_1]['Xvar'])
-                self.loop_table.cellWidget(row_1,3).setCurrentText(self.clades_other_dict[row_1]['Pointdodge'])
-                self.loop_table.cellWidget(row_1,4).setCurrentText(self.clades_other_dict[row_1]['Facet1'])
-                self.loop_table.cellWidget(row_1,5).setCurrentText(self.clades_other_dict[row_1]['Facet2'])
-                # if odf.at[row_1,'Inclusion'] == 1:
-                #     self.loop_table.cellWidget(row_1,9).setCurrentText("Yes")
-                # else:
-                #     self.loop_table.cellWidget(row_1,9).setCurrentText("No")
-                if self.clades_other_dict[row_1]['Covariates'] != "":
-                    # if self.deps != []:
-                    self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].loadCustom([w for w in self.clades_other_dict[row_1]['Covariates'].split('@')])
-                    self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].updateText()
-        
+            if self.pleth.loop_ready == 1:
+                for row in range(self.loop_table.rowCount()):
+                    self.clades_other_dict.update({row:{"Graph":"","Variable":"","Xvar":"","Pointdodge":"","Facet1":"","Facet2":"","Covariates":[],"Inclusion":"","Y axis minimum":"","Y axis maximum":""}})
+                    if self.pleth.loop_menu[self.loop_table][row]["Graph"].text() != "":
+                        self.clades_other_dict[row].update({"Graph": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Graph"].text(),'Column'].values[0]})
+                    if self.pleth.loop_menu[self.loop_table][row]["Variable"].currentText() != "":
+                        self.clades_other_dict[row].update({"Variable": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Variable"].currentText(),'Column'].values[0]})
+                    if self.pleth.loop_menu[self.loop_table][row]["Xvar"].currentText() != "":
+                        self.clades_other_dict[row].update({"Xvar": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Xvar"].currentText(),'Column'].values[0]})
+                    if self.pleth.loop_menu[self.loop_table][row]["Pointdodge"].currentText() != "":
+                        self.clades_other_dict[row].update({"Pointdodge": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Pointdodge"].currentText(),'Column'].values[0]})
+                    if self.pleth.loop_menu[self.loop_table][row]["Facet1"].currentText() != "":
+                        self.clades_other_dict[row].update({"Facet1": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Facet1"].currentText(),'Column'].values[0]})
+                    if self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText() != "":
+                        self.clades_other_dict[row].update({"Facet2": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText(),'Column'].values[0]})
+                    if self.pleth.loop_menu[self.loop_table][row]["Covariates"].currentData() != []:
+                        self.clades_other_dict[row].update({"Covariates": '@'.join(self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Covariates"].currentData(),'Column'].values[0])})
+                    self.clades_other_dict[row].update({"Inclusion": self.pleth.loop_menu[self.loop_table][row]["Inclusion"].currentText()})
+                    # if self.clades_other_dict[row]['Inclusion'] == 'Yes':
+                    #     self.clades_other_dict[row]['Inclusion'] = 1
+                    # else:
+                    #     self.clades_other_dict[row]['Inclusion'] = 0  
+                    if self.pleth.loop_menu[self.loop_table][row]["Y axis minimum"].text() != "":
+                        self.clades_other_dict[row].update({"Y axis minimum": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Y axis minimum"].text(),'Column'].values[0]})
+                    if self.pleth.loop_menu[self.loop_table][row]["Y axis maximum"].text() != "":
+                        self.clades_other_dict[row].update({"Y axis maximum": self.clades.loc[self.clades['Alias']==self.pleth.loop_menu[self.loop_table][row]["Y axis maximum"].text(),'Column'].values[0]})
+                print(f"other dict:{self.clades_other_dict}")
+                print(len(self.clades_other_dict))
+                self.classy()
+                self.deps = self.clades["Alias"]
+                self.show_loops(self.loop_table,len(self.clades_other_dict))
+                for row_1 in range(len(self.clades_other_dict)):
+                    print(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Variable'],'Alias'].values[0])
+                    print(self.clades_other_dict[row_1]['Variable'])
+                    print(self.pleth.loop_menu[self.loop_table][row]["Variable"])
+                    if self.clades_other_dict[row_1]['Graph'] != "":
+                        self.pleth.loop_menu[self.loop_table][row]["Graph"].setText(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Graph'],'Alias'].values[0])
+                    if self.clades_other_dict[row_1]['Y axis minimum'] != "":
+                        self.pleth.loop_menu[self.loop_table][row]["Y axis minimum"].setText(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Y axis minimum'],'Alias'].values[0])
+                    if self.clades_other_dict[row_1]['Y axis maximum'] != "":
+                        self.pleth.loop_menu[self.loop_table][row]["Y axis maximum"].setText(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Y axis maximum'],'Alias'].values[0])
+                    if self.clades_other_dict[row_1]['Variable'] != "":
+                        self.pleth.loop_menu[self.loop_table][row]["Variable"].setCurrentText(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Variable'],'Alias'].values[0])
+                    if self.clades_other_dict[row_1]['Xvar'] != "":
+                        self.pleth.loop_menu[self.loop_table][row]["Xvar"].setCurrentText(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Xvar'],'Alias'].values[0])
+                    if self.clades_other_dict[row_1]['Pointdodge'] != "":
+                        self.pleth.loop_menu[self.loop_table][row]["Pointdodge"].setCurrentText(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Pointdodge'],'Alias'].values[0])
+                    if self.clades_other_dict[row_1]['Facet1'] != "":
+                        self.pleth.loop_menu[self.loop_table][row]["Facet1"].setCurrentText(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Facet1'],'Alias'].values[0])
+                    if self.clades_other_dict[row_1]['Facet2'] != "":
+                        self.pleth.loop_menu[self.loop_table][row]["Facet2"].setCurrentText(self.clades.loc[self.clades['Column'] == self.clades_other_dict[row_1]['Facet2'],'Alias'].values[0])
+                    # if odf.at[row_1,'Inclusion'] == 1:
+                    #     self.loop_table.cellWidget(row_1,9).setCurrentText("Yes")
+                    # else:
+                    #     self.loop_table.cellWidget(row_1,9).setCurrentText("No")
+                    if self.clades_other_dict[row_1]['Covariates'] != "":
+                        # if self.deps != []:
+                        self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].loadCustom([self.clades.loc[self.clades['Column'] == w,'Alias'].values[0] for w in self.clades_other_dict[row_1]['Covariates']])
+                        self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].updateText()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
-        print(f"after after: {self.deps}")
 
     def setup_transform_combo(self):
         spacerItem64 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -2105,14 +2132,16 @@ class Config(QWidget, Ui_Config):
             # self.buttonDict_variable[item]["static"].activated.connect(self.v.replace)
             # self.buttonDict_variable[item]["role"].activated.connect(self.v.replace)
         for item_1 in self.pleth.breath_df:
+        # if self.pleth.loop_ready == 1:
             self.pleth.buttonDict_variable[item_1]["Independent"].toggled.connect(self.add_combos)
             self.pleth.buttonDict_variable[item_1]["Covariate"].toggled.connect(self.add_combos)
+            # self.variable_table.itemChanged.connect(self.add_combos)
         # self.n = 0
         # self.variable_table.cellChanged.connect(self.no_duplicates)
         # self.variable_table.cellChanged.connect(self.update_loop)
         
-        # self.variable_table.resizeColumnsToContents()
-        # self.variable_table.resizeRowsToContents()
+        self.variable_table.resizeColumnsToContents()
+        self.variable_table.resizeRowsToContents()
         # for item_1 in self.pleth.breath_df:
             # self.pleth.buttonDict_variable[item_1]["Alias"].textEdited.connect(self.no_duplicates)
             # self.buttonDict_variable[item]["Covariate"].toggled.connect(self.v.populate_combos(self.buttonDict_variable[item].))
@@ -2165,7 +2194,7 @@ class Config(QWidget, Ui_Config):
             table.setCellWidget(row,8,self.pleth.loop_menu[table][row]["Y axis maximum"])
             table.setCellWidget(row,9,self.pleth.loop_menu[table][row]["Inclusion"])
         
-        # table.resizeColumnsToContents()
+        table.resizeColumnsToContents()
         table.resizeRowsToContents()
 
     def show_custom(self):
@@ -2237,33 +2266,42 @@ class Config(QWidget, Ui_Config):
         #         currents[6] = 0
         #     for c in range(1,7):
         #         self.clades_other.iat[self.Plethysmography.row_loop,c] = currents[c]
-    def update_alias_event(self):
-        sbutton = self.sender()
-        self.update_alias(sbutton.objectName())
-    
-    def update_alias(self,donor):
-        print(donor)
-
-    def populate_combos(self):
-        print("config.populate_combos()")
-        self.classy()
-        for c in self.settings_dict['role'].keys():
-            c.clear()
-            c.addItem("Select variable:")
-            c.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
     
     def add_combos(self):
         print("add_combos()")
         self.classy()
-        current = {}
+        self.update_current_combo()
         for c in self.settings_dict['role'].keys():
-            # current.update({c:c.currentText()})
             c.clear()
             c.addItem("Select variable:")
             c.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
-            # c.setCurrentText(current[c])
-        # print([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
+            if c.currentText() != "Select variable:":
+                c.setCurrentText(self.clades.loc[self.clades['Column']==self.combo_current[c],'Alias'].values[0])
+            else:
+                c.setCurrentText(self.combo_current[c])
 
+    def update_current_combo(self):
+        print("config.update_current_combo()")
+        for c in self.settings_dict['role'].keys():
+            if c.currentText() != "Select variable:":
+                # print(self.clades.loc[self.clades['Alias']==c.currentText(),'Column'].values[0])
+                self.combo_current.update({c:self.clades.loc[self.clades['Alias']==c.currentText(),'Column'].values[0]})
+            else:
+                self.combo_current.update({c:"Select variable:"})
+
+    def update_combos(self):
+        print("config.update_combos()")
+        if self.pleth.loop_ready == 1:
+            if self.combo_current != {}:
+                self.classy()
+                for c in self.settings_dict['role'].keys():
+                    c.clear()
+                    c.addItem("Select variable:")
+                    c.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
+                    if self.combo_current[c] != "Select variable:":
+                        c.setCurrentText(self.clades.loc[self.clades['Column']==self.combo_current[c],'Alias'].values[0])
+                    else:
+                        c.setCurrentText(self.combo_current[c])
 
     def add_xvar_combo(self):
         print("add_xvar_combo()")
@@ -2300,14 +2338,14 @@ class Config(QWidget, Ui_Config):
 
     def graphy(self):
         print("config.graphy()")
-        clades_role_dict = {}
+        self.clades_role_dict = {}
         for col in self.role_list[2:6]:
             if self.settings_dict["rel"][col].currentText() == "Select variable:":
-                clades_role_dict.update({self.settings_dict["role"][self.settings_dict["rel"][col]]:""})
+                self.clades_role_dict.update({self.settings_dict["role"][self.settings_dict["rel"][col]]:""})
             else:
-                clades_role_dict.update({self.settings_dict["role"][self.settings_dict["rel"][col]]: self.settings_dict["rel"][col].currentText()})
+                self.clades_role_dict.update({self.settings_dict["role"][self.settings_dict["rel"][col]]: self.settings_dict["rel"][col].currentText()})
         # print(clades_role_dict)
-        self.clades_graph = pd.DataFrame.from_dict(clades_role_dict,orient='index').reset_index()
+        self.clades_graph = pd.DataFrame.from_dict(self.clades_role_dict,orient='index').reset_index()
         self.clades_graph.columns = ['Role','Alias']
         print(f'graph clades:{self.clades_graph.columns}')
     
@@ -2316,7 +2354,9 @@ class Config(QWidget, Ui_Config):
         self.clades_other_dict = {}
         for row in range(self.loop_table.rowCount()):
             print(row)
+            print(self.pleth.loop_menu)
             self.clades_other_dict.update({row:{}})
+            print(self.clades_other_dict)
             self.clades_other_dict[row].update({"Graph": self.pleth.loop_menu[self.loop_table][row]["Graph"].text()})
             self.clades_other_dict[row].update({"Variable": self.pleth.loop_menu[self.loop_table][row]["Variable"].currentText()})
             self.clades_other_dict[row].update({"Xvar": self.pleth.loop_menu[self.loop_table][row]["Xvar"].currentText()})
@@ -2616,6 +2656,8 @@ class Config(QWidget, Ui_Config):
 
     def add_loop(self):
         print("config.add_loop()")
+        for item in self.pleth.buttonDict_variable:
+            self.alias.append(self.pleth.buttonDict_variable[item]["Alias"].text())
         # It isn't working and I think the issue is that self.Pleth.row_loop is tied to the dictionary so when you're using the dictionary you're asking for a row that doesn't exist as a key:
         loop_row = self.loop_table.rowCount()
         self.loop_table.insertRow(loop_row)
@@ -2636,13 +2678,13 @@ class Config(QWidget, Ui_Config):
         self.pleth.loop_menu[self.loop_table][loop_row]["Inclusion"].addItems(["No","Yes"])
         self.loop_table.setCellWidget(loop_row,9,self.pleth.loop_menu[self.loop_table][loop_row]["Inclusion"])
         self.pleth.loop_menu[self.loop_table][loop_row].update({"Covariates": CheckableComboBox()})
-        self.pleth.loop_menu[self.loop_table][loop_row]["Covariates"].addItems([b for b in self.pleth.breath_df])
+        self.pleth.loop_menu[self.loop_table][loop_row]["Covariates"].addItems([b for b in self.alias])
         self.loop_table.setCellWidget(loop_row,6,self.pleth.loop_menu[self.loop_table][loop_row]["Covariates"])
 
-        for role in self.role_list[1:6]:
+        for role in ["Variable","Xvar","Pointdodge","Facet1","Facet2"]:
             self.pleth.loop_menu[self.loop_table][loop_row][role] = QComboBox()
             self.pleth.loop_menu[self.loop_table][loop_row][role].addItems([""])
-            self.pleth.loop_menu[self.loop_table][loop_row][role].addItems([x for x in self.pleth.breath_df])
+            self.pleth.loop_menu[self.loop_table][loop_row][role].addItems([x for x in self.alias])
         
         self.loop_table.setCellWidget(loop_row,1,self.pleth.loop_menu[self.loop_table][loop_row]["Variable"])
         self.loop_table.setCellWidget(loop_row,2,self.pleth.loop_menu[self.loop_table][loop_row]["Xvar"])
@@ -2653,14 +2695,15 @@ class Config(QWidget, Ui_Config):
     def reset_config(self):
         print("config.reset_config()")
         try:
+            self.pleth.loop_ready = 0
             self.setup_variables_config()
             self.setup_table_config()
+            self.pleth.loop_ready = 1
             self.n = 0
-            self.variable_table.cellChanged.connect(self.no_duplicates)
-            self.variable_table.cellChanged.connect(self.update_loop)
-            print(self.pleth.loop_menu)
+            self.variable_table.itemChanged.connect(self.no_duplicates)
+            self.variable_table.itemChanged.connect(self.update_loop)
+            self.variable_table.itemChanged.connect(self.update_combos)
             self.pleth.show_loops(self.loop_table,1)
-            print(self.pleth.loop_menu)
             for s in self.settings_dict['role']:
                 s.clear()
                 s.addItem("Select variable:")
@@ -2696,7 +2739,7 @@ class Config(QWidget, Ui_Config):
             #     load_path = str(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_config"))
 
             # Opens open file dialog
-            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/STAGG_config")))
+            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.pleth.mothership))
             paths = file_name[0]
         elif open_file == "no":
             paths = [self.configs[p]["path"] for p in self.configs]
@@ -2761,6 +2804,20 @@ class Config(QWidget, Ui_Config):
                                 self.thumb.message_received("Files not found", f"One or more of the files selected cannot be found:\n{os.linesep.join([b for b in self.baddies])}")
             print(f'goodies: {self.goodies}')
             print(f'baddies: {self.baddies}')
+            # try:
+            #     self.pleth.loop_ready = 0
+            #     self.pleth.variable_configuration()
+            #     self.n = 0
+            #     self.pleth.loop_ready = 1
+            #     self.variable_table.itemChanged.connect(self.no_duplicates)
+            #     self.variable_table.itemChanged.connect(self.update_loop)
+            #     self.variable_table.itemChanged.connect(self.update_combos)
+
+            # except Exception as e:
+            #     print(f'{type(e).__name__}: {e}')
+            #     print(traceback.format_exc())
+            # self.pleth.variable_configuration()
+            # self.load_configs()
             if "variable_config" in self.goodies:
                 try:
                     self.load_variable_config()
@@ -2826,16 +2883,58 @@ class Config(QWidget, Ui_Config):
         # self.load_variable_config()     
         print("self.check_load_variable_config() has finished")
 
+    # def load_configs(self):
+    #     if self.configs["variable_config"]["path"].endswith(".xlsx"):
+    #         xl = pd.read_excel(self.configs["variable_config"]["path"])
+    #         xl.to_csv(f'{os.path.splitext(self.configs["variable_config"]["path"])[0]}.csv')
+    #     self.pleth.breath_df = pd.read_csv(f'{os.path.splitext(self.configs["variable_config"]["path"])[0]}.csv')['Column'].tolist()
+    #     self.pleth.loop_ready = 0
+    #     self.pleth.variable_configuration()
+    #     self.pleth.show_loops(self.loop_table,1)
+    #     self.n = 0
+    #     self.pleth.loop_ready = 1
+    #     try:
+    #         self.variable_table.itemChanged.connect(self.no_duplicates)
+    #     except Exception as e:
+    #         print(f'{type(e).__name__}: {e}')
+    #         print(traceback.format_exc())
+    #     try:
+    #         self.variable_table.itemChanged.connect(self.update_loop)
+    #     except Exception as e:
+    #         print(f'{type(e).__name__}: {e}')
+    #         print(traceback.format_exc())
+    #     try:
+    #         self.variable_table.itemChanged.connect(self.update_combos)
+    #     except Exception as e:
+    #         print(f'{type(e).__name__}: {e}')
+    #         print(traceback.format_exc())
+
     def load_variable_config(self):
         print("loading variable config")
         if self.configs["variable_config"]["path"].endswith(".xlsx"):
             xl = pd.read_excel(self.configs["variable_config"]["path"])
             xl.to_csv(f'{os.path.splitext(self.configs["variable_config"]["path"])[0]}.csv')
         self.pleth.breath_df = pd.read_csv(f'{os.path.splitext(self.configs["variable_config"]["path"])[0]}.csv')['Column'].tolist()
-        self.setup_table_config()
+        self.pleth.loop_ready = 0
+        self.pleth.variable_configuration()
+        self.pleth.show_loops(self.loop_table,1)
         self.n = 0
-        self.variable_table.cellChanged.connect(self.no_duplicates)
-        self.variable_table.cellChanged.connect(self.update_loop)
+        self.pleth.loop_ready = 1
+        try:
+            self.variable_table.itemChanged.connect(self.no_duplicates)
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+        try:
+            self.variable_table.itemChanged.connect(self.update_loop)
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+        try:
+            self.variable_table.itemChanged.connect(self.update_combos)
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
         self.vdf = {}
         with open(self.configs["variable_config"]["path"],'r') as f:
             r = csv.DictReader(f)
@@ -2964,9 +3063,9 @@ class Config(QWidget, Ui_Config):
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
             
-
     def load_other_config(self):
         print("loading other config")
+        print(self.pleth.loop_menu)
         odf = pd.read_csv(self.configs["other_config"]['path'], index_col=False)
         self.feature_combo.setCurrentText("None")
         if "Apneas" in set(odf["Graph"]):
@@ -2978,13 +3077,11 @@ class Config(QWidget, Ui_Config):
         if ("Apneas" and "Sighs") in set(odf["Graph"]):
             # print("All")
             self.feature_combo.setCurrentText("All")
-        print(f"odf before: {odf}")
         # odf = odf[odf["Graph"] != "Apneas" or odf["Graph"] != "Sighs"]
         odf.drop(odf.loc[(odf["Graph"]=="Apneas") | (odf["Graph"]=="Sighs")].index, inplace = True)
-        print(f"odf after:{odf}")
-        print(len(odf))
-        self.show_loops(self.loop_table,len(odf))
+        # self.show_loops(self.loop_table,len(odf))
         print(self.pleth.loop_menu)
+        # odf = odf.fillna("",inplace = True)
         # self.clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
         if len(odf)>0:
             print(len(odf))
@@ -2994,40 +3091,44 @@ class Config(QWidget, Ui_Config):
             except:
                 print("nope")
             # self.loop_table.setRowCount(len(odf))
+            print(range(len(odf)-1))
             for row_1 in range(len(odf)):
+                print(f"row_1: {row_1}")
+                
                 # self.pleth.loop_menu[self.loop_table][row_1]["Graph"].setText(str(odf.at[row_1,'Graph']))
                 # self.loop_table.setCellWidget(row_1,0,self.pleth.loop_menu[self.loop_table][row_1]["Graph"])
                 # self.pleth.loop_menu[self.loop_table][row_1]["Y axis minimum"].setText(str(odf.at[row_1,'Y axis minimum']))
                 # self.loop_table.setCellWidget(row_1,7,self.pleth.loop_menu[self.loop_table][row_1]["Y axis minimum"])
                 # self.pleth.loop_menu[self.loop_table][row_1]["Y axis maximum"].setText(str(odf.at[row_1,'Y axis maximum']))
                 # self.loop_table.setCellWidget(row_1,8,self.pleth.loop_menu[self.loop_table][row_1]["Y axis maximum"])
-                self.loop_table.cellWidget(row_1,0).setText(str(odf.at[row_1,'Graph']))
-                self.loop_table.cellWidget(row_1,7).setText(str(odf.at[row_1,'Y axis minimum']))
-                self.loop_table.cellWidget(row_1,8).setText(str(odf.at[row_1,'Y axis maximum']))
-                self.loop_table.cellWidget(row_1,1).setCurrentText(str(odf.at[row_1,'Variable']))
-                self.loop_table.cellWidget(row_1,2).setCurrentText(str(odf.at[row_1,'Xvar']))
-                self.loop_table.cellWidget(row_1,3).setCurrentText(str(odf.at[row_1,'Pointdodge']))
-                self.loop_table.cellWidget(row_1,4).setCurrentText(str(odf.at[row_1,'Facet1']))
-                self.loop_table.cellWidget(row_1,5).setCurrentText(str(odf.at[row_1,'Facet2']))
+                self.pleth.loop_menu[self.loop_table][row_1]["Graph"].setText(str(odf.at[row_1,'Graph']))
+                self.pleth.loop_menu[self.loop_table][row_1]["Y axis minimum"].setText(str(odf.at[row_1,'Y axis minimum']))
+                self.pleth.loop_menu[self.loop_table][row_1]["Y axis maximum"].setText(str(odf.at[row_1,'Y axis maximum']))
+                self.pleth.loop_menu[self.loop_table][row_1]["Variable"].setCurrentText(str(odf.at[row_1,'Variable']))
+                self.pleth.loop_menu[self.loop_table][row_1]["Xvar"].setCurrentText(str(odf.at[row_1,'Xvar']))
+                self.pleth.loop_menu[self.loop_table][row_1]["Pointdodge"].setCurrentText(str(odf.at[row_1,'Pointdodge']))
+                self.pleth.loop_menu[self.loop_table][row_1]["Facet1"].setCurrentText(str(odf.at[row_1,'Facet1']))
+                self.pleth.loop_menu[self.loop_table][row_1]["Facet2"].setCurrentText(str(odf.at[row_1,'Facet2']))
                 if odf.at[row_1,'Inclusion'] == 1:
-                    self.loop_table.cellWidget(row_1,9).setCurrentText("Yes")
+                    self.pleth.loop_menu[self.loop_table][row_1]["Inclusion"].setCurrentText("Yes")
                 else:
-                    self.loop_table.cellWidget(row_1,9).setCurrentText("No")
+                    self.pleth.loop_menu[self.loop_table][row_1]["Inclusion"].setCurrentText("No")
                 if odf.at[row_1, 'Covariates'] != "":
                     if self.deps != []:
                         self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].loadCustom([w for w in odf.at[row_1, 'Covariates'].split('@')])
                         self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].updateText()
                         
-                if row_1 < (len(odf)-1):
-                    try:
-                        self.add_loop()
-                    except Exception as e:
-                        print("no added loop")
-                        print(f'{type(e).__name__}: {e}')
-                        print(traceback.format_exc())
+                # if row_1 < (len(odf)):
+                try:
+                    self.add_loop()
+                except Exception as e:
+                    print("no added loop")
+                    print(f'{type(e).__name__}: {e}')
+                    print(traceback.format_exc())
         # Iterating over everything and their grandmother takes forever. I should look into a more efficient way of populating the table from loaded specs.
         # toc=datetime.datetime.now()
         # print(toc-tic)
+        print(f"after{self.pleth.loop_menu}")
 
     def replace(self):
         print("config.replace()")
@@ -3227,8 +3328,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #region Analysis parameters
 
         os.chdir(os.path.join(Path(__file__).parent.parent.parent))
-        
-        
+
     # method with slot decorator to receive signals from the worker running in
     # a seperate thread...B_run is triggered by the worker's 'progress' signal
     @pyqtSlot(int)
@@ -3272,7 +3372,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stamp['Dictionaries']['Data'] = {}
         print(self.stamp['Dictionaries']['Data'])
         print(self.tsbyfile)
-        combo_need = self.necessary_timestamp_box.currentText()
+        combo_need = self.pleth.necessary_timestamp_box.currentText()
         # if self.input_dir_py == "":
         if self.signals == []:
             print("signals lsit empty")
@@ -3321,7 +3421,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.need = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
             print(self.need)
 
-            self.grabTimeStamps()
+            self.stamp_to_do()
+            # self.grabTimeStamps()
             self.checkFileTimeStamps()
 
             for e in epoch:
@@ -3585,10 +3686,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.get_bp_reqs()
         self.test_configuration()
         try:
+            self.loop_ready = 0
             self.variable_configuration()
+            self.classy()
             self.n = 0
-            self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
-            self.v.variable_table.cellChanged.connect(self.v.update_loop)
+            self.loop_ready = 1
+            self.v.variable_table.itemChanged.connect(self.v.no_duplicates)
+            self.v.variable_table.itemChanged.connect(self.v.update_loop)
+            self.v.variable_table.itemChanged.connect(self.v.update_combos)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -3613,10 +3718,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 else:
                     self.test_configuration()
                     try:
+                        self.loop_ready = 0
                         self.variable_configuration()
                         self.n = 0
-                        self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
-                        self.v.variable_table.cellChanged.connect(self.v.update_loop)
+                        self.loop_ready = 1
+                        self.v.variable_table.itemChanged.connect(self.v.no_duplicates)
+                        self.v.variable_table.itemChanged.connect(self.v.update_loop)
+                        self.v.variable_table.itemChanged.connect(self.v.update_combos)
                         self.v.show()
                     except Exception as e:
                         print(f'{type(e).__name__}: {e}')
@@ -3636,10 +3744,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             elif self.metadata != "" and (self.autosections != "" or self.mansections != ""):
                 self.test_configuration()
                 try:
+                    self.loop_ready = 0
                     self.variable_configuration()
                     self.n = 0
-                    self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
-                    self.v.variable_table.cellChanged.connect(self.v.update_loop)
+                    self.loop_ready = 1
+                    self.v.variable_table.itemChanged.connect(self.v.no_duplicates)
+                    self.v.variable_table.itemChanged.connect(self.v.update_loop)
+                    self.v.variable_table.itemChanged.connect(self.v.update_combos)
                     self.v.show()
                 except Exception as e:
                     print(f'{type(e).__name__}: {e}')
@@ -3721,6 +3832,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     #             if dict(row)[k] == "1":
                     #                 self.v.vdf.update({dict(row)['Column']:dict(row)})
                     try:
+                        self.loop_ready = 0
                         for a in self.v.vdf:
                             self.buttonDict_variable[a]['Alias'].setText(self.v.vdf[a]['Alias'])
                             for k in ["Independent","Dependent","Covariate"]:
@@ -3731,8 +3843,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                         print("not checkable match")
                                         pass
                         self.n = 0
-                        self.variable_table.cellChanged.connect(self.no_duplicates)
-                        self.variable_table.cellChanged.connect(self.update_loop)
+                        self.loop_ready = 1
+                        self.v.variable_table.itemChanged.connect(self.v.no_duplicates)
+                        self.v.variable_table.itemChanged.connect(self.v.update_loop)
+                        self.v.variable_table.itemChanged.connect(self.v.update_combos)
                         self.v.load_custom_config()
                         self.v.load_graph_config()
                     except Exception as e:
@@ -3939,10 +4053,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # self.buttonDict_variable[item]["Covariate"].toggled.connect(self.v.populate_combos(self.buttonDict_variable[item].))
         # self.v.variable_table.cellChanged.connect(self.v.add_combos)
         # Creating the dictionary that will store the cells' statuses based on user selection. The table's need separate dictionaries because they'll be yielding separate csvs:
-        self.v.n = 0
         for item_1 in self.breath_df:
+        # if self.loop_ready == 1:
             self.buttonDict_variable[item_1]["Independent"].toggled.connect(self.v.add_combos)
             self.buttonDict_variable[item_1]["Covariate"].toggled.connect(self.v.add_combos)
+            # self.v.variable_table.itemChanged.connect(self.v.add_combos)
         # self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
         # self.v.variable_table.cellChanged.connect(self.v.update_loop)
         self.v.variable_table.resizeColumnsToContents()
@@ -5346,7 +5461,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
-    
+
     def launch_worker(self,branch):
         print("worker started?")
         print('launch_worker thread id',threading.get_ident())
@@ -5452,7 +5567,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # self.thumb.message_received("Missing output",f"The following signals files did not pass BASSPRO:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
             self.hangar.append(f"\nThe following signals files did not pass BASSPRO:\n\n{', '.join([os.path.basename(thumb) for thumb in baddies])}\n")
 
-    
+        #     print(f"bass: {bass}")
+        #     print(f"stagg: {stagg}")
+        #     diff = list(set(bass) - set(stagg))
+        #     print(diff)
             # self.hangar.append(f"The following signal files did not yield output: {', '.join(x for x in diff)} \nConsider checking the original LabChart file or the metadata for anomalies.") 
 
     def rthing_to_do(self):
@@ -5536,7 +5654,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             try:
                 print('rthing_to_do thread id',threading.get_ident())
                 print("rthing_to_do process id",os.getpid())
+                # self.launch_r_worker()
                 self.launch_worker("r")
+                
+                # self.worker = threading.Thread(target = MainGUIworker_thready.futurama_r(self))
+                # self.worker.daemon = True
+                # self.worker.start()
                 print("worker started?")
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
@@ -5557,9 +5680,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def stamp_to_do(self):
         print('stamp_to_do thread id',threading.get_ident())
         print("stamp_to_do process id",os.getpid())
-        worker = threading.Thread(target = MainGUIworker.futurama_stamp(self))
-        worker.daemon = True
-        worker.start()
+        self.launch_worker("stamp")
         # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
         print("worker started?")
 
