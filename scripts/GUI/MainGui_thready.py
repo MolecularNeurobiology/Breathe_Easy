@@ -16,8 +16,6 @@ from custom_config import Ui_Custom
 from manual_form import Ui_Manual
 from auto_form import Ui_Auto
 from basic_form import Ui_Basic
-from stagg_form import Ui_Stagg
-from auto_simp_form import Ui_Auto_simp
 import MainGUImain
 import csv
 import queue
@@ -2843,10 +2841,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.loop_menu = {}
 
         self.v = Config(self)
-        self.s = Stagg(self)
-        self.p = Auto(self)
-        self.c = ""
-        # self.v = Config(self)
         self.m = Manual(self)
         self.a = Auto(self)
         self.b = Basic(self)

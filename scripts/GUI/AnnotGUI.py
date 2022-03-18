@@ -279,29 +279,6 @@ class Annot(QMainWindow, Ui_Annot):
             # selected_value.setHidden(True)
             # print(selected_value)
             self.variable_list_values.takeItem(self.variable_list_values.row(selected_value))
-        
-            # selected_value.setHidden(True)
-        # print(self.groups)
-        # print(self.selected_values)
-        # self.tree_label()
-
-    # def edit_label(self):
-    #     self.variable_tree.editItem
-
-    # def relabel(self):
-    #     index = self.group_list.currentIndex()
-    #     if index.isValid():
-    #         item = self.group_list.itemFromIndex(index)
-    #         item.setFlags(item.flags() | Qt.ItemIsEditable)
-    #     self.group_list.edit(index)
-    #     for x in range(len(self.groups)):
-    #         if self.groups[x]["alias"] == item.text():
-    #             self.groups[x]["alias"] == self.group_list.currentItem().text()
-    #             self.tree_group.setText(x,self.group_list.currentItem().text())
-    #     print(self.tree_group.text(0))
-    #     print(self.group_list.currentItem().text())
-    #     print(item.text())
-    #     print(self.groups)
 
     def relabel_group(self):
         print("annot.relabel_group()")
@@ -497,6 +474,26 @@ class Annot(QMainWindow, Ui_Annot):
             #     self.variable_list_columns.addItem(f'{x}*')
             # else:
             self.variable_list_columns.addItem(x)
+    
+    def populate_list_values(self):
+        print("annot.populate_list_values()")
+        self.variable_list_values.clear()
+        self.variable_tree.clear()
+        self.group_list.clear()
+        self.kids={}
+        self.groups=[]
+        # self.column = self.variable_list_columns.selectedItems()
+        # for x in list(self.column):
+        #     print(x.text())
+        #     self.selected_column = x.text()
+        #     print(self.selected_column)
+        #     for y in self.metadata[x.text()].unique():
+        #         self.variable_list_values.addItem(str(y))
+        #         self.kids[str(y)]=y
+        self.column = self.variable_list_columns.currentItem().text()
+        for y in sorted(set([m for m in self.metadata[self.column] if not(pd.isnull(m) == True)])):
+            self.variable_list_values.addItem(str(y))
+            self.kids[str(y)]=y
 
 #endregion
 
