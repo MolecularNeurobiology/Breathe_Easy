@@ -4089,16 +4089,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.output_dir_py=os.path.join(self.py_output_folder, 'BASSPRO_output_'+datetime.datetime.now().strftime(
                 '%Y%m%d_%H%M%S'
             ))
-            print(self.output_dir_py)
-            # self.py_output_dir_list.clear()
-            # self.py_output_dir_list.addItem(self.output_dir_py)
         else:
             Path(self.py_output_folder).mkdir()
             self.output_dir_py=os.path.join(self.py_output_folder,'BASSPRO_output_'+datetime.datetime.now().strftime(
                 '%Y%m%d_%H%M%S'
             ))
-            # self.py_output_dir_list.clear()
-            # self.py_output_dir_list.addItem(self.output_dir_py)
     
     def auto_get_signal_files(self):
         print("auto_get_signal_files()")
