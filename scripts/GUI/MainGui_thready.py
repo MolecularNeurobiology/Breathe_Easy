@@ -817,46 +817,31 @@ class Auto(QWidget, Ui_Auto):
     def save_auto_file(self):
         print("auto.save_auto_file()")
         self.pleth.autosections = self.path
-        # self.pleth.autosections = os.path.join(self.pleth.mothership, "auto_sections.csv")
-        # self.auto_df = self.frame
         try:
         # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
             with open(self.pleth.autosections,'w',newline = '') as stream:
                     writer = csv.writer(stream)
                     header = []
-                    # header.append("Key")
                     for row in range(self.view_tab.rowCount()):
                         item = self.view_tab.item(row,0)
                         if item.text() == "nan":
                             header.append("")
-                        # elif item.text() == "index":
-                        #     print("found index column")
                         else:
-                            print(item.text())
                             header.append(item.text())
-                    print(header)
-                    # writer.writerow(header)
                     for column in range(self.view_tab.columnCount()):
                         coldata = []
                         for row in range(self.view_tab.rowCount()):
                             item = self.view_tab.item(row, column)
-                            print(item.text())
                             if item.text() == "nan":
-                                print("it's nan")
-                                coldata.append(
-                                    "")
+                                coldata.append("")
                             else:
                                 coldata.append(item.text())
                         writer.writerow(coldata)
             auto = pd.read_csv(self.pleth.autosections)
             auto['Key'] = auto['Alias']
             auto.to_csv(self.pleth.autosections,index=False)
-            print(auto)
             if self.pleth.breath_df != []:
                 self.pleth.update_breath_df("automated settings")
-        # DO NOT KEEP THIS NONSENSE JUST INVERSE THE ROWS AND COLUMNS IN THE NESTING ABOVE
-        # QUICK FIX
-        # self.auto_df.transpose().to_csv(self.pleth.autosections)
 
             # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
             for item in self.pleth.sections_list.findItems("auto_sections",Qt.MatchContains):
@@ -867,19 +852,6 @@ class Auto(QWidget, Ui_Auto):
             print(traceback.format_exc())
             if type(e) == PermissionError:
                 reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
-            # self.thumb = Thumbass()
-            # self.thumb.show()
-            # self.thumb.message_received("The file(s) you're working with appear to be open in another program.")
-
-        # self.auto_df = pd.read_csv(self.pleth.autosections)
-        
-        # current = pd.DataFrame.to_dict(self.auto_df.set_index("index"))
-        # new_current = {}
-        # new_current[self.auto_setting_combo.currentText()]=current
-        # self.pleth.bc_config['Dictionaries']['Auto Settings']['current'] = new_current
-
-        # with open(f'{Path(__file__).parent}/breathcaller_config.json','w') as bconfig_file:
-        #     json.dump(self.pleth.bc_config,bconfig_file)
 
     def load_auto_file(self):
         print("auto.load_auto_file()")
@@ -892,323 +864,13 @@ class Auto(QWidget, Ui_Auto):
         file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(load_path))
 
         # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("that didn't work")
-        else:
-            # Access configuration settings for the breathcaller in breathcaller_config.json:
-            # with open(file[0],mode='r') as ad:
-            #     reader = csv.reader(ad)
-            #     next(reader)
-            #     # self.auto_dict = {rows[0]:rows[1] for rows in reader}
-            # print(self.auto_dict)
-            self.frame = pd.read_csv(file[0],index_col='Key').transpose().reset_index()
-            print(f'normal:{self.frame}')
-            # print(f'transposed:{self.frame.transpose()}')
-
-            self.setup_tabs_load()
-
-#endregion
-
-#region class Simp Sections
-# YOu need to make the columns reflect the headers of the dataframess
-class Simp(QWidget, Ui_Auto_simp):
-    def __init__(self,Plethysmography):
-        super(Simp, self).__init__()
-        self.setupUi(self)
-        self.setWindowTitle("Autosections input")
-        self.pleth = Plethysmography
-        # self.isActiveWindow()
-        self.isMaximized()
-        self.auto_simp_df = ""
-
-    def start_up(self):
-        if self.pleth.autosections == "":
-            print("Choose an autosections file.")
-        else:
-            self.auto_simp_df = pd.read_csv(self.pleth.autosections)
-            self.populate_table(self.auto_simp_df,self.simp_table)
-    # def load_config_files(self):
-    #     if not self.pleth.mothership:
-    #         file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(Path.home()))
-    #     else:
-    #         file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.pleth.mothership))
-    #     # self.signal_files=[]
-    #     if not file_name[0]:
-    #         print("no config files selected")
-    #     else:
-    #         for x in range(len(file_name[0])):
-    #             if os.path.basename(file_name[0][x]).startswith("r_config"):
-    #                 self.r_config_df = pd.read_csv(file_name[0][x])
-    #                 self.populate_table(self.r_config_df,self.r_config_table)
-    #             elif os.path.basename(file_name[0][x]).startswith("g_config"):
-    #                 self.g_config_df = pd.read_csv(file_name[0][x])
-    #                 self.populate_table(self.g_config_df,self.g_config_table)
-    #             elif os.path.basename(file_name[0][x]).startswith("o_config"):
-    #                 self.o_config_df = pd.read_csv(file_name[0][x])
-    #                 self.populate_table(self.o_config_df,self.o_config_table)
-    #             else:
-    #                 self.thumb = Thumbass()
-    #                 self.thumb.show()
-    #                 self.thumb.message_received("Please name the configuration files so that their file basename begins with r_config, g_config, and o_config. Otherwise, please load the settings individually.")
-
-    def populate_table(self,frame,view):
-        # Populate tablewidgets with views of uploaded csv. Currently editable.
-        view.setColumnCount(len(frame.columns))
-        view.setRowCount(len(frame))
-        for col in range(view.columnCount()):
-            for row in range(view.rowCount()):
-                view.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
-        view.setHorizontalHeaderLabels(frame.columns)
-
-    def load_auto_simp_file(self):
-        # Groping around to find a convenient directory:
-        # if Path(self.Plethysmography.py_output_folder).exists():
-            # load_path = self.Plethysmography.py_output_folder
-        if Path(self.pleth.mothership).exists():
-            load_path = self.pleth.mothership
-        else:
-            load_path = str(Path.home())
-
-        # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select autosections file to edit:', str(load_path))
-
-        # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("nope")
-        else:
-            self.auto_simp_df = pd.read_csv(file[0])
-            self.populate_table(self.auto_simp_df,self.simp_table)
-    
-    def save_checker(self,folder):
-        self.pleth.hangar.append("Saving...")
-        if folder == "":
-            # path = QFileDialog.getSaveFileName(self, 'Save File', f"{title}", ".csv(*.csv))")[0]
-            dire = QFileDialog.getExistingDirectory(self, 'Choose directory', str(Path.home()))
-            if not dire:
-                print("dialog cancelled")
-            else:
-                self.dire = dire
-        else:
-            dire = QFileDialog.getExistingDirectory(self, 'Choose directory', str(folder))
-            if not dire:
-                print("dialog cancelled")
-            else:
-                self.dire = dire
-
-    def save_auto_simp_files(self):
-        self.save_checker(self.pleth.mothership)
-        if not self.auto_simp_df.empty:
-            self.table_pack(self.auto_simp_df,self.simp_table,self.pleth.autosections,"auto_sections")
-        print(self.pleth.autosections)
-        
-    def table_pack(self,frame,table,varia,title):
-        # table_dict = {}
-        varia = os.path.join(self.dire, f"{title}.csv")
-        print(varia)
-        with open(Path(varia),'w',newline = '') as stream:
-                writer = csv.writer(stream)
-                header = []
-                for column in range(table.columnCount()):
-                    item = table.horizontalHeaderItem(column)
-                    print(item.text())
-                    if item.text() == "nan":
-                        print("it's nan")
-                        header.append(
-                            "")
-                    else:
-                        header.append(item.text())
-                writer.writerow(header)
-                for row in range(table.rowCount()):
-                    rowdata = []
-                    for column in range(table.columnCount()):
-                        item = table.item(row, column)
-                        print(item.text())
-                        print(rowdata)
-                        if item.text() == "nan":
-                            print("it's nan")
-                            rowdata.append(
-                                "")
-                        else:
-                            rowdata.append(item.text())
-                    writer.writerow(rowdata)
-        
-        # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
-        for item in self.pleth.sections_list.findItems("auto_sections.csv",Qt.MatchEndsWith):
-            self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
-        self.pleth.sections_list.addItem(self.pleth.autosections)
-#endregion
-
-#region class STagg Sections
-# YOu need to make the columns reflect the headers of the dataframess
-class Stagg(QWidget, Ui_Stagg):
-    def __init__(self,Plethysmography):
-        super(Stagg, self).__init__()
-        self.setupUi(self)
-        self.setWindowTitle("STAGG input")
-        self.pleth = Plethysmography
-        # self.isActiveWindow()
-        self.isMaximized()
-        self.r_config_df = ""
-        self.g_config_df = ""
-        self.o_config_df = ""
-
-    def load_config_files(self):
-        if not self.pleth.mothership:
-            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(Path.home()))
-        else:
-            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.pleth.mothership))
-        # self.signal_files=[]
-        if not file_name[0]:
-            print("no config files selected")
-        else:
-            for x in range(len(file_name[0])):
-                if os.path.basename(file_name[0][x]).startswith("r_config"):
-                    self.r_config_df = pd.read_csv(file_name[0][x])
-                    self.populate_table(self.r_config_df,self.r_config_table)
-                elif os.path.basename(file_name[0][x]).startswith("g_config"):
-                    self.g_config_df = pd.read_csv(file_name[0][x])
-                    self.populate_table(self.g_config_df,self.g_config_table)
-                elif os.path.basename(file_name[0][x]).startswith("other_config"):
-                    self.o_config_df = pd.read_csv(file_name[0][x])
-                    self.populate_table(self.o_config_df,self.o_config_table)
-                else:
-                    self.thumb = Thumbass(self)
-                    self.thumb.show()
-                    self.thumb.message_received("Naming","Please name the configuration files so that their file basename begins with variable_config, graph_config, and other_config. Otherwise, please load the settings files individually.")
-
-    def populate_table(self,frame,view):
-        # Populate tablewidgets with views of uploaded csv. Currently editable.
-        view.setColumnCount(len(frame.columns))
-        view.setRowCount(len(frame))
-        for col in range(view.columnCount()):
-            for row in range(view.rowCount()):
-                view.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
-        view.setHorizontalHeaderLabels(frame.columns)
-
-    def load_rconfig_file(self):
-        # Groping around to find a convenient directory:
-        # if Path(self.Plethysmography.py_output_folder).exists():
-            # load_path = self.Plethysmography.py_output_folder
-        # if Path(self.pleth.mothership).exists():
-        #     load_path = self.pleth.mothership
-        # else:
-        #     load_path = str(Path.home())
-
-        # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select r_config file to edit:', str(self.pleth.mothership))
-
-        # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("nope")
-        else:
-            self.r_config_df = pd.read_csv(file[0])
-            self.populate_table(self.r_config_df,self.r_config_table)
-
-    def load_gconfig_file(self):
-        # Groping around to find a convenient directory:
-        # if Path(self.Plethysmography.py_output_folder).exists():
-            # load_path = self.Plethysmography.py_output_folder
-        # if Path(self.pleth.mothership).exists():
-        #     load_path = self.pleth.mothership
-        # else:
-        #     load_path = str(Path.home())
-
-        # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select g_config file to edit:', str(self.pleth.mothership))
-
-        # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("nope")
-        else:
-            self.g_config_df = pd.read_csv(file[0])
-            self.populate_table(self.g_config_df,self.g_config_table)
-
-    def load_oconfig_file(self):
-        # Groping around to find a convenient directory:
-        # if Path(self.Plethysmography.py_output_folder).exists():
-            # load_path = self.Plethysmography.py_output_folder
-        # if Path(self.pleth.mothership).exists():
-        #     load_path = self.pleth.mothership
-        # else:
-        #     load_path = str(Path.home())
-
-        # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select o_config file to edit:', str(self.pleth.mothership))
-
-        # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("nope")
-        else:
-            self.o_config_df = pd.read_csv(file[0])
-            self.populate_table(self.o_config_df,self.o_config_table)
-    
-    def save_checker(self,folder):
-        self.pleth.hangar.append("Saving...")
-        if folder == "":
-            # path = QFileDialog.getSaveFileName(self, 'Save File', f"{title}", ".csv(*.csv))")[0]
-            dire = QFileDialog.getExistingDirectory(self, 'Choose directory', str(self.pleth.mothership))
-            if not dire:
-                print("dialog cancelled")
-            else:
-                self.dire = dire
-        else:
-            dire = QFileDialog.getExistingDirectory(self, 'Choose directory', str(folder))
-            if not dire:
-                print("dialog cancelled")
-            else:
-                self.dire = dire
-
-    def save_config_files(self):
-        self.save_checker(self.pleth.mothership)
-        if not self.r_config_df.empty:
-            self.table_pack(self.r_config_df,self.r_config_table,self.pleth.variable_config,"variable_config")
-        if not self.g_config_df.empty:
-            self.table_pack(self.g_config_df,self.g_config_table,self.pleth.graph_config,"graph_config")
-        if not self.o_config_df.empty:
-            self.table_pack(self.o_config_df,self.o_config_table,self.pleth.other_config,"other_config")
-        
-    def table_pack(self,frame,table,varia,title):
-        # table_dict = {}
-        varia = os.path.join(self.dire, f"{title}.csv")
-        print(varia)
         try:
-            with open(Path(varia),'w',newline = '') as stream:
-                    writer = csv.writer(stream)
-                    header = []
-                    for column in range(table.columnCount()):
-                        item = table.horizontalHeaderItem(column)
-                        print(item.text())
-                        if item.text() == "nan":
-                            print("it's nan")
-                            header.append(
-                                "")
-                        else:
-                            header.append(item.text())
-                    writer.writerow(header)
-                    for row in range(table.rowCount()):
-                        rowdata = []
-                        for column in range(table.columnCount()):
-                            item = table.item(row, column)
-                            print(item.text())
-                            print(rowdata)
-                            if item.text() == "nan":
-                                print("it's nan")
-                                rowdata.append(
-                                    "")
-                            else:
-                                rowdata.append(item.text())
-                        writer.writerow(rowdata)
-        except PermissionError as e:
+            self.frame = pd.read_csv(file[0],index_col='Key').transpose().reset_index()
+            self.setup_tabs_load()
+        except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
-            reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
-        
-        # Clearing the config panel of the mainGUI and adding to it to reflect changes:
-        for f in ["variable_config","graph_config","other_config"]:
-            for item in self.pleth.variable_list.findItems(f,Qt.MatchContains):
-                self.pleth.variable_list.takeItem(self.pleth.variable_list.row(item))
-        for p in [self.pleth.variable_config,self.pleth.graph_config,self.pleth.other_config]:
-            self.pleth.variable_list.addItem(self.pleth.variable_config)
+
 #endregion
 
 #region class Manual Sections

@@ -425,21 +425,18 @@ class Annot(QMainWindow, Ui_Annot):
         # print(self.metadata)
         # print(self.pleth.metadata)
         if self.pleth.metadata == "" and self.metadata is None:
-            print("metadata path and df are empty")
             reply = QMessageBox.information(self, 'Missing metadata file', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Ok:
                 self.load_metadata_file()
             if reply == QMessageBox.Cancel:
                 self.close()
         elif self.pleth.metadata != "" and self.metadata is None:
-            print("metadata path exists but df is empty")
             if Path(self.pleth.metadata).exists():
                 if self.pleth.metadata.endswith('.xlsx'):
                     self.metadata = pd.read_excel(self.pleth.metadata)
                     self.populate_list_columns()
                 elif self.pleth.metadata.endswith('.csv'):
                     self.metadata = pd.read_csv(self.pleth.metadata)
-                    print(self.metadata.columns)
                     self.populate_list_columns()
                 else:
                     reply = QMessageBox.information(self, 'Incorrect file format', 'Only .csv or .xlsx files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
@@ -500,35 +497,6 @@ class Annot(QMainWindow, Ui_Annot):
             #     self.variable_list_columns.addItem(f'{x}*')
             # else:
             self.variable_list_columns.addItem(x)
-
-    def populate_list_values(self):
-        print("annot.populate_list_values()")
-        self.variable_list_values.clear()
-        self.variable_tree.clear()
-        self.group_list.clear()
-        self.kids={}
-        self.groups=[]
-        # self.column = self.variable_list_columns.selectedItems()
-        # for x in list(self.column):
-        #     print(x.text())
-        #     self.selected_column = x.text()
-        #     print(self.selected_column)
-        #     for y in self.metadata[x.text()].unique():
-        #         self.variable_list_values.addItem(str(y))
-        #         self.kids[str(y)]=y
-        self.column = self.variable_list_columns.currentItem().text()
-        for y in sorted(set([m for m in self.metadata[self.column] if not(pd.isnull(m) == True)])):
-            self.variable_list_values.addItem(str(y))
-            self.kids[str(y)]=y
-        # for x in list(self.column):
-        #     print(x.text())
-        #     self.selected_column = x.text()
-        #     print(self.selected_column)
-        #     for y in self.metadata[x.text()].unique():
-        #         self.variable_list_values.addItem(str(y))
-        #         self.kids[str(y)]=y
-        # add functionality that either greys out items that have been included in a group or prompts
-        # a warning when the user selects a value that's already been recoded.
 
 #endregion
 
