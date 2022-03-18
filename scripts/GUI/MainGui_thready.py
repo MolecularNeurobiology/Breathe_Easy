@@ -556,11 +556,6 @@ class Auto(QWidget, Ui_Auto):
         self.thresh_reference: [self.help_min_co2,self.help_max_co2,self.help_min_o2,self.help_max_calibrated_TV,self.help_max_VEVO2,self.help_max_o2,self.help_within_start,self.help_within_end,self.help_after_start,self.help_before_end],
         self.inc_reference: [self.help_min_TT,self.help_max_TT,self.help_max_dvtv,self.help_X,self.help_max_pX,self.help_vol_mov_avg_drift,self.help_min_tv,self.help_min_bout,self.help_include_apnea,self.help_include_sigh,self.help_include_high_chamber_temp]}
 
-        # self.lineEdits = {self.lineEdit_alias: "Alias",
-        #                     self.lineEdit_key: "Key",
-        #                     self.lineEdit_cal_seg: "Cal Seg",
-        #                     self.lineEdit_auto_ind_include: "AUTO_IND_INCLUDE"}
-
         for v in self.refs.values():
             for vv in v:
                 vv.clicked.connect(self.reference_event)
@@ -581,19 +576,14 @@ class Auto(QWidget, Ui_Auto):
             self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default'][self.auto_setting_combo.currentText()]
             # print(self.auto_dict)
         else:
-            self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['5% Hypercapnia']
-            print("generic dictionary accessed")
-            self.auto_setting_combo.setCurrentText('5% Hypercapnia')
+            try:
+                self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['current']
+            except:
+                self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['5% Hypercapnia']
+                self.auto_setting_combo.setCurrentText('5% Hypercapnia')
         self.frame = pd.DataFrame(self.auto_dict).reset_index()
-        # if (verticalLayout in globals()) == True:
-        #     self.verticalLayout.setParent(None)
-
-        # index = myLayout.count()
-        # while(index >= 0):
-        #     myWidget = myLayout.itemAt(index).widget()
-        #     myWidget.setParent(None)
-        #     index -=1
         self.setup_tabs()
+
 #region Alternative setups
     def nsetup_tabs(self):
         # keynum = 0 
@@ -916,11 +906,6 @@ class Auto(QWidget, Ui_Auto):
             # print(f'transposed:{self.frame.transpose()}')
 
             self.setup_tabs_load()
-
-    def load_auto_current(self):
-        print("auto.load_auto_current()")
-        self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['current']
-        self.setup_tabs()
 
 #endregion
 
@@ -4066,30 +4051,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def mothership_dir(self):
         print("mothership_dir()")
-        # self.mothership = "C:/Users/atwit/Desktop/Mothership"
-        # if self.default_mothership.isChecked == False:
-        #     print("no default")
-        #     self.mothership = Path(QFileDialog.getExistingDirectory(self, 'Choose output directory', str(Path.home()), QFileDialog.ShowDirsOnly))
-        # elif self.default_mothership.isChecked == True:
-            # print("default please")
-            # self.mothership = self.gui_config['Dictionaries']['Paths']['mothership']
-        # self.mothership = self.gui_config['Dictionaries']['Paths']['mothership']
-        # elif self.default_mothership.isChecked == False:
-        #     print("no default")
         self.mothership = QFileDialog.getExistingDirectory(self, 'Choose output directory', str(Path.home()), QFileDialog.ShowDirsOnly)
-        # if self.mothership != "" and 
-        # self.mothership = Path(
         if not self.mothership:
             print(f'mothership after: {self.mothership}')
         else:
-            print("bob")
-            print(self.breath_df)
-          # self.breathcaller_path_list.clear()
-        # self.py_output_dir_list.clear()
-            # self.signal_files_list.clear()
-            # self.metadata_list.clear()
-            # self.sections_list.clear()
-        # self.py_go.setDisabled(False)
+            self.output_path_display.setText(self.mothership)
             if self.breath_df != [] or self.metadata != "" or self.autosections != "" or self.basicap != "" or self.mansections != "":
                 reply = QMessageBox.question(self, f'Input detected', 'The selected directory has recognizable input.\n\nWould you like to overwrite your current input selection?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
@@ -4097,10 +4063,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.auto_get_autosections()
                     self.auto_get_mansections()
                     self.auto_get_metadata()
-                    # self.auto_get_breath_files()
                     self.auto_get_output_dir_r()
-                    # self.auto_get_signal_files()
-                    # self.auto_get_variable()
                     self.auto_get_basic()
                     print(self.basicap)
                     print(self.autosections)
@@ -4114,24 +4077,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.auto_get_autosections()
                 self.auto_get_mansections()
                 self.auto_get_metadata()
-                # self.auto_get_breath_files()
                 self.auto_get_output_dir_r()
-                # self.auto_get_signal_files()
-                # self.auto_get_variable()
                 self.auto_get_basic()
                 if len(self.breath_df)>0:
                     self.update_breath_df("settings")
         
-    # def auto_get_python_module(self):
-    #     py_mod_path=self.gui_config['Dictionaries']['Paths']['breathcaller']
-    #     # self.breathcaller_path_list.clear()
-    #     if Path(py_mod_path).exists():
-    #         self.breathcaller_path=py_mod_path
-    #         self.breathcaller_path_list.addItem(self.breathcaller_path)
-    #     else:
-    #         self.breathcaller_path_list.clear()
-    #         self.breathcaller_path_list.addItem("Python module not detected.")
-
     def auto_get_output_dir_py(self):
         print("auto_get_output_dir_py()")
         self.py_output_folder=os.path.join(self.mothership,'BASSPRO_output')
@@ -5173,11 +5123,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("py_message()")
         try:
             self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
-            self.get_bp_reqs()
-            if self.parallel_box.isChecked() == True:
-                self.pything_to_do()
-            else:
-                self.pything_to_do_single()
+            self.get_bp_reqs()=
+            self.pything_to_do()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -5562,52 +5509,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         worker.start()
         # Note that this isn't printed until the very end, after all files have been processed and everything is basically done.
         print("worker started?")
-
-    def rthing_to_do_single(self):
-        try:
-            print("rthing_to_do is happening")
-            print('rthing_single thread id',threading.get_ident())
-            print("rthing_single process id",os.getpid())
-            self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
-            if self.output_folder != "":
-                self.output_dir_r = self.output_folder
-                self.thready(self.update_Rprogress)
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-    
-    def pything_to_do_single(self):
-        print("pything_single thread id", threading.get_ident())
-        print("pything_single process id", os.getpid())
-        self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
-        if self.output_folder != "":
-            self.output_dir_py = self.output_folder
-        # This conditional essentially checks whether or not a copy of the metadata already exists because if the metadat was pulled directly from Filemaker, then that function automatically makes the output py directory and places the pulled metadata in there before the launch button. I should change this and isolate the creation and copying to just the launch.
-        # if self.metadata_path == "":
-            try:
-                shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-                # self.get_parameter()
-                shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-                # if self.a.auto_df != "":
-                #     self.a.auto_df.to_csv(self.autosections,index=False)
-                shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"autosections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-                # if self.m.manual_df != "":
-                #     self.m.manual_df.to_csv(self.mansections,index=False)
-                #     shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"mansections_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-                # A copy of the basic parameters is not included because that's found in the breathcaller_config file. But so are all the other settings...
-                shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-                with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-                    json.dump(self.gui_config,gconfig_file)
-                shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-            except Exception as e:
-                print(f'{type(e).__name__}: {e}')
-                print(traceback.format_exc())
-            # self.thready(self.update_Pyprogress)
-            try:
-                self.update_Pyprogress()
-            except Exception as e:
-                print(f'{type(e).__name__}: {e}')
-                print(traceback.format_exc())
 
     def superthing_to_do(self):
         # self.thready(self.super_go)
