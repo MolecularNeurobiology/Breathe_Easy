@@ -5118,7 +5118,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("py_message()")
         try:
             self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
-            self.get_bp_reqs()=
+            self.get_bp_reqs()
             self.pything_to_do()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
