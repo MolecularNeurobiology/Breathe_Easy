@@ -1,10 +1,6 @@
 # library(gridExtra)
 # library(data.table)
 
-# TODO: auto-change interaction vars to character
-# TODO: Enlarge graph widths if many categories.
-
-
 # Breath filter
 cPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 # other_config <- read.csv("/D/Resp/StaGG/V0_4/Other_config/Other_config1.csv", stringsAsFactors = FALSE, na.strings = c("", " ", "NA"))
