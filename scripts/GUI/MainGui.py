@@ -3512,169 +3512,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.input_directory_r()
 #endregion
 
-#region Go methods
-
-    def go_r(self):
-        print("go_r()")
-        papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}"'.format(
-            rscript = self.rscript_des,
-            pipeline = self.pipeline_des,
-            d = self.mothership,
-            j = self.input_dir_r,
-            r = self.variable_config,
-            g = self.graph_config,
-            f = self.other_config,
-            o = self.output_dir_r,
-            t = os.path.join(self.papr_dir, "tibblemaker.R"),
-            s = os.path.join(self.papr_dir, "stat_runner.R"),
-            m = os.path.join(self.papr_dir, "graph_maker.R"),
-            b = os.path.join(self.papr_dir, "other_graphs.R")
-        )
-        self.hangar.append(papr_cmd)
-        print('go_r thread id',threading.get_ident())
-        print("go_r process id",os.getpid())
-        self.py_proc_r=subprocess.Popen(papr_cmd, stdout= subprocess.PIPE, stderr = subprocess.STDOUT)
-     
-    def go_py(self):
-        print("go_py()")
-        for d in self.signal_dict:
-            breathcaller_cmd = 'python -u "{module}" -i "{id}" {filelist} -o "{output}" -a "{metadata}" -m "{manual}" -c "{auto}" -p "{basic}"'.format(
-                module = self.breathcaller_path,
-                id = d,
-                output = self.output_dir_py,
-                filelist= '-f "'+'" -f "'.join([os.path.basename(i) for i in self.signal_dict[d]])+'"',
-                metadata = self.metadata,
-                manual = self.mansections, 
-                auto = self.autosections,
-                basic = self.basicap
-            )
-
-            print(breathcaller_cmd)
-            self.hangar.append("Breathcaller command: "+breathcaller_cmd)
-            print('go_py thread id',threading.get_ident())
-            print("go_py process id",os.getpid())
-            self.py_proc=subprocess.Popen(breathcaller_cmd, stdout= subprocess.PIPE, stderr = subprocess.STDOUT)
-
-    def go_super(self):
-        print("super!")
-
-#endregion
-
-#region Progress
-
-    def _parse_results(self, output):
-        print('parsing results')
-        # Output has one row of headers, all single words.  The
-        # remaining rows are one per filesystem, with columns
-        # matching the headers (assuming that none of the
-        # mount points have whitespace in the names).
-        if not output:
-            return []
-        lines = output.splitlines()
-        headers = lines[0].split()
-        devices = lines[1:]
-        results = [
-            dict(zip(headers, line.split()))
-            for line in devices
-        ]
-        return results
-    
-    def parse_progress(self,line):
-        compiled_re=re.compile('PROGRESS: (?P<pct>.+)% - ETC: (?P<eta>.+) (remaining )?of (?P<ert>.+) minutes - File (?P<curfile_no>.+) of (?P<totfile_no>.+)')
-        parsed_line=re.search(compiled_re,line)
-        self.mp_parsed={
-            'percent_complete':parsed_line['pct'],
-            'time_remaining':parsed_line['eta'],
-            'estimated_total_time':parsed_line['ert'],
-            'current_file_no':parsed_line['curfile_no'],
-            'total_file_no':parsed_line['totfile_no']
-            }
-        return self.mp_parsed
-
-    def update_Rprogress(self):
-        print('Rprogress thread id',threading.get_ident())
-        print("Rprogress process id",os.getpid())
-        self.go_r()
-        print("post")
-        while True:
-            output = self.py_proc_r.stdout.readline().decode('utf8')
-            if output=='' and self.py_proc_r.poll() is not None:
-                break
-            if output!='': 
-                print(output.strip())
-            self.hangar.append(str(output.strip()))
-            QApplication.processEvents()
-            time.sleep(0.2)
-
-    def update_Pyprogress(self):
-        print("pre go")
-        print('Pyprogress thread id',threading.get_ident())
-        print("Pyprogress process id",os.getpid())
-        signal_dir = []
-        self.signal_dict = {}
-        for s in self.signals:
-            signal_dir.append(os.path.dirname(s))
-        for d in set(signal_dir):
-            self.signal_dict.update({d:[]})
-            for l in self.signals:
-                if os.path.dirname(l) == d:
-                    self.signal_dict[d].append(l)
-        self.go_py()
-        print("post go")
-        self.completed = 0
-        while True:
-            output = self.py_proc.stdout.readline().decode('utf8')
-            if output=='' and self.py_proc.poll() is not None:
-                break
-            if output!='': 
-                print(output.strip())
-            self.hangar.append(str(output.strip()))
-            QApplication.processEvents()
-            time.sleep(0.2)
-
-#endregion
-
-#region Threading
-
-# Concurrency is a nightmare. I'll do my best to explain what's going on. Currently, there are two types of concurrency enabled for both the breathcaller and papr.
-# I'm in the process of exploring the black box. Fear is the mind killer.
-
-    def py_message(self):
-        print("py_message()")
-        try:
-            self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
-            self.get_bp_reqs()
-            self.pything_to_do()
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-        try:
-            self.auto_get_breath_files()
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-        try:
-            self.output_check()
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-
-    def r_message(self):
-        print("r_message()")
-        print(f'configs: {self.v.configs}')
-        print(f'v:{self.variable_config}')
-        print(f'g:{self.graph_config}')
-        print(f'o:{self.other_config}')
-        self.variable_config = self.v.configs["variable_config"]["path"]
-        self.graph_config = self.v.configs["graph_config"]["path"]
-        self.other_config = self.v.configs["other_config"]["path"]
-        if any([self.v.configs[key]['path'] == "" for key in self.v.configs]):
-            if self.stagg_list == []:
-                print("no stagg for you")
-            else:
-                QMessageBox.question(self, 'Missing STAGG settings', f"One or more STAGG settings files are missing.", QMessageBox.OK, QMessageBox.OK)
-        else:
-            self.rthing_to_do()
 
     def dir_checker(self,output_folder,output_folder_parent,text):
         print("dir_checker()")
@@ -3822,28 +3659,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.qthreadpool.start(self.workers[self.counter])
                 # advance the counter - used to test launching multiple threads
                 self.counter+=1
+        elif branch == "stamp":
+            for job in MainGUIworker.get_jobs_stamp(self):
+                # create a Worker
+                self.workers[self.counter] = MainGUIworker.Worker(
+                    job,
+                    self.counter,
+                    self.q,
+                    self
+                    )
+                self.workers[self.counter].progress.connect(self.B_run)
+                self.workers[self.counter].finished.connect(self.B_Done)
+                # adjust thread limit for the qthreadpool
+                self.qthreadpool.setMaxThreadCount(1)
+                # Add the 'QRunnable' worker to the threadpool which will manage how
+                # many are started at a time
+                self.qthreadpool.start(self.workers[self.counter])
+                # advance the counter - used to test launching multiple threads
+                self.counter+=1
         
-    def launch_r_worker(self):
-        print('launch_worker thread id',threading.get_ident())
-        print("launch_worker process id",os.getpid())
-        for job in MainGUIworker.get_jobs_r(self):
-            # create a Worker
-            self.workers[self.counter] = MainGUIworker.Worker(
-                job,
-                self.counter,
-                self.q,
-                self
-                )
-            self.workers[self.counter].progress.connect(self.B_run)
-            self.workers[self.counter].finished.connect(self.B_Done)
-            # adjust thread limit for the qthreadpool
-            self.qthreadpool.setMaxThreadCount(1)
-            # Add the 'QRunnable' worker to the threadpool which will manage how
-            # many are started at a time
-            self.qthreadpool.start(self.workers[self.counter])
-            # advance the counter - used to test launching multiple threads
-            self.counter+=1
-
     def output_check(self):
         if len(self.stagg_list) != len(self.signals):
             goodies = []
