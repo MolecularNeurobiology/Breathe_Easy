@@ -3784,7 +3784,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 print(traceback.format_exc())
     
     def launch_worker(self,branch):
-        print("worker started?")
         print('launch_worker thread id',threading.get_ident())
         print("launch_worker process id",os.getpid())
         if branch == "py":
@@ -3825,7 +3824,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.counter+=1
         
     def launch_r_worker(self):
-        print("worker started?")
         print('launch_worker thread id',threading.get_ident())
         print("launch_worker process id",os.getpid())
         for job in MainGUIworker.get_jobs_r(self):
