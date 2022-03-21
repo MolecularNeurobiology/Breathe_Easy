@@ -2,16 +2,12 @@
 #region Libraries
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
-from PyQt5 import QtCore
 from PyQt5.QtCore import *
-from PyQt5 import uic
-from form import Ui_Plethysmography
-from config_form import Ui_Config
 import sys
 import os
 import threading
 import logging
-import MainGui_thready
+import MainGui
 from multiprocessing import freeze_support
 
 #endregion
@@ -21,12 +17,10 @@ def main():
     root = os.path.dirname(os.path.abspath(__file__))        
     QDir.addSearchPath('resources', root)
     app = QApplication(sys.argv)
-    window = MainGui_thready.Plethysmography()
-    # app.aboutToQuit.connect(MainGui.Plethysmography.x_byutton)
+    window = MainGui.Plethysmography()
     print(window.signals)
     print('GUI thread id',threading.get_ident()) 
     print("GUI process id",os.getpid())
-    loop = QEventLoop(app)
     window.show()
     app.exec_()
 

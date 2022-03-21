@@ -17,7 +17,7 @@ import pyodbc
 import threading
 import multiprocessing
 import concurrent.futures
-from MainGui import *
+import MainGui
 
 import sys
 from pathlib import Path, PurePath
@@ -29,6 +29,45 @@ import logging
 import asyncio
 
 #endregion
+
+class WorkerSignals(QObject):
+    # create signals to be used by the worker
+    finished = pyqtSignal(int)
+    progress = pyqtSignal(int)
+    
+class Worker(QRunnable):
+       
+    def __init__(self,path_to_script,i,worker_queue,pleth):
+        super(Worker, self).__init__()
+        self.path_to_script = path_to_script
+        self.i = i
+        self.worker_queue = worker_queue
+        self.pleth = pleth
+        self.signals = WorkerSignals()
+        self.finished = self.signals.finished
+        self.progress = self.signals.progress
+    
+    def run(self):
+        # use subprocess.Popen to run a seperate program in a new process
+        # stdout will be captured by the variable self.echo and extracted below
+        self.echo = subprocess.Popen(
+            self.path_to_script,
+            stdout= subprocess.PIPE, 
+            stderr = subprocess.STDOUT
+            )
+    
+        # extract the stdout and feed it to the queue
+        # emit signals whenever adding to the queue or finishing
+        running = 1
+        while running == 1:
+            line = self.echo.stdout.readline().decode('utf8')
+            if self.echo.poll() is not None:
+                running = 0
+            elif line != '':
+                self.worker_queue.put(line.strip())
+                self.progress.emit(self.i)
+        self.finished.emit(self.i)
+
 
 #region futurama
 def futurama_py(Plethysmography):
@@ -150,7 +189,7 @@ def get_jobs_r(Plethysmography):
             i = Plethysmography.image_format
     )
     yield papr_cmd
-      
+    
 def get_jobs_stamp(Plethysmography):
     print('get_jobs_stamp thread id',threading.get_ident())
     print("get_jobs_stamp process id",os.getpid())
