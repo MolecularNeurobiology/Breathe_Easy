@@ -3872,47 +3872,41 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             elif self.jpeg_radioButton.isChecked() == True:
                 self.image_format = ".jpeg"
             try:
-                print("shutil is trying to happen for configs")
-                if datetime.datetime.now().strftime('%Y%m%d_%H%M%S') == os.path.basename(self.output_dir_r).lstrip('STAGG_output'):
-                    print("output folder timestamp and config timestamp are equal")
-                else:
-                    print("output and config timestamp not equal:\nconfig: {datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}\noutput: {os.path.basename(self.output_dir_r).lstrip('STAGG_output')}")
                 shutil.copyfile(self.variable_config, os.path.join(self.output_dir_r, f"variable_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
                 shutil.copyfile(self.graph_config, os.path.join(self.output_dir_r, f"graph_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
                 shutil.copyfile(self.other_config, os.path.join(self.output_dir_r, f"other_config_{os.path.basename(self.output_dir_r).lstrip('STAGG_output')}.csv"))
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
-                print("No variable or graph configuration files copied to STAGG output folder.")
             if any(os.path.basename(b).endswith("RData") for b in self.stagg_list):
                 self.pipeline_des = os.path.join(self.papr_dir, "Pipeline_env_multi.R")
             else:
                 self.pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
             if len(self.stagg_list)>200:
-                print("there are more than 100 files in stagg_list")
+                # If there are more than 200 files in Main.stagg_list, STAGG has troubles importing all of them when provided as a list of file paths, so in these cases, we would want args$JSON to be a directory path instead:
                 if len(set([os.path.dirname(y) for y in self.stagg_list]))>1:
-                    print("hay more than one directory in stagg_list")
-                    reply = QMessageBox.information(self, "That's a lot of JSON", 'The STAGG input provided consists of more than 200 files from multiple directories.\nPlease condense the files into one directory for STAGG to analyze.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
-                    if reply == QMessageBox.Ok:
-                        print("more than 200 files from multiple directories warning")
+                    # If there are more than 200 files in Main.stagg_list and they come from more than one directory, we would need to have a different command line, so instead we'll regulate the user:
+                    reply = QMessageBox.information(self, "That's a lot of JSON", 'The STAGG input provided consists of more than 200 files from multiple directories.\nPlease condense the files into one directory for STAGG to analyze.', QMessageBox.Ok, QMessageBox.Ok)
                 else:
-                    print("there is only one directory in stagg_list")
+                    # If there are more than 200 files in Main.stagg_list but they all come from the same directory, then args$JSON (Main.input_dir_r on our end) needs to be a directory path instead.
                     self.input_dir_r = os.path.dirname(self.stagg_list[0])
                     self.rthing_to_do_cntd()
             else:
-                print("there are fewer than 100 files in stagg_list")
+                # If there aren't a ridiculous number of json files in Main.stagg_list, then we just need to render the list of file paths into an unbracketed string so that STAGG can recognize it as a list. STAGG didn't like the brackets.
                 self.input_dir_r = ','.join(item for item in self.stagg_list)
                 self.rthing_to_do_cntd()
     
     def rthing_to_do_cntd(self):
         if Path(self.pipeline_des).is_file():
-            print("pipeline des is a real boy")
+            # Make sure the path stored in gui_config.json is an Rscript executable file:
             if os.path.basename(self.gui_config['Dictionaries']['Paths']['rscript']) == "Rscript.exe":
                 if os.path.exists(self.gui_config['Dictionaries']['Paths']['rscript']):
+                    # If it is an executable file, then that's the path we'll deliver as an argument to the command line.
                     self.rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
                 else:
                     reply = QMessageBox.information(self, 'Rscript not found', 'Rscript.exe path not defined. Would you like to select the R executable?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                     if reply == QMessageBox.Ok:
+                        # User provides the path to the Rscript executable and it's saved as a string in gui_config.json:
                         pre_des = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.mothership))
                         if os.path.basename(pre_des[0]) == "Rscript.exe":
                             self.rscript_des = pre_des[0]
@@ -3932,57 +3926,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 print('rthing_to_do thread id',threading.get_ident())
                 print("rthing_to_do process id",os.getpid())
                 self.launch_worker("r")
-                print("worker started?")
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
         else:
+            # If Main.pipeline_des (aka the first STAGG script file path) isn't a file, then the STAGG scripts aren't where they're supposed to be.
             reply = QMessageBox.information(self, 'STAGG scripts not found', 'BASSPRO-STAGG cannot find the scripts for STAGG. Check the BASSPRO-STAGG folder for missing files or directories.', QMessageBox.Ok, QMessageBox.Ok)
-   
-    def stamp_to_do(self):
-        print('stamp_to_do thread id',threading.get_ident())
-        print("stamp_to_do process id",os.getpid())
-        worker = threading.Thread(target = MainGUIworker.futurama_stamp(self))
-        worker.daemon = True
-        worker.start()
-        print("worker started?")
-
-    def superthing_to_do(self):
-        self.py_message()
-        self.rthing_to_do
-        print("worker started?")
-
-    def thready(self,thing_to_do):
-        print('thready thread id',threading.get_ident())
-        print("thready process id",os.getpid())
-        testy = QtCore.QThread()
-        # give self to QThread so that the thread isn't garbage-collected
-        # now QThread is destroyed while thread is still running when I destroy the
-        # thread by closing the GUI. Before it was destroyed when the program left the 
-        # MainWindow's __init__.
-        
-        worker = Worker_Single(thing_to_do)
-        
-        worker.moveToThread(testy)
-        worker.start.emit()
-
-        # testy.started.connect(lambda: worker.run())
-        # the above is hacky. Essentially this functions indicates that once testy is started,
-        # a signal should be sent to make worker.run() happen.
-        # Inside of the parentheses, we're trying to make worker.run() but it yields the following error:
-        # testy.started.connect(worker.run())
-        # TypeError: argument 1 has unexpected type 'NoneType'
-        # Adding lambda makes it happy. We don't know why other than it converts worker.run()
-        # into a callable function. Which worker.run() apparently is not.
-        testy.start()
-        worker.finished.connect(testy.quit)
-        self.threadpool.append(testy)
-        self.worker = worker
-        # worker.start.connect(worker.run())
-        # the above makes no idea
-
-        print("thready is happening")
-        # in this order, we're moving the worker to the thread before starting the thread
-
 
 #endregion
