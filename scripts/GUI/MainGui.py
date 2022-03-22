@@ -2060,11 +2060,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.gui_config = json.load(config_file)
         print(f'{Path(__file__).parent}/gui_config.json')
 
-        # Access timestamp settings for validating and storing timestamper results in timestamps.json:
+        # Access timestamp settings for storing timestamper results in timestamps.json:
         with open(f'{Path(__file__).parent}/timestamps.json') as stamp_file:
             self.stamp = json.load(stamp_file)
         print(f'{Path(__file__).parent}/timestamps.json')
-        # This should just connect to autosections dictionary keys instead in the future.
 
         # Access configuration settings for the breathcaller in breathcaller_config.json:
         with open(f'{Path(__file__).parent}/breathcaller_config.json') as bconfig_file:
