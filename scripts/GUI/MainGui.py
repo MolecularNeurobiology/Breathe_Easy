@@ -1368,15 +1368,10 @@ class Config(QWidget, Ui_Config):
                 self.clades_other_dict[row].update({"Facet1": self.pleth.loop_menu[self.loop_table][row]["Facet1"].currentText()})
                 self.clades_other_dict[row].update({"Facet2": self.pleth.loop_menu[self.loop_table][row]["Facet2"].currentText()})
                 self.clades_other_dict[row].update({"Covariates": '@'.join(self.pleth.loop_menu[self.loop_table][row]["Covariates"].currentData())})
-                self.clades_other_dict[row].update({"Inclusion": self.pleth.loop_menu[self.loop_table][row]["Inclusion"].currentText()})
-                # if self.clades_other_dict[row]['Inclusion'] == 'Yes':
-                #     self.clades_other_dict[row]['Inclusion'] = 1
-                # else:
-                #     self.clades_other_dict[row]['Inclusion'] = 0  
+                self.clades_other_dict[row].update({"Inclusion": self.pleth.loop_menu[self.loop_table][row]["Inclusion"].currentText()}) 
                 self.clades_other_dict[row].update({"Y axis minimum": self.pleth.loop_menu[self.loop_table][row]["Y axis minimum"].text()})
                 self.clades_other_dict[row].update({"Y axis maximum": self.pleth.loop_menu[self.loop_table][row]["Y axis maximum"].text()})
-            print(f"other dict:{self.clades_other_dict}")
-            print(len(self.clades_other_dict))
+
             self.show_loops(self.loop_table,len(self.clades_other_dict))
             for row_1 in range(len(self.clades_other_dict)):
                 self.loop_table.cellWidget(row_1,0).setText(self.clades_other_dict[row_1]['Graph'])
@@ -1387,15 +1382,9 @@ class Config(QWidget, Ui_Config):
                 self.loop_table.cellWidget(row_1,3).setCurrentText(self.clades_other_dict[row_1]['Pointdodge'])
                 self.loop_table.cellWidget(row_1,4).setCurrentText(self.clades_other_dict[row_1]['Facet1'])
                 self.loop_table.cellWidget(row_1,5).setCurrentText(self.clades_other_dict[row_1]['Facet2'])
-                # if odf.at[row_1,'Inclusion'] == 1:
-                #     self.loop_table.cellWidget(row_1,9).setCurrentText("Yes")
-                # else:
-                #     self.loop_table.cellWidget(row_1,9).setCurrentText("No")
                 if self.clades_other_dict[row_1]['Covariates'] != "":
-                    # if self.deps != []:
                     self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].loadCustom([w for w in self.clades_other_dict[row_1]['Covariates'].split('@')])
                     self.pleth.loop_menu[self.loop_table][row_1]['Covariates'].updateText()
-        
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -1417,8 +1406,6 @@ class Config(QWidget, Ui_Config):
                 print("no transform_combo")
         except Exception as e:
             self.setup_transform_combo()
-        # print(self.pleth.breath_df)
-        # self.pleth.cons = {"variable_config":self.pleth.variable_config,"graph_config":self.pleth.graph_config,"other_config":self.pleth.other_config}
         self.role_list = ["Graph","Variable","Xvar","Pointdodge","Facet1","Facet2","Inclusion","Y axis minimum","Y axis maximum"]
         self.graph_role = []
         self.additional_dict = {self.feature_combo:"Feature",self.Poincare_combo:"Poincare",self.Spectral_combo:"Spectral",self.transform_combo:"Transformation"}
@@ -1560,6 +1547,7 @@ class Config(QWidget, Ui_Config):
             self.pleth.c.show()
 
     def classy(self):
+        # This method is OLD
         print("config.classy()")
         self.clades = pd.DataFrame(columns= ["Column","Alias","Independent","Dependent","Covariate","ymin","ymax","Poincare","Spectral","Transformation"])
         self.clades_graph = pd.DataFrame(columns = ["Alias","Role"])
@@ -2090,7 +2078,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         with open(f'{Path(__file__).parent}/timestamps.json') as stamp_file:
             self.stamp = json.load(stamp_file)
         print(f'{Path(__file__).parent}/timestamps.json')
-        # This should just connect to autosections dictionary keys instead.
+        # This should just connect to autosections dictionary keys instead in the future.
 
         # Access configuration settings for the breathcaller in breathcaller_config.json:
         with open(f'{Path(__file__).parent}/breathcaller_config.json') as bconfig_file:
@@ -2159,6 +2147,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.pipeline_des = ""
         self.loop_menu = {}
 
+        # Initiating subGUIs
         self.v = Config(self)
         self.m = Manual(self)
         self.a = Auto(self)
@@ -2365,7 +2354,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
 #endregion
 
-#region Sections
+#region show subGUIs
     def show_annot(self):
         self.g.show()
         self.g.show_metadata_file()
