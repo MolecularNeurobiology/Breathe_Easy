@@ -3096,24 +3096,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.qthreadpool.start(self.workers[self.counter])
                 # advance the counter - used to test launching multiple threads
                 self.counter+=1
-        elif branch == "stamp":
-            for job in MainGUIworker.get_jobs_stamp(self):
-                # create a Worker
-                self.workers[self.counter] = MainGUIworker.Worker(
-                    job,
-                    self.counter,
-                    self.q,
-                    self
-                    )
-                self.workers[self.counter].progress.connect(self.B_run)
-                self.workers[self.counter].finished.connect(self.B_Done)
-                # adjust thread limit for the qthreadpool
-                self.qthreadpool.setMaxThreadCount(1)
-                # Add the 'QRunnable' worker to the threadpool which will manage how
-                # many are started at a time
-                self.qthreadpool.start(self.workers[self.counter])
-                # advance the counter - used to test launching multiple threads
-                self.counter+=1
         
     def output_check(self):
         if len(self.stagg_list) != len(self.signals):

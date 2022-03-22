@@ -102,19 +102,6 @@ def get_jobs_r(Plethysmography):
             i = Plethysmography.image_format
     )
     yield papr_cmd
-    
-def get_jobs_stamp(Plethysmography):
-    print('get_jobs_stamp thread id',threading.get_ident())
-    print("get_jobs_stamp process id",os.getpid())
-    for file_st in Plethysmography.signals:
-        print(file_st)
-        stamp_cmd = 'python -u "{stamper}" --s "{signal}" --n "{need}"'.format(
-            # The path to the timestamper python script:
-            stamper = Plethysmography.gui_config['Dictionaries']['Paths']['timestamper'],
-            # The basename of the signal file:
-            signal = file_st,
-            # The series of timestamps to the timestamps of the signal file will be compared to:
-            need = Plethysmography.gui_config['Dictionaries']['Timestamps'][1])
-        yield stamp_cmd
+
 
 #endregion
