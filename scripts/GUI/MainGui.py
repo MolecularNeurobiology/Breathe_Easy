@@ -226,7 +226,6 @@ class Basic(QWidget, Ui_Basic):
 
     def setup_tabs(self):
         print("basic.setup_tabs()")
-        print(self.pleth.basicap)
         # Populate lineEdit widgets with default basic parameter values from breathcaller configuration file:
         self.basic_dict = self.pleth.bc_config['Dictionaries']['AP']['default']
         for widget in self.lineEdits:
@@ -2281,9 +2280,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                             self.get_autosections()
                     if m is self.breathcaller_path:
                         reply = QMessageBox.information(self, "How is this program even running?", f"The program cannot find the following file: \n{self.breathcaller_path}\nPlease reinstall BASSPRO-STAGG.", QMessageBox.Ok)
-
-    def lvariable_configuration(self):
-        self.s.show()
 
     def variable_configuration(self):
         print("self.variable_configuration() has started")
