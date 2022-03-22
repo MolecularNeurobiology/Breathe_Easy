@@ -741,6 +741,7 @@ class Manual(QWidget, Ui_Manual):
 #endregion
 
 class CheckableComboBox(QComboBox):
+    # source: https://gis.stackexchange.com/questions/350148/qcombobox-multiple-selection-pyqt5
 
     # Subclass Delegate to increase item height
     class Delegate(QStyledItemDelegate):
