@@ -49,12 +49,9 @@ class Thinbass(QDialog,Ui_Thinbass):
     def __init__(self,Plethysmography):
         super(Thinbass, self).__init__()
         self.pleth = Plethysmography
-        # self.label = QLabel("Another Window % d" % randint(0,100))
         self.setupUi(self)
         self.setWindowTitle("Variables list sources")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        # self.pleth = Plethysmography
-        # self.message_received()
     
     def settings(self):
         print("thinbass.settings()")
@@ -97,7 +94,6 @@ class Thumbass(QDialog, Ui_Thumbass):
     """
     def __init__(self,Plethysmography):
         super(Thumbass, self).__init__()
-        # self.label = QLabel("Another Window % d" % randint(0,100))
         self.setupUi(self)
         self.setWindowTitle("Nailed it.")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
@@ -568,8 +564,6 @@ class Auto(QWidget, Ui_Auto):
         print("auto.load_auto_file()")
         # Opens open file dialog
         file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.mothership))
-
-        # If you the file you chose sucks, the GUI won't crap out.
         try:
             self.frame = pd.read_csv(file[0],index_col='Key').transpose().reset_index()
             self.setup_tabs()
@@ -613,7 +607,6 @@ class Manual(QWidget, Ui_Manual):
                     except Exception as e:
                         print(f'{type(e).__name__}: {e}')
                         print(traceback.format_exc())
-                        print("manual datapad load balking at suffix")
                         pass
                     try:
                         if "_" in mp:
