@@ -77,70 +77,70 @@ GUI design files
 
 MainGUI
 ...
-MainGui.py
+Initialized in: MainGui.py
 form.ui
 form.py
 ...
 
 Variable configuration subGUI
 ...
-AnnotGUI.py
+Initialized in: MainGui.py
 annot_form.ui
 annot_form.py
 ...
 
 Basic BASSPRO settings subGUI
 ...
-MainGui.py
+Initialized in: MainGui.py
 basic_form.ui
 basic_form.py
 ...
 
 Automated BASSPRO settings subGUI
 ...
-MainGui.py
+Initialized in: MainGui.py
 auto_form.ui
 auto_form.py
 ...
 
 Manual BASSPRO settings subGUI
 ...
-MainGui.py
+Initialized in: MainGui.py
 manual_form.ui
 manual_form.py
 ...
 
 STAGG settings subGUI
 ...
-MainGui.py
+Initialized in: MainGui.py
 config_form.ui
 config_form.py
 ...
 
 Custom STAGG settings subsubGUI
 ...
-MainGui.py
+Initialized in: MainGui.py
 custom_config.ui
 custom_config.py
 ...
 
 Thumbass dialog
 ...
-MainGui.py
+Initialized in: MainGui.py
 thumbass.ui
 thumbass.py
 ...
 
 Thinbass dialog
 ...
-MainGui.py
+Initialized in: MainGui.py
 thinbass.ui
 thinbass.py
 ...
 
 Thorbass dialog
 ...
-MainGui.py
+Initialized in: MainGui.py
 thorbass.ui
 thorbass.py
 ...
@@ -149,8 +149,19 @@ thorbass.py
 GUI settings files
 -------------------
 breathcaller_config.json
+...
+The breathcaller_config.json holds the dictionaries for 
 gui_config.json
 timestamps.json
+...
+The timestamps.json has two main keys. One is a dictionary containing the expected timestamps for CNO 5% Hypercapnia, CNO 7% Hypercapnia, CNO 10% Hypercapnia, CNO 10% Hypoxia, 
+5% Hypercapnia, 7% Hypercapnia, 10% Hypercapnia, and 10% Hypoxia. The other key is an empty dictionary where the contents of Main.tsbyfile, the dictionary created by the timestamper 
+methods (Main.timestamp_dict(), Main.grabTimeStamps(), and Main.checkFileTimeStamps()) in MainGui.py, are dumped when the timestamper json is saved to the directory of the first 
+signal file selected by the user. This json contains the timestamps for every signal file selected, as well as whether or not those timestamps matched the timestamps of the selected experimental
+setup. The experimental setup used for comparison is selected by the user via a drop-down menu (Main.necessary_timestamp_box) with options sourced from the keys of 
+Main.bc_config["Dictionaries"]["Auto Settings"]["default"], a dictionary stored in the breathcaller_config.json file. A summary of the comparison is presented on the main display
+in the Main Gui as a list of files that were missing timestamps, had duplicate timestamps, and/or had novel timestamps.
+...
 reference_config.json
 resource.qrc
 resource.py

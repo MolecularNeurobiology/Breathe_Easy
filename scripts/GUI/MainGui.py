@@ -228,9 +228,6 @@ class Basic(QWidget, Ui_Basic):
         
         for l in self.lineEdits:
             l.textChanged.connect(self.update_table_event)
-        
-        # for r in range(self.view_tab.rowCount()):
-        #     self.view_tab.cellChanged.connect(self.update_tabs)
 
     def setup_tabs(self):
         print("basic.setup_tabs()")
@@ -238,12 +235,7 @@ class Basic(QWidget, Ui_Basic):
         # Populate lineEdit widgets with default basic parameter values from breathcaller configuration file:
         self.basic_dict = self.pleth.bc_config['Dictionaries']['AP']['default']
         for widget in self.lineEdits:
-            # print(widget)
-            # print(self.lineEdits[widget])
-            # print(self.pleth.bc_config['Dictionaries']['AP']['default'])
-            # print(self.pleth.bc_config['Dictionaries']['AP']['default'][self.lineEdits[widget]])
             widget.setText(str(self.pleth.bc_config['Dictionaries']['AP']['default'][self.lineEdits[widget]]))
-
         if self.pleth.basicap != "":
             if Path(self.pleth.basicap).exists():
                 self.basic_df = pd.read_csv(self.pleth.basicap)
@@ -329,10 +321,6 @@ class Basic(QWidget, Ui_Basic):
     def saveas_basic_path(self):
         print("basic.saveas_basic_path()")
         self.get_parameter()
-        # if self.pleth.mothership == "":
-        #     dire = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
-        # else:
-        #     dire = self.pleth.mothership
         path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}", ".csv(*.csv))")[0]
         try:
             print(path)
@@ -346,10 +334,7 @@ class Basic(QWidget, Ui_Basic):
     def save_basic_path(self):
         print("basic.save_basic_path()")
         self.get_parameter()
-        # self.save_checker(self.pleth.mothership,"basics")
         if self.pleth.mothership == "":
-            # path = os.path.realpath("./basics.csv")
-            # print(path)
             self.saveas_basic_path()
         else:
             path = os.path.join(self.pleth.mothership, f"basics.csv")
@@ -358,9 +343,6 @@ class Basic(QWidget, Ui_Basic):
         else:
             self.path = path
             self.actual_saving()
-        # except Exception as e:
-        #     print(f'{type(e).__name__}: {e}')
-        #     self.saveas_basic_path()
     
     def actual_saving(self):
         print("basic.actual_saving_basic()")
@@ -373,11 +355,7 @@ class Basic(QWidget, Ui_Basic):
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
             print("actual saving basic to designated path (be it save or saveas) didn't work")
-        
-        # Copying current settings for appropriate entry in breathcaller_config:
-        # new_current = pd.DataFrame.to_json(self.basic_df.set_index("index"))
-        # self.pleth.bc_config['Dictionaries']['AP']['current'].update(new_current)
-
+    
         with open(f'{Path(__file__).parent}/breathcaller_config.json','w') as bconfig_file:
             json.dump(self.pleth.bc_config,bconfig_file)
         
@@ -397,29 +375,19 @@ class Basic(QWidget, Ui_Basic):
 
     def load_basic_file(self):
         print("basic.load_basic_file()")
-        # if Path(self.pleth.mothership).exists():
-        #     load_path = self.pleth.mothership
-        # else:
-        #     load_path = str(Path.home())
 
         # Opens open file dialog
         file = QFileDialog.getOpenFileName(self, 'Select breathcaller configuration file to edit basic parameters:', str(self.pleth.mothership))
 
         # If you the file you chose sucks, the GUI won't crap out.
         try:
-        # if not file[0]:
-        #     print("that didn't work")
             if Path(file[0]).suffix == ".json":
                 # Access configuration settings for the breathcaller in breathcaller_config.json:
-                # with open(file[0]) as bconfig_file:
-                print("basic load json")
                 self.basic_df = pd.DataFrame.from_dict(self.pleth.bc_config['Dictionaries']['AP']['current'],orient='index').reset_index()
                 self.basic_df.columns = ['Parameter','Setting']
-                # self.populate_table(self.basic_df,self.view_tab)
             elif Path(file[0]).suffix == ".csv":
                 print("basic load csv")
                 self.basic_df = pd.read_csv(file[0])
-                # self.populate_table(self.basic_df,self.view_tab)
             elif Path(file[0]).suffix == ".xlsx":
                 print("basic load xlsx")
                 self.basic_df = pd.read_excel(file[0])
@@ -430,10 +398,6 @@ class Basic(QWidget, Ui_Basic):
             reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file is not in the correct format. Only .csv, .xlsx, or .JSON files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.load_basic_file()
-        # self.populate_table(self.basic_df,self.view_tab)
-            # with open(file[0],mode='r') as bd:
-            #     reader = csv.reader(bd)
-            #     next(reader)
                 
     def load_basic_current(self):
         print("basic.load_basic_current()")
@@ -449,19 +413,12 @@ class Auto(QWidget, Ui_Auto):
         self.setupUi(self)
         self.setWindowTitle("Automated sections file creation")
         self.pleth = Plethysmography
-        # self.isActiveWindow()
         self.isMaximized()
-        
-        # self.setup_variables()
-        # self.setup_tabs()
         # Grab the relevant labels dicionary from the reference config json file to provide the relationships between tabs, sections, and widgets so that one functions can create the lineEdit tables throughout the subGUI. However, this renders the list order of the labels within the dictionary (the value of the key in the lowest level of the nested dictionary is a list) as the sole determinant of correct order when populating. The labels - OH I COULD MAKE THE LABELS DYNAMIC TOOOOOOO, eh later - no, no I should do that, balls, well I already have the dictionary of actual labels so YES all right this is happening. Ok, so scratch that warning, I'm adding the labels to the widgets so that everything and their grandmother will populate dynamically with the exception of the summary tab table and the reference table. Score. Ugh, but how do I make it so that the labels don't spawn OH I know. Nope, nope you also have the reference buttons, ok do this later, everything will break and explode and you need to check shit off your list before you can play and destroy.
         # So in the end, because the widgets are dynamically populated without referring to the order of the labels that are already statically in place, the matching of labels and values relies solely on the whimsy of list order in the dictionary. Ideally, I will return to this situation and incorporate both labels and the ref buttons into the dynamism so that everything relies on a single simple function and an outrageously convoluted dictionary. :D
         # What the hell just happened? This is why I don't write comments, jesus.
         self.widgy = self.pleth.rc_config['References']['Widget Labels']['Auto']
 
-    # def setup_variables(self):
-    #  {item: {col: None for col in self.config.custom_dict[item]} for item in self.config.custom_dict}
-        # self.tables = {}
         self.refs = {self.sections_reference:[self.help_key,self.help_cal_seg,self.help_auto_ind_include,self.help_auto_ind_injection,self.help_startpoint,self.help_midpoint,self.help_endpoint],
         self.cal_reference:[self.help_auto_ind_cal,self.help_auto_ind_gas_cal,self.help_cal_co2,self.help_cal_o2],
         self.thresh_reference: [self.help_min_co2,self.help_max_co2,self.help_min_o2,self.help_max_calibrated_TV,self.help_max_VEVO2,self.help_max_o2,self.help_within_start,self.help_within_end,self.help_after_start,self.help_before_end],
@@ -471,11 +428,6 @@ class Auto(QWidget, Ui_Auto):
             for vv in v:
                 vv.clicked.connect(self.reference_event)
 
-        # for r in self.resets:
-        #     r.clicked.connect(self.reset_event)
-        
-        # for l in self.lineEdits:
-        #     l.textChanged.connect(self.update_table_event)
         self.auto_setting_combo.addItems([x for x in self.pleth.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
         self.choose_dict()
 
@@ -485,7 +437,6 @@ class Auto(QWidget, Ui_Auto):
         if self.auto_setting_combo.currentText() in self.pleth.bc_config['Dictionaries']['Auto Settings']['default'].keys():
             print('default auto dictionary accessed')
             self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default'][self.auto_setting_combo.currentText()]
-            # print(self.auto_dict)
         else:
             try:
                 self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['current']
@@ -495,83 +446,11 @@ class Auto(QWidget, Ui_Auto):
         self.frame = pd.DataFrame(self.auto_dict).reset_index()
         self.setup_tabs()
 
-#region Alternative setups
-    def nsetup_tabs(self):
-        # keynum = 0 
-        self.config.custom_port = {item: {col: None for col in self.config.custom_dict[item]} for item in self.config.custom_dict}
-        # for tab in self.widgy:
-        #     for panel in self.widgy[tab]
-        self.widgible = {
-            self.sections_widget:{key: {col: self.auto_dict[key]["Alias"] for col in self.auto_dict[key]} for key in self.auto_dict}}
-  
-# THERE ARE SEVERAL BOOLEANS THAT WOULD BENEFIT FROM A COMBOBOX OR CHECKBOX INSTEAD OF LINEEDIT
-
-        for key in self.auto_dict.keys():
-            # The encompassing widget and main horizonalLayout are statically in place.
-            # Establish verticalLayout that the lineEdits and their spacers go into.
-            self.verticalLayout = QtWidgets.QVBoxLayout()
-            # Label it uniquely so the program doesn't implode. Note that it's labeled with the name of the experiment condition - we are essentially using the verticalLayout as columns in a table.
-            self.verticalLayout.setObjectName(f"verticalLayout_{key}")
-            label = QtWidgets.QLabel(Auto)
-            # We want spacers above and below every lineEdit. It's written to include a spacer below every lineEdit when creating the lineEdits, so this just adds that first top one that wouldn't be added when creating lineEdits.
-            self.spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-            self.verticalLayout.addItem(self.spacerItem)
-
-            self.lineEdit_auto_ind_include = QtWidgets.QLineEdit(self.widget)
-            self.lineEdit_auto_ind_include.setObjectName(f"lineEdit_auto_ind_include_{key}")
-            self.lineEdit_auto_ind_include.setText(str(self.auto_dict[key]["AUTO_IND_INCLUDE"]))
-            self.verticalLayout.addWidget(self.lineEdit_auto_ind_include)
-            self.spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-            self.verticalLayout.addItem(self.spacerItem4)
-            self.horizontalLayout_5.addLayout(self.verticalLayout)
-            self.spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-            self.horizontalLayout_5.addItem(self.spacerItem5)
-            self.gridLayout_2.addLayout(self.horizontalLayout_5, 0, 0, 1, 1)
-    
-
-    def lsetup_tabs(self):
-        for key in self.auto_dict.keys():
-            self.verticalLayout = QtWidgets.QVBoxLayout()
-            self.verticalLayout.setObjectName(f"verticalLayout_{key}")
-            self.spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-            # self.spacerItem.setObjectName(f"spacerItem_{key}")
-            self.verticalLayout.addItem(self.spacerItem)
-            self.lineEdit_alias = QtWidgets.QLineEdit(self.widget)
-            self.lineEdit_alias.setObjectName(f"lineEdit_alias_{key}")
-            self.lineEdit_alias.setText(str(self.auto_dict[key]["Alias"]))
-            self.verticalLayout.addWidget(self.lineEdit_alias)
-            self.spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-            self.verticalLayout.addItem(self.spacerItem1)
-            self.lineEdit_key = QtWidgets.QLineEdit(self.widget)
-            self.lineEdit_key.setObjectName(f"lineEdit_key_{key}")
-            self.lineEdit_key.setText(key)
-            self.verticalLayout.addWidget(self.lineEdit_key)
-            self.spacerItem2 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-            self.verticalLayout.addItem(self.spacerItem2)
-            self.lineEdit_cal_seg = QtWidgets.QLineEdit(self.widget)
-            self.lineEdit_cal_seg.setObjectName(f"lineEdit_cal_seg_{key}")
-            self.lineEdit_cal_seg.setText(str(self.auto_dict[key]["Cal Seg"]))
-            self.verticalLayout.addWidget(self.lineEdit_cal_seg)
-            self.spacerItem3 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-            self.verticalLayout.addItem(self.spacerItem3)
-            self.lineEdit_auto_ind_include = QtWidgets.QLineEdit(self.widget)
-            self.lineEdit_auto_ind_include.setObjectName(f"lineEdit_auto_ind_include_{key}")
-            self.lineEdit_auto_ind_include.setText(str(self.auto_dict[key]["AUTO_IND_INCLUDE"]))
-            self.verticalLayout.addWidget(self.lineEdit_auto_ind_include)
-            self.spacerItem4 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
-            self.verticalLayout.addItem(self.spacerItem4)
-            self.horizontalLayout_5.addLayout(self.verticalLayout)
-            self.spacerItem5 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-            self.horizontalLayout_5.addItem(self.spacerItem5)
-            self.gridLayout_2.addLayout(self.horizontalLayout_5, 0, 0, 1, 1)
-#endregion
-
     def setup_tabs(self):
         print("auto.setup_tabs()")
         # Populate table of threshold tab:
         auto_labels = self.pleth.gui_config['Dictionaries']['Settings Names']['Auto Settings']
         sec_char_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
-        # print(sec_char_df)
         sec_spec_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Interruptions'].values())),:]
         cal_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
         gas_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
@@ -587,15 +466,11 @@ class Auto(QWidget, Ui_Auto):
         self.populate_table(inc_df,self.inc_table)
         self.populate_table(self.frame,self.view_tab)
 
-        # print(self.frame)
-        # print(sec_char_df)
-
     def setup_tabs_load(self):
         print("auto.setup_tabs_load()")
         # Populate table of threshold tab:
         auto_labels = self.pleth.gui_config['Dictionaries']['Settings Names']['Auto Settings']
         sec_char_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
-        # print(sec_char_df)
         sec_spec_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Interruptions'].values())),:]
         cal_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
         gas_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
@@ -612,17 +487,10 @@ class Auto(QWidget, Ui_Auto):
         self.populate_table_load(self.frame,self.view_tab)
 
         self.auto_setting_combo.setCurrentText("Choose default criteria settings:")
-
-        # print(self.frame)
-        # print(sec_char_df)
     
     def reference_event(self):
         sbutton = self.sender()
         self.populate_reference(sbutton.objectName())
-
-    # def reset_event(self):
-    #     sbutton = self.sender()
-    #     self.reset_parameter(sbutton.objectName())
     
     def update_table_event(self):
         sbutton = self.sender()
@@ -643,8 +511,6 @@ class Auto(QWidget, Ui_Auto):
                     l.setText(self.view_tab.item(row,1).text())
 
     def populate_reference(self,butt):
-        # for k in self.pleth.rc_config['References']['Definitions'].keys():
-            # if f'help_{k}' == str(butt):
         for k,v in self.refs.items():
             for vv in v:
                 if vv.objectName() == str(butt):
@@ -652,8 +518,7 @@ class Auto(QWidget, Ui_Auto):
    
     def populate_table(self,frame,table):
         print("auto.populate_table()")
-            # Populate tablewidgets with views of uploaded csv. Currently editable.
-            # frame = frame.set_index('index')
+        # Populate tablewidgets with views of uploaded csv. Currently editable.
         table.setColumnCount(len(frame.columns))
         table.setRowCount(len(frame))
         for col in range(table.columnCount()):
@@ -662,12 +527,10 @@ class Auto(QWidget, Ui_Auto):
         table.setHorizontalHeaderLabels(frame.columns)
         table.resizeColumnsToContents()
         table.resizeRowsToContents()
-        # table.setVerticalHeaderLabels()
 
     def populate_table_load(self,frame,table):
         print("auto.populate_table_load()")
-            # Populate tablewidgets with views of uploaded csv. Currently editable.
-            # frame = frame.set_index('index')
+        # Populate tablewidgets with views of uploaded csv. Currently editable.
         table.setColumnCount(len(frame.columns))
         table.setRowCount(len(frame))
         for col in range(table.columnCount()):
@@ -689,36 +552,25 @@ class Auto(QWidget, Ui_Auto):
 
     def save_as(self):
         print("auto.save_as()")
-        # if self.pleth.mothership == "":
-        #     dire = os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
-        # self.pleth.hangar.append("Saving autosections file...")
         path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
-        if not path:
-            print("dialog cancelled")
-        else:
+        if os.path.exists(path):
             self.path = path
             self.save_auto_file()
 
     def save_checkerargs(self,folder,title):
         print("auto.save_checkerargs()")
-        # self.pleth.hangar.append("Saving autosections file...")
         if folder == "":
             path = QFileDialog.getSaveFileName(self, 'Save File', f"{title}", ".csv(*.csv))")[0]
-            if not path:
-                print("dialog cancelled")
-            else:
+            if os.path.exists(path):
                 self.path = path
         else:
             self.path = os.path.join(folder, f"{title}.csv")
     
     def save_checker(self):
         print("auto.save_checker()")
-        # self.pleth.hangar.append("Saving autosections file...")
         if self.pleth.mothership == "":
             path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
-            if not path:
-                print("dialog cancelled")
-            else:
+            if os.path.exists(path):
                 self.path = path
                 self.save_auto_file()
         else:
@@ -766,13 +618,8 @@ class Auto(QWidget, Ui_Auto):
 
     def load_auto_file(self):
         print("auto.load_auto_file()")
-        if Path(self.pleth.mothership).exists():
-            load_path = self.pleth.mothership
-        else:
-            load_path = str(Path.home())
-
         # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(load_path))
+        file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.mothership))
 
         # If you the file you chose sucks, the GUI won't crap out.
         try:
@@ -785,16 +632,13 @@ class Auto(QWidget, Ui_Auto):
 #endregion
 
 #region class Manual Sections
-# YOu need to make the columns reflect the headers of the dataframess
-# self.hypercapnia_default = {"Cal 20 Room Air": {"Alias": "Cal 20 Room Air", "Cal Seg": "Cal 20 Room Air", "MAN_IND_INCLUDE": 0, "MAN_IND_CAL": 1, "MAN_IND_GAS": "RA", "MAN_IND_INJECTION": "Cal"}, "Cal 20 5% CO2": {"Alias": "Cal 20 5% CO2", "Cal Seg": "Cal 20 5% CO2", "MAN_IND_INCLUDE": 0, "MAN_IND_CAL": 1, "MAN_IND_GAS": "CO2", "MAN_IND_INJECTION": "Cal"}, "Room Air": {"Alias": "Room Air", "Cal Seg": "Cal 20 Room Air", "MAN_IND_INCLUDE": 1, "MAN_IND_CAL": 1, "MAN_IND_GAS": "RA", "MAN_IND_INJECTION": "NA"}, "5% CO2": {"Alias": "5% CO2", "Cal Seg": "Cal 20 5% CO2", "MAN_IND_INCLUDE": 1, "MAN_IND_CAL": 1, "MAN_IND_GAS": "CO2", "MAN_IND_INJECTION": "NA"}, "Room Air 2": {"Alias": "Room Air 2", "Cal Seg": "Cal 20 Room Air", "MAN_IND_INCLUDE": 0, "MAN_IND_CAL": 1, "MAN_IND_GAS": "RA", "MAN_IND_INJECTION": "NA"}}
-
+# YOu need to make the columns reflect the headers of the dataframes
 class Manual(QWidget, Ui_Manual):
     def __init__(self,Plethysmography):
         super(Manual, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Manual sections file creation")
         self.pleth = Plethysmography
-        # self.isActiveWindow()
         self.isMaximized()
         self.datapad = None
         self.preset = None
@@ -803,14 +647,8 @@ class Manual(QWidget, Ui_Manual):
 
     def get_datapad(self):
         print("manual.get_datapad()")
-        # bob=os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
         file = QFileDialog.getOpenFileNames(self, 'Select Labchart datapad export file')
-        print(len(file))
-        print(len(file[0]))
-        # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("nope")
-        else:
+        if os.path.exists(file[0]):
             dfs=[]
             try:
                 for f in file[0]:
@@ -855,38 +693,26 @@ class Manual(QWidget, Ui_Manual):
                 dc['stop_time'] = pd.to_timedelta(dc['stop'],errors='coerce')
                 dc['stop'] = dc['stop_time'].dt.total_seconds()
                 if len(dc['start'].isna())>0:
-                    print("not cool")
                     bob=dc[dc['start'].isna()][['animal id','PLYUID']].drop_duplicates()
                     if self.pleth.signals != []:
-                        print("signals aren't empty")
                         for file in self.pleth.signals:
-                            # if os.path.basename(file) == f"{bob['animal id']}_{bob['PLYUID']}.txt":
                             print(f"{bob['animal id']}_{bob['PLYUID']}")
-                    # dc = dc.loc[(dc['start'] != "nan") & (dc['stop'] != "nan"),:]
-                else:
-                    print("cool")
                 self.datapad = dc
                 self.populate_table(self.datapad, self.datapad_view)
-                self.datapad.to_csv("C:/Users/atwit/Desktop/datapad.csv")
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
                 self.thumb = Thumbass(self)
                 self.thumb.show()
                 self.thumb.message_received(f"{type(e).__name__}: {e}",f"Please ensure that the datapad is formatted as indicated in the documentation.\n\n{traceback.format_exc()}")
-                self.pleth.save_bug(e)
-        # ou'll need to implement measures to ensure correct columns names, correct data type, etc.
 
     def get_preset(self):
         print("manual.get_preset()")
         self.preset = pd.DataFrame.from_dict(self.pleth.bc_config['Dictionaries']['Manual Settings']['default'][self.preset_menu.currentText()].values())
-        # self.preset = pd.DataFrame.from_dict(self.hypercapnia_default.values())
         self.populate_table(self.preset, self.settings_view)    
     
     def manual_merge(self):
         print("manual.manual_merge()")
-        # if self.datapad == "":
-        #     self.get_datapad()
         try:
             self.manual_df = self.datapad.merge(self.preset,'outer',left_on=self.datapad['segment'],right_on=self.preset['Alias'])
             self.manual_df = self.manual_df.iloc[:,1:]
@@ -904,8 +730,7 @@ class Manual(QWidget, Ui_Manual):
                 self.thorb = Thorbass(self)
                 self.thorb.show()
                 self.thorb.message_received('Nope.', 'There is nothing to merge. Would you like to open an existing manual sections settings file or create a new one?',self.new_manual_file,self.load_manual_file)
-                # reply = QMessageBox.information(self, 'What are you doing?', 'There is nothing to merge. Would you like to open an existing manual sections settings file or create a new one?', QMessageBox.New | QMessageBox.Open | QMessageBox.Cancel, QMessageBox.Ok)
-    
+         
     def new_manual_file(self):
         print("manual.new_manual_file()")
         if self.datapad == "":
@@ -929,9 +754,7 @@ class Manual(QWidget, Ui_Manual):
         print("manual.save_checker()")
         if folder == "":
             path = QFileDialog.getSaveFileName(self, 'Save File', f"{title}", ".csv(*.csv))")[0]
-            if not path:
-                print("dialog cancelled")
-            else:
+            if os.path.exists(path):
                 self.path = path
         else:
             self.path = os.path.join(folder, f"{title}.csv")
@@ -948,16 +771,6 @@ class Manual(QWidget, Ui_Manual):
             if self.pleth.breath_df != []:
                 self.pleth.update_breath_df("manual settings")
         
-        # current = pd.DataFrame.to_dict(self.manual_df.set_index("index"))
-        # print(current)
-        # new_current = {}
-        # new_current[self.preset_menu.currentText()]=current
-        # print(new_current)
-        # self.pleth.bc_config['Dictionaries']['Auto Settings']['current'] = new_current
-
-        # with open(f'{Path(__file__).parent}/breathcaller_config.json','w') as bconfig_file:
-        #     json.dump(self.pleth.bc_config,bconfig_file)
-        
         # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
             for item in self.pleth.sections_list.findItems("manual_sections",Qt.MatchContains):
                 self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
@@ -970,35 +783,17 @@ class Manual(QWidget, Ui_Manual):
     
     def load_manual_file(self):
         print("manual.load_manual_file()")
-        # Groping around to find a convenient directory:
-        # if Path(self.Plethysmography.py_output_folder).exists():
-            # load_path = self.Plethysmography.py_output_folder
-        # if Path(self.pleth.mothership).exists():
-        #     load_path = self.pleth.mothership
-        # else:
-        #     load_path = str(self.pleth.mothership)
-
-        # Opens open file dialog
-        # bob=os.path.join(Path(__file__).parent.parent.parent,"PAPR Output/")
         file = QFileDialog.getOpenFileName(self, 'Select manual sections file to edit:')
 
-        # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("nope")
-        else:
+        if os.path.exists(file[0]):
             try:
                 self.load_manual = pd.read_csv(file[0])
                 self.datapad = self.load_manual.loc[:,[x for x in self.vals]]
                 self.preset = self.load_manual.loc[:,[x for x in self.load_manual.columns if x not in self.datapad.columns]].drop_duplicates()
-                # self.manual_df = self.datapad.merge(self.preset,'outer',left_on=self.datapad['segment'],right_on=self.preset['Alias'])
-                # self.manual_df = self.manual_df.iloc[:,1:]
                 self.manual_df = self.load_manual
                 self.populate_table(self.manual_df,self.manual_view)
-                # self.populate_table(self.load_manual,self.manual_view)
                 self.populate_table(self.datapad, self.datapad_view)
                 self.populate_table(self.preset, self.settings_view)
-                # print(self.manual_df)
-                # print(self.load_manual)
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
@@ -2181,7 +1976,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
 #endregion
 
-#region Timestamper...
+#region Timestamper methods...
 
     def timestamp_dict(self):
         print("timestamp_dict()")
