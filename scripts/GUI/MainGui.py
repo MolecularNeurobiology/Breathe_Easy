@@ -2846,35 +2846,34 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("get_autosections()")
         try:
             file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.mothership))
-            if os.path.exists(file_name[0]):
-                n = 0
-                for x in range(len(file_name[0])):
-                    if file_name[0][x].endswith('.csv'):
-                        if os.path.basename(file_name[0][x]).startswith("auto_sections") | os.path.basename(file_name[0][x]).startswith("autosections"):
-                            self.autosections = file_name[0][x]
-                            n += 1
-                            for item in self.sections_list.findItems("auto_sections",Qt.MatchContains):
-                                self.sections_list.takeItem(self.sections_list.row(item))
-                            self.sections_list.addItem(self.autosections)
-                        elif os.path.basename(file_name[0][x]).startswith("manual_sections"):
-                            self.mansections = file_name[0][x]
-                            n += 1
-                            for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
-                                self.sections_list.takeItem(self.sections_list.row(item))
-                            self.sections_list.addItem(self.mansections)
-                        elif os.path.basename(file_name[0][x]).startswith("basics"):
-                            self.basicap = file_name[0][x]
-                            n += 1
-                            for item in self.sections_list.findItems("basics",Qt.MatchContains):
-                                self.sections_list.takeItem(self.sections_list.row(item))
-                            self.sections_list.addItem(self.basicap)
-                        if n>0:
-                            if len(self.breath_df)>0:
-                                self.update_breath_df("settings")
-                    else:
-                        self.thumb = Thumbass(self)
-                        self.thumb.show()
-                        self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. \nPlease convert your settings files or choose another file.")
+            n = 0
+            for x in range(len(file_name[0])):
+                if file_name[0][x].endswith('.csv'):
+                    if os.path.basename(file_name[0][x]).startswith("auto_sections") | os.path.basename(file_name[0][x]).startswith("autosections"):
+                        self.autosections = file_name[0][x]
+                        n += 1
+                        for item in self.sections_list.findItems("auto_sections",Qt.MatchContains):
+                            self.sections_list.takeItem(self.sections_list.row(item))
+                        self.sections_list.addItem(self.autosections)
+                    elif os.path.basename(file_name[0][x]).startswith("manual_sections"):
+                        self.mansections = file_name[0][x]
+                        n += 1
+                        for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
+                            self.sections_list.takeItem(self.sections_list.row(item))
+                        self.sections_list.addItem(self.mansections)
+                    elif os.path.basename(file_name[0][x]).startswith("basics"):
+                        self.basicap = file_name[0][x]
+                        n += 1
+                        for item in self.sections_list.findItems("basics",Qt.MatchContains):
+                            self.sections_list.takeItem(self.sections_list.row(item))
+                        self.sections_list.addItem(self.basicap)
+                    if n>0:
+                        if len(self.breath_df)>0:
+                            self.update_breath_df("settings")
+                else:
+                    self.thumb = Thumbass(self)
+                    self.thumb.show()
+                    self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. \nPlease convert your settings files or choose another file.")
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
