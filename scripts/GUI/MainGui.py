@@ -3511,7 +3511,38 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if reply == QMessageBox.Yes:
                 self.input_directory_r()
 #endregion
+    def py_message(self):
+        print("py_message()")
+        try:
+            self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
+            self.get_bp_reqs()
+            self.pything_to_do()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+        try:
+            self.auto_get_breath_files()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+        try:
+            self.output_check()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
 
+    def r_message(self):
+        print("r_message()")
+        self.variable_config = self.v.configs["variable_config"]["path"]
+        self.graph_config = self.v.configs["graph_config"]["path"]
+        self.other_config = self.v.configs["other_config"]["path"]
+        if any([self.v.configs[key]['path'] == "" for key in self.v.configs]):
+            if self.stagg_list == []:
+                print("no stagg for you")
+            else:
+                QMessageBox.question(self, 'Missing STAGG settings', f"One or more STAGG settings files are missing.", QMessageBox.OK, QMessageBox.OK)
+        else:
+            self.rthing_to_do()
 
     def dir_checker(self,output_folder,output_folder_parent,text):
         print("dir_checker()")

@@ -4,27 +4,11 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from form import Ui_Plethysmography
-import csv
+# from form import Ui_Plethysmography
 import subprocess
-import datetime
-import time
 import os
-import json
-import pyodbc
 import threading
-import multiprocessing
-import concurrent.futures
-import MainGui
-
-import sys
-from pathlib import Path, PurePath
-import shutil
-import pandas
-import re
-import importlib
-import logging
-import asyncio
+# import MainGui
 
 #endregion
 
