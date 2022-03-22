@@ -13,7 +13,7 @@ import pandas as pd
 
 #endregion
 #region Thumbass
-class Thumbass(QWidget, Ui_Thumbass):
+class Thumbass(QDialog, Ui_Thumbass):
     """
     Standard dialog to help protect people from themselves.
     """

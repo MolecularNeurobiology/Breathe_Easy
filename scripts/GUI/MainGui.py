@@ -20,16 +20,11 @@ import queue
 import traceback
 from pathlib import Path
 import subprocess
-from subprocess import PIPE, Popen
 import datetime
 import time
 import os
-import sys
 import json
 import pyodbc
-import tkinter.filedialog
-import tkinter as tk 
-from tkinter import N, ttk
 import shutil
 import pandas as pd
 import threading
@@ -1020,7 +1015,6 @@ class CheckableComboBox(QComboBox):
     class Delegate(QStyledItemDelegate):
         def sizeHint(self, option, index):
             size = super().sizeHint(option, index)
-            # size.setHeight(20)
             return size
 
     def __init__(self, *args, **kwargs):
@@ -1125,13 +1119,8 @@ class CheckableComboBox(QComboBox):
     def addItems(self, texts, datalist=None):
         for i, text in enumerate(texts):
             try:
-                # print(i)
-                # print(text)
                 data = datalist[i]
-                # print(data)
-            # except (TypeError, IndexError):
             except Exception as e:
-                # print(f'{type(e).__name__}: {e}')
                 data = None
             self.addItem(text, data)
 
@@ -1170,9 +1159,6 @@ class Custom(QWidget, Ui_Custom):
         print(self.config.deps)
         if self.config.deps.empty:
             reply = QMessageBox.information(self, 'Choose variables', 'Please select response variables to be modeled.', QMessageBox.Ok)
-            # self.thumb = Thumbass()
-            # self.thumb.show()
-            # self.thumb.message_received("Please select the response variables to be modeled.")
         else:
             self.populate_table(self.config.deps,self.custom_table)
             self.adjustSize()
