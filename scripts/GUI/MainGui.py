@@ -105,7 +105,6 @@ class Thumbass(QDialog, Ui_Thumbass):
         self.pleth = Plethysmography
     
     def message_received(self,title,words):
-        print("thumbass.message_received()")
         self.setWindowTitle(title)
         self.label.setText(words)
 #endregion
@@ -311,9 +310,7 @@ class Basic(QWidget, Ui_Basic):
         print("basic.save_checker()")
         if folder == "":
             path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}", ".csv(*.csv))")[0]
-            if not path:
-                print("dialog cancelled")
-            else:
+            if os.path.exists(path):
                 self.path = path
         else:
             self.path = os.path.join(folder, f"{title}.csv")
@@ -346,7 +343,6 @@ class Basic(QWidget, Ui_Basic):
     
     def actual_saving(self):
         print("basic.actual_saving_basic()")
-        print(self.pleth.basicap)
         self.pleth.basicap = self.path
         # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
         try:
@@ -354,15 +350,12 @@ class Basic(QWidget, Ui_Basic):
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
-            print("actual saving basic to designated path (be it save or saveas) didn't work")
     
         with open(f'{Path(__file__).parent}/breathcaller_config.json','w') as bconfig_file:
             json.dump(self.pleth.bc_config,bconfig_file)
         
-        print(self.pleth.breath_df)
         if self.pleth.breath_df != []:
             self.pleth.update_breath_df("basic parameters")
-        print(self.pleth.breath_df)
         if self.pleth.basicap != "":
         # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
             for item in self.pleth.sections_list.findItems("basic",Qt.MatchContains):
@@ -382,14 +375,13 @@ class Basic(QWidget, Ui_Basic):
         # If you the file you chose sucks, the GUI won't crap out.
         try:
             if Path(file[0]).suffix == ".json":
-                # Access configuration settings for the breathcaller in breathcaller_config.json:
-                self.basic_df = pd.DataFrame.from_dict(self.pleth.bc_config['Dictionaries']['AP']['current'],orient='index').reset_index()
+                with open(file[0]) as config_file:
+                    basic_json = json.load(config_file)
+                self.basic_df = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
                 self.basic_df.columns = ['Parameter','Setting']
             elif Path(file[0]).suffix == ".csv":
-                print("basic load csv")
                 self.basic_df = pd.read_csv(file[0])
             elif Path(file[0]).suffix == ".xlsx":
-                print("basic load xlsx")
                 self.basic_df = pd.read_excel(file[0])
             self.populate_table(self.basic_df,self.view_tab)
         except Exception as e:
@@ -398,11 +390,6 @@ class Basic(QWidget, Ui_Basic):
             reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file is not in the correct format. Only .csv, .xlsx, or .JSON files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.load_basic_file()
-                
-    def load_basic_current(self):
-        print("basic.load_basic_current()")
-        self.basic_dict = self.pleth.bc_config['Dictionaries']['AP']['current']
-        self.setup_tabs()
         
 #endregion
 
@@ -415,8 +402,7 @@ class Auto(QWidget, Ui_Auto):
         self.pleth = Plethysmography
         self.isMaximized()
         # Grab the relevant labels dicionary from the reference config json file to provide the relationships between tabs, sections, and widgets so that one functions can create the lineEdit tables throughout the subGUI. However, this renders the list order of the labels within the dictionary (the value of the key in the lowest level of the nested dictionary is a list) as the sole determinant of correct order when populating. The labels - OH I COULD MAKE THE LABELS DYNAMIC TOOOOOOO, eh later - no, no I should do that, balls, well I already have the dictionary of actual labels so YES all right this is happening. Ok, so scratch that warning, I'm adding the labels to the widgets so that everything and their grandmother will populate dynamically with the exception of the summary tab table and the reference table. Score. Ugh, but how do I make it so that the labels don't spawn OH I know. Nope, nope you also have the reference buttons, ok do this later, everything will break and explode and you need to check shit off your list before you can play and destroy.
-        # So in the end, because the widgets are dynamically populated without referring to the order of the labels that are already statically in place, the matching of labels and values relies solely on the whimsy of list order in the dictionary. Ideally, I will return to this situation and incorporate both labels and the ref buttons into the dynamism so that everything relies on a single simple function and an outrageously convoluted dictionary. :D
-        # What the hell just happened? This is why I don't write comments, jesus.
+        # So in the end, because the widgets are dynamically populated without referring to the order of the labels that are already statically in place, the matching of labels and values relies solely on the whimsy of list order in the dictionary. Ideally, I will return to this situation and incorporate both labels and the ref buttons into the dynamism so that everything relies on a single simple function and an outrageously convoluted dictionary. :D Or should it be many small functions and a simple dictionary?
         self.widgy = self.pleth.rc_config['References']['Widget Labels']['Auto']
 
         self.refs = {self.sections_reference:[self.help_key,self.help_cal_seg,self.help_auto_ind_include,self.help_auto_ind_injection,self.help_startpoint,self.help_midpoint,self.help_endpoint],
@@ -435,14 +421,10 @@ class Auto(QWidget, Ui_Auto):
         print("auto.choose_dict()")
         # Get the appropriate template based on user's choice of experimental condition:
         if self.auto_setting_combo.currentText() in self.pleth.bc_config['Dictionaries']['Auto Settings']['default'].keys():
-            print('default auto dictionary accessed')
             self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default'][self.auto_setting_combo.currentText()]
         else:
-            try:
-                self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['current']
-            except:
-                self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['5% Hypercapnia']
-                self.auto_setting_combo.setCurrentText('5% Hypercapnia')
+            self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['5% Hypercapnia']
+            self.auto_setting_combo.setCurrentText('5% Hypercapnia')
         self.frame = pd.DataFrame(self.auto_dict).reset_index()
         self.setup_tabs()
 
@@ -465,28 +447,6 @@ class Auto(QWidget, Ui_Auto):
         self.populate_table(time_thresh_df,self.time_thresh_table)
         self.populate_table(inc_df,self.inc_table)
         self.populate_table(self.frame,self.view_tab)
-
-    def setup_tabs_load(self):
-        print("auto.setup_tabs_load()")
-        # Populate table of threshold tab:
-        auto_labels = self.pleth.gui_config['Dictionaries']['Settings Names']['Auto Settings']
-        sec_char_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
-        sec_spec_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Interruptions'].values())),:]
-        cal_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
-        gas_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
-        time_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Time Thresholds'].values())),:]
-        inc_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Inclusion Criteria']['Breath Quality Standards'].values())),:]
-        
-        # Populate table of tabs with appropriately sliced dataframes derived from selected settings template:
-        self.populate_table_load(sec_char_df,self.sections_char_table)
-        self.populate_table_load(sec_spec_df,self.sections_spec_table)
-        self.populate_table_load(cal_df,self.cal_table)
-        self.populate_table_load(gas_thresh_df,self.gas_thresh_table)
-        self.populate_table_load(time_thresh_df,self.time_thresh_table)
-        self.populate_table_load(inc_df,self.inc_table)
-        self.populate_table_load(self.frame,self.view_tab)
-
-        self.auto_setting_combo.setCurrentText("Choose default criteria settings:")
     
     def reference_event(self):
         sbutton = self.sender()
@@ -518,18 +478,6 @@ class Auto(QWidget, Ui_Auto):
    
     def populate_table(self,frame,table):
         print("auto.populate_table()")
-        # Populate tablewidgets with views of uploaded csv. Currently editable.
-        table.setColumnCount(len(frame.columns))
-        table.setRowCount(len(frame))
-        for col in range(table.columnCount()):
-            for row in range(table.rowCount()):
-                table.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
-        table.setHorizontalHeaderLabels(frame.columns)
-        table.resizeColumnsToContents()
-        table.resizeRowsToContents()
-
-    def populate_table_load(self,frame,table):
-        print("auto.populate_table_load()")
         # Populate tablewidgets with views of uploaded csv. Currently editable.
         table.setColumnCount(len(frame.columns))
         table.setRowCount(len(frame))
@@ -624,7 +572,7 @@ class Auto(QWidget, Ui_Auto):
         # If you the file you chose sucks, the GUI won't crap out.
         try:
             self.frame = pd.read_csv(file[0],index_col='Key').transpose().reset_index()
-            self.setup_tabs_load()
+            self.setup_tabs()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -797,11 +745,6 @@ class Manual(QWidget, Ui_Manual):
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
-
-    def load_manual_current(self):
-        print("manual.load_manual_current()")
-        self.manual_dict = self.pleth.bc_config['Dictionaries']['Manual Settings']['current']
-        self.setup_tabs()
 #endregion
 
 class CheckableComboBox(QComboBox):
@@ -2143,7 +2086,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.m.show()
 
     def show_auto(self):
-        self.p.show()
+        self.a.show()
 
     def show_basic(self):
         self.b.show()
