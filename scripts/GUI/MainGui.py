@@ -44,7 +44,7 @@ class AlignDelegate(QStyledItemDelegate):
 
 class Thinbass(QDialog,Ui_Thinbass):
     """
-    Standard dialog to help protect people from themselves.
+    Specialized dialog to help protect people from themselves. Spawned when the user has metadata and BASSPRO settings files as well as JSON files - either can be a source for building the variable list that populates the STAGG Settings subGUI.
     """
     def __init__(self,Plethysmography):
         super(Thinbass, self).__init__()
@@ -108,7 +108,7 @@ class Thumbass(QDialog, Ui_Thumbass):
 #region Thorbass
 class Thorbass(QDialog,Ui_Thorbass):
     """
-    Standard dialog to help protect people from themselves.
+    Specialized dialog to help protect people from themselves when opening the STAGG Settings subGUI or trying to merge in the Manual BASSPRO Settings subGUI.
     """
     def __init__(self,Plethysmography):
         super(Thorbass, self).__init__()

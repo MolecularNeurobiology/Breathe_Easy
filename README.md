@@ -25,6 +25,7 @@ Class locations:
 ...
 Class (Class object type) found in the .py file
 Class-less functions found in the .py file
+GUI or subGUI that the Class is associated with
 ...
 =============
 
@@ -37,42 +38,58 @@ def main()
 MainGui.py
 ...
 Class Plethysmography (QMainWindow)
+Primary Class for Main GUI
 ...
 Class Auto (QWidget)
+Primary Class for Automated BASSPRO Settings subGUI
 ...
 Class Basic (QWidget)
+Primary Class for Basic BASSPRO Settings subGUI
 ...
 Class Manual (QWidget)
+Primary Class for Manual BASSPRO Settings subGUI
 ...
 Class Config (QWidget)
+Primary Class for STAGG Settings subGUI
 ...
 Class Custom (QWidget)
+Primary Class for Custom STAGG Settings subsubGUI
+Secondary Class for STAGG Settings subGUI
 ...
 Class Thumbass (QDialog)
+Supplementary Class for User Messaging
 ...
 Class Thinbass (QDialog)
+Supplementary Class for User Messaging when opening STAGG Settings subGUI with multiple possible variable list sources
 ...
 Class Thorbass (QDialog)
+Supplementary Class for User Messaging when merging in Manual BASSPRO Settings subGUI or when opening STAGG Settings subGUI with no possible variable list sources
 ...
 Class AlignDelegate (QStyledItemDelegate)
+Supplementary Class to align headers in STAGG Settings subGUI Config.variable_table
 ...
 Class CheckableComboBox (QComboBox)
+Supplementary Class to make checkable comboBox for transformation drop-down menus in STAGG Settings subGUI
 ...
 
 
 AnnotGUI.py
 ...
 Class Annot (QMainWindow)
+Primary Class for Variable Configuration subGUI
 ...
 Class Thumbass (QDialog)
+Supplementary Class for User Messaging
 ...
 
 
 MainGUIworker.py
 ...
 Class WorkerSignals (QObject)
+Secondary Class for Main GUI to support parallel processing
 ...
 Class Worker (QRunnable)
+Secondary Class for Main GUI to support parallel processing
 ...
 def get_jobs_py()
 def get_jobs_r()
