@@ -1,21 +1,41 @@
 #%%
 #region Libraries
 
-from PyQt5.QtCore import *
-import subprocess
 import os
+from pyclbr import Class
+from queue import Queue
+import subprocess
 import threading
+from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
 
 #endregion
 
+
 class WorkerSignals(QObject):
-    # create signals to be used by the worker
+    """
+    Create signals used by the worker.
+    """
     finished = pyqtSignal(int)
     progress = pyqtSignal(int)
     
+
 class Worker(QRunnable):
-       
-    def __init__(self,path_to_script,i,worker_queue,pleth):
+
+    def __init__(self, path_to_script: str, i: int, worker_queue: Queue, pleth: Class):
+        """
+        Instantiate the Worker Class.
+
+        Parameters
+        ---------
+        path_to_script: str
+            The string yielded by get_jobs_py() or get_jobs_r() that is given to the command line to launch either BASSPRO or STAGG respectively.
+        i: int
+            The worker's number, determined by Plethysmography.counter.
+        worker_queue: Queue
+            A first-in, first-out queue constructor for safely exchanging information between threads.
+        pleth: Class
+            The Plethysmography Class.
+        """
         super(Worker, self).__init__()
         self.path_to_script = path_to_script
         self.i = i
@@ -26,16 +46,17 @@ class Worker(QRunnable):
         self.progress = self.signals.progress
     
     def run(self):
-        # use subprocess.Popen to run a seperate program in a new process
-        # stdout will be captured by the variable self.echo and extracted below
+        """
+        Use subprocess.Popen to run a seperate program in a new process.
+        stdout will be captured by the variable self.echo and extracted below.
+        """
         self.echo = subprocess.Popen(
             self.path_to_script,
-            stdout= subprocess.PIPE, 
-            stderr = subprocess.STDOUT
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.STDOUT
             )
-    
-        # extract the stdout and feed it to the queue
-        # emit signals whenever adding to the queue or finishing
+        # Extract the stdout and feed it to the queue.
+        # Emit signals whenever adding to the queue or finishing.
         running = 1
         while running == 1:
             line = self.echo.stdout.readline().decode('utf8')
@@ -46,9 +67,22 @@ class Worker(QRunnable):
                 self.progress.emit(self.i)
         self.finished.emit(self.i)
 
+
 #region get_jobs
-def get_jobs_py(Plethysmography):
-    # Building the string that will be delivered to the command line to start BASSPRO
+def get_jobs_py(Plethysmography: Class):
+    """
+    Return the string fed to the command line to launch the BASSPRO module.
+
+    Parameters
+    --------
+    Plethysmography: Class
+        The Plethysmography Class.
+    
+    Returns
+    --------
+    output: breathcaller_cmd
+        The string given to the command line to launch the BASSPRO module.
+    """
     print('get_jobs_py thread id',threading.get_ident())
     print("get_jobs_py process id",os.getpid())
     for file_py in Plethysmography.signals:
@@ -72,8 +106,21 @@ def get_jobs_py(Plethysmography):
         )
         yield breathcaller_cmd
 
-def get_jobs_r(Plethysmography):
-    print('R env route')
+
+def get_jobs_r(Plethysmography: Class):
+    """
+    Return the string fed to the command line to launch the STAGG module.
+
+    Parameters
+    --------
+    Plethysmography: Class
+        The Plethysmography Class.
+    
+    Returns
+    --------
+    output: papr_cmd
+        The string given to the command line to launch the STAGG module.
+    """
     print('get_jobs_r thread id',threading.get_ident())
     print("get_jobs_r process id",os.getpid())
     papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
