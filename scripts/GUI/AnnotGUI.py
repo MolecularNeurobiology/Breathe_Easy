@@ -350,32 +350,24 @@ class Annot(QMainWindow, Ui_Annot):
             This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
         self.group_list: QListWidget
             This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
-        self.variable_tree: QTreeWidget
-            This TreeWidget displays the new groups and all of their contents (all values, not just unique values). Not editable.
-        self.groups: list
-            This attribute is set as an empty list.
-        self.metadata: Dataframe | None
-            This attribute is either a dataframe or is set as None.
+        self.metadata: Dataframe
+            This attribute is a dataframe.
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
         
         Outputs
         --------
         self.variable_list_columns: QListWidget
             This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
-        self.variable_list_values: QListWidget
-            This ListWidget is populated with the unique and sorted values of the column in the self.metadata dataframe with a header matching the text stored in the attribute self.column. Not editable.
         self.group_list: QListWidget
-            This ListWidget is cleared of contents. If the values of the selected ListWidgetItem's header equivalent in the self.metadata dataframe 
-        self.variable_tree: QTreeWidget
-            This TreeWidget is cleared of contents.
-        self.groups: list
-            This attribute is set as an empty list.
-        self.metadata: Dataframe
-            This attribute is a dataframe. 
+            This ListWidget is cleared of contents. If the values of the selected ListWidgetItem's header equivalent in the self.metadata dataframe have non-numeric values, a ListWidgetItem with text stating that is added to this widget.
+        
+        Outcomes
+        --------
+        self.binning_value_continued()
+            This method actually divides the values of the selected column into bins by value.
         """
         print("annot.binning_value()")
-        self.group_list.clear()
-        self.variable_tree.clear()
-        self.groups = []
         value_list = self.metadata[self.variable_list_columns.selectedItems()[0].text()]
         if value_list.dtypes == object:
             self.group_list.addItem("Selected variable has non-numeric values.")
@@ -387,6 +379,43 @@ class Annot(QMainWindow, Ui_Annot):
             self.binning_value_continued()
 
     def binning_value_continued(self):
+        """
+        Divide the values displayed in self.variable_list_values (ListWidget) into bins by value. 
+
+        Parameters
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        self.variable_tree: QTreeWidget
+            This TreeWidget displays the new groups and all of their contents (all values, not just unique values). Not editable.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.metadata: Dataframe
+            This attribute is a dataframe.
+        self.bin_edit: QLineEdit
+            This LineEdit is editable by the user. The text is set by default as 4. This number dictates the number of bins.
+        
+        Outputs
+        --------
+        self.group_list: QListWidget
+            This ListWidget is iteratively populated by successive self.current_group values, i.e. Group 1, Group 2, etc. ListWidgetItem is editable so the user can change the names to something less generic than Group 1. 
+        self.variable_tree: QTreeWidget
+            This TreeWidget provides a nested display of the new groups and all of their contents (all values, not just unique values). It is iteratively populated by self.tree_group (TreeWidgetItem). Not editable.
+        self.groups: list
+            This attribute is populated with a list of dictionaries (why?). Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
+        self.bin_number: int
+            The text of the self.bin_edit (LineEdit) typed as int. This attribute determines the number of bins.
+        self.selected_values: list
+            This attribute is populated with the values of the active bin.
+        self.current_group: str
+            This attribute is constructed from the concatenation of "Group" and the number of groups in self.groups (list).
+        self.tree_group: QTreeWidgetItem
+            This attribute is a first-level child of self.variable_tree (TreeWidget) with self.current_group set as its text. It is iteratively populated by kid (TreeWidgetItem). 
+        kid: QTreeWidgetItem
+            This variable is a first-level child of self.tree_group (TreeWidgetItem) and thus a second-level child of self.variable_tree (TreeWidget). It iteratively populates its parent self.tree_group (TreeWidgetItem) with values from self.selected_values (list) typed as str. This unhelpfully named variable is distinct from the attribute self.kids (dict). 
+        """
         print("annot.binning_value_continued()")
         value_list = self.metadata[self.variable_list_columns.selectedItems()[0].text()]
         value_list = value_list.sort_values()
@@ -414,6 +443,31 @@ class Annot(QMainWindow, Ui_Annot):
             self.groups.append({"alias": self.current_group,"kids":self.selected_values})
 
     def binning_count(self):
+        """Inspect the list of values in the column selected in self.variable_list_columns for non-numeric values and missing values before starting self.binning_count_continued().
+        
+        Parameters
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        self.metadata: Dataframe
+            This attribute is a dataframe.
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+        
+        Outputs
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        self.group_list: QListWidget
+            This ListWidget is cleared of contents. If the values of the selected ListWidgetItem's header equivalent in the self.metadata dataframe have non-numeric values, a ListWidgetItem with text stating that is added to this widget.
+        
+        Outcomes
+        --------
+        self.binning_count_continued()
+            This method actually divides the values of the selected column into bins by count.
+        """
         print("annot.binning_count()")
         value_list = self.metadata[self.variable_list_columns.selectedItems()[0].text()]
         if value_list.dtypes == object:
@@ -426,11 +480,48 @@ class Annot(QMainWindow, Ui_Annot):
             self.binning_count_continued()
 
     def binning_count_continued(self):
+        """
+        Divide the values displayed in self.variable_list_values (ListWidget) into bins by count. 
+
+        Parameters
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        self.variable_tree: QTreeWidget
+            This TreeWidget displays the new groups and all of their contents (all values, not just unique values). Not editable.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.metadata: Dataframe
+            This attribute is a dataframe.
+        self.bin_edit: QLineEdit
+            This LineEdit is editable by the user. The text is set by default as 4. This number dictates the number of bins.
+        
+        Outputs
+        --------
+        self.group_list: QListWidget
+            This ListWidget is iteratively populated by successive self.current_group values, i.e. Group 1, Group 2, etc. ListWidgetItem is editable so the user can change the names to something less generic than Group 1. 
+        self.variable_tree: QTreeWidget
+            This TreeWidget provides a nested display of the new groups and all of their contents (all values, not just unique values). It is iteratively populated by self.tree_group (TreeWidgetItem). Not editable.
+        self.groups: list
+            This attribute is populated with a list of dictionaries (why?). Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
+        self.bin_number: int
+            The text of the self.bin_edit (LineEdit) typed as int. This attribute determines the number of bins.
+        self.selected_values: list
+            This attribute is populated with the values of the active bin.
+        self.current_group: str
+            This attribute is constructed from the concatenation of "Group" and the number of groups in self.groups (list).
+        self.tree_group: QTreeWidgetItem
+            This attribute is a first-level child of self.variable_tree (TreeWidget) with self.current_group set as its text. It is iteratively populated by kid (TreeWidgetItem). 
+        kid: QTreeWidgetItem
+            This variable is a first-level child of self.tree_group (TreeWidgetItem) and thus a second-level child of self.variable_tree (TreeWidget). It iteratively populates its parent self.tree_group (TreeWidgetItem) with values from self.selected_values (list) typed as str. This unhelpfully named variable is distinct from the attribute self.kids (dict). 
+        """
         print("annot.binning_count_continued()")
-        self.group_list.clear()
-        self.variable_tree.clear()
-        self.selected_values = []
-        self.groups = []
+        # self.group_list.clear()
+        # self.variable_tree.clear()
+        # self.selected_values = []
+        # self.groups = []
         value_list = self.metadata[self.variable_list_columns.selectedItems()[0].text()]
         value_list = value_list.sort_values()
         value_list = [v for v in value_list if not(pd.isna(v))]
