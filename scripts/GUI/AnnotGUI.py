@@ -1,23 +1,35 @@
 #%%
 #region Libraries
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5 import QtCore
-from PyQt5.QtCore import *
-from pathlib import Path
 import os
+from pathlib import Path
+from pyclbr import Class
+import pandas as pd
+from PyQt5.QtWidgets import QDialog, QMainWindow, QMessageBox, QTreeWidgetItem, QFileDialog
+from PyQt5 import QtCore, QtGui
 from thumbass import Ui_Thumbass
 from annot_form import Ui_Annot
-import pandas as pd
 
 #endregion
 #region Thumbass
 class Thumbass(QDialog, Ui_Thumbass):
     """
-    Standard dialog to help protect people from themselves.
+    This class is a standard dialog used to communicate directly to the user with messages.
+
+    Parameters
+    ---------
+    Thumbass.label: QLabel
+        The label displays the text provided as the arguments "words" of Thumbass.message_received().
+    
+    Outputs
+    --------
+    Thumbass: QDialog
+        The dialog gives the user information.
     """
     def __init__(self):
+        """
+        Instantiate the Thumbass class.
+        """
         super(Thumbass, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Nailed it.")
@@ -25,34 +37,182 @@ class Thumbass(QDialog, Ui_Thumbass):
         self.label.setOpenExternalLinks(True)
     
     def message_received(self,title,words):
+        """Set the text of the dialog's window title and the Thumbass.label.
+        
+        Parameters
+        --------
+        Thumbass: QDialog
+            The dialog window title is set.
+        Thumbass.label: QLabel
+            The label displays the text provided as the arguments "words" of Thumbass.message_received().
+        title: str
+            The text that serves as the dialog's window title.
+        words: str
+            The text that populates Thumbass.label and serves as the main message of the dialog.
+        
+        Outputs
+        --------
+        Thumbass: QDialog
+            The dialog window title is set.
+        Thumbass.label: QLabel
+            The label displays the text provided as the arguments "words" of Thumbass.message_received().
+        """
         self.setWindowTitle(title)
         self.label.setText(words)
 #endregion
 
 class Annot(QMainWindow, Ui_Annot):
-    def __init__(self,Plethysmography):
+    def __init__(self,Plethysmography: Class):
+        """Instantiates the Annot class.
+        
+        Parameters
+        --------
+        Plethysmography: Class
+            The Annot class inherits from the Plethysmography class.
+        Ui_Annot: Class
+            The Annot class inherits its widgets and layouts from the Ui_Annot class.
+
+        Outputs
+        --------
+        self.pleth: Class
+            Shorthand for Plethsmography class.
+        self.metadata: None
+            This attribute will store a pandas dataframe.
+        self.column: str
+            This attribute is set as an empty string.
+        self.new_column: str
+            This attribute is set as an empty string.
+        self.selected_values: list
+            This attribute is set as an empty list.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.changes: list
+            This attribute is set as an empty list.
+        self.kids: dict
+            This attribute is set as an empty dictionary.
+        """
         super(Annot, self).__init__()
 
 #region class attributes
 
-        self.GUIpath=os.path.realpath(__file__)
         self.setupUi(self)
         self.pleth = Plethysmography
         self.setWindowTitle("BASSPRO Variable Annotation")
         self.isActiveWindow()
 
         self.metadata = None
-        self.column=""
-        self.new_column=""
-        self.selected_values=[]
-        self.groups=[]
-        self.kids={}
-        self.changes=[]
+        self.column = ""
+        self.new_column = ""
+        self.selected_values = []
+        self.groups = []
+        self.changes = []
+        self.kids = {}
 
 #endregion
 
+    def show_metadata_file(self):
+        print("annot.show_metadata_file()")
+        if self.pleth.metadata == "" and self.metadata is None:
+            reply = QMessageBox.information(self, 'Missing metadata file', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+            if reply == QMessageBox.Ok:
+                self.load_metadata_file()
+            if reply == QMessageBox.Cancel:
+                self.close()
+        elif self.pleth.metadata != "" and self.metadata is None:
+            if Path(self.pleth.metadata).exists():
+                if self.pleth.metadata.endswith('.xlsx'):
+                    self.metadata = pd.read_excel(self.pleth.metadata)
+                    self.populate_list_columns()
+                elif self.pleth.metadata.endswith('.csv'):
+                    self.metadata = pd.read_csv(self.pleth.metadata)
+                    self.populate_list_columns()
+                else:
+                    reply = QMessageBox.information(self, 'Incorrect file format', 'Only .csv or .xlsx files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+                    if reply == QMessageBox.Ok:
+                        self.load_metadata_file()
+        else:
+            print("existing annot activity")
+            
+
+#region populate
+    def load_metadata_file(self):
+        """
+        Clear the widgets and some attributes and 
+        Parameters
+        --------
+        self.group_list: QListWidget
+            The ListWidget that displays the new groups and allows the user the change the name of the group.
+        self.variable_tree: QTreeWidget
+            The TreeWidget that displays the new groups and all of their contents (all values, not just unique values). Not editable.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.metadata: Dataframe | None
+            This attribute is either a dataframe or is set as None.
+        """
+        print("loading metadata file for annot subGUI")
+        self.variable_list_columns.clear()
+        self.variable_list_values.clear()
+        self.variable_tree.clear()
+        self.group_list.clear()
+        self.kids={}
+        self.groups=[]
+            
+
+    # Opens open file dialog
+        file = QFileDialog.getOpenFileName(self, 'Select metadata file', str(self.pleth.mothership))
+
+    # If you the file you chose sucks, the GUI won't crap out.
+        if not file[0]:
+            print("that didn't work")
+        elif Path(file[0]).suffix == ".xlsx":
+            self.metadata = pd.read_excel(file[0])
+            self.populate_list_columns()
+        elif Path(file[0]).suffix == ".csv":
+            self.metadata = pd.read_csv(file[0])
+            self.populate_list_columns()
+        else:
+            self.thumb = self.pleth.Thumbass()
+            self.thumb.show()
+            self.thumb.message_received("Incorrect file format","The file you selected is neither an xlsx nor a csv. Please check the format of your file or choose another one.")
+
+    def populate_list_columns(self):
+        print("annot.populate_list_columns()")
+        self.variable_list_columns.clear()
+        self.variable_list_values.clear()
+        self.variable_tree.clear()
+        self.group_list.clear()
+        self.kids={}
+        self.groups=[]
+        for x in self.metadata.columns:
+            self.variable_list_columns.addItem(x)
+    
+    def populate_list_values(self):
+        print("annot.populate_list_values()")
+        self.variable_list_values.clear()
+        self.variable_tree.clear()
+        self.group_list.clear()
+        self.kids={}
+        self.groups=[]
+        self.column = self.variable_list_columns.currentItem().text()
+        for y in sorted(set([m for m in self.metadata[self.column] if not(pd.isnull(m) == True)])):
+            self.variable_list_values.addItem(str(y))
+            self.kids[str(y)]=y
+# endregion
+
 #region actions
     def binning_value(self):
+        """Inspect the list of values in the column selected in self.variable_list_columns for non-numeric values and missing values before starting self.binning_value_continued().
+        
+        Parameters
+        --------
+        self.group_list: QListWidget
+            The ListWidget that displays the new groups and allows the user the change the name of the group.
+        self.variable_tree: QTreeWidget
+            The TreeWidget that displays the new groups and all of their contents (all values, not just unique values). Not editable.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.metadata: Dataframe | None
+            This attribute is either a dataframe or is set as None."""
         print("annot.binning_value()")
         self.group_list.clear()
         self.variable_tree.clear()
@@ -164,7 +324,7 @@ class Annot(QMainWindow, Ui_Annot):
         index = self.group_list.currentIndex()
         if index.isValid():
             item = self.group_list.itemFromIndex(index)
-            item.setFlags(item.flags() | Qt.ItemIsEditable)
+            item.setFlags(item.flags() | QtGui.Qt.ItemIsEditable)
         self.group_list.edit(index)
     
     def relabel_column(self):
@@ -172,8 +332,7 @@ class Annot(QMainWindow, Ui_Annot):
         index = self.variable_list_columns.currentIndex()
         item = self.variable_list_columns.itemFromIndex(index)
         if index.isValid():
-            # item = self.variable_list_columns.itemFromIndex(index)
-            item.setFlags(item.flags() | Qt.ItemIsEditable)
+            item.setFlags(item.flags() | QtGui.Qt.ItemIsEditable)
         self.variable_list_columns.edit(index)
 
     def column_label(self):
@@ -247,86 +406,7 @@ class Annot(QMainWindow, Ui_Annot):
         print("annot.cancel_annot()")
         self.metadata = None
 
-    def show_metadata_file(self):
-        print("annot.show_metadata_file()")
-        if self.pleth.metadata == "" and self.metadata is None:
-            reply = QMessageBox.information(self, 'Missing metadata file', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-            if reply == QMessageBox.Ok:
-                self.load_metadata_file()
-            if reply == QMessageBox.Cancel:
-                self.close()
-        elif self.pleth.metadata != "" and self.metadata is None:
-            if Path(self.pleth.metadata).exists():
-                if self.pleth.metadata.endswith('.xlsx'):
-                    self.metadata = pd.read_excel(self.pleth.metadata)
-                    self.populate_list_columns()
-                elif self.pleth.metadata.endswith('.csv'):
-                    self.metadata = pd.read_csv(self.pleth.metadata)
-                    self.populate_list_columns()
-                else:
-                    reply = QMessageBox.information(self, 'Incorrect file format', 'Only .csv or .xlsx files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
-                    if reply == QMessageBox.Ok:
-                        self.load_metadata_file()
-        else:
-            print("existing annot activity")
-            
-
-#region populate
-    def load_metadata_file(self):
-        print("loading metadata file for annot subGUI")
-        self.variable_list_columns.clear()
-        self.variable_list_values.clear()
-        self.variable_tree.clear()
-        self.group_list.clear()
-        self.kids={}
-        self.groups=[]
-        if self.pleth.mothership == "":
-            load_path = str(os.path.join(Path(__file__).parent.parent.parent,"PAPR Output"))
-            print(load_path)
-        else:
-            print("mothership exists")
-            load_path = self.pleth.mothership
-            
-
-    # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select metadata file', str(load_path))
-
-    # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("that didn't work")
-        elif Path(file[0]).suffix == ".xlsx":
-            self.metadata = pd.read_excel(file[0])
-            self.populate_list_columns()
-        elif Path(file[0]).suffix == ".csv":
-            self.metadata = pd.read_csv(file[0])
-            self.populate_list_columns()
-        else:
-            self.thumb = self.pleth.Thumbass()
-            self.thumb.show()
-            self.thumb.message_received("Incorrect file format","The file you selected is neither an xlsx nor a csv. Please check the format of your file or choose another one.")
-
-    def populate_list_columns(self):
-        print("annot.populate_list_columns()")
-        self.variable_list_columns.clear()
-        self.variable_list_values.clear()
-        self.variable_tree.clear()
-        self.group_list.clear()
-        self.kids={}
-        self.groups=[]
-        for x in self.metadata.columns:
-            self.variable_list_columns.addItem(x)
     
-    def populate_list_values(self):
-        print("annot.populate_list_values()")
-        self.variable_list_values.clear()
-        self.variable_tree.clear()
-        self.group_list.clear()
-        self.kids={}
-        self.groups=[]
-        self.column = self.variable_list_columns.currentItem().text()
-        for y in sorted(set([m for m in self.metadata[self.column] if not(pd.isnull(m) == True)])):
-            self.variable_list_values.addItem(str(y))
-            self.kids[str(y)]=y
 
 #endregion
 

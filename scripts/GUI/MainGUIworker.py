@@ -49,6 +49,7 @@ class Worker(QRunnable):
         """
         Use subprocess.Popen to run a seperate program in a new process.
         stdout will be captured by the variable self.echo and extracted below.
+        
         """
         self.echo = subprocess.Popen(
             self.path_to_script,
