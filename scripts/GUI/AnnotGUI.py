@@ -400,15 +400,15 @@ class Annot(QMainWindow, Ui_Annot):
         Outputs
         --------
         self.group_list: QListWidget
-            This ListWidget is iteratively populated by successive self.current_group values, i.e. Group 1, Group 2, etc. ListWidgetItem is editable so the user can change the names to something less generic than Group 1. 
+            This ListWidget is cleared and then iteratively populated by successive self.current_group values, i.e. Group 1, Group 2, etc. ListWidgetItem is editable so the user can change the names to something less generic than Group 1. 
         self.variable_tree: QTreeWidget
-            This TreeWidget provides a nested display of the new groups and all of their contents (all values, not just unique values). It is iteratively populated by self.tree_group (TreeWidgetItem). Not editable.
+            This TreeWidget provides a nested display of the new groups and all of their contents (all values, not just unique values). It is cleared and then iteratively populated by self.tree_group (TreeWidgetItem). Not editable.
         self.groups: list
-            This attribute is populated with a list of dictionaries (why?). Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
+            This attribute is cleared and then populated with a list of dictionaries (why?). Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
         self.bin_number: int
             The text of the self.bin_edit (LineEdit) typed as int. This attribute determines the number of bins.
         self.selected_values: list
-            This attribute is populated with the values of the active bin.
+            This attribute is cleared and then populated with the values of the active bin.
         self.current_group: str
             This attribute is constructed from the concatenation of "Group" and the number of groups in self.groups (list).
         self.tree_group: QTreeWidgetItem
@@ -417,6 +417,10 @@ class Annot(QMainWindow, Ui_Annot):
             This variable is a first-level child of self.tree_group (TreeWidgetItem) and thus a second-level child of self.variable_tree (TreeWidget). It iteratively populates its parent self.tree_group (TreeWidgetItem) with values from self.selected_values (list) typed as str. This unhelpfully named variable is distinct from the attribute self.kids (dict). 
         """
         print("annot.binning_value_continued()")
+        self.group_list.clear()
+        self.variable_tree.clear()
+        self.selected_values = []
+        self.groups = []
         value_list = self.metadata[self.variable_list_columns.selectedItems()[0].text()]
         value_list = value_list.sort_values()
         self.bin_number = int(self.bin_edit.text())
@@ -501,15 +505,15 @@ class Annot(QMainWindow, Ui_Annot):
         Outputs
         --------
         self.group_list: QListWidget
-            This ListWidget is iteratively populated by successive self.current_group values, i.e. Group 1, Group 2, etc. ListWidgetItem is editable so the user can change the names to something less generic than Group 1. 
+            This ListWidget is cleared and then iteratively populated by successive self.current_group values, i.e. Group 1, Group 2, etc. ListWidgetItem is editable so the user can change the names to something less generic than Group 1. 
         self.variable_tree: QTreeWidget
-            This TreeWidget provides a nested display of the new groups and all of their contents (all values, not just unique values). It is iteratively populated by self.tree_group (TreeWidgetItem). Not editable.
+            This TreeWidget provides a nested display of the new groups and all of their contents (all values, not just unique values). It is cleared and then iteratively populated by self.tree_group (TreeWidgetItem). Not editable.
         self.groups: list
-            This attribute is populated with a list of dictionaries (why?). Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
+            This attribute is cleared and then populated with a list of dictionaries (why?). Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
         self.bin_number: int
             The text of the self.bin_edit (LineEdit) typed as int. This attribute determines the number of bins.
         self.selected_values: list
-            This attribute is populated with the values of the active bin.
+            This attribute is cleared andd then populated with the values of the active bin.
         self.current_group: str
             This attribute is constructed from the concatenation of "Group" and the number of groups in self.groups (list).
         self.tree_group: QTreeWidgetItem
@@ -518,14 +522,13 @@ class Annot(QMainWindow, Ui_Annot):
             This variable is a first-level child of self.tree_group (TreeWidgetItem) and thus a second-level child of self.variable_tree (TreeWidget). It iteratively populates its parent self.tree_group (TreeWidgetItem) with values from self.selected_values (list) typed as str. This unhelpfully named variable is distinct from the attribute self.kids (dict). 
         """
         print("annot.binning_count_continued()")
-        # self.group_list.clear()
-        # self.variable_tree.clear()
-        # self.selected_values = []
-        # self.groups = []
+        self.group_list.clear()
+        self.variable_tree.clear()
+        self.selected_values = []
+        self.groups = []
         value_list = self.metadata[self.variable_list_columns.selectedItems()[0].text()]
         value_list = value_list.sort_values()
         value_list = [v for v in value_list if not(pd.isna(v))]
-        value_list_int = [int(floater) for floater in value_list]
         self.bin_number = int(self.bin_edit.text())
         diff = len(value_list)
         cutt_off = int(diff/self.bin_number)
