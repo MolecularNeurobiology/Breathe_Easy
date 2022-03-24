@@ -111,6 +111,32 @@ class Annot(QMainWindow, Ui_Annot):
 #endregion
 
     def show_metadata_file(self):
+        """
+        Determine the source of the metadata that will be manipulated by the user in the Annot subGUI.
+        
+        Parameters
+        --------
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+        self.pleth.metadata: str
+            This Plethysmography attribute is either an empty string or a string of the path to the user-selected file that has the metadata.
+        self.metadata: Dataframe | None
+            This attribute is either a dataframe or is set as None.
+
+        Outputs
+        --------
+        self.metadata: Dataframe | None
+            This attritube is either a dataframe or continues to be None.
+        
+        Outcomes
+        --------
+        self.load_metadata_file()
+            This method is called if the user has not yet selected a metadata file (self.pleth.metadata is an empty string) or if the selected metadata file is not the correct file format (self.pleth.metadata is a file path) or if the selected metadata file was not found (self.pleth.metadata is a file path that does not exist).
+        self.populate_list_columns()
+            This method is called after self.metadata is populated with a dataframe. The headers of the dataframe are added to self.variable_list_columns (ListWidget).
+        self.close()
+            This method closes the Annot subGUI if the user chooses not to provide a metadata file.
+        """
         print("annot.show_metadata_file()")
         if self.pleth.metadata == "" and self.metadata is None:
             reply = QMessageBox.information(self, 'Missing metadata file', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
@@ -130,24 +156,64 @@ class Annot(QMainWindow, Ui_Annot):
                     reply = QMessageBox.information(self, 'Incorrect file format', 'Only .csv or .xlsx files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                     if reply == QMessageBox.Ok:
                         self.load_metadata_file()
+            else:
+                reply = QMessageBox.information(self, 'File not found', 'The previously selected metadata file was not found.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+                if reply == QMessageBox.Ok:
+                    self.load_metadata_file()
+                if reply == QMessageBox.Cancel:
+                    self.close()
         else:
             print("existing annot activity")
             
-
 #region populate
     def load_metadata_file(self):
         """
-        Clear the widgets and some attributes and 
+        Clear the widgets, reset some attributes, and spawn a file dialog to get the path to the file that will populate self.metadata with a dataframe.
+
         Parameters
         --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        self.variable_list_values: QListWidget
+            This ListWidget displays the unique values of the self.metadata dataframe column selected by the user in self.variable_list_columns. Not editable.
         self.group_list: QListWidget
-            The ListWidget that displays the new groups and allows the user the change the name of the group.
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
         self.variable_tree: QTreeWidget
-            The TreeWidget that displays the new groups and all of their contents (all values, not just unique values). Not editable.
+            This TreeWidget displays the new groups and all of their contents (all values, not just unique values). Not editable.
         self.groups: list
             This attribute is set as an empty list.
+        self.kids: dict
+            This attribute is set as an empty dictionary.
         self.metadata: Dataframe | None
             This attribute is either a dataframe or is set as None.
+        file: QFileDialog
+            This variable stores the path of the file the user selected via the FileDialog.
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+        
+        Outputs
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget is cleared of contents.
+        self.variable_list_values: QListWidget
+            This ListWidget is cleared of contents.
+        self.group_list: QListWidget
+            This ListWidget is cleared of contents.
+        self.variable_tree: QTreeWidget
+            This TreeWidget is cleared of contents.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.kids: dict
+            This attribute is set as an empty dictionary.
+        self.metadata: Dataframe | None
+            This attribute is either a dataframe or continues to be None.
+        
+        Outcomes
+        --------
+        self.populate_list_columns()
+            This method is called after self.metadata is populated with a dataframe. The headers of the dataframe are added to self.variable_list_columns (ListWidget).
+        self.close()
+            This method closes the Annot subGUI if the user chooses not to provide a metadata file.
         """
         print("loading metadata file for annot subGUI")
         self.variable_list_columns.clear()
@@ -156,43 +222,118 @@ class Annot(QMainWindow, Ui_Annot):
         self.group_list.clear()
         self.kids={}
         self.groups=[]
-            
 
     # Opens open file dialog
         file = QFileDialog.getOpenFileName(self, 'Select metadata file', str(self.pleth.mothership))
 
     # If you the file you chose sucks, the GUI won't crap out.
-        if not file[0]:
-            print("that didn't work")
-        elif Path(file[0]).suffix == ".xlsx":
-            self.metadata = pd.read_excel(file[0])
-            self.populate_list_columns()
-        elif Path(file[0]).suffix == ".csv":
-            self.metadata = pd.read_csv(file[0])
-            self.populate_list_columns()
+        if os.path.exists(file[0]):
+            if Path(file[0]).suffix == ".xlsx":
+                self.metadata = pd.read_excel(file[0])
+                self.populate_list_columns()
+            elif Path(file[0]).suffix == ".csv":
+                self.metadata = pd.read_csv(file[0])
+                self.populate_list_columns()
+            else:
+                reply = QMessageBox.information(self, 'Incorrect file format', 'Only .csv or .xlsx files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+                if reply == QMessageBox.Ok:
+                    self.load_metadata_file()
         else:
-            self.thumb = self.pleth.Thumbass()
-            self.thumb.show()
-            self.thumb.message_received("Incorrect file format","The file you selected is neither an xlsx nor a csv. Please check the format of your file or choose another one.")
+            self.close()
 
     def populate_list_columns(self):
+        """
+        Clear the widgets, reset some attributes, and populate self.variable_list_columns (ListWidget) with the headers of the dataframe stored in the attribute self.metadata.
+
+        Parameters
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        self.variable_list_values: QListWidget
+            This ListWidget displays the unique values of the self.metadata dataframe column selected by the user in self.variable_list_columns. Not editable.
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        self.variable_tree: QTreeWidget
+            This TreeWidget displays the new groups and all of their contents (all values, not just unique values). Not editable.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.kids: dict
+            This attribute is set as an empty dictionary.
+        self.metadata: Dataframe | None
+            This attribute is either a dataframe or is set as None.
+        
+        Outputs
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget is cleared of contents and then populated with the headers of the dataframe stored in self.metadata.
+        self.variable_list_values: QListWidget
+            This ListWidget is cleared of contents.
+        self.group_list: QListWidget
+            This ListWidget is cleared of contents.
+        self.variable_tree: QTreeWidget
+            This TreeWidget is cleared of contents.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.kids: dict
+            This attribute is set as an empty dictionary.
+        self.metadata: Dataframe
+            This attribute is a dataframe. 
+        """
         print("annot.populate_list_columns()")
         self.variable_list_columns.clear()
         self.variable_list_values.clear()
-        self.variable_tree.clear()
         self.group_list.clear()
-        self.kids={}
+        self.variable_tree.clear()
         self.groups=[]
+        self.kids={}
         for x in self.metadata.columns:
             self.variable_list_columns.addItem(x)
     
     def populate_list_values(self):
+        """
+        Clear some widgets, reset some attributes, and populate self.variable_list_values (ListWidget) with the unique values of the column selected by the user in self.variable_list_columns (ListWidget)of the dataframe stored in the attribute self.metadata.
+
+        Parameters
+        --------
+        self.column: str
+            This attribute is set as an empty string
+        self.variable_list_values: QListWidget
+            This ListWidget displays the unique values of the self.metadata dataframe column selected by the user in self.variable_list_columns. Not editable.
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        self.variable_tree: QTreeWidget
+            This TreeWidget displays the new groups and all of their contents (all values, not just unique values). Not editable.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.kids: dict
+            This attribute is set as an empty dictionary.
+        self.metadata: Dataframe
+            This attribute is a dataframe.
+        
+        Outputs
+        --------
+        self.column: str
+            This attribute is the text of the ListWidgetItem in self.variable_list_columns (ListWidget) selected by the user. It is one of the headers of the self.metadata dataframe.
+        self.variable_list_values: QListWidget
+            This ListWidget is populated with the unique and sorted values of the column in the self.metadata dataframe with a header matching the text stored in the attribute self.column. Not editable.
+        self.group_list: QListWidget
+            This ListWidget is cleared of contents.
+        self.variable_tree: QTreeWidget
+            This TreeWidget is cleared of contents.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.kids: dict
+            This dictionary is populated with the not-null sorted unique values typed as strings as the keys and typed as is as the values.
+        self.metadata: Dataframe
+            This attribute is a dataframe. 
+        """
         print("annot.populate_list_values()")
         self.variable_list_values.clear()
-        self.variable_tree.clear()
         self.group_list.clear()
-        self.kids={}
+        self.variable_tree.clear()
         self.groups=[]
+        self.kids={}
+        
         self.column = self.variable_list_columns.currentItem().text()
         for y in sorted(set([m for m in self.metadata[self.column] if not(pd.isnull(m) == True)])):
             self.variable_list_values.addItem(str(y))
@@ -205,14 +346,32 @@ class Annot(QMainWindow, Ui_Annot):
         
         Parameters
         --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
         self.group_list: QListWidget
-            The ListWidget that displays the new groups and allows the user the change the name of the group.
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
         self.variable_tree: QTreeWidget
-            The TreeWidget that displays the new groups and all of their contents (all values, not just unique values). Not editable.
+            This TreeWidget displays the new groups and all of their contents (all values, not just unique values). Not editable.
         self.groups: list
             This attribute is set as an empty list.
         self.metadata: Dataframe | None
-            This attribute is either a dataframe or is set as None."""
+            This attribute is either a dataframe or is set as None.
+        
+        Outputs
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        self.variable_list_values: QListWidget
+            This ListWidget is populated with the unique and sorted values of the column in the self.metadata dataframe with a header matching the text stored in the attribute self.column. Not editable.
+        self.group_list: QListWidget
+            This ListWidget is cleared of contents. If the values of the selected ListWidgetItem's header equivalent in the self.metadata dataframe 
+        self.variable_tree: QTreeWidget
+            This TreeWidget is cleared of contents.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.metadata: Dataframe
+            This attribute is a dataframe. 
+        """
         print("annot.binning_value()")
         self.group_list.clear()
         self.variable_tree.clear()
