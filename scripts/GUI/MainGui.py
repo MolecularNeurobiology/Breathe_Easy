@@ -3538,6 +3538,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.hangar.append(f"\nThe following signals files did not pass BASSPRO:\n\n{', '.join([os.path.basename(thumb) for thumb in baddies])}\n")
 
     def rthing_to_do(self):
+        """
+        Copy STAGG input to timestamped STAGG output folder, determine which STAGG scripts to use based on the presence or absence of an .RData file, and determine if self.input_dir_r needs to be a str path to directory instead of list because the list has more than 200 files, and run self.rthing_to_do_cntd().
+        """
         print("rthing_to_do()")
         self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
         if self.output_folder != "":
@@ -3572,6 +3575,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.rthing_to_do_cntd()
     
     def rthing_to_do_cntd(self):
+        """
+        Ensure the STAGG script exists, prompt the user to indicate where the Rscript.exe file is, and run self.launch_worker().
+        """
         if Path(self.pipeline_des).is_file():
             # Make sure the path stored in gui_config.json is an Rscript executable file:
             if os.path.basename(self.gui_config['Dictionaries']['Paths']['rscript']) == "Rscript.exe":
