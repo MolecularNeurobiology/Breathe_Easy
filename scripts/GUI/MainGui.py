@@ -2546,7 +2546,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             
     def update_breath_df(self,updated_file):
         """
-        
+        Ask the user if they want to update the self.breath_df list to include the latest updates to the metadata and/or the automated or manual BASSPRO settings and if so, reset and repopulate the STAGG settings subGUI widgets, namely Config.variable_table.
         """
         print("update_breath_df()")
         self.old_bdf = self.breath_df
@@ -2593,6 +2593,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.breath_df = self.old_bdf
 
     def try_open(self,path):
+        """
+        Ensure that the file and its contents are accessible.
+        """
         print("try_open()")
         try:
             with open(path,encoding='utf-8') as file:
@@ -2609,7 +2612,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.missing_meta.append(path)
 
     def test_configuration(self):
-        # show_variable_config() test whether or not the source files variables are empty - essentially has the user ever started a variable configuration subGUI session within this main session? But in the situation where the source files variables are not empty but the source files nevertheless cannnot be found (because they were located on a hard drive and you closed your computer, unplugged the hard drive, did something else fabulously interesting, came back, and tried to reopen the variable configuration subGUI to find the whole thing crashes because it can't build itself without the source files you pointed it to on your damn hard drive), these trys and excepts allow the GUI to handle your gaff gracefully. Jesus. This is why I don't write comments.
+        """
+        Ensure that the file paths that populate the attributes required to show the STAGG settings subGUI exist and their contents are accessible, and provide feedback to the user on what they're missing if anything.
+        """
         print("test_configuration() has started")
         self.missing_meta = []
         for p in [self.metadata,self.autosections,self.mansections]:
@@ -2642,6 +2647,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         reply = QMessageBox.information(self, "How is this program even running?", f"The program cannot find the following file: \n{self.breathcaller_path}\nPlease reinstall BASSPRO-STAGG.", QMessageBox.Ok)
 
     def variable_configuration(self):
+        """
+        Populate self.buttonDict_variable with widgets and text and populate Config.variable_table with the contents of self.buttonDict_variable.
+        """
         print("self.variable_configuration() has started")
         self.stack = []
 
@@ -2735,6 +2743,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #region Automatic selection
 
     def mothership_dir(self):
+        """
+        Prompt the user to choose an output directory where both BASSPRO and STAGG output will be written to, detect any relevant input that may already be present in that directory, ask the user if they would like to keep previous selections for input or replace them with the contents of the selected directory if there are previous selections for input and update self.breath_df (list).
+        """
         print("mothership_dir()")
         self.mothership = QFileDialog.getExistingDirectory(self, 'Choose output directory', str(Path.home()), QFileDialog.ShowDirsOnly)
         if os.path.exists(self.mothership):
@@ -2760,6 +2771,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.update_breath_df("settings")
         
     def auto_get_output_dir_py(self):
+        """
+        Check whether or not a BASSPRO_output directory exists in the user-selected directory and make it if it does not exist, and make a timestamped BASSPRO output folder for the current session's next run of BASSPRO.
+        """
         print("auto_get_output_dir_py()")
         self.py_output_folder=os.path.join(self.mothership,'BASSPRO_output')
         if Path(self.py_output_folder).exists():
@@ -2769,9 +2783,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.output_dir_py=os.path.join(self.py_output_folder,'BASSPRO_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
     
     def auto_get_metadata(self):
+        """
+        Detect a metadata file.
+        """
         print("auto_get_metadata()")
-        print(id(self.metadata))
-        print(os.path.basename(self.metadata))
         metadata_path=os.path.join(self.mothership, 'metadata.csv')
         if Path(metadata_path).exists():
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
@@ -2790,6 +2805,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.check_metadata_file("metadata")
 
     def auto_get_basic(self):
+        """
+        Detect a basic file.
+        """
         print("auto_get_basic()")
         basic_path=os.path.join(self.mothership, 'basics.csv')
         if Path(basic_path).exists():
@@ -2806,6 +2824,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print("Basic parameters settings file not detected.")
 
     def auto_get_autosections(self):
+        """
+        Detect an automated BASSPRO settings file.
+        """
         print("auto_get_autosections()")
         autosections_path=os.path.join(self.mothership, 'auto_sections.csv')
         if Path(autosections_path).exists():
@@ -2823,6 +2844,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print("Autosection parameters file not detected.")
 
     def auto_get_mansections(self):
+        """
+        Detect a manual BASSPRO settings file.
+        """
         print("auto_get_mansections()")
         mansections_path=os.path.join(self.mothership, 'manual_sections.csv')
         if Path(mansections_path).exists():
@@ -2844,6 +2868,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.v.check_load_variable_config("yes")
 
     def auto_get_breath_files(self):
+        """
+        Detect JSON BASSPRO output files.
+        """
         print("auto_get_breath_files()")
         if self.stagg_list != []:
             reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
@@ -2855,6 +2882,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.breath_list.addItem(x)
            
     def auto_get_output_dir_r(self):
+        """
+        Check whether or not a STAGG_output directory exists in the user-selected directory and make it if it does not exist, and make a timestamped STAGG output folder for the current session's next run of STAGG.
+        """
         print("auto_get_output_dir_r()")
         self.r_output_folder=os.path.join(self.mothership,'STAGG_output')
         if Path(self.r_output_folder).exists():
@@ -2869,6 +2899,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #endregion
 
     def open_click(self,item):
+        """
+        Open the double-clicked ListWidgetItem in the default program for the user's device.
+        """
         print("open_click()")
         try:
             if Path(item.text()).exists():
@@ -2879,6 +2912,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             pass
 
     def get_signal_files(self):
+        """
+        Prompt the user to select signal files via FileDialog.
+        """
         print("get_signal_files()")
         file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
         if not file_name[0]:
@@ -2907,6 +2943,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.check_metadata_file("signal")
 
     def get_metadata(self):
+        """
+        Prompt the user to select a previously made metadata file.
+        """
         print("get_metadata()")
         if self.mothership != "":
             file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.mothership))
@@ -2927,6 +2966,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.check_metadata_file("metadata")
     
     def mp_parser(self):
+        """
+        Grab MUIDs and PlyUIDs from signal file names.
+        """
         print("mp_parser()")
         self.mp_parsed={'MUIDLIST':[],'PLYUIDLIST':[],'MUID_PLYUID_tuple':[]}
         self.mp_parserrors=[]
@@ -2956,6 +2998,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.mp_parserrors.append(file)
 
     def connect_database(self):
+        """
+        Collect relevant metadata for the mice and their runs as indicated by their MUID and PlyUID in the signal file name as sourced via self.mp_parser().
+        """
         print("connect_database()")
         if self.signals == []:
             reply = QMessageBox.information(self, 'Unable to connect to database', 'No signal files selected.\nWould you like to select a signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
@@ -2984,6 +3029,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.get_metadata()
 
     def get_study(self, fixformat=True):
+        """
+        Scrape the values from the relevant fields of the database for the metadata.
+        """
         print("get_study()")
         self.metadata_list.addItem("Building query...")
         try:
@@ -3127,6 +3175,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             meta_assemble_errors.append(new_error)
 
     def metadata_checker_filemaker(self):
+        """
+        Ensure the metadata collected from the database matches the signal files.
+        """
         print("metadata_checker_filemaker()")
         self.essential_fields = self.gui_config['Dictionaries']['metadata']['essential_fields']
         self.metadata_list.addItem("Checking metadata...")
