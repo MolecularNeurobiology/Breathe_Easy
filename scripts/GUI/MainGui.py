@@ -1010,6 +1010,7 @@ class CheckableComboBox(QComboBox):
 #region class Custom Config Sections
 class Custom(QWidget, Ui_Custom):
     """
+    This class inherits widgets and layouts from Ui_Custom and defines the subGUI within the STAGG settings subGUI that allows users to customize the settings for each dependent variable.
     """
     def __init__(self,Config):
         super(Custom, self).__init__()
@@ -1025,32 +1026,37 @@ class Custom(QWidget, Ui_Custom):
         self.custom_spectral = []
         self.custom_irreg = []
 
-    def populate_reference(self,butt):
-        for k,v in self.widgy.items():
-            for vv in v:
-                if vv.objectName() == str(butt):
-                    k.setPlainText(self.pleth.rc_config['References']['Definitions'][butt.replace("help_","")])
-
     def extract_variable(self):
+        """
+        Check if Config.deps (list) is empty. If it is, prompt a MessageBox informing the user. If it isn't, populate self.custom_table (TableWidget) using Config.deps.
+
+        Parameters
+        --------
+        Config.deps: list
+            This list contains the Aliases of the dependent variables the user has selected in Config.variable_table (TableWidget).
+        self.custom_table: QTableWidget
+            This TableWidget displays the text and widgets that allows the user to customize the STAGG settings for each dependent variable on the main model.
+
+        Outputs
+        --------
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+        self.custom_table: QTableWidget
+            This TableWidget is populated based on the number of dependent variables selected by the user in Config.variable_table.
+        
+        Outcomes
+        --------
+        self.populate_table(self.config.deps, self.custom_table)
+        self.adjustSize()
+        self.show()
+        """
         print("custom.extract_variable()")
-        print(self.config.deps)
         if self.config.deps.empty:
             reply = QMessageBox.information(self, 'Choose variables', 'Please select response variables to be modeled.', QMessageBox.Ok)
         else:
             self.populate_table(self.config.deps,self.custom_table)
             self.adjustSize()
             self.show()
-    
-    def addItem(self, text, data=None):
-        print("custom.addItem()")
-        item = QStandardItem()
-        item.setText(text)
-        if data is None:
-            item.setData(text)
-        else:
-            item.setData(data)
-        item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
-        item.setData(Qt.Unchecked, Qt.CheckStateRole)
 
     def populate_table(self,frame,table):
         print("custom started populating table")
@@ -1067,7 +1073,6 @@ class Custom(QWidget, Ui_Custom):
                 # Creating the radio buttons that will populate the cells in each row:
                 self.config.custom_dict[item]["Poincare"]=QCheckBox()
                 self.config.custom_dict[item]["Spectral"]=QCheckBox()
-                # self.custom_dict[item]["Inclusive"].setAlignment(Qt.AlignHCenter)
                 # Creating the combo boxes that will populate the cells in each row:
                 self.config.custom_dict[item]["Transformation"]=CheckableComboBox()
                 self.config.custom_dict[item]["Transformation"].addItems(["raw","log10","ln","sqrt"])
@@ -1126,6 +1131,9 @@ class Custom(QWidget, Ui_Custom):
 
 
     def save_custom(self):
+        """
+        Save the contents of Config.custom_dict to Config.custom_port. Update the status of the comboBoxes corresponding to Poincare, Spectral, and Transformation settings made in the Custom subGUI.
+        """
         print("custom.save_custom()")
         self.config.custom_port = {item: {col: None for col in self.config.custom_dict[item]} for item in self.config.custom_dict}
         try:
@@ -1139,8 +1147,6 @@ class Custom(QWidget, Ui_Custom):
                         self.config.custom_port[item].update({col:self.config.custom_dict[item][col].currentText()})
                     elif "CheckableComboBox" in str(type(self.config.custom_dict[item][col])):
                         self.config.custom_port[item].update({col:self.config.custom_dict[item][col].currentData()})
-                    else:
-                        print("wibblecol")
             for key,value in {self.config.Poincare_combo:"Poincare",self.config.Spectral_combo:"Spectral"}.items():
                 if all([self.config.custom_port[var][value] == 1 for var in self.config.custom_port]):
                     key.setCurrentText("All")
