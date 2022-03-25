@@ -2484,6 +2484,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.get_autosections()
 
     def new_variable_config(self):
+        """
+        Run self.get_bp_reqs() and self.test_configuration() to ensure that BASSPRO has the required input, run self.variable_configuration() to populate Config.variable_table (TableWidget), and show the STAGG settings subGUI.
+        """
         self.get_bp_reqs()
         self.test_configuration()
         try:
@@ -2501,6 +2504,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print(traceback.format_exc()) 
         
     def show_variable_config(self):
+        """
+        Ensure that there is a source of variables to populate Config.variable_table with and run test_configuration() to ensure that those sources are viable, run self.variable_configuration() to populate Config.variable_table (TableWidget), and either show the STAGG settings subGUI or show a Thorbass dialog to guide the user through providing the required input if there is no input.
+        """
         if self.buttonDict_variable == {}:
             if self.v.configs["variable_config"]["path"] != "":
                 self.v.check_load_variable_config("no")
@@ -2539,6 +2545,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.v.show()
             
     def update_breath_df(self,updated_file):
+        """
+        
+        """
         print("update_breath_df()")
         self.old_bdf = self.breath_df
         self.breath_df = []
