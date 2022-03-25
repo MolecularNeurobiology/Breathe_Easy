@@ -3240,6 +3240,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.metadata_passlist.append(f"M{m}_Ply{p}")
      
     def save_filemaker(self):
+        """
+        Save the dataframe derived from the database to a csv file and assign the file path to self.metadata attribute.
+        """
         print("save_filemaker()")
         self.metadata_list.addItem("Creating csv file...")
         self.metadata = os.path.join(self.mothership,"metadata.csv")
@@ -3254,6 +3257,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
       
     def get_autosections(self):
+        """
+        Prompt the user to select a previously made automated BASSPRO settings file.
+        """
         print("get_autosections()")
         try:
             file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.mothership))
@@ -3290,6 +3296,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print(traceback.format_exc())
 
     def input_directory_r(self):
+        """
+        Prompt the user to select input files for STAGG.
+        """
         print("input_directory_r()")
         input_dir_r = QFileDialog.getOpenFileNames(self, 'Choose STAGG input files from BASSPRO output', self.mothership)
         if all(file.endswith(".json") or file.endswith(".RData") for file in input_dir_r[0]):
@@ -3319,24 +3328,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if reply == QMessageBox.Yes:
                 self.input_directory_r()
     
-    def input_directory_r_env(self):
-        print("input_directory_r_env()")
-        input_dir_r = QFileDialog.getOpenFileName(self, 'Select R environment', "./STAGG_output")
-        if all(file.endswith(".RData") for file in input_dir_r[0]):
-            if self.stagg_list != []:
-                reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                if reply == QMessageBox.No:
-                    self.breath_list.clear()
-                    self.stagg_list = []
-            self.stagg_list = [file for file in input_dir_r[0] if file.endswith(".RData")==True]
-            for x in self.stagg_list:
-                self.breath_list.addItem(x)       
-        else:
-            reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file(s) are not .RData files.\nWould you like to select different files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-            if reply == QMessageBox.Yes:
-                self.input_directory_r()
 #endregion
     def py_message(self):
+        """
+        Ensure the user has selected an output directory and prompt them to do so if they haven't, check that the required input for BASSPRO has been selected, launch BASSPRO, detect the JSON files produced after BASSPRO has finished and populate self.stagg_list with the file paths to those JSON files.
+        """
         print("py_message()")
         try:
             self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
@@ -3357,6 +3353,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             print(traceback.format_exc())
 
     def r_message(self):
+        """
+        Assign the file paths to the attributes, ensure that all required STAGG input has been selected and prompt the user to select whatever is missing, and launch STAGG.
+        """
         print("r_message()")
         self.variable_config = self.v.configs["variable_config"]["path"]
         self.graph_config = self.v.configs["graph_config"]["path"]
@@ -3370,6 +3369,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.rthing_to_do()
 
     def dir_checker(self,output_folder,output_folder_parent,text):
+        """
+        Ensure the user has selected an output directory and prompt them to do so if they haven't.
+        """
         print("dir_checker()")
         self.output_folder = ""
         self.output_folder_parent = ""
@@ -3437,6 +3439,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     os.makedirs(self.output_folder)
     
     def pything_to_do(self):
+        """
+        Copy the required BASSPRO input other than the signal files and the breathcaller_config.json file to the timestamped BASSPRO output folder (self.output_dir_py) and run self.launch_worker().
+        """
         print("pything_to_do()")
         if self.output_folder != "":
             self.output_dir_py = self.output_folder
@@ -3469,6 +3474,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 print(traceback.format_exc())
     
     def launch_worker(self,branch):
+        """
+        Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
+        """
         print('launch_worker thread id',threading.get_ident())
         print("launch_worker process id",os.getpid())
         if branch == "py":
@@ -3509,6 +3517,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.counter+=1
         
     def output_check(self):
+        """
+        Find the signal files that did not produce BASSPRO output.
+        """
         if len(self.stagg_list) != len(self.signals):
             goodies = []
             baddies = []
