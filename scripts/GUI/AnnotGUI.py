@@ -408,7 +408,7 @@ class Annot(QMainWindow, Ui_Annot):
         self.bin_number: int
             The text of the self.bin_edit (LineEdit) typed as int. This attribute determines the number of bins.
         self.selected_values: list
-            This attribute is cleared and then populated with the values of the active bin.
+            This attribute is cleared and then iteratively populated with the values of the active bin.
         self.current_group: str
             This attribute is constructed from the concatenation of "Group" and the number of groups in self.groups (list).
         self.tree_group: QTreeWidgetItem
@@ -501,6 +501,8 @@ class Annot(QMainWindow, Ui_Annot):
             This attribute is a dataframe.
         self.bin_edit: QLineEdit
             This LineEdit is editable by the user. The text is set by default as 4. This number dictates the number of bins.
+        self.selected_values: list
+            This attribute is set as an empty list.
         
         Outputs
         --------
@@ -513,7 +515,7 @@ class Annot(QMainWindow, Ui_Annot):
         self.bin_number: int
             The text of the self.bin_edit (LineEdit) typed as int. This attribute determines the number of bins.
         self.selected_values: list
-            This attribute is cleared andd then populated with the values of the active bin.
+            This attribute is iteratively cleared and then populated with the values of the active bin.
         self.current_group: str
             This attribute is constructed from the concatenation of "Group" and the number of groups in self.groups (list).
         self.tree_group: QTreeWidgetItem
@@ -552,6 +554,39 @@ class Annot(QMainWindow, Ui_Annot):
             self.groups.append({"alias": self.current_group,"kids":self.selected_values})
 
     def recode(self):  
+        """
+        Create a manually-selected bin from multiple values selected in self.variable_list_values (ListWidget). 
+
+        Parameters
+        --------
+        self.variable_list_values: QListWidget
+            This ListWidget displays the unique values of the self.metadata dataframe column selected by the user in self.variable_list_columns. Not editable.
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        self.variable_tree: QTreeWidget
+            This TreeWidget displays the new groups and all of their contents (all values, not just unique values). Not editable.
+        self.groups: list
+            This attribute is set as an empty list.
+        self.selected_values: list
+            This attribute is set as an empty list.
+        
+        Outputs
+        --------
+        self.group_list: QListWidget
+            This ListWidget is cleared and then iteratively populated by successive self.current_group values, i.e. Group 1, Group 2, etc. ListWidgetItem is editable so the user can change the names to something less generic than Group 1. 
+        self.variable_tree: QTreeWidget
+            This TreeWidget provides a nested display of the new groups and all of their contents (all values, not just unique values). It is cleared and then iteratively populated by self.tree_group (TreeWidgetItem). Not editable.
+        self.groups: list
+            This attribute is cleared and then populated with a list of dictionaries (why?). Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
+        self.selected_values: list
+            This attribute is iteratively cleared and then populated with the values of the active bin.
+        self.current_group: str
+            This attribute is constructed from the concatenation of "Group" and the number of groups in self.groups (list).
+        self.tree_group: QTreeWidgetItem
+            This attribute is a first-level child of self.variable_tree (TreeWidget) with self.current_group set as its text. It is iteratively populated by kid (TreeWidgetItem). 
+        kid: QTreeWidgetItem
+            This variable is a first-level child of self.tree_group (TreeWidgetItem) and thus a second-level child of self.variable_tree (TreeWidget). It iteratively populates its parent self.tree_group (TreeWidgetItem) with values from self.selected_values (list) typed as str. This unhelpfully named variable is distinct from the attribute self.kids (dict). 
+        """
         print("annot.recode()") 
         self.selected_values=[]
         for value in list(self.variable_list_values.selectedItems()):
@@ -573,28 +608,54 @@ class Annot(QMainWindow, Ui_Annot):
             self.variable_list_values.takeItem(self.variable_list_values.row(selected_value))
 
     def relabel_group(self):
+        """
+        Change the text of the selected ListWidgetItem in self.group_list (ListWidget).
+
+        Parameters
+        --------
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        item: QListWidgetItem
+            This ListWidgetItem in self.group_list (ListWidget) has been selected by the user.
+        
+        Outputs
+        --------
+        self.group_list: QListWidget
+            The text of item (ListWidgetItem) is edited by the user.
+        """
         print("annot.relabel_group()")
         index = self.group_list.currentIndex()
         if index.isValid():
             item = self.group_list.itemFromIndex(index)
-            item.setFlags(item.flags() | QtGui.Qt.ItemIsEditable)
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
         self.group_list.edit(index)
-    
-    def relabel_column(self):
-        print("annot.relabel_column()")
-        index = self.variable_list_columns.currentIndex()
-        item = self.variable_list_columns.itemFromIndex(index)
-        if index.isValid():
-            item.setFlags(item.flags() | QtGui.Qt.ItemIsEditable)
-        self.variable_list_columns.edit(index)
-
-    def column_label(self):
-        print("annot.column_label()")
-        index = self.variable_list_columns.currentIndex()
-        item = self.variable_list_columns.itemFromIndex(index)
-        self.metadata.rename(columns = {self.column:item.text()}, inplace=True)
 
     def tree_label(self):
+        """
+        Change the text of the first-level TreeWidgetItem in self.variable_tree that corresponds to the selected ListWidgetItem in self.group_list (ListWidget) that was edited by self.relabel_group().
+
+        Parameters
+        --------
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        self.variable_tree: QTreeWidget
+            This TreeWidget displays the groups and all of their contents (all values, not just unique values). Not editable.
+        item: QListWidgetItem
+            This ListWidgetItem in self.group_list (ListWidget) has been selected by the user.
+        self.groups: list
+            This attribute is a list of dictionaries. Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
+
+        Outputs
+        --------
+        self.variable_tree: QListWidget
+            This TreeWidget provides a nested display of the relabeled groups and all of their contents (all values, not just unique values). It is cleared and then iteratively repopulated by self.tree_group (TreeWidgetItem). Not editable.
+        self.groups: list
+            The value of the "alias" key of the dictionary that is the item in this list with the same index as the selected ListWidgetItem in self.groups (ListWidget) is changed to the edited text of the selected ListWidgetItem. The corresponding "kid" key's value is left unchanged.
+        self.tree_group: QTreeWidgetItem
+            This attribute is a first-level child of self.variable_tree (TreeWidget) with its text set as the value of the "alias" key of the updated dictionary in self.groups (list). It is iteratively repopulated by kid (TreeWidgetItem).
+        kid: QTreeWidgetItem
+            This variable is a first-level child of self.tree_group (TreeWidgetItem) and thus a second-level child of self.variable_tree (TreeWidget). It populates its parent self.tree_group (TreeWidgetItem) with values from the "kids" key's list of values from the active dictionary when iterating through self.groups (list). This unhelpfully named variable is distinct from the attribute self.kids (dict). 
+        """
         print("annot.tree_label()")
         self.variable_tree.clear()
         index = self.group_list.currentIndex()
@@ -609,8 +670,69 @@ class Annot(QMainWindow, Ui_Annot):
                 self.tree_group.addChild(kid)
                 kid.setText(0,str(k))
             self.tree_group.setExpanded(True)
+    
+    def relabel_column(self):
+        """
+        Change the text of the selected ListWidgetItem in self.variable_list_columns (ListWidget). Currently, there is nothing preventing the user from renaming a column with a header that's already in use, which will cause problems in either BASSPRO or STAGG.
+
+        Parameters
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        item: QListWidgetItem
+            This ListWidgetItem in self.variable_list_columns (ListWidget) has been selected by the user.
+
+        Outputs
+        --------
+        self.variable_list_columns: QListWidget
+            The text of item (ListWidgetItem) is edited by the user.
+        """
+        print("annot.relabel_column()")
+        index = self.variable_list_columns.currentIndex()
+        item = self.variable_list_columns.itemFromIndex(index)
+        if index.isValid():
+            item.setFlags(item.flags() | QtCore.Qt.ItemIsEditable)
+        self.variable_list_columns.edit(index)
+
+    def column_label(self):
+        """
+        Change the text of the header in self.metadata dataframe that corresponds to the selected ListWidgetItem in self.variable_list_columns that was edited by self.relabel_column().
+
+        Parameters
+        ------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        item: QListWidgetItem
+            This ListWidgetItem in self.variable_list_columns (ListWidget) has been selected by the user.
+        self.metadata: Dataframe
+            This attribute is set as a dataframe.
+
+        Outputs
+        --------
+        self.metadata: Dataframe
+            The header corresponding to item (ListWidgetItem) is changed in the dataframe to reflect the user's edit.
+        """
+        print("annot.column_label()")
+        index = self.variable_list_columns.currentIndex()
+        item = self.variable_list_columns.itemFromIndex(index)
+        self.metadata.rename(columns = {self.column:item.text()}, inplace=True)
 
     def naming(self):
+        """
+        Change the name of the new column by appending a suffix "_recode_#" to avoid duplicate column names in the metadata.
+
+        Parameters
+        --------
+        self.metadata: Dataframe
+            This attribute is a dataframe.
+        self.column: str
+            This attribute is the text of the ListWidgetItem in self.variable_list_columns (ListWidget) selected by the user. It is one of the headers of the self.metadata dataframe.
+        
+        Outputs
+        --------
+        self.new_column: str
+            This attribute is constructed from the concatenation of str value in self.column and "_recode_#".
+        """
         print("annot.naming()")
         c=1
         if any(f"{self.column}_recode" in col for col in self.metadata.columns):
@@ -620,15 +742,46 @@ class Annot(QMainWindow, Ui_Annot):
             self.new_column = f"{self.column}_recode_1"
 
     def add_config(self):
+        """
+        Create a new column in the self.metadata dataframe from self.groups and update self.variable_list_column to reflect the added column.
+
+        Parameters
+        --------
+        self.variable_list_columns: QListWidget
+            This ListWidget displays the headers of the self.metadata dataframe. ListWidgetItem is editable.
+        self.variable_list_values: QListWidget
+            This ListWidget displays the unique values of the self.metadata dataframe column selected by the user in self.variable_list_columns. Not editable.
+        self.group_list: QListWidget
+            This ListWidget displays the new groups and allows the user the change the name of the group. ListWidgetItem is editable.
+        self.metadata: Dataframe
+            This attribute is set as a dataframe.
+        self.groups: list
+            This attribute is cleared and then populated with a list of dictionaries (why?). Each dictionary consists of one level with two keys: the "alias" key's value is self.current_group, and the "kids" key's value is self.selected_values.
+        self.new_column: str
+            This attribute is constructed from the concatenation of str value in self.column and "_recode_#" in self.naming().
+        
+        Outputs
+        --------
+        self.megameta: Dataframe
+            This attribute is a copy of the self.metadata dataframe. A new column is added to the dataframe based on the contents of self.group (list).
+        self.metadata: Dataframe
+            This attribute is a copy of self.megameta after the new column is added.
+        self.variable_list_columns: QListWidget
+            This ListWidget is cleared of contents and then populated with the headers of the dataframe stored in self.megameta.
+        self.variable_list_values: QListWidget
+            This ListWidget is cleared of contents.
+        self.group_list: QListWidget
+            This ListWidget is cleared of contents.
+        self.groups: list
+            This attribute is set as an empty list.
+        """
         print("annot.add_config()")
         self.megameta = self.metadata.copy()
         self.naming()
         for group in self.groups:
-            print(f'group:{group}')
             for value in group["kids"]:
                 self.megameta.loc[self.megameta[self.column].astype(str)==str(value),
                     [self.new_column]]=group["alias"]
-        print([type(v) for v in self.megameta[self.new_column]])
         self.variable_list_columns.clear()
         self.variable_list_values.clear()
         self.group_list.clear()
@@ -638,8 +791,33 @@ class Annot(QMainWindow, Ui_Annot):
         self.groups=[]
 
     def save_config(self):
+        """
+        Write the self.metadata dataframe to a csv file saved by the user via a standard FileDialog, populate self.pleth.metadata with the corresponding file path, and add the file path as a ListWidgetItem to self.pleth.metadata_list (ListWidget).
+
+        Parameters
+        --------
+        file: QFileDialog
+            This variable stores the path of the file the user selected via the FileDialog.
+        self.metadata: Dataframe
+            This attribute is set as a dataframe.
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+        self.pleth.breath_df: list
+            This Plethysmography class attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
+        
+        Outputs
+        --------
+        self.pleth.metadata: str
+            This Plethysmography class attribute stores the path of the csv file that self.metadata dataframe was written to.
+        self.pleth.metadata_list: QListWidget
+            This ListWidget is populated with the file path in self.pleth.metadata.
+        
+        Outcomes
+        --------
+        self.pleth.update_breath_df()
+            This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the metadata.
+        """
         print("annot.save_config()")
-        # perhaps need a safe measure so that if the user didn't press add configuration and they hit save we prompt them to make sure they didn't forget
         try:
             file = QFileDialog.getSaveFileName(self, 'Save File', '', ".csv(*.csv))")
             self.metadata.to_csv(file[0], index = False)
@@ -650,7 +828,6 @@ class Annot(QMainWindow, Ui_Annot):
             reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
-            print("no file chosen")
         if self.pleth.breath_df != []:
             self.pleth.update_breath_df()
 
