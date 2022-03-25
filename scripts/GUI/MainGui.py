@@ -576,6 +576,29 @@ class Auto(QWidget, Ui_Auto):
 # YOu need to make the columns reflect the headers of the dataframes
 class Manual(QWidget, Ui_Manual):
     def __init__(self,Plethysmography):
+        """
+        Instantiates the Manual class.
+        
+        Parameters
+        --------
+        Plethysmography: class
+            The Manual class inherits from the Plethysmography class.
+        Ui_Manual: class
+            The Manual class inherits the widget and layouts of the manual BASSPRO settings subGUI from the Ui_Manual class.
+        
+        Outputs
+        --------
+        self.pleth: class
+            Shorthand for the Plethysmography class.
+        self.datapad: Dataframe | None
+            This attribute is set as None.
+        self.preset: Dataframe | None
+            This attribute is set as None.
+        self.manual_df: Dataframe | str
+            This attribute is set as an empty string.
+        self.vals: list
+            This attribute is a list of the headers of the dataframe in the .txt files produced when exporting the LabChart Datapad views of the signal files the user wants to analyze.
+        """
         super(Manual, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Manual sections file creation")
@@ -587,6 +610,30 @@ class Manual(QWidget, Ui_Manual):
         self.vals = ['animal id','PLYUID','start','stop','duration','mFrequency_Hz','mPeriod_s','mHeight_V','mO2_V','mCO2_V','mTchamber_V','segment']
 
     def get_datapad(self):
+        """
+        Retrieve and concatenate the user-selected .txt files produced when exporting the LabChart Datapad views of the user-selected signal files to be analyzed in BASSPRO.
+
+        Parameters
+        --------
+        file: QFileDialog
+            This variable stores the paths of the files the user selected via the FileDialog.
+        self.datapad_view: QTableWidget
+            This TableWidget is inherited from Ui_Manual and displays the dataframe formed when the user-selected LabChart Datapad view exports are concatenated.
+
+        Outputs
+        --------
+        self.datapad: Dataframe
+            This attribute stores the dataframe produced by concatenating the dataframes read in from each exported LabChart Datapad view of the signal files selected by the user.
+        Thumbass: class
+            This dialog gives the user information. It appears when an error is thrown while creating the self.datapad dataframe.
+        self.datapad_view: QTableWidget
+            This TableWidget is populated with self.datapad.
+        
+        Outcomes
+        --------
+        self.populate_table(self.datapad, self.datapad_view)
+            This method populates self.datapad_view (TableWidget) with the self.datapad dataframe.
+        """
         print("manual.get_datapad()")
         file = QFileDialog.getOpenFileNames(self, 'Select Labchart datapad export file')
         if os.path.exists(file[0]):
@@ -647,11 +694,69 @@ class Manual(QWidget, Ui_Manual):
                 self.thumb.message_received(f"{type(e).__name__}: {e}",f"Please ensure that the datapad is formatted as indicated in the documentation.\n\n{traceback.format_exc()}")
 
     def get_preset(self):
+        """
+        Retrieve the default settings for the experimental setup selected by the user in the self.preset_menu comboBox from the corresponding dictionary in self.pleth.bc_config (dict).
+
+        Parameters
+        --------
+        self.preset_menu: QComboBox
+            A comboBox of the Manual class inherited from Ui_Manual that is populated with the experimental setups for which the GUI has default manual BASSPRO settings that will be concatenated with the user's manual selections of breaths to produce the final manual_sections.csv file. These experimental setups are sourced from thekeys of the "default" dictionary nested in the "Manual Settings" dictionary loaded from the breathcaller_config.json file.
+        self.pleth.bc_config: dict
+            This Plethysmography class attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
+        self.settings_view: QTableWidget
+            This TableWidget is inherited from Ui_Manual and displays the dataframe formed from the dictionary selected.
+        
+        Outputs
+        --------
+        self.preset: Dataframe
+            This attribute is the dataframe formed from the dictionary from self.pleth.bc_config (dict) based on the user's selection of experimental setup in self.preset_menu (ComboBox).
+        self.settings_view: QTableWidget
+            This TableWidget is populated with the dataframe formed from the dictionary selected. 
+        
+        Outcomes
+        --------
+        self.populate_table(self.preset, self.settings_view)
+            This method populates self.settings_view (TableWidget) with the self.preset dataframe.
+        """
         print("manual.get_preset()")
         self.preset = pd.DataFrame.from_dict(self.pleth.bc_config['Dictionaries']['Manual Settings']['default'][self.preset_menu.currentText()].values())
         self.populate_table(self.preset, self.settings_view)    
     
     def manual_merge(self):
+        """
+        Merge the dataframes in self.datapad and self.preset to form self.manual_df (dataframe) and populate self.manual_view (TableWidget) with the new dataframe.
+
+        Parameters
+        --------
+        self.datapad: Dataframe | None
+            This attribute stores the dataframe produced by concatenating the dataframes read in from each exported LabChart Datapad view of the signal files selected by the user.
+        self.preset: Dataframe | None
+            This attribute is the dataframe formed from the dictionary from self.pleth.bc_config (dict) based on the user's selection of experimental setup in self.preset_menu (ComboBox).
+        self.manual_view: QTableWidget
+            This TableWidget is inherited from Ui_Manual and displays the self.manual_df dataframe.
+        
+        Outputs
+        --------
+        Thorbass: class
+            Specialized dialog that guides the user through the process of selecting the necessary files.
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+        self.manual_df: Dataframe
+            This attribute stores the dataframe formed by merging the dataframes of self.datapad and self.preset.
+        self.manual_view: QTableWidget
+            This TableWidget is populated with the self.manual_df dataframe.
+        
+        Outcomes
+        --------
+        self.populate_table(self.manual_df, self.manual_view)
+            This method populates self.manual_view (TableWidget) with the self.manual_df dataframe.
+        self.get_datapad()
+            This method is triggered if self.datapad is None but self.preset has a dataframe.
+        self.new_manual_file()
+            This method is one of two that can be selected by the user in the Thorbass dialog.
+        self.load_manual_file()
+            This methods one of two that can be selected by the user in the Thorbass dialog.
+        """
         print("manual.manual_merge()")
         try:
             self.manual_df = self.datapad.merge(self.preset,'outer',left_on=self.datapad['segment'],right_on=self.preset['Alias'])
@@ -672,15 +777,31 @@ class Manual(QWidget, Ui_Manual):
                 self.thorb.message_received('Nope.', 'There is nothing to merge. Would you like to open an existing manual sections settings file or create a new one?',self.new_manual_file,self.load_manual_file)
          
     def new_manual_file(self):
+        """
+        Guide user through selecting LabChart Datapad view exported .txt files and/or an experimental setup from the drop-down menu. 
+        """
         print("manual.new_manual_file()")
-        if self.datapad == "":
+        if self.datapad == None:
             reply = QMessageBox.information(self, 'Missing datapad file', 'You need to select a LabChart datapad exported as a text file. Would you like to select a file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Yes:
                 self.get_datapad()
-        if self.preset == "":
+        if self.preset == None:
             reply = QMessageBox.information(self, 'Missing sections settings', 'Please select one of the options from the dropdown menu above.', QMessageBox.Ok)
 
     def populate_table(self,frame,view):
+        """
+        Populate the TableWidget with the dataframe.
+
+        Parameters
+        --------
+        frame: Dataframe
+        view: QTableWidget
+
+        Outputs
+        --------
+        view: QTableWidget
+            The view TableWidget is populated with the frame dataframe.
+        """
         print("manual.populate_table()")
         # Populate tablewidgets with views of uploaded csv. Currently editable.
         view.setColumnCount(len(frame.columns))
@@ -691,6 +812,23 @@ class Manual(QWidget, Ui_Manual):
         view.setHorizontalHeaderLabels(frame.columns)
 
     def save_checker(self,folder,title):
+        """
+        Check the existence of the file being saved and the directory it's being saved to.
+
+        Parameters
+        --------
+        folder: str
+            The directory in which the manual_sections.csv file will be saved.
+        title: str
+            The name of the file being saved.
+        path: str
+            This variable stores the path of the file the user saved via the FileDialog.
+        
+        Outputs
+        --------
+        self.path: str
+            The path of the file being saved.
+        """
         print("manual.save_checker()")
         if folder == "":
             path = QFileDialog.getSaveFileName(self, 'Save File', f"{title}", ".csv(*.csv))")[0]
@@ -700,6 +838,9 @@ class Manual(QWidget, Ui_Manual):
             self.path = os.path.join(folder, f"{title}.csv")
 
     def save_manual_file(self):
+        """
+        Assign the file path determined in self.save_checker() to self.pleth.mansections (str), save self.manual_df dataframe as a .csv file to the file path location, populate self.pleth.sections_list (ListWidget) with the file path (self.pleth.mansections), and update self.breath_df (list).
+        """
         print("manual.save_manual_file()")
         try:
             self.save_checker(self.pleth.mothership,"manual_sections")
@@ -722,6 +863,9 @@ class Manual(QWidget, Ui_Manual):
             reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
     
     def load_manual_file(self):
+        """
+        Read a user-selected, previously made manual BASSPRO settings .csv file, populate self.datapad, self.preset, and self.manual_df with their corresponding pieces of the dataframe, and populate the corresponding tables.
+        """
         print("manual.load_manual_file()")
         file = QFileDialog.getOpenFileName(self, 'Select manual sections file to edit:')
 
@@ -865,6 +1009,8 @@ class CheckableComboBox(QComboBox):
 
 #region class Custom Config Sections
 class Custom(QWidget, Ui_Custom):
+    """
+    """
     def __init__(self,Config):
         super(Custom, self).__init__()
         self.setupUi(self)
@@ -1783,6 +1929,110 @@ class Config(QWidget, Ui_Config):
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     def __init__(self):
+        """
+        Instantiate the Plethysmography class.
+
+        Parameters
+        --------
+        Config: class
+            This class defines the STAGG settings subGUI.
+        Annot: class
+            This class defines the variable configuration subGUI.
+        Basic: class
+            This class defines the basic BASSPRO settings subGUI.
+        Auto: class
+            This class defines the automated BASSPRO settings subGUI.
+        Manual: class
+            This class defines the manual BASSPRO settings subGUI.
+        
+        self.gui_config: dict
+            This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail.
+        self.stamp: dict
+            This attribute is a nested dictionary loaded from timestamps.json. It contains a populated dictionary with the default timestamps of multiple experimental setups and an empty dictionary that will be populated by the timestamps of signal files selected by the user.
+        self.bc_config: dict
+            This attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
+        self.rc_config: dict
+            This attribute is a shallow dictionary loaded from reference_config.json. It contains definitions, descriptions, and recommended values for every basic, manual, and automated BASSPRO setting.
+        self.q: Queue
+            A first-in, first-out queue constructor for safely exchanging information between threads.
+        self.counter: int
+            The worker's number.
+        self.finished_count: int
+            The number of finished workers.
+        self.qThreadpool: QThreadPool
+        self.threads: dict
+        self.workers: dict
+            Workers spawned.
+        
+        self.breathcaller_path: str
+            The path to the BASSPRO module script. Required input for BASSPRO.
+        self.output_dir_py: str
+            The path to the BASSPRO output directory. Required input for BASSPRO.
+        self.autosections: str
+            The path to the automated BASSPRO settings file. BASSPRO requires either an automated BASSPRO settings file or a manual BASSPRO settings file. It can also be given both as input.
+        self.mansections: str
+            The path to the manual BASSPRO settings file. BASSPRO requires either an automated BASSPRO settings file or a manual BASSPRO settings file. It can also be given both as input.
+        self.basicap: str
+            The path to the basic BASSPRO settings file. Required input for BASSPRO.
+        self.metadata: str
+            The path to the metadata file. Required input for BASSPRO.
+        self.signals: list
+            The list of file paths of the user-selected .txt signal files that are analyzed by BASSPRO. Required input for BASSPRO.
+        self.mothership: str
+            The path to the user-selected directory for all output. Required input for BASSPRO and STAGG.
+        self.stagg_list: list
+            The list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
+        self.output_dir_r: str
+            The path to the STAGG output directory. Required input for STAGG.
+        self.input_dir_r: str
+            The path to the STAGG input directory. Derived from os.path.dirname() of the JSON  output files from BASSPRO. Required input for STAGG.
+        self.variable_config: str
+            The path to the variable_config.csv file. Required input for STAGG.
+        self.graph_config: str
+            The path to the graph_config.csv file. Required input for STAGG.
+        self.other_config: str
+            The path to the other_config.csv file. Required input for STAGG.
+        self.image_format: str
+            The file format of the figures produced by STAGG. Either ".svg" or ".jpeg". Required input for STAGG.
+        self.papr_dir: str
+            The path to the STAGG scripts directory derived from self.gui_config. Required input for STAGG.
+        self.rscript_des: str
+            The path to the Rscript.exe file on the user's device. Required input for STAGG.
+        self.pipeline_des: str
+            The path to the appropriate .R script in the STAGG scripts directory. Required input for STAGG.
+        sef.py_output_folder: str
+            The path to the directory containing the BASSPRO output directories.
+        self.r_output_folder: str
+            The path to the directory containing the STAGG output directories. 
+        self.buttonDict_variable: dict
+            The nested dictionary used to populate and save the text and RadioButton states of Config.variable_table (TableWidget) in the Config subGUI.
+        self.loop_menu: dict
+            The nested dictionary used to populate and save the text, CheckBox, ComboBox, and CheckableComboBox states of Config.loop_table (TableWidget) in the Config subGUI.
+        
+        Outputs
+        --------
+        self.necessary_timestamp_box: QComboBox
+            A comboBox inherited from Ui_Plethysmography that is populated with the experimental setups for which the GUI has default automated BASSPRO settings. These experimental setups are sourced from the keys of the "default" dictionary nested in the "Auto Settings" dictionary loaded from the breathcaller_config.json file.
+        self.parallel_combo: QComboBox
+            A comboBox inherited from Ui_Plethysmography that is populated with the number of CPU's available on the user's device.
+        Manual.preset_menu: QComboBox
+            A comboBox of the Manual class inherited from Ui_Manual that is populated with the experimental setups for which the GUI has default manual BASSPRO settings that will be concatenated with the user's manual selections of breaths to produce the final manual_sections.csv file. These experimental setups are sourced from thekeys of the "default" dictionary nested in the "Manual Settings" dictionary loaded from the breathcaller_config.json file. 
+        Auto.auto_setting_combo: QComboBox
+            A comboBox of the Auto class inherited from Ui_Auto that is populated with the experimental setups for which the GUI has default automated BASSPRO settings. These experimental setups are sourced from the keys of the "default" dictionary nested in the "Auto Settings" dictionary loaded from the breathcaller_config.json file.
+        
+        Outcomes
+        --------
+        self.v()
+            This method instantiates the Config class.
+        self.m()
+            This method instantiates the Manual class.
+        self.a()
+            This method instantiates the Auto class.
+        self.b()
+            This method instantiates the Basic class.
+        self.g()
+            This method instantiates the Annot class.
+        """
         super(Plethysmography, self).__init__()
 
 #region class methods
@@ -1833,7 +2083,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.mothership=""
         self.breathcaller_path = self.gui_config['Dictionaries']['Paths']['breathcaller']
         self.output_dir_py=""
-        self.input_dir_py=""
         self.input_dir_r=""
         self.output_dir_r=""
         self.autosections=""

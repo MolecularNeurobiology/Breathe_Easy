@@ -201,8 +201,8 @@ AP (basic settings) has a third key, "nomenclature", that is not accessed by the
 =================
 gui_config.json
 ...
-The gui_config.json is a nested dictionary containing three keys. The "Paths" key's value is a dictionary storing paths to the BASSPRO module, the timestamp module that's under development,
-the directory of the STAGG scripts, the R executable file (Rscript.exe) on the user's device, and the output folder selected by the user in the most recent session. 
+The gui_config.json is a nested dictionary containing three keys. The "Paths" key's value is a dictionary storing paths to the BASSPRO module,
+the directory of the STAGG scripts, and the R executable file (Rscript.exe) on the user's device. 
 
 The "metadata" key's value is a nested dictionary storing the names of the fields of the database that are accessed when building a metadata file using the database. Currently, these fields 
 are written to accommodate the Ray Lab's database. Ideally, the user will be able to change these fields to suit their own database using something friendlier than a json file. 
