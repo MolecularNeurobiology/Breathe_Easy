@@ -2322,10 +2322,21 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def grabTimeStamps(self):
         """
-        iterates through files in filepathlist to gather unique timestamps 
-        contained in the files - this is useful for building AutoCriteria Files
+        Iterate through user-selected signal files to compare the signal file's timestamps to the timestamps of one of multiple experimental setups.
+
+        Parameters
+        --------
+        self.signals: list
+            The list of file paths of the user-selected .txt signal files that are analyzed by BASSPRO.
+        self.tsbyfile: dict
+            This attribute is set as an empty dictionary.
+        
+        Outputs
+        --------
+        self.tsbyfile: dict
+            This attribute stores a nested dictionary containing the timestamps for every signal file, as well as listing the file and the offending timestamp for duplicate timestamps, missing timestamps, and novel timestamps.
+        
         """
-        errors = []
         timestamps = []
         self.tsbyfile = {}
         
@@ -2346,6 +2357,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         timestamps.sort()
 
     def checkFileTimeStamps(self):
+        """
+        Iterate through contents of self.tsbyfile (dict) to compare them to the default timestamps of the user-selected experimental set-up and populate self.new_check (dict) with offending timestamps and their signals.
+        """
         self.check = {}
         new_ts={}
         filesmissingts={}
@@ -2418,6 +2432,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #endregion
 #region Variable configuration
     def check_metadata_file(self,direction):
+        """
+        Ensure the user-selected metadata is the correct file format, contains metadata for the signal files that were selected, and is named correctly. This method depends on the presence of a column named MUID and a column named PlyUID in the metadata and depends on the file being named as either MUID or MUID_PlyUID. 
+        """
         baddies = []
         if self.metadata.endswith(".csv"):
             meta = pd.read_csv(self.metadata)
@@ -2438,6 +2455,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.thumb.message_received("Metadata and signal files mismatch",f"The following signals files were not found in the selected metadata file:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
 
     def get_bp_reqs(self):
+        """
+        Ensure that the user has provided metadata, basic BASSPRO settings, and either automated or manual BASSPRO settings before launching BASSPRO.
+        """
         if self.metadata == "":
             reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Ok:
