@@ -1173,6 +1173,9 @@ class Custom(QWidget, Ui_Custom):
 
 #region class Variable
 class Config(QWidget, Ui_Config):
+    """
+    This class inherits widgets and layouts from Ui_Config and defines the STAGG settings subGUI that allows users to define the STAGG settings.
+    """
     def __init__(self,Plethysmography):
         super(Config, self).__init__()
         self.setupUi(self)
@@ -1184,31 +1187,40 @@ class Config(QWidget, Ui_Config):
         self.setup_variables_config()
     
     def minus_loop(self):
+        """
+        Remove the selected row from self.loop_table and its corresponding data from self.pleth.loop_menu (dict).
+        """
         print("config.minus_loop()")
         try:
-            print(f"minus before: {self.pleth.loop_menu}")
-            print(self.loop_table.currentRow())
             self.pleth.loop_menu[self.loop_table].pop(self.loop_table.currentRow())
             for p in self.pleth.loop_menu[self.loop_table]:
                 if p > self.loop_table.currentRow():
                     self.pleth.loop_menu[self.loop_table][p-1] = self.pleth.loop_menu[self.loop_table].pop(p)
             self.loop_table.removeRow(self.loop_table.currentRow())
-            print(f"minus after: {self.pleth.loop_menu}")
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
         
     def reference_event(self):
+        """
+        Respond to the user's button click by populating self.config_reference (TextBrowser) with the appropriate reference material.
+        """
         sbutton = self.sender()
         self.populate_reference(sbutton.objectName())
 
-    def populate_reference(self,butt):
+    def populate_reference(self,buttoned):
+        """
+        Populate self.config_reference (TextBrowser) with the definition and description of the setting based on the name of the button the user pressed from self.pleth.rc_config where the reference material for all settings were loaded into as a dictionary from the reference_config.json file.
+        """
         for k,v in self.widgy.items():
             for vv in v:
-                if vv.objectName() == str(butt):
-                    k.setPlainText(self.pleth.rc_config['References']['Definitions'][butt.replace("help_","")])
+                if vv.objectName() == str(buttoned):
+                    k.setPlainText(self.pleth.rc_config['References']['Definitions'][buttoned.replace("help_","")])
 
     def no_duplicates(self):
+        """
+        Automatically rename the variable in the "Alias" column of self.variable_table (TableWidget) to avoid duplicates variable names.
+        """
         print("config.no_duplicates()")
         try:
             for row in range(self.variable_table.rowCount()):
@@ -1221,13 +1233,14 @@ class Config(QWidget, Ui_Config):
             print(traceback.format_exc())
     
     def update_loop(self):
+        """
+        Update the contents of self.clades_other_dict with the contents of self.pleth.loop_menu and then update the contents of self.loop_table with the newly updated contents of self.clades_other_dict.
+        """
         print("config.update_loop()")
         print(f"before: {self.deps}")
         try:
             self.classy()
             self.deps = self.clades["Alias"]
-            print(f"after: {self.deps}")
-            print(f"before loop table rowcount: {self.loop_table.rowCount()}")
             for row in range(self.loop_table.rowCount()):
                 self.clades_other_dict.update({row:{}})
                 self.clades_other_dict[row].update({"Graph": self.pleth.loop_menu[self.loop_table][row]["Graph"].text()})
@@ -1260,6 +1273,9 @@ class Config(QWidget, Ui_Config):
         print(f"after after: {self.deps}")
 
     def setup_transform_combo(self):
+        """
+        Add widget from custom class CheckableComboBox to STAGG settings subGUI layout.
+        """
         spacerItem64 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_25.addItem(spacerItem64)
         self.transform_combo = CheckableComboBox()
@@ -1269,6 +1285,9 @@ class Config(QWidget, Ui_Config):
         self.verticalLayout_25.addItem(spacerItem65)
 
     def setup_variables_config(self): 
+        """
+        Add the CheckableComboBox to the STAGG settings subGUI layout and establish attributes.
+        """
         print("config.setup_variables_config()")
         try:
             if not self.transform_combo:
@@ -1301,6 +1320,9 @@ class Config(QWidget, Ui_Config):
                 vv.clicked.connect(self.reference_event)
     
     def setup_table_config(self):
+        """
+        Populate self.variable_table (TableWidget) with the contents of self.pleth.buttonDict_variable (dict).
+        """
         print("config.setup_table_config()")
         self.stack = []
 
@@ -1361,6 +1383,9 @@ class Config(QWidget, Ui_Config):
         self.variable_table.resizeRowsToContents()
     
     def show_loops(self,table,r):
+        """
+        Populate self.pleth.loop_menu with the appropriate widgets and populated self.loop_table with self.pleth.loop_menu.
+        """
         # Almost redundant. See Main.show_loops().
         print("config.show_loops()")
         self.pleth.loop_menu = {}
@@ -1395,6 +1420,9 @@ class Config(QWidget, Ui_Config):
         table.resizeRowsToContents()
 
     def show_custom(self):
+        """
+        Check self.variable_table Alias selections, update rows in Custom.custom_table accordingly, and show the custom subGUI.
+        """
         print("config.show_custom()")
         self.old_deps = self.deps
         self.classy()
@@ -1416,6 +1444,9 @@ class Config(QWidget, Ui_Config):
             self.pleth.c.show()
 
     def classy(self):
+        """
+        Store the statuses of the self.variable_table (TableWidget) widgets held in self.pleth.buttonDict_variable (dict) in list attributes and dataframe attributes. Create columns for self.clades_graph and self.clades_other.
+        """
         # This method is OLD
         print("config.classy()")
         self.clades = pd.DataFrame(columns= ["Column","Alias","Independent","Dependent","Covariate","ymin","ymax","Poincare","Spectral","Transformation"])
@@ -1443,6 +1474,9 @@ class Config(QWidget, Ui_Config):
         self.clades[["Poincare","Spectral"]] = self.clades[["Poincare","Spectral"]].fillna(0)
 
     def add_combos(self):
+        """
+        Update the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes whenever the user selects a new independent variable or covariate variable.
+        """
         print("add_combos()")
         self.classy()
         for c in self.settings_dict['role'].keys():
@@ -1451,6 +1485,9 @@ class Config(QWidget, Ui_Config):
             c.addItems([x for x in self.clades.loc[(self.clades["Independent"] == 1) | (self.clades['Covariate'] == 1)]['Alias']])
 
     def graphy(self):
+        """
+        Populate self.clades_graph with a dataframe containing the settings selected in the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes.
+        """
         print("config.graphy()")
         clades_role_dict = {}
         for col in self.role_list[2:6]:
@@ -1462,6 +1499,9 @@ class Config(QWidget, Ui_Config):
         self.clades_graph.columns = ['Role','Alias']
     
     def othery(self):
+        """
+        Populate self.clades_other with a dataframe derived from the contents of self.clades_other_dict after the latter was updated with the current states of the widgets stored in self.pleth.loop_menu (dict).
+        """
         print("config.othery()")
         self.clades_other_dict = {}
         for row in range(self.loop_table.rowCount()):
@@ -1493,12 +1533,13 @@ class Config(QWidget, Ui_Config):
         self.clades_other.drop(self.clades_other.loc[(self.clades_other["Graph"]=="") & (self.clades_other["Variable"]=="")].index, inplace=True)
      
     def classy_save(self):
+        """
+        Updating the relevant cells in self.clades with any custom settings stored in self.custom_port, updating the self.configs dictionary with the new dataframe for "variable_config", "graph_config", and "other_config", and calling self.graphy() and self.othery() to populating self.clades_graph and self.clades_other.
+        """
         print("config.classy_save()")
-        print(f"custom port: {self.custom_port}")
         # Grabbing the user's selections from the widgets and storing them in dataframes:
         self.classy()
         if self.custom_port == {}:
-            print("empty custom") 
             self.pleth.c = Custom(self)
             self.pleth.c.save_custom()
         for cladcol in self.clades:
@@ -1523,6 +1564,9 @@ class Config(QWidget, Ui_Config):
         self.configs["other_config"].update({"df":self.clades_other})
         
     def save_config(self):
+        """
+        Save the dataframes self.clades, self.clades_graph, and self.clades_other as .csv files to the default STAGG_config folder held in the user-selected output folder (self.pleth.mothership) and as timestamped .csv files to the timestamped STAGG output folder (self.pleth.output_dir_r) in the STAGG_output folder (self.pleth.r_output_folder) in the user-selected output folder (self.pleth.mothership).
+        """
         print("config.save_config()")
         thumbholes = []
         self.classy_save()
@@ -1566,9 +1610,9 @@ class Config(QWidget, Ui_Config):
             for item in self.pleth.variable_list.findItems(f,Qt.MatchContains):
                 self.pleth.variable_list.takeItem(self.pleth.variable_list.row(item))
             self.pleth.variable_list.addItem(self.configs[f]['path'])
-    # If I load previously made things, I have paths but they haven't been assigned. I assign them above. They'll overwrite the files they're editing. 
     
     def saveas_config(self):
+        """Save the settings stored in self.clades, self.clades_graph, and/or self.clades_other to .csv files at the paths selected by the user with a standard FileDialog as well as at the default paths in the STAGG_config folder in the user-selected output folder (self.pleth.mothership), populate the display widget self.pleth.variable_list (ListWidget) in the Main GUI with the timestamped file paths, update self.configs (dict) with the timestamped file paths, and assign self.pleth.output_folder_r and self.pleth.input_dir_r according to the user-selected location of the STAGG settings files."""
         print("config.saveas_config()")
         thumbholes = []
         self.classy_save()
@@ -1615,8 +1659,10 @@ class Config(QWidget, Ui_Config):
                 self.pleth.variable_list.addItem(self.configs[f]['path'])
 
     def add_loop(self):
+        """
+        Update self.pleth.loop_menu with another key corresponding to the additional row, add another row to self.loop_table, and populate the row with the text and widgets stored in self.pleth.loop_menu.
+        """
         print("config.add_loop()")
-        # It isn't working and I think the issue is that self.Pleth.row_loop is tied to the dictionary so when you're using the dictionary you're asking for a row that doesn't exist as a key:
         loop_row = self.loop_table.rowCount()
         self.loop_table.insertRow(loop_row)
         self.pleth.loop_menu[self.loop_table].update({loop_row: {"Graph": QLineEdit()}})
@@ -1644,6 +1690,9 @@ class Config(QWidget, Ui_Config):
         self.loop_table.setCellWidget(loop_row,5,self.pleth.loop_menu[self.loop_table][loop_row]["Facet2"])
 
     def reset_config(self):
+        """
+        Reset attributes, clear Xvar, Pointdode, Facet1, and Facet2 comboBoxes, set Poincare, Spectral, feature, and Transformation comboBoxes to None, repopulate self.loop_table and self.variable_table with the updated (rebuilt) dictionaries self.pleth.loop_menu and self.pleth.buttonDict_variable respectively.
+        """
         print("config.reset_config()")
         try:
             self.setup_variables_config()
@@ -1670,6 +1719,9 @@ class Config(QWidget, Ui_Config):
         self.check_load_variable_config("yes")
 
     def check_load_variable_config(self,open_file):
+        """
+        Check the user-selected files to ensure they exist and they are the correct file format and they begin with either "variable_config", "graph_config", or "other_config", triggering a MessageBox or dialog to inform the user if any do not and loading the file as a dataframe if they do.
+        """
         paths = []
         print("self.check_load_variable_config has started")
         if open_file == "yes":
@@ -1781,6 +1833,9 @@ class Config(QWidget, Ui_Config):
             self.thumb.message_received("Error reading file",f"""One or more of the files selected is not formatted correctly:<br><br>{os.linesep.join([self.configs[b]['path'] for b in self.baddies])}<br><br>Please refer to the <a href="https://github.com/">documentation</a> for structuring your data.""") 
 
     def load_variable_config(self):
+        """
+        Load the variable_config file as a dataframe, populate self.pleth.breath_df with the list values in the "Column" column of the dataframe, populate self.variable_table (TableWidget) with a row for each variable in the variable_config dataframe, and load the custom settings.
+        """
         print("loading variable config")
         if self.configs["variable_config"]["path"].endswith(".xlsx"):
             xl = pd.read_excel(self.configs["variable_config"]["path"])
@@ -1805,6 +1860,9 @@ class Config(QWidget, Ui_Config):
         self.load_custom_config()
 
     def load_custom_config(self):
+        """
+        Populate Custom.custom_table based on the dependent variables selected by the user according to the dataframe derived from the variable config .csv file the user selected. 
+        """
         print("loading custom config")
         for p in self.additional_dict:
             p.setCurrentText("None")
@@ -1828,6 +1886,9 @@ class Config(QWidget, Ui_Config):
         self.pleth.c.save_custom()
         
     def load_graph_config(self):
+        """
+        Populate the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes with the variables selected as independent or covariate according to the variable_config .csv file; if there is no variable_config file, then populate those comboBoxes with the variables in the dataframe read from the graph_config file and set the comboBoxes current text.
+        """
         print("loading graph config")
         gdf = pd.read_csv(self.configs["graph_config"]["path"], index_col=False)
         if "variable_config" in self.goodies:
@@ -1861,6 +1922,9 @@ class Config(QWidget, Ui_Config):
             
 
     def load_other_config(self):
+        """
+        Set the current text of the feature plots comboBox according to the other_config .csv file loaded and populate self.loop_table with the contents of the dataframe derived from the other_config .csv file.
+        """
         print("loading other config")
         odf = pd.read_csv(self.configs["other_config"]['path'], index_col=False)
         self.feature_combo.setCurrentText("None")
@@ -1900,6 +1964,9 @@ class Config(QWidget, Ui_Config):
                         print(traceback.format_exc())
 
     def checkable_ind(self,state):
+        """
+        Change the RadioButton status for every column in the selected rows so that only the "Independent" RadioButton is set as checked.
+        """
         try:
             print("true")
             for selected_rows in self.variable_table.selectedRanges():
@@ -1909,6 +1976,9 @@ class Config(QWidget, Ui_Config):
             print("nope")
         # 
     def checkable_dep(self):
+        """
+        Change the RadioButton status for every column in the selected rows so that only the "Dependent" RadioButton is set as checked.
+        """
         try:
             for selected_rows in self.variable_table.selectedRanges():
                 for row in range(selected_rows.topRow(),selected_rows.bottomRow()+1):
@@ -1917,6 +1987,9 @@ class Config(QWidget, Ui_Config):
             print("nope")
         
     def checkable_cov(self):
+        """
+        Change the RadioButton status for every column in the selected rows so that only the "Covariate" RadioButton is set as checked.
+        """
         try:
             for selected_rows in self.variable_table.selectedRanges():
                 for row in range(selected_rows.topRow(),selected_rows.bottomRow()+1):
@@ -1925,6 +1998,9 @@ class Config(QWidget, Ui_Config):
             print("nope")
 
     def checkable_ign(self):
+        """
+        Change the RadioButton status for every column in the selected rows so that only the "Ignore" RadioButton is set as checked.
+        """
         try:
             for selected_rows in self.variable_table.selectedRanges():
                 for row in range(selected_rows.topRow(),selected_rows.bottomRow()+1):
@@ -3442,3 +3518,5 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             reply = QMessageBox.information(self, 'STAGG scripts not found', 'BASSPRO-STAGG cannot find the scripts for STAGG. Check the BASSPRO-STAGG folder for missing files or directories.', QMessageBox.Ok, QMessageBox.Ok)
 
 #endregion
+
+# %%
