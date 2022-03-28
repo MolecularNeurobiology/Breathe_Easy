@@ -68,9 +68,9 @@ class Annot(QMainWindow, Ui_Annot):
         Parameters
         --------
         Plethysmography: Class
-            The Annot class inherits from the Plethysmography class.
+            The Annot class inherits Plethysmography's methods, attributes, and widgets.
         Ui_Annot: Class
-            The Annot class inherits its widgets and layouts from the Ui_Annot class.
+            The Annot class inherits its widgets and layouts of the Ui_Annot class.
 
         Outputs
         --------

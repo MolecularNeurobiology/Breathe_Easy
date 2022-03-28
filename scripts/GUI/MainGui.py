@@ -1,5 +1,6 @@
 #%%
 #region Libraries
+from typing import Callable
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -38,15 +39,28 @@ from bs4 import BeautifulSoup as bs
 #%%
 #region classes
 class AlignDelegate(QStyledItemDelegate):
+    """
+    This class assigns delegates to Config.variable_table and Config.loop_table TableWidgets and and centers the delegate items.
+    """
     def initStyleOption(self, option, index):
         super(AlignDelegate, self).initStyleOption(option, index)
         option.displayAlignment = Qt.AlignCenter
 
 class Thinbass(QDialog,Ui_Thinbass):
     """
-    Specialized dialog to help protect people from themselves. Spawned when the user has metadata and BASSPRO settings files as well as JSON files - either can be a source for building the variable list that populates the STAGG Settings subGUI.
+    This class is used when the user has metadata and BASSPRO settings files as well as JSON files - either can be a source for building the variable list that populates the STAGG Settings subGUI. This dialog prompts them to decide which source they'd like to use.
     """
     def __init__(self,Plethysmography):
+        """"
+        Instantiate the Thinbass class in the method Plethysmography.show_variable_config().
+
+        Parameters
+        --------
+        Ui_Thinbass: class
+            Thinbass inherits widgets and layouts of Ui_Thinbass.
+        Plethysmography: class
+            Thinbass inherits Plethysmography's methods, attributes, and widgets.
+        """
         super(Thinbass, self).__init__()
         self.pleth = Plethysmography
         self.setupUi(self)
@@ -54,11 +68,39 @@ class Thinbass(QDialog,Ui_Thinbass):
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     
     def settings(self):
+        """
+        Populate Config.variable_table and the comboBoxes in Config.loop_table with the list of variables (Plethysmography.breath_df) compiled from BASSPRO settings and metadata and show the STAGG settings subGUI.
+
+        Parameters
+        --------
+        Plethysmography: class
+            Thinbass inherits Plethysmography's methods, attributes, and widgets.
+        Plethysmography.Config: class
+            Thinbass inherits Config methods, attributes, and widget via its Plethysmography inheritance. Config defines the STAGG settings subGUI.
+        Plethysmography.Config.variable_table: QTableWidget
+            This TableWidget is defined in the Config class, displayed in the STAGG settings subGUI, and populated with rows based on the list of variables (Plethysmography.breath_df). 
+
+        Outputs
+        --------
+        Plethysmography.n: int
+            This integer is incremented when variables are given duplicate names and appended to the existing variable's name so that the edited variable retains the user's edits.
+        Plethysmography.Config.variable_table: QTableWidget
+            cellChanged signals are assigned to the TableWidgets cells for two slots: Plethysmography.Config.no_duplicates() and Plethysmography.Config.update_loop().
+        
+        Outcomes
+        --------
+        Plethysmography.test_configuration()
+            This Plethysmography method ensures that the file paths that populate the attributes required to show the STAGG settings subGUI exist and their contents are accessible, and provide feedback to the user on what is missing if anything.
+        Plethysmography.variable_configuration()
+            This Plethysmography method populates self.buttonDict_variable with widgets and text and populates Config.variable_table with the contents of self.buttonDict_variable.
+        Plethysmography.Config.show()
+            This Plethysmography method displays the STAGG settings subGUI.
+        """
         print("thinbass.settings()")
         self.pleth.test_configuration()
         try:
             self.pleth.variable_configuration()
-            self.n = 0
+            self.pleth.n = 0
             self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.no_duplicates)
             self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.update_loop)
         except Exception as e:
@@ -67,6 +109,37 @@ class Thinbass(QDialog,Ui_Thinbass):
         self.pleth.v.show()
     
     def output(self):
+        # This method was written before we developed the means to accept .RData files are STAGG input. We need to add functionality that checks to make sure that Plethysmography.stagg_list[0] is actually a JSON file and not an .RData file and nexts until it finds one.
+        """
+        Populate Config.variable_table and the comboBoxes in Config.loop_table with the list of variables (Plethysmography.breath_df) compiled from BASSPRO output JSON file and show the STAGG settings subGUI.
+
+        Parameters
+        --------
+        Plethysmography: class
+            Thinbass inherits Plethysmography's methods, attributes, and widgets.
+        Plethysmography.Config: class
+            Thinbass inherits Config methods, attributes, and widget via its Plethysmography inheritance. Config defines the STAGG settings subGUI.
+        Plethysmography.Config.variable_table: QTableWidget
+            This TableWidget is defined in the Config class, displayed in the STAGG settings subGUI, and populated with rows based on the list of variables (Plethysmography.breath_df). 
+
+        Outputs
+        --------
+        Plethysmography.breath_df: list
+            This Plethysmography class attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file. Thinbass.output() populates Plethysmography.breath_df using the third option.
+        Pletheysmography.stagg_list: list
+            The list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
+        Plethysmography.n: int
+            This integer is incremented when variables are given duplicate names and appended to the existing variable's name so that the edited variable retains the user's edits.
+        Plethysmography.Config.variable_table: QTableWidget
+            cellChanged signals are assigned to the TableWidgets cells for two slots: Plethysmography.Config.no_duplicates() and Plethysmography.Config.update_loop().
+        
+        Outcomes
+        --------
+        Plethysmography.variable_configuration()
+            This Plethysmography method populates self.buttonDict_variable with widgets and text and populates Config.variable_table with the contents of self.buttonDict_variable.
+        Plethysmography.Config.show()
+            This Plethysmography method displays the STAGG settings subGUI.
+        """
         print("thinbass.output()")
         try:
             with open(self.pleth.stagg_list[0]) as first_json:
@@ -90,15 +163,31 @@ class Thinbass(QDialog,Ui_Thinbass):
 #region Thumbass
 class Thumbass(QDialog, Ui_Thumbass):
     """
-    Standard dialog to help protect people from themselves.
+    This class defines a simple dialog that displays information to the user.
     """
     def __init__(self,Plethysmography):
+        """
+        Instantiate the Thumbass class.
+
+        Parameters
+        --------
+        Plethysmography: class
+            Thinbass inherits Plethysmography's methods, attributes, and widgets.
+        Ui_Thumbass: class
+            Thinbass inherits widgets and layouts from the Ui_Thumbass class 
+    
+        Outputs
+        --------
+        Thumbass: QDialog
+            The Dialog displays the output of Thumbass.message_received() and its window title is the text of the "title" argument of Thumbass.message_received().
+        Thumbass.label: QLabel
+            The label displays the text provided as the argument "words" of Thumbass.message_received().
+        """
         super(Thumbass, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Nailed it.")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.label.setOpenExternalLinks(True)
-        self.pleth = Plethysmography
     
     def message_received(self,title,words):
         self.setWindowTitle(title)
@@ -108,42 +197,97 @@ class Thumbass(QDialog, Ui_Thumbass):
 #region Thorbass
 class Thorbass(QDialog,Ui_Thorbass):
     """
-    Specialized dialog to help protect people from themselves when opening the STAGG Settings subGUI or trying to merge in the Manual BASSPRO Settings subGUI.
+    This class defines a specialized dialog that prompts the user to provide the necessary input for the function they are trying to use. It's instantiated by Manual.manual_merge() or Plethysmography.show_variable_config().
     """
     def __init__(self,Plethysmography):
+        """"
+        Instantiate the Thorbass class.
+
+        Parameters
+        --------
+        Ui_Thorbass: class
+            Thorbass inherits widgets and layouts of Ui_Thorbass.
+        Plethysmography: class
+            Thorbass inherits Plethysmography's methods, attributes, and widgets.
+        
+        Outputs
+        --------
+        self.pleth: class
+            Shorthand for the Plethysmography class.
+        """
         super(Thorbass, self).__init__()
         self.pleth = Plethysmography
         self.setupUi(self)
         self.setWindowTitle("Nailed it.")
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
     
-    def message_received(self,title,words,new,opens):
+    def message_received(self, title: str, words: str, new: callable, opens: callable):
+        """
+        Set the Dialog's window title as the text of "title", set the text of Label as the text of "words", assign the clicked signal and slot defined by "new" to Thorbass.new_button, and assign the clicked signal and slot defined by "opens" to Thorbass.open_button.
+
+        Parameters
+        --------
+        title: str
+            This argument is a string intended to be the Dialog's window title.
+        words: str
+            This argument is a string intended to be set as Thorbass.label's text.
+        new: callable
+            This argument is a callable to either Manual.new_manual_file() or Plethysmography.new_variable_config().
+        opens: callable
+            This argument is a callable to either Manual.open_manual_file() or Plethysmography.get_variable_config().
+
+
+        Outputs
+        --------
+        Thorbass.label: QLabel
+            The label displays the text provided as the argument "words" of Thorbass.message_received().
+        Thorbass.new_button: QPushButton
+            This PushButton is assigned the clicked signal and the slot defined by "new".
+        Thorbass.open_button: QPushButton
+            This PushButton is assigned the clicked signal and the slot defined by "opens".
+        """
         print("thorbass.message_received()")
         self.setWindowTitle(title)
         self.label.setText(words)
         self.new_button.clicked.connect(new)
         self.open_button.clicked.connect(opens)
-
-    def new_variable_config(self):
-        print("thorbass.new_variable_config()")
-        self.pleth.new_variable_config()
-    
-    def get_variable_config(self):
-        print("thorbass.get_variable_config()")
-        self.pleth.get_variable_config()
-    
-    def new_manual_file(self):
-        print("thorbass.new_manual_file()")
-        self.pleth.m.new_manual_file()
-
-    def load_manual_file(self):
-        print("thorbass.load_manual_file()")
-        self.pleth.m.load_manual_file()
 #endregion
 
 #region class Basic Parameters
 class Basic(QWidget, Ui_Basic):
+    """
+    The Basic class defines the the properties, attributes, and methods used by the basic BASSPRO settings subGUI.
+
+    Parameters
+    --------
+    QWidget: class
+        The Basic class inherits properties and methods from the QWidget class. 
+    Ui_Basic: class
+        The Basic class inherits widgets and layouts defined in the Ui_Basic class.
+    """
     def __init__(self,Plethysmography):
+        """
+        Instantiate the Basic class.
+
+        Parameters
+        --------
+        Plethysmography: class
+            The Basic class inherits properties, attributes and methods of the Plethysmography class.
+        
+        Outputs
+        --------
+        self.pleth: class
+            Shorthand for the Plethysmography class.
+        self.path: str
+            This attribute is set as an empty string.
+
+        Outcomes
+        --------
+        self.setup_variables()
+            This method organizes widgets in dictionaries and assigns signals and slots to certain widgets.
+        self.setup_tabs()
+            This method populates the basic BASSPRO settings subGUI widgets with default values derived from Plethysmography.bc_config (breathcaller_config.json).
+        """
         super(Basic, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Basic BASSPRO settings")
@@ -154,6 +298,39 @@ class Basic(QWidget, Ui_Basic):
         self.path = ""
         
     def setup_variables(self):
+        """
+        Organize widgets in dictionaries and assign signals and slots to relevant buttons.
+
+        Parameters
+        --------
+        Plethysmography.bc_config: dict
+            This Plethysmography class attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
+        self.{tab}_reference: QTextBrowser
+            These TextBrowsers display the definition, description, and default value of the user-selected setting. There is a TextBrowser for each of the first three tabs of the subGUI.
+        self.help_{setting}: QToolButton
+            These are buttons intended to provide helpful information to the user about the relevant setting.
+        self.lineEdit_{setting}: QLineEdit
+            These LineEdits widgets display the values of the basic settings. They are editable.
+        self.reset_{setting}: QToolButton
+            These ToolButtons revert the value of the setting displayed in the corresponding LineEdit to the default value stored in Plethysmography.bc_config.
+        
+        Outputs
+        --------
+        self.basic_dict: dict
+            This attribute stores the nested dictionary in Plethysmography.bc_config that contains the default basic BASSPRO settings.
+        self.widgy: dict
+            This dictionary relates the self.help_{setting} widgets with the appropriate TextBrowser.
+        self.lineEdits: dict
+            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
+        self.resets: list
+            This list makes it easier to iteratively assign signals and slots to all the self.reset_{setting} widgets.
+        self.help_{setting}: QToolButton
+            These buttons are assigned clicked signals and slotted for self.reference_event().
+        self.lineEdit_{setting}: QLineEdit
+            These LineEdits are assigned textChanged signals and slotted for self.update_table_event().
+        self.reset_{setting}: QToolButton
+            These buttons are assigned clicked signals and slotted for self.reset_event().
+        """
         print("basic.setup_variables()")
         self.basic_dict = self.pleth.bc_config['Dictionaries']['AP']['default']
         self.widgy = {self.basic_reference:[self.help_minTI,self.help_minPIF,self.help_minPEF,self.help_TTwin,self.help_SIGHwin,self.help_minAplTT,self.help_minApsTT],
@@ -217,7 +394,7 @@ class Basic(QWidget, Ui_Basic):
         for v in self.widgy.values():
             for vv in v:
                 vv.clicked.connect(self.reference_event)
-                
+        
         for r in self.resets:
             r.clicked.connect(self.reset_event)
         
@@ -225,11 +402,36 @@ class Basic(QWidget, Ui_Basic):
             l.textChanged.connect(self.update_table_event)
 
     def setup_tabs(self):
+        """
+        Populate widgets in each tab with appropriate values for the default basic BASSPRO settings stored in self.basic_dict.
+
+        Parameters
+        --------
+        self.lineEdits: dict
+            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
+        self.basic_dict: dict
+            This attribute stores the nested dictionary in Plethysmography.bc_config that contains the default basic BASSPRO settings.
+        Plethysmography.basicap: str
+            The path of the user-selected basic BASSPRO settings file.
+        self.view_tab: QTableWidget
+            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
+        
+        Outputs
+        --------
+        self.lineEdit_{setting}: QLineEdit
+            The LineEdits' values are iteratively set as the values of the corresponding keys in self.basic_dict.
+        self.basic_df: Dataframe
+            This attribute stores a dataframe derived either from self.basic_dict or from the .csv file indicated by the user-selected file path (self.basicap).
+        
+        Outcomes
+        --------
+        self.populate_table()
+            This method populates self.view_tab (TableWidget) with the self.basic_df dataframe.
+        """
         print("basic.setup_tabs()")
         # Populate lineEdit widgets with default basic parameter values from breathcaller configuration file:
-        self.basic_dict = self.pleth.bc_config['Dictionaries']['AP']['default']
         for widget in self.lineEdits:
-            widget.setText(str(self.pleth.bc_config['Dictionaries']['AP']['default'][self.lineEdits[widget]]))
+            widget.setText(str(self.basic_dict[self.lineEdits[widget]]))
         if self.pleth.basicap != "":
             if Path(self.pleth.basicap).exists():
                 self.basic_df = pd.read_csv(self.pleth.basicap)
@@ -240,25 +442,52 @@ class Basic(QWidget, Ui_Basic):
         self.populate_table(self.basic_df,self.view_tab)
     
     def reference_event(self):
+        """
+        Respond to the signal emitted by the self.help_{setting} ToolButton clicked by the user by calling self.populate_reference(self.sender.objectName()) to populate the appropriate TextBrowser with the definition, description, and default value of corresponding setting.
+        """
         sbutton = self.sender()
         self.populate_reference(sbutton.objectName())
     
     def reset_event(self):
+        """
+        Respond to the signal emitted by the self.reset_{setting} ToolButton clicked by the user by calling self.reset_parameters(self.sender.objectName()) to revert the LineEdit value to the default value in the default basic BASSPRO settings dictionary (self.basic_dict).
+        """
         sbutton = self.sender()
         self.reset_parameter(sbutton.objectName())
     
     def update_table_event(self):
+        """
+        Respond to the signal emitted by the self.lineEdit_{setting} LineEdit edited by the user by calling self.update_table(self.sender.objectName()) to update self.view_tab to reflect changes made to LineEdits in other tabs.
+        """
         sbutton = self.sender()
         self.update_table(sbutton.objectName())
 
-    def populate_reference(self,butt):
+    def populate_reference(self,buttoned):
+        """
+        Populate the appropriate reference TextBrowser with the definition, description, and default values of the appropriate setting as indicated by the suffix of the ToolButton's objectName(), e.g. "help_{setting}" from Plethysmography.rc_config (reference_config.json).
+        """
         for k,v in self.widgy.items():
             for vv in v:
-                if vv.objectName() == str(butt):
-                    k.setPlainText(self.pleth.rc_config['References']['Definitions'][butt.replace("help_","")])
+                if vv.objectName() == str(buttoned):
+                    k.setPlainText(self.pleth.rc_config['References']['Definitions'][buttoned.replace("help_","")])
                     k.setOpenExternalLinks(True)
    
     def populate_table(self,frame,table):
+        """
+        Populate self.view_tab (TableWidget) with the self.basic_df dataframe.
+
+        Parameters
+        --------
+        frame: Dataframe
+            This variable refers to the self.basic_df dataframe.
+        table: QTableWidget
+            This variable refers to self.view_tab (TableWidget).
+
+        Outputs
+        --------
+        self.view_tab: QTableWidget
+            The TableWidget is populated by the contents of the self.basic_df dataframe, assigned cellChanged signals slotted to self.update_tabs, and cell dimensions adjusted to accommodate the text.
+        """
         print("basic.populate_table()")
         # Populate tablewidgets with views of uploaded csv. Currently editable.
         table.setColumnCount(len(frame.columns))
@@ -272,8 +501,26 @@ class Basic(QWidget, Ui_Basic):
         self.view_tab.resizeColumnsToContents()
         self.view_tab.resizeRowsToContents()
 
-    def update_table(self,donor):
+    def update_table(self, donor: QObject.objectName):
+        """
+        Update self.view_tab (TableWidget) to reflect changes to LineEdits.
+
+        Parameters
+        --------
+        donor: QObject.objectName
+            This variable is the objectName of the LineEdit that emitted the signal self.update_table_event that called this method. Its suffix is used to identify the appropriate cell in self.view_tab (TableWidget).
+        self.lineEdits: dict
+            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
+        self.view_tab: QTableWidget
+            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
+
+        Outputs
+        --------
+        self.view_tab: QTableWidget
+            The cell that contains the value of the setting that was updated by the user editing a LineEdit is updated to reflect the edit.
+        """
         print("basic.update_table()")
+        # The first loop grabs the widget with the text we need because donor is passed to this method as a QObject.objectName(), not the actual object.
         for l in self.lineEdits:
             if donor == l.objectName():
                 d = l
@@ -282,6 +529,21 @@ class Basic(QWidget, Ui_Basic):
                 self.view_tab.item(row,1).setText(d.text())
         
     def update_tabs(self):
+        """
+        Update the LineEdits to reflect changes to self.view_tab (TableWidget).
+
+        Parameters
+        --------
+        self.view_tab: QTableWidget
+            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
+        self.lineEdits: dict
+            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
+        
+        Outputs
+        --------
+        self.lineEdit_{settings}: QLineEdit
+            The LineEdit whose objectName suffix matches the setting that was edited by the user in self.view_tab (TableWidget) is updated to reflect the edit.
+        """
         print("basic.update_tabs()")
         for row in range(self.view_tab.rowCount()):
             for l in self.lineEdits:
@@ -289,12 +551,42 @@ class Basic(QWidget, Ui_Basic):
                     l.setText(self.view_tab.item(row,1).text())
 
     def reset_parameter(self,butts):
+        """
+        Revert the settings to its corresponding default value in the basic BASSPRO settings stored in the self.basic_dict.
+
+        Parameters
+        --------
+        self.lineEdits: dict
+            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
+        self.basic_df: Dataframe
+            This attribute stores a dataframe derived either from self.basic_dict or from the .csv file indicated by the user-selected file path (self.basicap).
+
+        Outputs
+        --------
+        self.lineEdit_{settings}: QLineEdit
+            The LineEdit whose objectName suffix matches the setting that was edited by the user in self.view_tab (TableWidget) is updated to reflect the edit.
+        """
         print("basic.reset_parameter()")
         for widget in self.lineEdits:
             if widget.objectName().replace("lineEdit_","") == str(butts).replace("reset_",""):
                 widget.setText(str(self.basic_dict[self.lineEdits[widget]]))
 
     def get_parameter(self):
+        """
+        Scrape the values of the LineEdits to update the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config.
+
+        Parameters
+        --------
+        Plethysmography.bc_config: dict
+            This attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
+        self.lineEdits: dict
+            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
+
+        Outputs
+        --------
+        self.basic_df: Dataframe
+            This attribute stores a dataframe made from the "current" dictionary that was updated with the values of the corresponding LineEdits.
+        """
         print("basic.get_parameter()")
         for k,v in self.lineEdits.items():
             self.pleth.bc_config['Dictionaries']['AP']['current'].update({v:k.text()})
@@ -302,20 +594,56 @@ class Basic(QWidget, Ui_Basic):
         self.basic_df.columns = ['Parameter','Setting']
     
     def save_checker(self,folder,title):
+        """
+        Check the existence of the file being saved and the directory it's being saved to - if an output folder has not been selected, prompt the user to save as via FileDialog. 
+
+        Parameters
+        --------
+        folder: str
+            The directory in which the .csv file for basic BASSPRO settings will be saved.
+        title: str
+            The name of the file being saved.
+        path: str
+            This variable stores the path of the file the user saved via the FileDialog.
+        
+        Outputs
+        --------
+        self.path: str
+            The path of the file being saved.
+        """
         print("basic.save_checker()")
         if folder == "":
-            path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}", ".csv(*.csv))")[0]
+            path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics", ".csv(*.csv))")[0]
             if os.path.exists(path):
                 self.path = path
         else:
             self.path = os.path.join(folder, f"{title}.csv")
     
     def saveas_basic_path(self):
+        """
+        Call self.get_parameter(), prompt the user to save as via FileDialog, and then call self.actual_saving().
+
+        Parameters
+        --------
+        path: str
+            The file path selected by the user via FileDialog.
+        
+        Outputs
+        --------
+        self.path: str
+            This attribute stores the file path selected by the user via FileDialog.
+
+        Outcomes
+        --------
+        self.get_parameter()
+            Scrape the values of the LineEdits to update the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config.
+        self.actual_saving()
+            Write self.basic_df dataframe to a .csv file, dump the nested dictionary stored in Plethysmography.bc_config to breathcaller_config.json to save changes made to the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config, and add the file path self.basicap to the ListWidget self.sections_list for display in the main GUI.
+        """
         print("basic.saveas_basic_path()")
         self.get_parameter()
-        path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}", ".csv(*.csv))")[0]
+        path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics", ".csv(*.csv))")[0]
         try:
-            print(path)
             self.path = path
             self.actual_saving()
         except Exception as e:
@@ -324,6 +652,28 @@ class Basic(QWidget, Ui_Basic):
             print("saveas_basic_path didn't work")
 
     def save_basic_path(self):
+        """
+        Call self.get_parameter to update "current" dictionary in Plethysmography.bc_config, check the existence of a user-selected output directory - if an output folder has not been selected, call self.saveas_basic_path() to prompt the user to save as via FileDialog, check the existance of the file path, and call self.actual_saving(). 
+
+        Parameters
+        --------
+        path: str
+            This variable stores the file path automatically generated based on the user-selected output directory.
+        
+        Outputs
+        --------
+        self.path: str
+            This attribute stores the file path automatically generated based on the user-selected output directory.
+        
+        Outcomes
+        --------
+        self.get_parameter()
+            Scrape the values of the LineEdits to update the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config.
+        self.saveas_basic_path()
+            Call self.get_parameter(), prompt the user to save as via FileDialog, and then call self.actual_saving().
+        self.actual_saving()
+            Write self.basic_df dataframe to a .csv file, dump the nested dictionary stored in Plethysmography.bc_config to breathcaller_config.json to save changes made to the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config, and add the file path self.basicap to the ListWidget self.sections_list for display in the main GUI.
+        """
         print("basic.save_basic_path()")
         self.get_parameter()
         if self.pleth.mothership == "":
@@ -337,6 +687,38 @@ class Basic(QWidget, Ui_Basic):
             self.actual_saving()
     
     def actual_saving(self):
+        """
+        Write self.basic_df dataframe to a .csv file, dump the nested dictionary stored in Plethysmography.bc_config to breathcaller_config.json to save changes made to the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config, and add the file path self.basicap to the ListWidget self.sections_list for display in the main GUI.
+
+        Parameters
+        --------
+        self.path: str
+            This attribute stores the file path automatically generated based on the user-selected output directory.
+        Plethysmography.basicap: str
+            This Plethysmography class attribute stores the file path of the .csv file that the basic BASSPRO settings are saved to.
+        self.basic_df: Dataframe
+            This attribute stores a dataframe made from the "current" dictionary that was updated with the values of the corresponding LineEdits.
+        Plethysmography.bc_config: dict
+            This Plethysmography class attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
+        Plethysmography.sections_list: QListWidget
+            This Plethysmography class ListWidget displays the file paths of the .csv files defining the BASSPRO settings.
+        Plethysmography.hangar: QTextEdit
+            This TextEdit displays feedback on user activity and feedback on BASSPRO or STAGG processing.
+
+        Outputs
+        --------
+        Plethysmography.basicap: str
+            This Plethysmography class attribute stores the file path of the .csv file that the basic BASSPRO settings are saved to.
+        Plethysmography.sections_list: QListWidget
+            This Plethysmography class ListWidget is updated to display the path to the basic BASSPRO settings .csv file.
+        Plethysmography.hangar: QTextEdit
+            This TextEdit is updated to describe the user's activity.
+        
+        basic.csv: CSV file
+            The .csv file that the basic BASSPRO settings are saved to.
+        breathcaller_config.json: JSON file
+            The JSON file that the updated Plethysmography.bc_config dictionary is dumped to.
+        """
         print("basic.actual_saving_basic()")
         self.pleth.basicap = self.path
         # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
@@ -349,8 +731,6 @@ class Basic(QWidget, Ui_Basic):
         with open(f'{Path(__file__).parent}/breathcaller_config.json','w') as bconfig_file:
             json.dump(self.pleth.bc_config,bconfig_file)
         
-        if self.pleth.breath_df != []:
-            self.pleth.update_breath_df("basic parameters")
         if self.pleth.basicap != "":
         # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
             for item in self.pleth.sections_list.findItems("basic",Qt.MatchContains):
@@ -362,43 +742,119 @@ class Basic(QWidget, Ui_Basic):
             self.pleth.hangar.append("BASSPRO basic settings files saved.")
 
     def load_basic_file(self):
+        """
+        Prompt the user to indicate the location of a previously made file - either .csv, .xlsx, or .json formatted file - detailing the basic BASSPRO settings of a previous run, populate self.basic_df with a dataframe from that file, call self.populate_table(), and warn the user if they chose files in formats that are not accepted and ask if they would like to select a different file.
+
+        Parameters
+        --------
+        file: QFileDialog
+            This variable stores the path of the file the user selected via the FileDialog.
+        yes: int
+            This variable is used to indicate whether or not self.basic_df was successfully populated with a dataframe from the user-selected file.
+        Plethysmography.mothership: str
+            The path to the user-selected directory for all output.
+        self.basic_df: Dataframe
+            This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
+        self.view_tab: QTableWidget
+            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+
+        Outputs
+        --------
+        self.basic_df: Dataframe
+            This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
+        self.view_tab: QTableWidget
+            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
+        
+        Outcomes
+        --------
+        self.populate_table()
+            Populate self.view_tab (TableWidget) with the self.basic_df dataframe.
+        self.load_basic_file()
+            Prompt the user to indicate the location of a previously made file - either .csv, .xlsx, or .json formatted file - detailing the basic BASSPRO settings of a previous run, populate self.basic_df with a dataframe from that file, call self.populate_table(), and warn the user if they chose files in formats that are not accepted and ask if they would like to select a different file.
+        """
         print("basic.load_basic_file()")
-
         # Opens open file dialog
+        yes = 0
         file = QFileDialog.getOpenFileName(self, 'Select breathcaller configuration file to edit basic parameters:', str(self.pleth.mothership))
-
-        # If you the file you chose sucks, the GUI won't crap out.
-        try:
-            if Path(file[0]).suffix == ".json":
-                with open(file[0]) as config_file:
-                    basic_json = json.load(config_file)
-                self.basic_df = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
-                self.basic_df.columns = ['Parameter','Setting']
-            elif Path(file[0]).suffix == ".csv":
-                self.basic_df = pd.read_csv(file[0])
-            elif Path(file[0]).suffix == ".xlsx":
-                self.basic_df = pd.read_excel(file[0])
-            self.populate_table(self.basic_df,self.view_tab)
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-            reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file is not in the correct format. Only .csv, .xlsx, or .JSON files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
-            if reply == QMessageBox.Ok:
-                self.load_basic_file()
+        if os.path.exists(file[0]):
+            try:
+                if Path(file[0]).suffix == ".json":
+                    with open(file[0]) as config_file:
+                        basic_json = json.load(config_file)
+                    self.basic_df = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
+                    self.basic_df.columns = ['Parameter','Setting']
+                    yes = 1
+                elif Path(file[0]).suffix == ".csv":
+                    self.basic_df = pd.read_csv(file[0])
+                    yes = 1
+                elif Path(file[0]).suffix == ".xlsx":
+                    self.basic_df = pd.read_excel(file[0])
+                    yes = 1
+                if yes == 1:
+                    self.populate_table(self.basic_df,self.view_tab)
+            except Exception as e:
+                print(f'{type(e).__name__}: {e}')
+                print(traceback.format_exc())
+                reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file is not in the correct format. Only .csv, .xlsx, or .JSON files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+                if reply == QMessageBox.Ok:
+                    self.load_basic_file()
         
 #endregion
 
 #region class Auto Sections
 class Auto(QWidget, Ui_Auto):
+    """
+    The Auto class defines the the properties, attributes, and methods used by the automated BASSPRO settings subGUI.
+
+    Parameters
+    --------
+    QWidget: class
+        The Basic class inherits properties and methods from the QWidget class. 
+    Ui_Auto: class
+        The Auto class inherits widgets and layouts defined in the Ui_Auto class.
+    """
     def __init__(self,Plethysmography):
+        """
+        Instantiate the Auto class.
+
+        Parameters
+        --------
+        Plethysmography: class
+            The Auto class inherits properties, attributes and methods of the Plethysmography class.
+        Plethysmography.bc_config: dict
+            This Plethysmography class attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
+        Plethysmography.rc_config: dict
+            This attribute is a shallow dictionary loaded from reference_config.json. It contains definitions, descriptions, and recommended values for every basic, manual, and automated BASSPRO setting.
+        self.{tab}_reference: QTextBrowser
+            These widgets display the definition, description, and default value of the user-selected setting. There is a TextBrowser for each of the first four tabs of the subGUI.
+        self.help_{setting}: QToolButton
+            These are buttons intended to provide helpful information to the user about the relevant setting.
+        self.auto_setting_combo: QComboBox
+            A comboBox that serves as a drop-down menu of the available experimental setups to choose the appropriate default settings.
+
+        Outputs
+        --------
+        self.pleth: class
+            Shorthand for the Plethysmography class.
+        self.refs: dict
+            This dictionary relates the self.help_{setting} ToolButtons with the appropriate self.{tab}_reference TextBrowser.
+        self.help_{setting}: QToolButton
+            These buttons are assigned clicked signals and slotted for self.reference_event().
+        self.auto_setting_combo: QComboBox
+            A comboBox that is populated with the experimental setups for which the GUI has default automated BASSPRO settings. These experimental setups are sourced from the keys of the "default" dictionary nested in the "Auto Settings" dictionary from Plethysmography.bc_config.
+        
+        Outcomes
+        --------
+        self.choose_dict()
+            This method populates the automated BASSPRO settings subGUI widgets with default values derived from Plethysmography.bc_config (breathcaller_config.json).
+        """
         super(Auto, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Automated sections file creation")
         self.pleth = Plethysmography
         self.isMaximized()
-        # Grab the relevant labels dicionary from the reference config json file to provide the relationships between tabs, sections, and widgets so that one functions can create the lineEdit tables throughout the subGUI. However, this renders the list order of the labels within the dictionary (the value of the key in the lowest level of the nested dictionary is a list) as the sole determinant of correct order when populating. The labels - OH I COULD MAKE THE LABELS DYNAMIC TOOOOOOO, eh later - no, no I should do that, balls, well I already have the dictionary of actual labels so YES all right this is happening. Ok, so scratch that warning, I'm adding the labels to the widgets so that everything and their grandmother will populate dynamically with the exception of the summary tab table and the reference table. Score. Ugh, but how do I make it so that the labels don't spawn OH I know. Nope, nope you also have the reference buttons, ok do this later, everything will break and explode and you need to check shit off your list before you can play and destroy.
-        # So in the end, because the widgets are dynamically populated without referring to the order of the labels that are already statically in place, the matching of labels and values relies solely on the whimsy of list order in the dictionary. Ideally, I will return to this situation and incorporate both labels and the ref buttons into the dynamism so that everything relies on a single simple function and an outrageously convoluted dictionary. :D Or should it be many small functions and a simple dictionary?
-        self.widgy = self.pleth.rc_config['References']['Widget Labels']['Auto']
 
         self.refs = {self.sections_reference:[self.help_key,self.help_cal_seg,self.help_auto_ind_include,self.help_auto_ind_injection,self.help_startpoint,self.help_midpoint,self.help_endpoint],
         self.cal_reference:[self.help_auto_ind_cal,self.help_auto_ind_gas_cal,self.help_cal_co2,self.help_cal_o2],
@@ -413,6 +869,26 @@ class Auto(QWidget, Ui_Auto):
         self.choose_dict()
 
     def choose_dict(self):
+        """
+        This method populates the automated BASSPRO settings subGUI widgets with default values derived from Plethysmography.bc_config (breathcaller_config.json).
+
+        Parameters
+        --------
+        self.auto_setting_combo: QComboBox
+            A comboBox that is populated with the experimental setups for which the GUI has default automated BASSPRO settings. These experimental setups are sourced from the keys of the "default" dictionary nested in the "Auto Settings" dictionary from Plethysmography.bc_config.
+        
+        Outputs
+        --------
+        self.auto_dict: dict
+            This attribute stores the nested dictionary in Plethysmography.bc_config that contains the default automated BASSPRO settings of multiple experimental setups.
+        self.frame: Dataframe
+            This attribute stores the dataframe converted from self.auto_dict.
+        
+        Outcomes
+        --------
+        self.setup_tabs()
+            This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (breathcaller_config.json).
+        """
         print("auto.choose_dict()")
         # Get the appropriate template based on user's choice of experimental condition:
         if self.auto_setting_combo.currentText() in self.pleth.bc_config['Dictionaries']['Auto Settings']['default'].keys():
@@ -424,6 +900,25 @@ class Auto(QWidget, Ui_Auto):
         self.setup_tabs()
 
     def setup_tabs(self):
+        """
+        This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (breathcaller_config.json).
+        
+        Parameters
+        --------
+        self.pleth.gui_config: dict
+            This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail.
+        self.frame: Dataframe
+            This attribute stores the dataframe converted from self.auto_dict.
+        self.{division}_table: QTableWidget
+            These TableWidgets display the automated BASSPRO settings is in the appropriate TableWidgets over multiple tabs.
+        self.view_tab: QTableWidget
+            The TableWidget displays the automated BASSPRO settings in one table on the fifth tab.
+        
+        Outcomes
+        --------
+        self.populate_table(frame,table)
+            This method populates the self.{division}_table widgets with the appropriate portions of the self.frame dataframe based on the relationship of particular rows to particular divisions as defined in the "Settings Names" dictionary within self.pleth.gui_config.
+        """
         print("auto.setup_tabs()")
         # Populate table of threshold tab:
         auto_labels = self.pleth.gui_config['Dictionaries']['Settings Names']['Auto Settings']
@@ -444,34 +939,37 @@ class Auto(QWidget, Ui_Auto):
         self.populate_table(self.frame,self.view_tab)
     
     def reference_event(self):
+        """
+        Respond to the signal emitted by the self.help_{setting} ToolButton clicked by the user by calling self.populate_reference(self.sender.objectName()) to populate the appropriate TextBrowser with the definition, description, and default value of corresponding setting.
+        """
         sbutton = self.sender()
         self.populate_reference(sbutton.objectName())
-    
-    def update_table_event(self):
-        sbutton = self.sender()
-        self.update_table(sbutton.objectName())
 
-    def update_table(self,donor):
-        for l in self.lineEdits:
-            if donor == l.objectName():
-                d = l
-        for row in range(self.view_tab.rowCount()):
-            if self.view_tab.item(row,0).text() == donor.replace("lineEdit_",""):
-                self.view_tab.item(row,1).setText(d.text())
-        
-    def update_tabs(self):
-        for row in range(self.view_tab.rowCount()):
-            for l in self.lineEdits:
-                if self.view_tab.item(row,0).text() == l.objectName().replace("lineEdit_",""):
-                    l.setText(self.view_tab.item(row,1).text())
-
-    def populate_reference(self,butt):
+    def populate_reference(self,buttoned):
+        """
+        Populate the appropriate reference TextBrowser with the definition, description, and default values of the appropriate setting as indicated by the suffix of the ToolButton's objectName(), e.g. "help_{setting}" from Plethysmography.rc_config (reference_config.json).
+        """
         for k,v in self.refs.items():
             for vv in v:
-                if vv.objectName() == str(butt):
-                    k.setPlainText(self.pleth.rc_config['References']['Definitions'][butt.replace("help_","")])
+                if vv.objectName() == str(buttoned):
+                    k.setPlainText(self.pleth.rc_config['References']['Definitions'][buttoned.replace("help_","")])
    
     def populate_table(self,frame,table):
+        """
+        This method populates the self.{division}_table widgets with the appropriate portions of the self.frame dataframe based on the relationship of particular rows to particular divisions as defined in the "Settings Names" dictionary within self.pleth.gui_config.
+
+        Parameters
+        --------
+        frame: Dataframe
+            This variable refers to the appropriate portion of the self.frame dataframe.
+        table: QTableWidget
+            This variable refers to the appropriate self.{division}_table.
+
+        Outputs
+        --------
+        self.{division}_table: QTableWidget
+            The TableWidget referred to by the argument "table" is populated with the appropriate settings from self.frame dataframe as contained in the argument "frame".
+        """
         print("auto.populate_table()")
         # Populate tablewidgets with views of uploaded csv. Currently editable.
         table.setColumnCount(len(frame.columns))
@@ -482,34 +980,53 @@ class Auto(QWidget, Ui_Auto):
         table.setHorizontalHeaderLabels(frame.columns)
         table.resizeColumnsToContents()
         table.resizeRowsToContents()
-    
-    def collate_dfs(self,table):
-        print("auto.collate_dfs()")
-        for row in range(table.rowCount()):
-            rows = []
-            for col in range(table.columnCount()):
-                if table.item(row,col) is not None:
-                    rows.append(table.item(row,col).text())
-                else:
-                    rows.append("")
 
     def save_as(self):
+        """
+        Prompt the user to select a file path to save the .csv file of the automated BASSPRO settings to.
+
+        Parameters
+        --------
+        path: str
+            This variable stores the file path selected by the user to which the .csv file of the automated BASSPRO settings wll be saved.
+
+        Outputs
+        --------
+        self.path: str
+            This attribute stores the file path.
+        
+        Outcomes
+        --------
+        self.save_auto_file()
+            This methods writes the contents of the self.view_tab TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
+        """
         print("auto.save_as()")
         path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
         if os.path.exists(path):
             self.path = path
             self.save_auto_file()
-
-    def save_checkerargs(self,folder,title):
-        print("auto.save_checkerargs()")
-        if folder == "":
-            path = QFileDialog.getSaveFileName(self, 'Save File', f"{title}", ".csv(*.csv))")[0]
-            if os.path.exists(path):
-                self.path = path
-        else:
-            self.path = os.path.join(folder, f"{title}.csv")
     
     def save_checker(self):
+        """
+        Ensure the existence of a user-selected output directory, prompt the user to select one if they have not, and call self.save_auto_file().
+
+        Parameters
+        --------
+        self.pleth.mothership: str
+            The path to the user-selected directory for all output.
+        path: str
+            This variable stores the file path selected by the user to which the .csv file of the automated BASSPRO settings wll be saved.
+
+        Outputs
+        --------
+        self.path: str
+            This attribute stores the file path.
+
+        Outcomes
+        --------
+        self.save_auto_file()
+            This methods writes the contents of the self.view_tab TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI.
+        """
         print("auto.save_checker()")
         if self.pleth.mothership == "":
             path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
@@ -521,6 +1038,36 @@ class Auto(QWidget, Ui_Auto):
             self.save_auto_file()
 
     def save_auto_file(self):
+        """
+        Write the contents of the self.view_tab TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, call self.pleth.update_breath_df(), and add self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
+
+        Parameters
+        --------
+        self.path: str
+            This attribute stores the file path selected by the user to which the .csv file of the automated BASSPRO settings wll be saved.
+        self.pleth.breath_df: list
+            This Plethysmography class attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
+        self.view_tab: QTableWidget
+            The TableWidget displays the automated BASSPRO settings in one table on the fifth tab.
+        self.pleth.autosections: str
+            This Plethysmography class attribute is either an empty string or stores a file path.
+
+        Outputs
+        --------
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+        self.pleth.autosections: str
+            This attribute is updated with self.path, the file path to the .csv file of automated BASSPRO settings.
+        self.pleth.sections_list: QListWidget
+            This Plethysmography class ListWidget displays the file paths of the .csv files defining the BASSPRO settings. It is updated to display self.pleth.autosections.
+        autosections.csv: CSV file
+            The .csv file that the automated BASSPRO settings are saved to.
+        
+        Outcomes
+        --------
+        self.update_breath_df()
+            This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the metadata.
+        """
         print("auto.save_auto_file()")
         self.pleth.autosections = self.path
         try:
@@ -543,6 +1090,7 @@ class Auto(QWidget, Ui_Auto):
                             else:
                                 coldata.append(item.text())
                         writer.writerow(coldata)
+            # This is ridiculous.
             auto = pd.read_csv(self.pleth.autosections)
             auto['Key'] = auto['Alias']
             auto.to_csv(self.pleth.autosections,index=False)
@@ -560,6 +1108,36 @@ class Auto(QWidget, Ui_Auto):
                 reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
 
     def load_auto_file(self):
+        """
+        Prompt the user to indicate the location of a previously made file - either .csv, .xlsx, or .json formatted file - detailing the basic BASSPRO settings of a previous run, populate self.basic_df with a dataframe from that file, call self.populate_table(), and warn the user if they chose files in formats that are not accepted and ask if they would like to select a different file.
+
+        Parameters
+        --------
+        file: QFileDialog
+            This variable stores the path of the file the user selected via the FileDialog.
+        yes: int
+            This variable is used to indicate whether or not self.basic_df was successfully populated with a dataframe from the user-selected file.
+        Plethysmography.mothership: str
+            The path to the user-selected directory for all output.
+        self.basic_df: Dataframe
+            This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
+        self.view_tab: QTableWidget
+            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+
+        Outputs
+        --------
+        self.basic_df: Dataframe
+            This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
+        self.view_tab: QTableWidget
+            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
+        
+        Outcomes
+        --------
+        self.setup_tabs()
+            This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (breathcaller_config.json).
+        """
         print("auto.load_auto_file()")
         # Opens open file dialog
         file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.mothership))
@@ -582,9 +1160,9 @@ class Manual(QWidget, Ui_Manual):
         Parameters
         --------
         Plethysmography: class
-            The Manual class inherits from the Plethysmography class.
+            The Manual class inherits Plethysmography's methods, attributes, and widgets.
         Ui_Manual: class
-            The Manual class inherits the widget and layouts of the manual BASSPRO settings subGUI from the Ui_Manual class.
+            The Manual class inherits the widget and layouts of the manual BASSPRO settings subGUI of the Ui_Manual class.
         
         Outputs
         --------
@@ -700,7 +1278,7 @@ class Manual(QWidget, Ui_Manual):
         Parameters
         --------
         self.preset_menu: QComboBox
-            A comboBox of the Manual class inherited from Ui_Manual that is populated with the experimental setups for which the GUI has default manual BASSPRO settings that will be concatenated with the user's manual selections of breaths to produce the final manual_sections.csv file. These experimental setups are sourced from thekeys of the "default" dictionary nested in the "Manual Settings" dictionary loaded from the breathcaller_config.json file.
+            A comboBox of the Manual class inherited from Ui_Manual that is populated with the experimental setups for which the GUI has default manual BASSPRO settings that will be concatenated with the user's manual selections of breaths to produce the final manual_sections.csv file. These experimental setups are sourced from the keys of the "default" dictionary nested in the "Manual Settings" dictionary loaded from the breathcaller_config.json file.
         self.pleth.bc_config: dict
             This Plethysmography class attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
         self.settings_view: QTableWidget
@@ -839,7 +1417,35 @@ class Manual(QWidget, Ui_Manual):
 
     def save_manual_file(self):
         """
-        Assign the file path determined in self.save_checker() to self.pleth.mansections (str), save self.manual_df dataframe as a .csv file to the file path location, populate self.pleth.sections_list (ListWidget) with the file path (self.pleth.mansections), and update self.breath_df (list).
+        Call self.save_check(), assign the file path determined in self.save_checker() to self.pleth.mansections (str), save self.manual_df dataframe as a .csv file to the file path location, populate self.pleth.sections_list (ListWidget) with the file path (self.pleth.mansections), and update self.breath_df (list).
+
+        Parameters
+        ---------
+        self.path: str
+            This variable stores the path of the file the user saved via the FileDialog in self.save_checker().
+        self.pleth.mansections: str
+            The path to the manual BASSPRO settings file. It is either an empty string or a file path.
+        self.pleth.breath_df: list
+            This Plethysmography class attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
+        self.manual_df: Dataframe
+            This attribute stores the dataframe formed by merging the dataframes of self.datapad and self.preset.
+
+        Outputs
+        --------
+        reply: QMessageBox
+            This specialized dialog communicates information to the user.
+        self.pleth.mansections: str
+            This attribute is updated with self.path, the file path to the .csv file of manual BASSPRO settings.
+        self.pleth.sections_list: QListWidget
+            This Plethysmography class ListWidget displays the file paths of the .csv files defining the BASSPRO settings. It is updated to display self.pleth.mansections.
+        
+        manual_sections.csv: CSV file
+            The .csv file that the manual BASSPRO settings are saved to.
+        
+        Outcomes
+        --------
+        self.update_breath_df()
+            This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the manual BASSPRO settings.
         """
         print("manual.save_manual_file()")
         try:
@@ -865,16 +1471,38 @@ class Manual(QWidget, Ui_Manual):
     def load_manual_file(self):
         """
         Read a user-selected, previously made manual BASSPRO settings .csv file, populate self.datapad, self.preset, and self.manual_df with their corresponding pieces of the dataframe, and populate the corresponding tables.
+
+        Parameters
+        --------
+        file: QFileDialog
+            This variable stores the paths of the file the user selected via the FileDialog.
+
+        Outputs
+        --------
+        self.manual_df: Dataframe
+            This attribute stores the dataframe derived from the user-selected .csv file storing previously made manual BASSPRO settings.
+        self.datapad: Dataframe
+            This attribute stores the dataframe produced by slicing self.manual_df dataframe to include only the columns with headers found in self.vals (list).
+        self.preset: Dataframe
+            This attribute stores the dataframe produced by slicing the self.manual_df dataframe to include the columns not included in self.datapad dataframe.
+        
+        Outcomes
+        --------
+        self.populate_table(self.datapad, self.datapad_view)
+            This method populates self.datapad_view (TableWidget) with the self.datapad dataframe.
+        self.populate_table(self.preset, self.settings_view)
+            This method populates self.settings_view (TableWidget) with the self.preset dataframe.
+        self.populate_table(self.manual_df, self.manual_view)
+            This method populates self.manual_view (TableWidget) with the self.manual_df dataframe.
         """
         print("manual.load_manual_file()")
         file = QFileDialog.getOpenFileName(self, 'Select manual sections file to edit:')
 
         if os.path.exists(file[0]):
             try:
-                self.load_manual = pd.read_csv(file[0])
-                self.datapad = self.load_manual.loc[:,[x for x in self.vals]]
-                self.preset = self.load_manual.loc[:,[x for x in self.load_manual.columns if x not in self.datapad.columns]].drop_duplicates()
-                self.manual_df = self.load_manual
+                self.manual_df = pd.read_csv(file[0])
+                self.datapad = self.manual_df.loc[:,[x for x in self.vals]]
+                self.preset = self.manual_df.loc[:,[x for x in self.manual_df.columns if x not in self.datapad.columns]].drop_duplicates()
                 self.populate_table(self.manual_df,self.manual_view)
                 self.populate_table(self.datapad, self.datapad_view)
                 self.populate_table(self.preset, self.settings_view)
@@ -1010,9 +1638,43 @@ class CheckableComboBox(QComboBox):
 #region class Custom Config Sections
 class Custom(QWidget, Ui_Custom):
     """
-    This class inherits widgets and layouts from Ui_Custom and defines the subGUI within the STAGG settings subGUI that allows users to customize the settings for each dependent variable.
+    This class inherits widgets and layouts of Ui_Custom and defines the subGUI within the STAGG settings subGUI that allows users to customize the settings for each dependent variable.
+
+    Parameters
+    --------
+    QWidget: class
+        The Custom class inherits properties and methods from the QWidget class. 
+    Ui_Custom: class
+        The Custom class inherits widgets and layouts defined in the Ui_Custom class.
     """
     def __init__(self,Config):
+        """
+        Instantiate the Custom class.
+
+        Parameters
+        --------
+        Config: class
+            The Custom class inherits properties, attributes, and methods from the Config class.
+        
+        Outputs
+        --------
+        self.config: class
+            Shorthand for the Config class.
+        self.custom_alias: list
+            This attribute is set as an empty list.
+        self.ymin: list
+            This attribute is set as an empty list.
+        self.ymax: list
+            This attribute is set as an empty list.
+        self.custom_transform: list
+            This attribute is set as an empty list.
+        self.custom_poincare: list
+            This attribute is set as an empty list.
+        self.custom_spectral: list
+            This attribute is set as an empty list.
+        self.custom_irreg: list
+            This attribute is set as an empty list.
+        """
         super(Custom, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Custom graph settings configuration")
@@ -1032,7 +1694,7 @@ class Custom(QWidget, Ui_Custom):
 
         Parameters
         --------
-        Config.deps: list
+        self.config.deps: list
             This list contains the Aliases of the dependent variables the user has selected in Config.variable_table (TableWidget).
         self.custom_table: QTableWidget
             This TableWidget displays the text and widgets that allows the user to customize the STAGG settings for each dependent variable on the main model.
@@ -1047,8 +1709,9 @@ class Custom(QWidget, Ui_Custom):
         Outcomes
         --------
         self.populate_table(self.config.deps, self.custom_table)
-        self.adjustSize()
+            This method populates self.custom_table TableWidget with rows corresponding to the items in the self.config.deps list.
         self.show()
+            This method displays the STAGG settings subGUI.
         """
         print("custom.extract_variable()")
         if self.config.deps.empty:
@@ -1058,7 +1721,28 @@ class Custom(QWidget, Ui_Custom):
             self.adjustSize()
             self.show()
 
-    def populate_table(self,frame,table):
+    def populate_table(self,frame: list,table: QTableWidget):
+        """
+        Populate an empty self.config.custom_dict as a nested dictionary based on the items in self.config.deps (list) or update an existing self.config.custom_dict by appending keys and establishing widgets, update self.config.custom_port if it's populated, and populate self.custom_table with the contents of self.config.custom_dict, with the number of rows corresponding to the number of items in self.config.deps.
+
+        Parameters
+        --------
+        frame: list
+            This argument passes self.config.deps, a list of user-selected dependent variables.
+        table: QTableWidget
+            This argument passes self.custom_table TableWidget.
+        self.config.custom_dict: dict
+            This attribute inherited from the Config class is either empty or a nested dictionary defining widgets.
+        self.config.custom_port: dict
+            This attribute inherited from the Config class is either empty or a deep copy of self.config.custom_dict.
+        
+        Outputs
+        --------
+        self.config.custom_dict: dict
+            This attribute inherited from the Config class is either populated or updated to include newly-selected dependent variables.
+        self.custom_table: QTableWidget
+            This TableWidget is populated with the text and widgets stored in self.config.custom_dict.
+        """
         print("custom started populating table")
         # Populate tablewidgets with dictionary holding widgets. 
         table.setRowCount(len(frame))
@@ -1127,12 +1811,32 @@ class Custom(QWidget, Ui_Custom):
             row += 1
         table.resizeColumnsToContents()
         table.resizeRowsToContents()
-        print("custom finished populating table")
-
 
     def save_custom(self):
         """
         Save the contents of Config.custom_dict to Config.custom_port. Update the status of the comboBoxes corresponding to Poincare, Spectral, and Transformation settings made in the Custom subGUI.
+
+        Parameters
+        --------
+        self.config.custom_dict: dict
+            This attribute inherited from the Config class is either empty or a nested dictionary defining rows and corresponding widgets that will populate self.custom_table TableWidget.
+        self.config.Poincare_combo: QComboBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to produce Poincare plots for all or none of the selected dependent variables.
+        self.config.Spectral_combo: QComboBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to produce Spectral plots for all or none of the selected dependent variables.
+        self.config.transform_combo: CheckableComboBox
+            This CheckableComboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to run STAGG on different model transformations.
+        
+        Outputs
+        --------
+        self.config.custom_port: dict
+            This nested dictionary is a deep copy of self.config.custom_port.
+        self.config.Poincare_combo: QComboBox
+            The comboBox in the STAGG settings subGUI that allows the user to choose to produce Poincare plots for all or none of the selected dependent variables is set to "Custom" to indicate customized settings regarding Poincare plots.
+        self.config.Spectral_combo: QComboBox
+            The comboBox in the STAGG settings subGUI that allows the user to choose to produce Spectral plots for all or none of the selected dependent variables is set to "Custom" to indicate customized settings regarding Poincare plots.
+        
+        self.
         """
         print("custom.save_custom()")
         self.config.custom_port = {item: {col: None for col in self.config.custom_dict[item]} for item in self.config.custom_dict}
@@ -1174,7 +1878,7 @@ class Custom(QWidget, Ui_Custom):
 #region class Variable
 class Config(QWidget, Ui_Config):
     """
-    This class inherits widgets and layouts from Ui_Config and defines the STAGG settings subGUI that allows users to define the STAGG settings.
+    This class inherits widgets and layouts of Ui_Config and defines the STAGG settings subGUI that allows users to define the STAGG settings.
     """
     def __init__(self,Plethysmography):
         super(Config, self).__init__()
@@ -1203,14 +1907,28 @@ class Config(QWidget, Ui_Config):
         
     def reference_event(self):
         """
-        Respond to the user's button click by populating self.config_reference (TextBrowser) with the appropriate reference material.
+        Respond to the signal emitted by the self.help_{setting} ToolButton clicked by the user by calling self.populate_reference(self.sender.objectName()) to populate the self.config_reference TextBrowser with the definition, description, and default value of corresponding setting.
         """
         sbutton = self.sender()
         self.populate_reference(sbutton.objectName())
 
-    def populate_reference(self,buttoned):
+    def populate_reference(self,buttoned: QObject.objectName):
         """
-        Populate self.config_reference (TextBrowser) with the definition and description of the setting based on the name of the button the user pressed from self.pleth.rc_config where the reference material for all settings were loaded into as a dictionary from the reference_config.json file.
+        Populate self.config_reference (TextBrowser) with the definition, description, and default values of the appropriate setting as indicated by the suffix of the ToolButton's objectName(), e.g. "help_{setting}" from Plethysmography.rc_config (reference_config.json).
+
+        Parameters
+        --------
+        buttoned: QObject.objectName
+            This variable is the objectName of the ToolButton that emitted the signal self.reference_event that called this method. Its suffix is used to identify the appropriate cell in self.view_tab (TableWidget).
+        self.widgy: dict
+            This attribute relates the self.help_{setting} ToolButtons to self.reference_config TableWidget.
+        Plethysmography.rc_config: dict
+            This attribute is a shallow dictionary loaded from reference_config.json. It contains definitions, descriptions, and recommended values for every basic, manual, and automated BASSPRO setting.
+
+        Outputs
+        --------
+        self.config_reference: QTableWidget
+            This TableWidget displays the definition, description, and default value of the user-selected setting.
         """
         for k,v in self.widgy.items():
             for vv in v:
@@ -1219,7 +1937,12 @@ class Config(QWidget, Ui_Config):
 
     def no_duplicates(self):
         """
-        Automatically rename the variable in the "Alias" column of self.variable_table (TableWidget) to avoid duplicates variable names.
+        Automatically rename the variable in the "Alias" column of self.variable_table (TableWidget) to avoid duplicate variable names.
+
+        Parameters
+        --------
+        self.variable_table: QTableWidget
+            This TableWidget displays the text and widgets needed to allow the user to indicate the type of a selected variable.
         """
         print("config.no_duplicates()")
         try:
@@ -1235,9 +1958,33 @@ class Config(QWidget, Ui_Config):
     def update_loop(self):
         """
         Update the contents of self.clades_other_dict with the contents of self.pleth.loop_menu and then update the contents of self.loop_table with the newly updated contents of self.clades_other_dict.
+        
+        Parameters
+        --------
+        self.clades: Dataframe
+            This attribute is a dataframe that containts the states of the self.variable_table widgets for each variable.
+        self.loop_table: QTableWidget
+            This TableWidget displays the settings for additional models either via widgets or loading previously made other_config.csv with previous STAGG run's settings for additional models.
+        self.pleth.loop_menu: dict
+            The nested dictionary used to populate and save the text, CheckBox, ComboBox, and CheckableComboBox states of Config.loop_table (TableWidget) in the Config subGUI.
+        self.clades_other_dict: dict
+            This dictionary is populated and updated with the current states of the widgets stored in self.pleth.loop_menu.
+        
+        Outputs
+        --------
+        self.deps: Series
+            This attribute is a Series of the variables, specifically the "Alias" column of dataframe self.clades derived from self.variable_table.
+        self.loop_table: QTableWidget
+            This TableWidget is populated with the settings for additional models either via widgets or loading previously made other_config.csv with previous STAGG run's settings for additional models.
+        self.clades_other_dict: dict
+            This dictionary is populated and updated with the current states of the widgets stored in self.pleth.loop_menu.
+        
+        Outcomes
+        --------
+        self.show_loops(self.loop_table, len(self.clades_other_dict))
+            Populate self.pleth.loop_menu with the appropriate widgets and populated self.loop_table with self.clades_other_dict.
         """
         print("config.update_loop()")
-        print(f"before: {self.deps}")
         try:
             self.classy()
             self.deps = self.clades["Alias"]
@@ -1270,11 +2017,10 @@ class Config(QWidget, Ui_Config):
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
-        print(f"after after: {self.deps}")
 
     def setup_transform_combo(self):
         """
-        Add widget from custom class CheckableComboBox to STAGG settings subGUI layout.
+        Add widget from custom class CheckableComboBox to STAGG settings subGUI layout to serve as drop-down menu for data transformation options.
         """
         spacerItem64 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_25.addItem(spacerItem64)
@@ -1287,6 +2033,70 @@ class Config(QWidget, Ui_Config):
     def setup_variables_config(self): 
         """
         Add the CheckableComboBox to the STAGG settings subGUI layout and establish attributes.
+
+        Parameters
+        --------
+        self.clades: Dataframe
+            This attribute is a dataframe that containts the states of the self.variable_table widgets for each variable.
+        self.clades_graph: Dataframe
+            This attribute is a dataframe that containts the states of the many comboBoxes that define graph roles for selected variables.
+        self.clades_other: Dataframe
+            This attribute is a dataframe that containts the states of the self.loop_table widgets for each variable as well as the states for self.feature_combo comboBox..
+        self.feature_combo: QCombobBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to produce plots of respiratory features such as sighs and apneas.
+        self.Poincare_combo: QComboBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to produce Poincare plots for all or none of the selected dependent variables.
+        self.Spectral_combo: QComboBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to produce Spectral plots for all or none of the selected dependent variables.
+        self.transform_combo: CheckableComboBox
+            This CheckableComboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to run STAGG on different model transformations.
+        self.Xvar_combo: QComboBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose which independent or covariate variable should determine the x axis of figures of the main model.
+        self.Pointdodge_combbo: QComboBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose which independent or covariate variable should determine the groups of symbol of figures of the main model.
+        self.Facet1_combo: QComboBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose which independent or covariate variable should determine the splitting of the x axis if at all.
+        self.Facet2_combo: QComboBox
+            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose which independent or covariate variable should determine the splitting of the y axis if at all.
+        self.config_reference: QTextBrowser
+            This TableWidget displays the definition, description, and default value of the user-selected setting.
+        self.help_{setting}: QToolButton
+            These buttons are assigned clicked signals and slotted for self.reference_event().
+        self.pleth.variable_config: str
+            This Plethysmography class attribute is the file path to one of the STAGG settings files.
+        self.plethg.graph_config: str
+            This Plethysmography class attribute is the file path to one of the STAGG settings files.
+        self.pleth.other_config: str
+            This Plethysmography class attribute is the file path to one of the STAGG settings files.
+
+        Outputs
+        --------
+        self.role_list: list
+            This attribute is a list of strings that are the headers of the self.loop_table.
+        self.additional_dict: dict
+            This dictionary relates certain header strings to their corresponding comboBoxes.
+        self.settings_dict: dict
+            A nested dictionary that relates the graph settings comboBoxes to their headers.
+        self.widgy: dict
+            This dictionary relates the self.help_{setting} widgets to self.config_reference (TextBrowser).
+        self.alias: list
+            This attribue is set as an empty list.
+        self.independent: list
+            This attribue is set as an empty list.
+        self.dependent: list
+            This attribue is set as an empty list.
+        self.covariate: list
+            This attribue is set as an empty list.
+        self.custom_dict: dict
+            This attribue is set as an empty dictionary.
+        self.custom_port: dict
+            This attribue is set as an empty dictionary.
+        self.clades_other_dict
+            This dictionary is populated and updated with the current states of the widgets stored in self.pleth.loop_menu.
+        Outcomes
+        --------
+        self.setup_transform_combo()
+            Add widget from custom class CheckableComboBox to STAGG settings subGUI layout to serve as drop-down menu for data transformation options.
         """
         print("config.setup_variables_config()")
         try:
@@ -1295,7 +2105,6 @@ class Config(QWidget, Ui_Config):
         except Exception as e:
             self.setup_transform_combo()
         self.role_list = ["Graph","Variable","Xvar","Pointdodge","Facet1","Facet2","Inclusion","Y axis minimum","Y axis maximum"]
-        self.graph_role = []
         self.additional_dict = {self.feature_combo:"Feature",self.Poincare_combo:"Poincare",self.Spectral_combo:"Spectral",self.transform_combo:"Transformation"}
         self.settings_dict = {"role": {self.Xvar_combo:1,self.Pointdodge_combo:2,self.Facet1_combo:3,self.Facet2_combo:4}, 
                               "rel": {"Xvar":self.Xvar_combo,"Pointdodge":self.Pointdodge_combo,"Facet1":self.Facet1_combo,"Facet2":self.Facet2_combo}}
@@ -2511,21 +3320,21 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if self.v.configs["variable_config"]["path"] != "":
                 self.v.check_load_variable_config("no")
                 self.v.show()
-            elif self.stagg_list != [] and os.path.isdir(self.stagg_list[0])==True:
-                if self.metadata != "" and (self.autosections != "" or self.mansections != ""):
-                    self.thinb = Thinbass(self)
-                    self.thinb.show()
-                else:
-                    self.test_configuration()
-                    try:
-                        self.variable_configuration()
-                        self.n = 0
-                        self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
-                        self.v.variable_table.cellChanged.connect(self.v.update_loop)
-                        self.v.show()
-                    except Exception as e:
-                        print(f'{type(e).__name__}: {e}')
-                        print(traceback.format_exc())
+            elif self.stagg_list != [] and any(a.endswith(".json") for a in self.stagg_list):
+                    if self.metadata != "" and (self.autosections != "" or self.mansections != ""):
+                        self.thinb = Thinbass(self)
+                        self.thinb.show()
+                    else:
+                        self.test_configuration()
+                        try:
+                            self.variable_configuration()
+                            self.n = 0
+                            self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
+                            self.v.variable_table.cellChanged.connect(self.v.update_loop)
+                            self.v.show()
+                        except Exception as e:
+                            print(f'{type(e).__name__}: {e}')
+                            print(traceback.format_exc())
             elif self.metadata != "" and (self.autosections != "" or self.mansections != ""):
                 self.test_configuration()
                 try:
@@ -2613,7 +3422,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def test_configuration(self):
         """
-        Ensure that the file paths that populate the attributes required to show the STAGG settings subGUI exist and their contents are accessible, and provide feedback to the user on what they're missing if anything.
+        Ensure that the file paths that populate the attributes required to show the STAGG settings subGUI exist and their contents are accessible, and provide feedback to the user on what is missing if anything.
         """
         print("test_configuration() has started")
         self.missing_meta = []
