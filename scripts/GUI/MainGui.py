@@ -2278,7 +2278,7 @@ class Config(QWidget, Ui_Config):
         Outputs
         --------
         self.pleth.loop_menu: dict
-            This Plethysmography class attribute is set as an empty dictionary and repopulated with widgets.
+            This Plethysmography class attribute is set as an empty dictionary and repopulated with widgets with a row count of "r". 
         self.loop_table: QTableWidget
             This TableWidget is populated with the contents of self.pleth.loop_menu.
         """
@@ -2318,17 +2318,42 @@ class Config(QWidget, Ui_Config):
     def show_custom(self):
         """
         Check self.variable_table Alias selections, update rows in Custom.custom_table accordingly, and show the custom subGUI.
+
+        Parameters
+        --------
+        self.deps: Series
+            This attribute is a Series of the variables, specifically the "Alias" column of dataframe self.clades derived from self.variable_table.
+        self.custom_dict: dict
+            This attribute is either populated or updated to include newly-selected dependent variables.
+        Custom: class
+            This class inherits widgets and layouts of Ui_Custom and defines the subGUI within the STAGG settings subGUI that allows users to customize the settings for each dependent variable.
+        
+        Outputs
+        --------
+        self.old_deps: Series | list
+            This attribute is a copy of self.deps before calling self.classy() to refresh self.deps with any recently selected dependent variables.
+        self.deps: Series
+            This attribute is set as the user-selected dependent variables defined by the self.clades dataframe after calling self.classy() and refreshing self.clades dataframe with any recently selected variables.
+        self.custom_dict: dict
+            Any items that are in self.old_deps but not in self.deps are popped from this dictionary.
+        
+        Outcomes
+        --------
+        self.classy()
+            This method populates several list attributes and dataframe attributes with text and widget statuses from self.pleth.buttonDict_variable (dict) and creates columns for self.clades_graph and self.clades_other.
+        Custom.extract_variable()
+            This Custom class method checks if self.deps (list) is empty. If it is, it prompts a MessageBox informing the user. If it isn't, it populates self.custom_table (TableWidget) using self.deps.
+        Custom.show()
+            This Custom class method shows the custom settings subGUI.
         """
         print("config.show_custom()")
         self.old_deps = self.deps
         self.classy()
         self.deps = self.clades.loc[(self.clades["Dependent"] == 1)]["Alias"]
         if self.custom_dict == {}:
-            # custom dict apparently empty
             self.pleth.c = Custom(self)
             self.pleth.c.extract_variable()
         elif set(self.deps) != set(self.old_deps):
-            # custom dict is not empty but new variables chosen
             d = [c for c in self.custom_dict]
             for c in d:
                 if c not in self.deps:
@@ -2336,18 +2361,33 @@ class Config(QWidget, Ui_Config):
             self.pleth.c = Custom(self)
             self.pleth.c.extract_variable()
         else:
-            print("custom dict not empty")
             self.pleth.c.show()
 
     def classy(self):
         """
-        Store the statuses of the self.variable_table (TableWidget) widgets held in self.pleth.buttonDict_variable (dict) in list attributes and dataframe attributes. Create columns for self.clades_graph and self.clades_other.
+        Populate several list attributes and self.clades dataframe with text and widget statuses from self.pleth.buttonDict_variable (dict) and create columns for self.clades_graph and self.clades_other.
+
+        Parameters
+        --------
+        self.pleth.buttonDict_variable: dict
+            This Plethysmography class attribute is a nested dictionary used to populate and save the text and RadioButton states of Config.variable_table (TableWidget) in the Config subGUI.
+        
+        Outputs
+        --------
+        self.clades: Dataframe
+            This attribute is populated with dataframe that contains the states of the self.variable_table widgets for each variable as stored in self.pleth.buttonDict_variable (dict).
+        self.alias: list
+            This attribute is set as an empty list and populated with the status of RadioButtons in the self.variable_table column "Alias" as stored in self.pleth.buttonDict_variable (dict).
+        self.independent: list
+            This attribute is set as an empty list and populated with the status of RadioButtons in the self.variable_table column "Independent" as stored in self.pleth.buttonDict_variable (dict).
+        self.dependent: list
+            This attribute is set as an empty list and populated with the status of RadioButtons in the self.variable_table column "Dependent" as stored in self.pleth.buttonDict_variable (dict).
+        self.covariate: list
+            This attribute is set as an empty list and populated with the status of RadioButtons in the self.variable_table column "Covariate" as stored in self.pleth.buttonDict_variable (dict).
         """
-        # This method is OLD
+        # This method is OLD and gross
         print("config.classy()")
         self.clades = pd.DataFrame(columns= ["Column","Alias","Independent","Dependent","Covariate","ymin","ymax","Poincare","Spectral","Transformation"])
-        self.clades_graph = pd.DataFrame(columns = ["Alias","Role"])
-        self.clades_other = pd.DataFrame(columns = ["Graph","Variable","Xvar","Pointdodge","Facet1","Facet2","ymin","ymax","Filter"])
         origin = []
         self.alias = []
         self.independent = []
@@ -2372,6 +2412,23 @@ class Config(QWidget, Ui_Config):
     def add_combos(self):
         """
         Update the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes whenever the user selects a new independent variable or covariate variable.
+    
+        Parameters
+        --------
+        self.clades: Dataframe
+            This attribute is a dataframe that contains the states of the self.variable_table widgets for each variable as stored in self.pleth.buttonDict_variable (dict).
+        self.settings_dict: dict
+            This attribute is a nested dictionary that relates the graph settings comboBoxes to their corresponding headers in self.clades_graph.
+        
+        Outputs
+        --------
+        self.{role}_combo: QComboBox
+            These ComboBoxes are populated with the aliases of user-selected independent and covariate variables as stored in self.clades after self.classy() is called and self.clades is refreshed.
+        
+        Outcomes
+        --------
+        self.classy()
+            Populate several list attributes and dataframe attributes with text and widget statuses from self.pleth.buttonDict_variable (dict) and create columns for self.clades_graph and self.clades_other.
         """
         print("add_combos()")
         self.classy()
@@ -2383,6 +2440,18 @@ class Config(QWidget, Ui_Config):
     def graphy(self):
         """
         Populate self.clades_graph with a dataframe containing the settings selected in the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes.
+        
+        Parameters
+        --------
+        self.role_list: list
+            This attribute is a list of strings that are the headers of the self.loop_table.
+        self.settings_dict: dict
+            This attribute is a nested dictionary that relates the graph settings comboBoxes to their corresponding headers in self.clades_graph.
+        
+        Outputs
+        --------
+        self.clades_graph: Dataframe
+            This attribute is a dataframe of two columns populated with the current text of the self.{role}_combo ComboBoxes.
         """
         print("config.graphy()")
         clades_role_dict = {}
@@ -2397,6 +2466,22 @@ class Config(QWidget, Ui_Config):
     def othery(self):
         """
         Populate self.clades_other with a dataframe derived from the contents of self.clades_other_dict after the latter was updated with the current states of the widgets stored in self.pleth.loop_menu (dict).
+
+        Parameters
+        --------
+        self.pleth.loop_menu: dict
+            This Plethysmography class attribute is a nested dictionary used to populate and save the text, CheckBox, ComboBox, and CheckableComboBox states of Config.loop_table (TableWidget) in the Config subGUI.
+        self.loop_table: QTableWidget
+            This TableWidget is populated with the contents of self.pleth.loop_menu.
+        self.feature_combo: QComboBox
+            This ComboBox is the drop-down menu that allows the user to choose whether or not to include plots of respiratory features (i.e. apneas, sighs) with STAGG output.
+        
+        Outputs
+        --------
+        self.clades_other_dict: dict
+            This attribute is set as an empty dictionary and populated with the contents of self.pleth.loop_menu which is populated with the current text of widgets in self.loop_table.
+        self.clades_other: Dataframe
+            This attribute is set as a dataframe populated from self.clades_other_dict and the self.feature_combo selection.
         """
         print("config.othery()")
         self.clades_other_dict = {}
