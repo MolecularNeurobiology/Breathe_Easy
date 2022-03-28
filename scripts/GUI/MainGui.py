@@ -2177,11 +2177,29 @@ class Config(QWidget, Ui_Config):
     
     def setup_table_config(self):
         """
-        Populate self.variable_table (TableWidget) with the contents of self.pleth.buttonDict_variable (dict).
+        Assign delegates to self.variable_table and self.loop_table, set self.pleth.buttonDict_variable as an empty dictionary, repopulate it with text and widgets based on items listed in self.pleth.breath_df (list), assign the RadioButton widgets of each row to a ButtonGroup, populate self.variable_table (TableWidget) with the contents of self.pleth.buttonDict_variable, assign toggled signals slotted for self.add_combos() to the RadioButtons in self.pleth.buttonDict_variable that correspond to those in the "Independent" and "Covariate" columns of the TableWidget, and adjust the size of the cells of self.variable_table.
 
         Parameters
         --------
-
+        AlignDelegate: class
+            This class assigns delegates to Config.variable_table and Config.loop_table TableWidgets and and centers the delegate items.
+        self.variable_table: QTableWidget
+            This TableWidget is defined in the Config class, displayed in the STAGG settings subGUI, and populated with rows based on the list of variables (Plethysmography.breath_df).
+        self.loop_table: QTableWidget
+            This TableWidget is populated with the settings for additional models either via widgets or loading previously made other_config.csv with previous STAGG run's settings for additional models.
+        self.pleth.breath_df: list
+            This Plethysmography class attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
+        self.pleth.buttonDict_variable: dict
+            This Plethysmography class attribute is a nested dictionary used to populate and save the text and RadioButton states of Config.variable_table (TableWidget) in the Config subGUI.
+        
+        Outputs
+        --------
+        self.variable_table: QTableWidget
+            This TableWidget is populated with text and widgets stored in self.pleth.buttonDict_variable (dict).
+        self.loop_table: QTableWidget
+            This TableWidget is populated with one row. (why?)
+        self.pleth.buttonDict_variable: dict
+            This Plethysmography class attribute is set as an empty dictionary and repopulated with text and widgets based on items in the list self.pleth.breath_df.
         """
         print("config.setup_table_config()")
         # I've forgotten what this was specifically about, but I remember it had something to do with spacing or centering text or something.
