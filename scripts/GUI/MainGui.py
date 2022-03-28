@@ -2260,7 +2260,27 @@ class Config(QWidget, Ui_Config):
     
     def show_loops(self,table,r):
         """
-        Populate self.pleth.loop_menu with the appropriate widgets and populated self.loop_table with self.pleth.loop_menu.
+        Set self.pleth.loop_menu as an empty dictionary, iteratively populate self.pleth.loop_menu with QLineEdits, QComboBoxes, and CheckableComboBox, populate the ComboBoxes with items from self.deps, populate self.loop_table with the contents of self.pleth.loop_menu, and adjust the cell sizes of self.loop_table.
+
+        Parameters
+        --------
+        self.pleth.loop_menu: dict
+            This Plethysmography class attribute is a nested dictionary used to populate and save the text, CheckBox, ComboBox, and CheckableComboBox states of Config.loop_table (TableWidget) in the Config subGUI.
+        self.role_list: list
+            This attribute is a list of strings that are the headers of the self.loop_table.
+        self.deps:
+            This attribute is a Series of the variables, specifically the "Alias" column of dataframe self.clades derived from self.variable_table.
+        table: QTableWidget
+            This argument refers to self.loop_table TableWidget - previously there was another loop table, so that's why we have the "table" argument instead of just used the attribute to refer to the widget.
+        r: int
+            This argument passes the number of rows self.loop_table should have.
+        
+        Outputs
+        --------
+        self.pleth.loop_menu: dict
+            This Plethysmography class attribute is set as an empty dictionary and repopulated with widgets.
+        self.loop_table: QTableWidget
+            This TableWidget is populated with the contents of self.pleth.loop_menu.
         """
         # Almost redundant. See Main.show_loops().
         print("config.show_loops()")
