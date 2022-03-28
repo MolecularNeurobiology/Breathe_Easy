@@ -177,7 +177,7 @@ if(nrow(other_config) > 0){
       }
       
       # Set graphing variables as a vector.
-      box_vars <- c(xvar, pointdodge, facet1, facet2)
+      box_vars <- c(ocr2["Xvar"], ocr2["Pointdodge"], ocr2["Facet1"], ocr2["Facet2"])
       box_vars <- box_vars[box_vars != ""]
       if(length(box_vars) == 0){ next }
       names(box_vars) <- NULL
@@ -243,8 +243,8 @@ if(nrow(other_config) > 0){
       }
       
       # Make graph + save
-      graph_make(bw_vars, as.character(xvar), as.character(pointdodge), 
-                 as.character(facet1), as.character(facet2), other_graph_df, 
+      graph_make(bw_vars, as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
+                 as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
                  other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
                  "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                  ymins, ymaxes)
@@ -266,7 +266,7 @@ if(nrow(other_config) > 0){
       }
       
       # Set graphing variables as a vector.
-      temp_vars <- c(pointdodge, facet1, facet2)
+      temp_vars <- c(ocr2["Pointdodge"], ocr2["Facet1"], ocr2["Facet2"])
       temp_vars <- temp_vars[temp_vars != ""]
       names(temp_vars) <- NULL
       
@@ -346,10 +346,10 @@ if(nrow(other_config) > 0){
       other_mod_res <- stat_run("Temp", other_inter_vars, other_covars, melt_bt_df, FALSE)
       
       # Make graph + save
-      graph_make("Temp", "State", as.character(pointdodge), 
-                 as.character(facet1), as.character(facet2), melt_bt_graph_df, 
+      graph_make("Temp", "State", as.character(ocr2["Pointdodge"]), 
+                 as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), melt_bt_graph_df, 
                  other_mod_res$rel_comp, temp_vars, graph_file, other = TRUE,
-                 "Temperature", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
+                 "Temperature", "Time", as.character(ocr2_wu["Pointdodge"]),
                  ymins, ymaxes)
       
     #######################################################
@@ -358,7 +358,7 @@ if(nrow(other_config) > 0){
       if(ocr2["Resp"] %in% colnames(tbl0)) {
         
         # Set graphing variables as a vector.
-        box_vars <- c(xvar, pointdodge, facet1, facet2)
+        box_vars <- c(ocr2["Xvar"], ocr2["Pointdodge"], ocr2["Facet1"], ocr2["Facet2"])
         box_vars <- box_vars[box_vars != ""]
         if(length(box_vars) == 0){ next }
         names(box_vars) <- NULL
@@ -442,8 +442,8 @@ if(nrow(other_config) > 0){
         }
         
         # Make graph + save
-        graph_make(as.character(ocr2["Resp"]), as.character(xvar), as.character(pointdodge), 
-                   as.character(facet1), as.character(facet2), other_graph_df, 
+        graph_make(as.character(ocr2["Resp"]), as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
+                   as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
                    other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
                    as.character(ocr2_wu["Resp"]), as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                    ymins, ymaxes)
@@ -468,7 +468,8 @@ if(nrow(other_config) > 0){
 # Functionality to make graphs for sigh and apnea rates.
 if(sighs || apneas){
   print("Making apnea and sigh graphs")
-  tbl0$measure_breaks <- as.logical(c(FALSE, tbl0$Mouse_And_Session_ID[1:(nrow(tbl0) - 1)] != tbl0$Mouse_And_Session_ID[2:(nrow(tbl0))]))
+  tbl0$measure_breaks <- as.logical(c(FALSE, tbl0$Mouse_And_Session_ID[1:(nrow(tbl0) - 1)] != 
+                                        tbl0$Mouse_And_Session_ID[2:(nrow(tbl0))]))
   
   # Set graphing variables as a vector.
   box_vars <- c(xvar, pointdodge, facet1, facet2)
@@ -642,7 +643,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
 if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
   for(ii in 1:length(poincare_vars)){
     print((paste0("Making Poincare plot ", ii, "/", length(poincare_vars))))
-    poincare_graph(poincare_vars[ii], tbl0,  xvar, pointdodge, facet1, 
+    poincare_graph(poincare_vars[ii], tbl0, xvar, pointdodge, facet1, 
                    facet2, pointdodge_wu)
   }
 }

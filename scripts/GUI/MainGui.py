@@ -2593,7 +2593,9 @@ class Config(QWidget, Ui_Config):
             self.pleth.variable_list.addItem(self.configs[f]['path'])
     
     def saveas_config(self):
-        """Save the settings stored in self.clades, self.clades_graph, and/or self.clades_other to .csv files at the paths selected by the user with a standard FileDialog as well as at the default paths in the STAGG_config folder in the user-selected output folder (self.pleth.mothership), populate the display widget self.pleth.variable_list (ListWidget) in the Main GUI with the timestamped file paths, update self.configs (dict) with the timestamped file paths, and assign self.pleth.output_folder_r and self.pleth.input_dir_r according to the user-selected location of the STAGG settings files."""
+        """
+        Save the settings stored in self.clades, self.clades_graph, and/or self.clades_other to .csv files at the paths selected by the user with a standard FileDialog as well as at the default paths in the STAGG_config folder in the user-selected output folder (self.pleth.mothership), populate the display widget self.pleth.variable_list (ListWidget) in the Main GUI with the timestamped file paths, update self.configs (dict) with the timestamped file paths, and assign self.pleth.output_folder_r and self.pleth.input_dir_r according to the user-selected location of the STAGG settings files.
+        """
         print("config.saveas_config()")
         thumbholes = []
         self.classy_save()

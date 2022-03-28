@@ -470,17 +470,19 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
 print("Making graphs")
 
 if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_vars)) && (!is_empty(interaction_vars))){ 
-  ## Get names of response variables for printing
+  
+  ## Get names of dependent and independent variables for printing
   response_var_names <- var_names$With_units[which(var_names$Dependent != 0)]
+  graph_v <- c(xvar, pointdodge, facet1, facet2)
+  graph_v <- graph_v[graph_v != ""]
+  
   for(ii in 1:length(response_vars)){
     
     # Creates graphs for the original, non-transformed dependent variable.
-    if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || ("non" %in% transform_set[ii]))){
+    if((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii]))){
       print(paste0("Making graph for ", response_vars[ii]))
       
       # Create mouse-wise summary data for graphing.
-      graph_v <- c(xvar, pointdodge, facet1, facet2)
-      graph_v <- graph_v[graph_v != ""]
       graph_df <- tbl0 %>%
         dplyr::filter(Breath_Inclusion_Filter == 1) %>% 
         group_by_at(c(graph_v, "MUID")) %>%
