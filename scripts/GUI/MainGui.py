@@ -1881,18 +1881,52 @@ class Config(QWidget, Ui_Config):
     This class inherits widgets and layouts of Ui_Config and defines the STAGG settings subGUI that allows users to define the STAGG settings.
     """
     def __init__(self,Plethysmography):
+        """
+        Instantiate the Config class.
+
+        Parameters 
+        --------
+        Plethysmography: class
+            Config inherits the properties, attributes, and methods of the Plethysmography class.
+
+        Outputs
+        --------
+        self.pleth: class
+            Shorthand for Plethysmography class.
+        self.deps: list
+            This attribute is set as an empty list.
+        
+        Outcomes
+        --------
+        self.setup_variables_config()
+            Add the CheckableComboBox to the STAGG settings subGUI layout, establish attributes, and assign clicked signals and self.reference_event slots to each self.help_{setting} ToolButton.
+        """
         super(Config, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("STAGG Variable Configuration")
         self.pleth = Plethysmography
         self.isMaximized()
         self.deps = []
-        
         self.setup_variables_config()
     
     def minus_loop(self):
         """
         Remove the selected row from self.loop_table and its corresponding data from self.pleth.loop_menu (dict).
+
+        Parameters
+        --------
+        self.loop_table: QTableWidget
+            This TableWidget displays the settings for additional models either via widgets or loading previously made other_config.csv with previous STAGG run's settings for additional models.
+        self.pleth.loop_menu: dict
+            The nested dictionary used to populate and save the text, CheckBox, ComboBox, and CheckableComboBox states of Config.loop_table (TableWidget) in the Config subGUI.
+        
+        Outputs
+        --------
+        self.loop_table: QTableWidget
+            The user-selected row is removed from this TableWidget.
+        self.pleth.loop_menu: dict
+            The item in this nested dictionary that corresponds to the removed row is popped from the dictionary.
+
         """
         print("config.minus_loop()")
         try:
@@ -2032,7 +2066,7 @@ class Config(QWidget, Ui_Config):
 
     def setup_variables_config(self): 
         """
-        Add the CheckableComboBox to the STAGG settings subGUI layout and establish attributes.
+        Add the CheckableComboBox to the STAGG settings subGUI layout, establish attributes, and assign clicked signals and self.reference_event slots to each self.help_{setting} ToolButton.
 
         Parameters
         --------
@@ -2090,9 +2124,22 @@ class Config(QWidget, Ui_Config):
         self.custom_dict: dict
             This attribue is set as an empty dictionary.
         self.custom_port: dict
-            This attribue is set as an empty dictionary.
-        self.clades_other_dict
+            This attribute is set as an empty dictionary.
+        self.clades_other_dict: dict
             This dictionary is populated and updated with the current states of the widgets stored in self.pleth.loop_menu.
+        self.clades: Dataframe | list
+            This attribute is set as an empty list.
+        self.clades_graph: Dataframe | list
+            This attribute is set as an empty list.
+        self.clades_other: Dataframe | list
+            This attribute is set as an empty list.
+        self.baddies: list
+            This attribute is set as an empty list.
+        self.goodies: list
+            This attribute is set as an empty list.
+        self.configs: dict
+            This attribute is populated with a nested dictionary in which each item contains a dictionary unique to each settings file - variable_config.csv, graph_config.csv, and other_config.csv. Each dictionary has the following key, value items: "variable", the Plethysmography class attribute that stores the file path to the settings file; "path", 
+
         Outcomes
         --------
         self.setup_transform_combo()
@@ -2131,10 +2178,12 @@ class Config(QWidget, Ui_Config):
     def setup_table_config(self):
         """
         Populate self.variable_table (TableWidget) with the contents of self.pleth.buttonDict_variable (dict).
+
+        Parameters
+        --------
+
         """
         print("config.setup_table_config()")
-        self.stack = []
-
         # I've forgotten what this was specifically about, but I remember it had something to do with spacing or centering text or something.
         delegate = AlignDelegate(self.variable_table)
         delegate_loop = AlignDelegate(self.loop_table)
@@ -3460,7 +3509,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Populate self.buttonDict_variable with widgets and text and populate Config.variable_table with the contents of self.buttonDict_variable.
         """
         print("self.variable_configuration() has started")
-        self.stack = []
 
         # I've forgotten what this was specifically about, but I remember it had something to do with spacing or centering text or something.
         delegate = AlignDelegate(self.v.variable_table)
