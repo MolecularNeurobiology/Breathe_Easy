@@ -319,13 +319,16 @@ class Ui_Plethysmography(object):
         Plethysmography.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(Plethysmography)
+        
+        # Callbacks
+        self.signal_files.clicked.connect(Plethysmography.get_signal_files)
+
         self.breath_files.clicked.connect(Plethysmography.input_directory_r)
         self.r_go.clicked.connect(Plethysmography.r_message)
         self.mother_button.clicked.connect(Plethysmography.mothership_dir)
         self.breath_parameters.clicked.connect(Plethysmography.show_basic)
         self.py_go.clicked.connect(Plethysmography.py_message)
         self.metadata.clicked.connect(Plethysmography.get_metadata)
-        self.signal_files.clicked.connect(Plethysmography.get_signal_files)
         self.signal_segments.clicked.connect(Plethysmography.get_autosections)
         self.filemaker_button.clicked.connect(Plethysmography.connect_database)
         self.sections_list.itemDoubleClicked['QListWidgetItem*'].connect(Plethysmography.open_click)

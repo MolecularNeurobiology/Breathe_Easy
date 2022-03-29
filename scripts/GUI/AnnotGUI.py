@@ -17,10 +17,6 @@ import os
 import json
 import pyodbc
 import datetime
-import tkinter
-import tkinter.filedialog
-import tkinter as tk 
-from tkinter import ttk
 import shutil
 import threading
 import re

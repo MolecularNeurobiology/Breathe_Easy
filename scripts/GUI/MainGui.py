@@ -27,9 +27,6 @@ import os
 import sys
 import json
 import pyodbc
-import tkinter.filedialog
-import tkinter as tk 
-from tkinter import N, ttk
 import shutil
 import pandas as pd
 import threading
@@ -2331,7 +2328,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.variable_config=""
         self.graph_config=""
         self.other_config=""
-        self.signals = []
         self.metadata_path = ""
         self.mouse_list = []
         self.mp_parsed = {}
@@ -2937,31 +2933,32 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 '%Y%m%d_%H%M%S'
             ))
     
-    def auto_get_signal_files(self):
-        print("auto_get_signal_files()")
-        signal_folder=os.path.join(self.mothership,'signals')
-        if self.signals != []:
-            reply = QMessageBox.information(self, 'Clear signal files list?', 'Would you like to keep the previously selected signal files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if reply == QMessageBox.No:
-                self.signal_files_list.clear()
-                self.signals = []
-        if Path(signal_folder).exists() and Path(signal_folder).is_dir():
-            self.input_dir_py=signal_folder
-            bad_signals = []
-            for file in Path(signal_folder).iterdir():
-                if file.endswith(".txt"):
-                    self.signal_files_list.addItem(str(file))
-                    self.signals.append(file)
-                else:
-                    bad_signals.append(file)
-            if len(bad_signals)>0:
-                self.thumb = Thumbass(self)
-                self.thumb.show()
-                self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_signals])}\n\nThey will not be included.")
-            print(self.signals)
-        else:
-            if self.signals == []:
-                self.signal_files_list.clear()
+    # UNUSED #
+    #def auto_get_signal_files(self):
+    #    print("auto_get_signal_files()")
+    #    signal_folder=os.path.join(self.mothership,'signals')
+    #    if self.signals != []:
+    #        reply = QMessageBox.information(self, 'Clear signal files list?', 'Would you like to keep the previously selected signal files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+    #        if reply == QMessageBox.No:
+    #            self.signal_files_list.clear()
+    #            self.signals = []
+    #    if Path(signal_folder).exists() and Path(signal_folder).is_dir():
+    #        self.input_dir_py=signal_folder
+    #        bad_signals = []
+    #        for file in Path(signal_folder).iterdir():
+    #            if file.endswith(".txt"):
+    #                self.signal_files_list.addItem(str(file))
+    #                self.signals.append(file)
+    #            else:
+    #                bad_signals.append(file)
+    #        if len(bad_signals)>0:
+    #            self.thumb = Thumbass(self)
+    #            self.thumb.show()
+    #            self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_signals])}\n\nThey will not be included.")
+    #        print(self.signals)
+    #    else:
+    #        if self.signals == []:
+    #            self.signal_files_list.clear()
      
     def auto_get_metadata(self):
         print("auto_get_metadata()")
@@ -3093,29 +3090,34 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             pass
 
     def get_signal_files(self):
-        print("get_signal_files()")
-        file_name = QFileDialog.getOpenFileNames(self, 'Select signal files')
-        if not file_name[0]:
-            if self.signals == []:
-                self.signal_files_list.clear()
-        else:
-            if self.signals != []:
+        '''
+        Choose signal files from file browser
+        '''
+        filenames, filter = QFileDialog.getOpenFileNames(self, 'Select signal files')
+        # len(filenames) == 0 when dialog is cancelled
+        if len(filenames) > 0:
+
+            # Overwrite existing files?
+            if self.signal_files_list.count() > 0:
                 reply = QMessageBox.information(self, 'Clear signal files list?', 'Would you like to keep the previously selected signal files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
                 if reply == QMessageBox.No:
                     self.signal_files_list.clear()
-                    self.signals = []
-            bad_signals = []
+
             self.hangar.append("Signal files selected.")
-            for x in range(len(file_name[0])):
-                if file_name[0][x].endswith(".txt"):
-                    self.signal_files_list.addItem(file_name[0][x])
-                    self.signals.append(file_name[0][x])
+
+            # Pull out anything that's not a text file
+            bad_file_formats = []
+            for file in filenames:
+                if file.endswith(".txt"):
+                    self.signal_files_list.addItem(file)
                 else:
-                    bad_signals.append(file_name[0][x])
-            if len(bad_signals)>0:
+                    bad_file_formats.append(file)
+
+            if bad_file_formats:
                 self.thumb = Thumbass(self)
                 self.thumb.show()
-                self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_signals])}\n\nThey will not be included.")
+                self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_file_formats])}\n\nThey will not be included.")
+
         if self.metadata != "":
             if os.path.exists(self.metadata):
                 self.check_metadata_file("signal")
