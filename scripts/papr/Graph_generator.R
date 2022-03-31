@@ -11,6 +11,7 @@ print("Preparing graphs")
 ### pointdodge: character string, name of independent variable mapped to color.
 ### facet1: character string, name of independent variable mapped to row-wise faceting.
 ### facet2: character string, name of independent variable mapped to column-wise faceting.
+### graph_data: data frame, mouse-wise averaged data to be graphed.
 ### tukey_res: data frame, multiple comparisons table output from statistical analysis.
 ### inter_vars: character vector, names of independent variables.
 ### savename: character string, name of graph file when saved,
