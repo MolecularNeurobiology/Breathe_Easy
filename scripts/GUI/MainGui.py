@@ -5374,6 +5374,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Parameters
         --------
         
+        Outcomes
+        --------
+        self.launch_worker()
+            Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
         print("pything_to_do()")
         if self.output_folder != "":
@@ -5473,6 +5477,39 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def rthing_to_do(self):
         """
         Copy STAGG input to timestamped STAGG output folder, determine which STAGG scripts to use based on the presence or absence of an .RData file, and determine if self.input_dir_r needs to be a str path to directory instead of list because the list has more than 200 files, and run self.rthing_to_do_cntd().
+
+        Parameters
+        --------
+        self.output_folder: str
+            This attribute is set as an empty string and then populated with the appropriate directory path (i.e. the path that will serve as either self.output_dir_py or self.output_dir_r). The corresponding directory is created if it doesn't already exist.
+        self.variable_config: str
+            This attribute refers to the file path of the variable_config.csv file.
+        self.graph_config: str
+            This attribute refers to the file path of the graph_config.csv file.
+        self.other_config: str
+            This attribute refers to the file path of the other_config.csv file.
+        self.papr_dir: str
+            This attribute refers to the directory path of the STAGG scripts folder.
+        self.stagg_list: list
+            This attribute is a list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
+        
+        Outputs
+        --------
+        self.output_dir_r: str
+            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.mothership. It is not spawned until self.dir_checker() is called when STAGG is launched.
+        self.image_format: str
+            This attribute is set as either ".svg" or ".jpeg" depending on which RadioButton is checked on the main GUI.
+        self.pipeline_des: str
+            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_list has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_list consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
+        self.input_dir_r: str
+            This attribute is set as the directory path of the first file in self.stagg_list if self.stagg_list contains the file paths of more than 200 files from the same directory.
+        reply: QMessageBox
+            This MessageBox informs the user that they have more than 200 file paths in self.stagg_list from more than one directory and asks the user to put the file in one directory.
+
+        Outcomes
+        --------
+        self.rthing_to_do_cntd()
+            This method ensures the STAGG script exists, prompts the user to indicate where the Rscript.exe file is, and runs self.launch_worker().
         """
         print("rthing_to_do()")
         self.dir_checker(self.output_dir_r,self.r_output_folder,"STAGG")
@@ -5510,6 +5547,30 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def rthing_to_do_cntd(self):
         """
         Ensure the STAGG script exists, prompt the user to indicate where the Rscript.exe file is, and run self.launch_worker().
+
+        Parameters
+        --------
+        self.pipeline_des: str
+            self.pipeline_des: str
+            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_list has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_list consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
+        self.gui_config: dict
+            This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail. 
+        
+        Outputs
+        --------
+        self.rscript_des: str
+            This attribute refers to the file path to the Rscript.exe of the user's device or of R-Portable.
+        reply: QMessageBox
+            This MessageBox prompts the user to navigate to the Rscript executable file if the file path stored in self.gui_config cannot be found.
+        self.gui_config: dict
+            This dictionary is updated with the new file path of the Rscript.exe file when appropriate.
+        gui_config.json
+            The updated self.gui_config is dumped to the gui_config.json file in the GUI scripts folder.
+        
+        Outcomes
+        --------
+        self.launch_worker()
+            Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
         if Path(self.pipeline_des).is_file():
             # Make sure the path stored in gui_config.json is an Rscript executable file:
