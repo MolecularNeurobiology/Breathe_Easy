@@ -21,14 +21,21 @@ class Thumbass(QDialog, Ui_Thumbass):
     Thumbass.label: QLabel
         The label displays the text provided as the arguments "words" of Thumbass.message_received().
     
-    Outputs
+    Parameters
     --------
-    Thumbass: QDialog
-        The dialog gives the user information.
+    QDialog: class
+        The Thumbass class inherits properties and methods from the QDialog class.
+    Ui_Thumbass: class
+        The Thumbass class inherits widgets and layouts defined in the Ui_Thumbass class.
     """
     def __init__(self):
         """
         Instantiate the Thumbass class.
+
+        Parameters
+        ---------
+        Thumbass.label: QLabel
+            The label displays the text provided as the arguments "words" of Thumbass.message_received().
         """
         super(Thumbass, self).__init__()
         self.setupUi(self)
@@ -62,15 +69,24 @@ class Thumbass(QDialog, Ui_Thumbass):
 #endregion
 
 class Annot(QMainWindow, Ui_Annot):
+    """
+    The Annot class inherits widgets and layout of Ui_Annot and defines the metadata customization subGUI.
+
+    Parameters
+    --------
+    QMainWindow: class
+        The Annot class inherits properties and methods from the QMainWindow class.
+    Ui_Annot: Class
+        The Annot class inherits its widgets and layouts of the Ui_Annot class.
+    """
     def __init__(self,Plethysmography: Class):
-        """Instantiates the Annot class.
+        """
+        Instantiate the Annot class.
         
         Parameters
         --------
         Plethysmography: Class
             The Annot class inherits Plethysmography's methods, attributes, and widgets.
-        Ui_Annot: Class
-            The Annot class inherits its widgets and layouts of the Ui_Annot class.
 
         Outputs
         --------

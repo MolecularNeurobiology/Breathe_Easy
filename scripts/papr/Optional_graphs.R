@@ -725,7 +725,7 @@ if((!is.na(spec_vars)) && (length(spec_vars) != 0)){
 
 ##Runs the R markdown code and saves to the output directory.
 print("Making summary pdf")
-rmd_file <- list.files(path = args$dir, pattern = "Summary.Rmd", 
+rmd_file <- list.files(path = "C:/Users/atwit/Desktop/PAPR/refactor/BASSPRO-STAGG/scripts/papr", pattern = "Summary.Rmd", 
                        all.files = TRUE, full.names = TRUE, 
                        recursive = TRUE, ignore.case = TRUE)
 rmarkdown::render(rmd_file, output_dir = args$Output)
