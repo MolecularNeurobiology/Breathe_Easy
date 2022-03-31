@@ -396,6 +396,8 @@ class Annot(QMainWindow, Ui_Annot):
 
     def binning_value_continued(self):
         """
+        This method was written with significant contributions from Chris Ward.
+
         Divide the values displayed in self.variable_list_values (ListWidget) into bins by value. 
 
         Parameters
@@ -501,6 +503,8 @@ class Annot(QMainWindow, Ui_Annot):
 
     def binning_count_continued(self):
         """
+        This method was written with significant contributions from Chris Ward.
+
         Divide the values displayed in self.variable_list_values (ListWidget) into bins by count. 
 
         Parameters

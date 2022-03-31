@@ -1,3 +1,11 @@
+"""
+BASSPRO-STAGG GUI
+
+Signficant contributions and help from Chris Ward, Savannah Lusk, Andersen Chang, and Russell Ray.
+
+version 5 trillion
+"""
+
 #%%
 #region Libraries
 from typing import Callable
@@ -4632,6 +4640,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     
     def mp_parser(self):
         """
+        This method was adapted from a function written by Chris Ward.
+
         Grab MUIDs and PlyUIDs from signal file names.hey are expected to be named with the ID of the mouse beginning with the letter "M", followed by an underscore, followed by the ID of the plethysmography run beginning with the letters "Ply". 
 
         Parameters
@@ -4676,6 +4686,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def connect_database(self):
         """
+        This method was adapted from a function written by Chris Ward.
+
         Collect relevant metadata for the mice and their runs as indicated by their MUID and PlyUID in the signal file name as sourced via self.mp_parser().
 
         Parameters
@@ -4746,6 +4758,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def get_study(self, fixformat=True):
         """
+        This method was adapted from a function written by Chris Ward.
+
         Scrape the values from the relevant fields of the database for the metadata.
 
         Parameters
