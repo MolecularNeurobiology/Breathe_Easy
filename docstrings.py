@@ -185,7 +185,7 @@ The Plethysmography class inherits widgets and layouts of Ui_Plethysmography and
         self.input_dir_r: str
             The path to the STAGG input directory. Derived from os.path.dirname() of the JSON  output files from BASSPRO. Required input for STAGG.
         self.variable_config: str
-            The path to the variable_config.csv file. Required input for STAGG.
+            The path to thef variable_config.csv file. Required input for STAGG.
         self.graph_config: str
             The path to the graph_config.csv file. Required input for STAGG.
         self.other_config: str
