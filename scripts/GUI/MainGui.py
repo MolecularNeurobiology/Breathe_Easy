@@ -5456,6 +5456,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def output_check(self):
         """
         Find the signal files that did not produce BASSPRO output.
+
+        Parameters
+        --------
+        self.signals: list
+            This attribute is a list of the file paths of the current signal files selected.
+        self.stagg_list: list
+            This attribute is a list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
+        self.hangar: QTextEdit
+            This TextEdit displays feedback on user activity and either BASSPRO or STAGG processing.
+        
+        Outputs
+        --------
+        self.hangar: QTextEdit
+            This TextEdit is appended with a list of othe signal files that did not pass BASSPRO and failed to produce JSON files.
         """
         if len(self.stagg_list) != len(self.signals):
             goodies = []
