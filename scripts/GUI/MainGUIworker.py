@@ -140,13 +140,13 @@ def get_jobs_r(Plethysmography: Class):
     """
     print('get_jobs_r thread id',threading.get_ident())
     print("get_jobs_r process id",os.getpid())
-    papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
+    papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}" -Sum "{summary}"'.format(
             # The path to the local R executable file:
             rscript = Plethysmography.rscript_des,
             # The path to the STAGG script:
             pipeline = Plethysmography.pipeline_des,
             # The path to the STAGG scripts directory:
-            # summary = Plethysmography.papr_dir,
+            summary = Plethysmography.papr_dir,
             # The path to the output directory chosen by the user:
             d = Plethysmography.mothership,
             # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
