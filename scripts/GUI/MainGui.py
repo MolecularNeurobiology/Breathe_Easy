@@ -2268,8 +2268,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def metadata_files(self):
         return [self.metadata_list.item(i).text() for i in range(self.metadata_list.count())]
 
-    def delete(self):
-        self.hangar.append("delete clicked")
+    def delete_setting_file(self):
+        a = self.sections_list.currentItem()
+        if a:
+            self.hangar.append(f"Deleted settings: {a.text()}")
+            self.sections_list.takeItem(self.sections_list.row(a))
+            del a
 
     def notify_error(self, msg):
         # TODO: find error message class
@@ -3478,28 +3482,28 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def get_autosections(self):
         print("get_autosections()")
         try:
-            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.mothership))
-            if not file_name[0]:
+            filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.mothership)
+            if not filenames:
                 if self.autosections == "" and self.basicap == "" and self.mansections == "":
                     print("No BASSPRO settings files selected.")
             else:
                 n = 0
-                for x in range(len(file_name[0])):
-                    if file_name[0][x].endswith('.csv'):
-                        if os.path.basename(file_name[0][x]).startswith("auto_sections") | os.path.basename(file_name[0][x]).startswith("autosections"):
-                            self.autosections = file_name[0][x]
+                for file in filenames:
+                    if file.endswith('.csv'):
+                        if os.path.basename(file).startswith("auto_sections") | os.path.basename(file).startswith("autosections"):
+                            self.autosections = file
                             n += 1
                             for item in self.sections_list.findItems("auto_sections",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))
                             self.sections_list.addItem(self.autosections)
-                        elif os.path.basename(file_name[0][x]).startswith("manual_sections"):
-                            self.mansections = file_name[0][x]
+                        elif os.path.basename(file).startswith("manual_sections"):
+                            self.mansections = file
                             n += 1
                             for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))
                             self.sections_list.addItem(self.mansections)
-                        elif os.path.basename(file_name[0][x]).startswith("basics"):
-                            self.basicap = file_name[0][x]
+                        elif os.path.basename(file).startswith("basics"):
+                            self.basicap = file
                             n += 1
                             for item in self.sections_list.findItems("basics",Qt.MatchContains):
                                 self.sections_list.takeItem(self.sections_list.row(item))

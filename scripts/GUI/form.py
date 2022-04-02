@@ -323,14 +323,14 @@ class Ui_Plethysmography(object):
         # Callbacks
         self.signal_files_button.clicked.connect(Plethysmography.get_signal_files)
         self.metadata.clicked.connect(Plethysmography.load_metadata)
-        self.delete_sections.clicked.connect(Plethysmography.delete)
+        self.delete_sections.clicked.connect(Plethysmography.delete_setting_file)
+        self.signal_segments.clicked.connect(Plethysmography.get_autosections)
 
         self.breath_files.clicked.connect(Plethysmography.input_directory_r)
         self.r_go.clicked.connect(Plethysmography.r_message)
         self.mother_button.clicked.connect(Plethysmography.mothership_dir)
         self.breath_parameters.clicked.connect(Plethysmography.show_basic)
         self.py_go.clicked.connect(Plethysmography.py_message)
-        self.signal_segments.clicked.connect(Plethysmography.get_autosections)
         self.filemaker_button.clicked.connect(Plethysmography.connect_database)
         self.sections_list.itemDoubleClicked['QListWidgetItem*'].connect(Plethysmography.open_click)
         self.breath_list.itemDoubleClicked['QListWidgetItem*'].connect(Plethysmography.open_click)
