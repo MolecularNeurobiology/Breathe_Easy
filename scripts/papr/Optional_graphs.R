@@ -172,8 +172,12 @@ if(nrow(other_config) > 0){
       bw_vars <- c(var_names$Alias[which(var_names$Body.Weight == 1)])
       
       if(length(bw_vars) == 0) {
-        print("No weight variables to plot.")
-        next
+        if("Weight" %in% var_names$Alias) {
+          bw_vars <- "Weight"
+        } else {
+          print("No weight variables to plot.")
+          next
+        }
       }
       
       # Set graphing variables as a vector.
@@ -724,8 +728,22 @@ if((!is.na(spec_vars)) && (length(spec_vars) != 0)){
 #######################################
 
 ##Runs the R markdown code and saves to the output directory.
-print("Making summary pdf")
-rmd_file <- list.files(path = args$dir, pattern = "Summary.Rmd", 
+print("Making summary HTML")
+
+# Assumes first that args$Sum is a directory containing Summary.Rmd
+rmd_file <- list.files(path = args$Sum, pattern = "Summary\\.Rmd", 
                        all.files = TRUE, full.names = TRUE, 
                        recursive = TRUE, ignore.case = TRUE)
-rmarkdown::render(rmd_file, output_dir = args$Output)
+
+# If not, see if args$Sum is pointing directly to the Summary.Rmd file 
+if(length(rmd_file) == 0){
+  rmd_file <- args$Sum
+}
+
+# Render RMD file.
+html_try <- try(rmarkdown::render(rmd_file, output_dir = args$Output))
+
+# If there is an error, 
+if(class(html_try) == "try-error"){
+  print("No Summary Rmd file found in specified location.")
+}

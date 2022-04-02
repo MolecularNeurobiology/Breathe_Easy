@@ -46,6 +46,9 @@ p <- add_argument (p, "--Bodytemp", help="Filepath to R code for other graphs")
 
 p <- add_argument (p, "--I", help="Type of image to output")
 
+p <- add_argument (p, "--Sum", help="Filepath to directory with R markdown code for summary html")
+
+
 # Arguments are imported + stored as a list with the names defined as above.
 args <- parse_args(p)
 

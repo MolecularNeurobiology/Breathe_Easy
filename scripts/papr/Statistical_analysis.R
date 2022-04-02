@@ -143,7 +143,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
   for(ii in 1:length(response_vars)){
     
     # Runs the model on the original, non-transformed dependent variable (if selected by user)
-    if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || ("non" %in% transform_set[ii]))){
+    if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii])))){
       print(paste0("Running model for ", response_vars[ii]))
       ## Run models
       mod_res <- stat_run(response_vars[ii], interaction_vars, covariates, tbl0, inc_filt = TRUE)
