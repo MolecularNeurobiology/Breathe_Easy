@@ -1,42 +1,57 @@
 #%%
 #region Libraries
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
-from form import Ui_Plethysmography
-import csv
-import subprocess
-from subprocess import PIPE, Popen
-import datetime
-import time
 import os
-import json
-import pyodbc
+from pyclbr import Class
+from queue import Queue
+import subprocess
 import threading
-import multiprocessing
-import concurrent.futures
-import MainGui
-
-import sys
-from pathlib import Path, PurePath
-import shutil
-import pandas
-import re
-import importlib
-import logging
-import asyncio
+from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
 
 #endregion
 
+
 class WorkerSignals(QObject):
-    # create signals to be used by the worker
+    """
+    Chris Ward got the threading to work!
+    
+    Create signals used by the worker.
+
+    Parameters
+    --------
+    QObject: class
+        The WorkerSignals class inherits properties and methods from the QObject class.
+    """
     finished = pyqtSignal(int)
     progress = pyqtSignal(int)
     
+
 class Worker(QRunnable):
-       
-    def __init__(self,path_to_script,i,worker_queue,pleth):
+    """
+    Chris Ward got the threading to work!
+
+    The Worker class handles the threading and parallel processing for the main GUI.
+
+    Parameters
+    --------
+    QRunnable: class
+        The Worker class inherits the properties and methods from teh QRunnable class.
+    """
+    def __init__(self, path_to_script: str, i: int, worker_queue: Queue, pleth: Class):
+        """
+        Instantiate the Worker Class.
+
+        Parameters
+        ---------
+        path_to_script: str
+            The string yielded by get_jobs_py() or get_jobs_r() that is given to the command line to launch either BASSPRO or STAGG respectively.
+        i: int
+            The worker's number, determined by Plethysmography.counter.
+        worker_queue: Queue
+            A first-in, first-out queue constructor for safely exchanging information between threads.
+        pleth: Class
+            The Plethysmography Class.
+        """
         super(Worker, self).__init__()
         self.path_to_script = path_to_script
         self.i = i
@@ -47,16 +62,18 @@ class Worker(QRunnable):
         self.progress = self.signals.progress
     
     def run(self):
-        # use subprocess.Popen to run a seperate program in a new process
-        # stdout will be captured by the variable self.echo and extracted below
+        """
+        Use subprocess.Popen to run a seperate program in a new process.
+        stdout will be captured by the variable self.echo and extracted below.
+        
+        """
         self.echo = subprocess.Popen(
             self.path_to_script,
-            stdout= subprocess.PIPE, 
-            stderr = subprocess.STDOUT
+            stdout=subprocess.PIPE, 
+            stderr=subprocess.STDOUT
             )
-    
-        # extract the stdout and feed it to the queue
-        # emit signals whenever adding to the queue or finishing
+        # Extract the stdout and feed it to the queue.
+        # Emit signals whenever adding to the queue or finishing.
         running = 1
         while running == 1:
             line = self.echo.stdout.readline().decode('utf8')
@@ -68,236 +85,89 @@ class Worker(QRunnable):
         self.finished.emit(self.i)
 
 
-#region futurama
-def futurama_py(Plethysmography):
-    print('futurama_py thread id',threading.get_ident())
-    print("futurama_py process id",os.getpid())
-    futures = set()
-    with concurrent.futures.ProcessPoolExecutor(max_workers=int(Plethysmography.parallel_combo.currentText())) as executor:
-    # with concurrent.futures.ProcessPoolExecutor() as executor:
-        print("futurama")
-        for job in get_jobs_py(Plethysmography):
-            future = executor.submit(go_py,job)
-            futures.add(future)
-        concurrent.futures.wait(futures)
-        # summary = wait_for(futures)
-        print("submission?")
-    # return summary
-
-def futurama_r(Plethysmography):
-    print('futurama_r thread id',threading.get_ident())
-    print("futurama_r process id",os.getpid())
-    futures = set()
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        print("futurama")
-        for job in get_jobs_r(Plethysmography):
-            future = executor.submit(go_r,job)
-            futures.add(future)
-        concurrent.futures.wait(futures)
-        # summary = wait_for(futures)
-        print("submission?")
-
-def futurama_stamp(Plethysmography):
-    print('futurama_stamp thread id',threading.get_ident())
-    print("futurama_stamp process id",os.getpid())
-    futures = set()
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        print("futurama")
-        for job in get_jobs_stamp(Plethysmography):
-            future = executor.submit(go_stamp,job)
-            futures.add(future)
-        concurrent.futures.wait(futures)
-        # summary = wait_for(futures)
-        print("submission?")
-
-#endregion
-# def wait_for(futures):
-#     results = []
-#     for future in concurrent.futures.wait(futures):
-#         err = future.exception()
-#         if err is None:
-#             results.append(future.result())
-#         else:
-#             raise err
-#     return results
-
 #region get_jobs
-def get_jobs_py(Plethysmography):
+def get_jobs_py(Plethysmography: Class):
+    """
+    Return the string fed to the command line to launch the BASSPRO module.
+
+    Parameters
+    --------
+    Plethysmography: Class
+        The Plethysmography Class.
+    
+    Returns
+    --------
+    output: breathcaller_cmd
+        The string given to the command line to launch the BASSPRO module.
+    """
     print('get_jobs_py thread id',threading.get_ident())
     print("get_jobs_py process id",os.getpid())
     for file_py in Plethysmography.signals:
-        print(file_py)
         breathcaller_cmd = 'python -u "{module}" -i "{id}" -f "{signal}" -o "{output}" -a "{metadata}" -m "{manual}" -c "{auto}" -p "{basic}"'.format(
+            # The path to the BASSPRO script:
             module = Plethysmography.breathcaller_path,
-            # id = Plethysmography.input_dir_py,
+            # The path of the signal file's directory:
             id = os.path.dirname(file_py),
+            # The path of the BASSPRO output directory as chosen by the user previously:
             output = Plethysmography.output_dir_py,
+            # The basename of the signal file:
             signal = os.path.basename(file_py),
+            # The path of the metadata file:
             metadata = Plethysmography.metadata,
+            # The path of the manual settings file - if not selected, it's an empty string "":
             manual = Plethysmography.mansections,
-            # manual = "NONE", 
+            # The path of the automated settings file - if not selected, it's an empty string "":
             auto = Plethysmography.autosections,
-            # auto = "NONE",
+            # The path of the basic settings file:
             basic = Plethysmography.basicap
         )
-        # breathcaller_cmd = 'python -u "{module}" -i "{id}" -f "{signal}" -o "{output}" -a "{metadata}" -m "{manual}" -p "{basic}"'.format(
-        #     module = Plethysmography.breathcaller_path,
-        #     id = Plethysmography.input_dir_py,
-        #     output = Plethysmography.output_dir_py,
-        #     signal = os.path.basename(file_py),
-        #     metadata = Plethysmography.metadata,
-        #     manual = Plethysmography.mansections,
-        #     # manual = "", 
-        #     # auto = Plethysmography.autosections,
-        #     auto = "NONE",
-        #     basic = Plethysmography.basicap
-        # )
         yield breathcaller_cmd
-        # this follows the example for the sake of my sanity but it's obviously redundant as is. However, if we have each signal file be its own job, we could approximate blah.
 
-def get_jobs_r(Plethysmography):
-    print('R env route')
+
+def get_jobs_r(Plethysmography: Class):
+    """
+    Return the string fed to the command line to launch the STAGG module.
+
+    Parameters
+    --------
+    Plethysmography: Class
+        The Plethysmography Class.
+    
+    Returns
+    --------
+    output: papr_cmd
+        The string given to the command line to launch the STAGG module.
+    """
     print('get_jobs_r thread id',threading.get_ident())
     print("get_jobs_r process id",os.getpid())
-
-    papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}"'.format(
-            # rscript = Plethysmography.gui_config['Dictionaries']['Paths']['rscript'],
+    papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}" -Sum "{summary}"'.format(
+            # The path to the local R executable file:
             rscript = Plethysmography.rscript_des,
-            # pipeline = os.path.join(Plethysmography.papr_dir, "Pipeline.R"),
+            # The path to the STAGG script:
             pipeline = Plethysmography.pipeline_des,
+            # The path to the STAGG scripts directory:
+            summary = Plethysmography.papr_dir,
+            # The path to the output directory chosen by the user:
             d = Plethysmography.mothership,
-            # j = os.path.join(Plethysmography.mothership, "JSON"),
+            # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
             j = Plethysmography.input_dir_r,
+            # The path to the variable_config.csv file:
             r = Plethysmography.variable_config,
-            # r = Plethysmography.v.configs["variable_config"]["path"],
-            # r = "C:/Users/atwit/Desktop/Mothership/R_config/variable_config.csv",
-            # r = "D:/BCM/Man4_Monte Carlo/STAGG inputs/r_config.csv",
-            # g = Plethysmography.v.configs["graph_config"]["path"],
+            # The path to the graph_config.csv file:
             g = Plethysmography.graph_config,
-            # g = "D:/BCM/Man4_Monte Carlo/STAGG inputs/g_config.csv",
-            # f = "C:/Users/atwit/Desktop/Mothership/R_config/o_config.csv",
+            # The path to the other_config.csv file:
             f = Plethysmography.other_config,
-            # f = Plethysmography.v.configs["other_config"]["path"],
-            # o = "C:/Users/atwit/Desktop/PAPR/PAPR Output/STAGG_output/STAGG_output_20220124_160750",
-            # o = os.path.join(self.mothership, "Output"),
+            # The path to the directory for STAGG output:
             o = Plethysmography.output_dir_r,
+            # The paths to the STAGG scripts:
             t = os.path.join(Plethysmography.papr_dir, "Data_import_multi.R"),
             s = os.path.join(Plethysmography.papr_dir, "Statistical_analysis.R"),
             m = os.path.join(Plethysmography.papr_dir, "Graph_generator.R"),
             b = os.path.join(Plethysmography.papr_dir, "Optional_graphs.R"),
+            # A string, either ".jpeg" or ".svg", indicating the format of the image output from STAGG:
             i = Plethysmography.image_format
     )
     yield papr_cmd
-    
-def get_jobs_stamp(Plethysmography):
-    print('get_jobs_stamp thread id',threading.get_ident())
-    print("get_jobs_stamp process id",os.getpid())
-    for file_st in Plethysmography.signals:
-        print(file_st)
-        stamp_cmd = 'python -u "{stamper}" --s "{signal}" --n "{need}"'.format(
-            stamper = Plethysmography.gui_config['Dictionaries']['Paths']['timestamper'],
-            # stamper = "C:/Users/atwit/Desktop/Plethysmography/Plethysmography_trim/stimestamp.py",
-            signal = file_st,
-            need = Plethysmography.gui_config['Dictionaries']['Timestamps'][1])
-        yield stamp_cmd
 
-#endregion
-
-#region update_progress
-def update_Rprogress():
-        # self.go_r()
-        print("update_Rprogress is happening")
-        print('update_Rprogress thread id', int(QThread.currentThreadId()))
-        print("update_Rprogress process id",os.getpid())
-        self.completed = 0
-        for i in range(101):
-            self.completed = i
-            self.hangar.append(str(self.completed))
-            QApplication.processEvents()
-            time.sleep(0.1)
-            self.progressBar_r.setValue(self.completed)
-
-#endregion
-
-#region go
-def go_py(breathcaller_cmd):
-    tic=datetime.datetime.now()
-    print(tic)
-    print("going?")
-    print('go_py thread id', int(QThread.currentThreadId()))
-    print("go_py process id",os.getpid())
-    # Ui_MiniPleth.mini_hangar.append("Breathcaller command: "+breathcaller_cmd)
-    print(breathcaller_cmd)
-
-    py_proc=subprocess.Popen(breathcaller_cmd, stdout= subprocess.PIPE)
-
-    while True:
-        output = py_proc.stdout.readline().decode('utf8')
-        if output=='' and py_proc.poll() is not None:
-            break
-        if output!='': 
-            print(output.strip())
-        #     for line in output.strip():
-        #         self.completed += 1
-        # if 'PROGRESS:' in output.strip():
-        #     current_progress=self.parse_progress(output.strip())
-        #     print('***  {percent_complete}  |  {time_remaining}  |  {estimated_total_time}  |  {current_file_no}  |  {total_file_no}  ********'.format(**current_progress))
-        #     # self.completed = float(current_progress['percent_complete'])
-    
-    toc=datetime.datetime.now()
-    print(toc)
-    print(toc-tic)
-    Ui_Plethysmography.hangar.append(toc-tic)
-    return py_proc
-
-def go_r(papr_cmd):
-    tic=datetime.datetime.now()
-    print(tic)
-    print("going?")
-    print('go_r thread id', int(QThread.currentThreadId()))
-    print("go_r process id",os.getpid())
-    print(papr_cmd)
-
-    r_proc=subprocess.Popen(papr_cmd, stdout= subprocess.PIPE)
-
-    while True:
-        output = r_proc.stdout.readline().decode('utf8')
-        if output=='' and r_proc.poll() is not None:
-            break
-        if output!='': 
-            print(output.strip())
-        #     for line in output.strip():
-        #         self.completed += 1
-        # if 'PROGRESS:' in output.strip():
-        #     current_progress=self.parse_progress(output.strip())
-        #     print('***  {percent_complete}  |  {time_remaining}  |  {estimated_total_time}  |  {current_file_no}  |  {total_file_no}  ********'.format(**current_progress))
-        #     # self.completed = float(current_progress['percent_complete'])
-    
-    toc=datetime.datetime.now()
-    print(toc)
-    print(toc-tic)
-    Ui_Plethysmography.hangar.append(toc-tic)
-    return r_proc
-
-def go_stamp(stamp_cmd):
-    tic=datetime.datetime.now()
-    print(tic)
-    print('go_stamp thread id', int(QThread.currentThreadId()))
-    print("go_stamp process id",os.getpid())
-    print(stamp_cmd)
-
-    stamp_proc = subprocess.Popen(stamp_cmd, stdout = subprocess.PIPE)
-
-    while True:
-        output = stamp_proc.stdout.readline().decode('utf8')
-        if output == '' and stamp_proc.poll() is not None:
-            break
-        if output != '':
-            print(output.strip())
-    
-    toc=datetime.datetime.now()
-    print(toc)
-    print(toc-tic)
-    return stamp_proc
 
 #endregion
