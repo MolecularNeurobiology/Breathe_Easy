@@ -18,8 +18,8 @@ def main():
     QDir.addSearchPath('resources', root)
     app = QApplication(sys.argv)
     window = MainGui.Plethysmography()
-    print('GUI thread id',threading.get_ident()) 
-    print("GUI process id",os.getpid())
+    print('GUI thread id', threading.get_ident()) 
+    print("GUI process id", os.getpid())
     window.show()
     app.exec_()
 

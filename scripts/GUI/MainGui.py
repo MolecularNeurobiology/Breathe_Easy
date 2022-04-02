@@ -5,7 +5,6 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5 import QtCore
 from PyQt5.QtCore import *
-import resource
 from form import Ui_Plethysmography
 from thorbass import Ui_Thorbass
 from thumbass import Ui_Thumbass
@@ -2261,6 +2260,21 @@ class Config(QWidget, Ui_Config):
 #endregion
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
+    @property
+    def signal_files(self):
+        return [self.signal_files_list.item(i).text() for i in range(self.signal_files_list.count())]
+
+    @property
+    def metadata_files(self):
+        return [self.metadata_list.item(i).text() for i in range(self.metadata_list.count())]
+
+    def delete(self):
+        self.hangar.append("delete clicked")
+
+    def notify_error(self, msg):
+        # TODO: find error message class
+        QMessageBox.warning(self, "Error", msg)
+
     def __init__(self):
         super(Plethysmography, self).__init__()
 
@@ -2398,24 +2412,27 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 #region Timestamper...
 
     def timestamp_dict(self):
-        print("timestamp_dict()")
         self.stamp['Dictionaries']['Data'] = {}
         combo_need = self.necessary_timestamp_box.currentText()
-        if self.signals == []:
+        if self.signal_files_list.count() == 0:
             reply = QMessageBox.information(self, 'Missing signal files', 'No signal files selected.\nWould you like to select a signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.get_signal_files()
         elif combo_need == "Select dataset...":
             reply = QMessageBox.information(self, 'Missing dataset', 'Please select one of the options from the dropdown menu above.', QMessageBox.Ok)
-        elif not all(x.endswith(".txt") for x in self.signals)==True:
-            reply = QMessageBox.information(self, 'Incorrect file format', 'The selected signal files are not text formatted.\nWould you like to select a different signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+        elif not all(x.endswith(".txt") for x in self.signal_files):
+            reply = QMessageBox.information(
+                self,
+                'Incorrect file format',
+                'The selected signal files are not text formatted.\nWould you like to select a different signal file directory?',
+                QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.get_signal_files()
         else:
-            epoch = [os.path.basename(Path(self.signals[0]).parent.parent)]
-            condition = [os.path.basename(Path(self.signals[0]).parent)]
+            epoch = [os.path.basename(Path(self.signal_files[0]).parent.parent)]
+            condition = [os.path.basename(Path(self.signal_files[0]).parent)]
             
-            for f in self.signals:
+            for f in self.signal_files:
                 if os.path.basename(Path(f).parent.parent) in epoch:
                     continue
                 else:
@@ -2438,6 +2455,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             self.need = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
 
+            self.hangar.append("Checking timestamps...")
+            # TODO: put in separate thread/process
             self.grabTimeStamps()
             self.checkFileTimeStamps()
 
@@ -2447,7 +2466,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     for notable in self.check:
                         self.stamp['Dictionaries']['Data'][e][c][notable] = self.check[notable]  
             try:
-                tpath = os.path.join(Path(self.signals[0]).parent,f"timestamp_{os.path.basename(Path(self.signals[0]).parent)}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}")
+                tpath = os.path.join(Path(self.signal_files[0]).parent,f"timestamp_{os.path.basename(Path(self.signal_files[0]).parent)}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}")
                 with open(tpath,"w") as tspath:
                     tspath.write(json.dumps(self.stamp))
                     tspath.close()
@@ -2457,31 +2476,30 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb = Thumbass(self)
                 self.thumb.show()
                 self.thumb.message_received(f"{type(e).__name__}: {e}",f"The timestamp file could not be written.")
+
+            # Show timestamp status
             self.hangar.append("Timestamp output saved.")
-            miss = []
             self.hangar.append("---Timestamp Summary---")
             self.hangar.append(f"Files with missing timestamps: {', '.join(set([w for m in self.check['files_missing_a_ts'] for w in self.check['files_missing_a_ts'][m]]))}")
             self.hangar.append(f"Files with duplicate timestamps: {', '.join(set([y for d in self.check['files_with_dup_ts'] for y in self.check['files_with_dup_ts'][d]]))}")
-            if len(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]])) == len(self.signals):
+
+            if len(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]])) == len(self.signal_files):
                 self.hangar.append(f"Files with novel timestamps: all signal files")
             else:
                 self.hangar.append(f"Files with novel timestamps: {', '.join(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]]))}")
-            try:
-                self.hangar.append(f"Full review of timestamps: {Path(tpath)}")
-            except Exception as e:
-                print(f'{type(e).__name__}: {e}')
-                print(traceback.format_exc())
+
+            self.hangar.append(f"Full review of timestamps: {Path(tpath)}")
+
 
     def grabTimeStamps(self):
         """
         iterates through files in filepathlist to gather unique timestamps 
         contained in the files - this is useful for building AutoCriteria Files
         """
-        errors = []
         timestamps = []
         self.tsbyfile = {}
         
-        for CurFile in self.signals:
+        for CurFile in self.signal_files:
             self.tsbyfile[CurFile]=[]
             with open(CurFile,'r') as opfi:
                 i=0
@@ -2538,15 +2556,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if error==0:
                 goodfiles.append(os.path.basename(f))
         for m in filesmissingts:
-            if len(filesmissingts[m]) == len(self.signals):
+            if len(filesmissingts[m]) == len(self.signal_files):
                 filesmissingts[m] = ["all signal files"]
-        if len(goodfiles) == len(self.signals):
+        if len(goodfiles) == len(self.signal_files):
             goodfiles = ["all signal files"]
         for n in filesextrats:
-            if len(filesextrats[n]) == len(self.signals):
+            if len(filesextrats[n]) == len(self.signal_files):
                 filesextrats[n] = ["all signal files"]
         for p in new_ts:
-            if len(new_ts[p]) == len(self.signals):
+            if len(new_ts[p]) == len(self.signal_files):
                 new_ts[p] = ["all signal files"]
         self.check = {'good_files':goodfiles,'files_missing_a_ts':filesmissingts,
             'files_with_dup_ts':filesextrats,'new_ts':new_ts} 
@@ -2574,31 +2592,50 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             sys.exit(0)
 
 #region Variable configuration
-    def check_metadata_file(self,direction):
+    def check_metadata_files(self, metadata_files):
+        self.hangar.append("Checking metadata files")
         baddies = []
-        if self.metadata.endswith(".csv"):
-            meta = pd.read_csv(self.metadata)
-        elif self.metadata.endswith(".xlsx"):
-            meta = pd.read_excel(self.metadata)
-        for s in self.signals:
-            name = os.path.basename(s).split('.')[0]
-            if '_' in name:
-                if len(meta.loc[(meta['MUID'] == name.split('_')[0])])==0:
-                    baddies.append(s)
-                elif len(meta.loc[(meta['PlyUID'] == name.split('_')[1])])==0:
-                    baddies.append(s)
-            elif len(meta.loc[(meta['MUID'] == name)])==0:
-                baddies.append(s)
-        if len(baddies)>0:
-            self.thumb = Thumbass(self)
-            self.thumb.show()
-            self.thumb.message_received("Metadata and signal files mismatch",f"The following signals files were not found in the selected metadata file:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
+        final_metadata_files = list(metadata_files)
+
+        for metadata_file in metadata_files:
+            self.hangar.append(f"Checking {metadata_file}")
+
+            if metadata_file.endswith(".csv"):
+                meta = pd.read_csv(metadata_file)
+            elif metadata_file.endswith(".xlsx"):
+                meta = pd.read_excel(metadata_file)
+            else:
+                final_metadata_files.remove(metadata_file)
+
+            if metadata_file in final_metadata_files:
+                for s in self.signal_files:
+                    name = os.path.basename(s).split('.')[0]
+                    if '_' in name:
+                        mouse_uid, ply_uid = name.split('_')
+                        if len(meta.loc[(meta['MUID'] == mouse_uid)])==0:
+                            baddies.append(s)
+                        elif len(meta.loc[(meta['PlyUID'] == ply_uid)])==0:
+                            baddies.append(s)
+                    elif len(meta.loc[(meta['MUID'] == name)])==0:
+                        baddies.append(s)
+
+                if len(baddies) > 0:
+                    self.thumb = Thumbass(self)
+                    self.thumb.show()
+                    self.thumb.message_received("Metadata and signal files mismatch",f"The following signals files were not found in the selected metadata file:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
+
+        # If we had any bad metadata files, show error notice
+        if len(final_metadata_files) != len(metadata_files):
+            bad_metadata_files_str = '\n'.join(list(set(metadata_files) - set(final_metadata_files)))
+            self.notify_error(f"Bad metadata file format:\n{bad_metadata_files_str}")
+
+        return final_metadata_files
 
     def get_bp_reqs(self):
         if self.metadata == "":
             reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Ok:
-                self.get_metadata()
+                self.load_metadata()
             if self.autosections == "" and self.mansections == "":
                 reply = QMessageBox.information(self, 'Missing BASSPRO automated/manual settings', 'Please select BASSPRO automated or manual settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
                 if reply == QMessageBox.Ok:
@@ -2768,7 +2805,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     if m is self.mothership:
                         reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                         if reply == QMessageBox.Ok:
-                            self.get_metadata()
+                            self.load_metadata()
                         if reply == QMessageBox.Cancel:
                             self.metadata_list.clear()
                             self.metadata_list.addItem("No metadata file selected.")
@@ -2900,7 +2937,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.auto_get_output_dir_py()
                     self.auto_get_autosections()
                     self.auto_get_mansections()
-                    self.auto_get_metadata()
+                    self.auto_load_metadata()
                     self.auto_get_output_dir_r()
                     self.auto_get_basic()
                     print(self.basicap)
@@ -2914,7 +2951,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.auto_get_output_dir_py()
                 self.auto_get_autosections()
                 self.auto_get_mansections()
-                self.auto_get_metadata()
+                self.auto_load_metadata()
                 self.auto_get_output_dir_r()
                 self.auto_get_basic()
                 if len(self.breath_df)>0:
@@ -2960,26 +2997,24 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     #        if self.signals == []:
     #            self.signal_files_list.clear()
      
-    def auto_get_metadata(self):
-        print("auto_get_metadata()")
-        print(id(self.metadata))
-        print(os.path.basename(self.metadata))
-        metadata_path=os.path.join(self.mothership, 'metadata.csv')
+    def auto_load_metadata(self):
+        metadata_path = os.path.join(self.mothership, 'metadata.csv')
         if Path(metadata_path).exists():
+            # TODO: put this check where it needs to go
+            metadata_files = self.check_metadata_files([metadata_path])
+
+            if not metadata_files:
+                return
+
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
             for item in self.metadata_list.findItems("metadata",Qt.MatchContains):
-            # and we remove them from the widget.
+                # and we remove them from the widget.
                 self.metadata_list.takeItem(self.metadata_list.row(item))
-            if self.metadata == "":
-                self.metadata=metadata_path
-                self.metadata_list.addItem(self.metadata)
-            else:
-                self.metadata=metadata_path
-                self.metadata_list.addItem(self.metadata)
+
+            self.metadata = metadata_path
+            self.metadata_list.addItem(self.metadata)
         else:
             print("No metadata file selected.")
-        if self.signals != []:
-            self.check_metadata_file("metadata")
 
     def auto_get_basic(self):
         print("auto_get_basic()")
@@ -3094,8 +3129,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Choose signal files from file browser
         '''
         filenames, filter = QFileDialog.getOpenFileNames(self, 'Select signal files')
+
         # len(filenames) == 0 when dialog is cancelled
-        if len(filenames) > 0:
+        if filenames:
 
             # Overwrite existing files?
             if self.signal_files_list.count() > 0:
@@ -3118,30 +3154,38 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.thumb.show()
                 self.thumb.message_received("Incorrect file format",f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_file_formats])}\n\nThey will not be included.")
 
-        if self.metadata != "":
-            if os.path.exists(self.metadata):
-                self.check_metadata_file("signal")
+            self.check_metadata_files(self.metadata_files)
 
-    def get_metadata(self):
-        print("get_metadata()")
-        if self.mothership != "":
-            file_name = QFileDialog.getOpenFileNames(self, 'Select files', str(self.mothership))
-        else:
-            file_name = QFileDialog.getOpenFileNames(self, 'Select metadata file')
-        if not file_name[0]:
-            if self.metadata == "":
-                self.metadata_list.clear()
-        else:
-            self.metadata_list.clear()
-            for x in range(len(file_name[0])):
-                self.metadata_list.addItem(file_name[0][x])
-            self.metadata = file_name[0][0]
+    def load_metadata(self):
+        # Keep selecting metadata until good data or cancel
+        while True:
+            # TODO: are we picking one file or multiple? -- may apply to multiple spots
+            filenames, filter = QFileDialog.getOpenFileNames(self, 'Select metadata file', self.mothership)
+
+            # if files were selected (not cancelled)
+            if filenames:
+
+                # check files and return only valid ones
+                filenames = self.check_metadata_files(filenames)
+
+                # If there are valid files, keep going
+                if filenames:
+                    break
             
-            if len(self.breath_df)>0:
-                self.update_breath_df("metadata")
-        if self.signals != []:
-            self.check_metadata_file("metadata")
-    
+            # User cancelled
+            else:
+                return
+
+        self.metadata_list.clear()
+        for f in filenames:
+            self.metadata_list.addItem(f)
+
+        # TODO: why do we assign only the first one here?
+        self.metadata = filenames[0]
+        
+        if len(self.breath_df) > 0:
+            self.update_breath_df("metadata")
+
     def mp_parser(self):
         print("mp_parser()")
         self.mp_parsed={'MUIDLIST':[],'PLYUIDLIST':[],'MUID_PLYUID_tuple':[]}
@@ -3172,32 +3216,40 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.mp_parserrors.append(file)
 
     def connect_database(self):
-        print("connect_database()")
-        if self.signals == []:
+
+        # Wait for user to get signal files
+        while self.signal_files_list.count() == 0:
             reply = QMessageBox.information(self, 'Unable to connect to database', 'No signal files selected.\nWould you like to select a signal file directory?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
                 self.get_signal_files()
-        else:
-            self.metadata_warnings={}
-            self.metadata_pm_warnings=[]
-            self.missing_plyuids=[]
-            self.metadata_list.addItem("Gauging Filemaker connection...")
-            try:
-                dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
-                self.mousedb = pyodbc.connect(dsn)
-                self.mousedb.timeout=1
-                self.mp_parser()
-                self.get_study()
-                self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
-                self.metadata_list.clear()
-                if os.path.exists(self.mothership):
-                    self.save_filemaker()
-            except Exception as e:
-                print(f'{type(e).__name__}: {e}')
-                print(traceback.format_exc())
-                reply = QMessageBox.information(self, 'Unable to connect to database', 'You were unable to connect to the database.\nWould you like to select another metadata file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
-                if reply == QMessageBox.Ok:
-                    self.get_metadata()
+            elif reply == QMessageBox.Cancel:
+                break
+        
+        # TODO: Is this true?
+        # Cannot connect to database if no signal files
+        if self.signal_files_list.count() == 0:
+            return
+
+        self.metadata_warnings={}
+        self.metadata_pm_warnings=[]
+        self.missing_plyuids=[]
+        self.hangar.append("Gauging Filemaker connection...")
+        try:
+            dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
+            self.mousedb = pyodbc.connect(dsn)
+            self.mousedb.timeout=1
+            self.mp_parser()
+            self.get_study()
+            self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
+            self.metadata_list.clear()
+            if os.path.exists(self.mothership):
+                self.save_filemaker()
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+            reply = QMessageBox.information(self, 'Unable to connect to database', 'You were unable to connect to the database.\nWould you like to select another metadata file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+            if reply == QMessageBox.Ok:
+                self.load_metadata()
 
     def get_study(self, fixformat=True):
         print("get_study()")
@@ -3642,7 +3694,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 # I'm in the process of exploring the black box. Fear is the mind killer.
 
     def py_message(self):
-        print("py_message()")
         try:
             self.dir_checker(self.output_dir_py,self.py_output_folder,"BASSPRO")
             self.get_bp_reqs()
