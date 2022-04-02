@@ -1,72 +1,11 @@
-#%%
-#region Libraries
 
 import os
 from pathlib import Path
 from pyclbr import Class
 import pandas as pd
-from PyQt5.QtWidgets import QDialog, QMainWindow, QMessageBox, QTreeWidgetItem, QFileDialog
-from PyQt5 import QtCore, QtGui
-from thumbass import Ui_Thumbass
-from annot_form import Ui_Annot
-
-#endregion
-#region Thumbass
-class Thumbass(QDialog, Ui_Thumbass):
-    """
-    This class is a standard dialog used to communicate directly to the user with messages.
-
-    Parameters
-    ---------
-    Thumbass.label: QLabel
-        The label displays the text provided as the arguments "words" of Thumbass.message_received().
-    
-    Parameters
-    --------
-    QDialog: class
-        The Thumbass class inherits properties and methods from the QDialog class.
-    Ui_Thumbass: class
-        The Thumbass class inherits widgets and layouts defined in the Ui_Thumbass class.
-    """
-    def __init__(self):
-        """
-        Instantiate the Thumbass class.
-
-        Parameters
-        ---------
-        Thumbass.label: QLabel
-            The label displays the text provided as the arguments "words" of Thumbass.message_received().
-        """
-        super(Thumbass, self).__init__()
-        self.setupUi(self)
-        self.setWindowTitle("Nailed it.")
-        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
-        self.label.setOpenExternalLinks(True)
-    
-    def message_received(self,title,words):
-        """Set the text of the dialog's window title and the Thumbass.label.
-        
-        Parameters
-        --------
-        Thumbass: QDialog
-            The dialog window title is set.
-        Thumbass.label: QLabel
-            The label displays the text provided as the arguments "words" of Thumbass.message_received().
-        title: str
-            The text that serves as the dialog's window title.
-        words: str
-            The text that populates Thumbass.label and serves as the main message of the dialog.
-        
-        Outputs
-        --------
-        Thumbass: QDialog
-            The dialog window title is set.
-        Thumbass.label: QLabel
-            The label displays the text provided as the arguments "words" of Thumbass.message_received().
-        """
-        self.setWindowTitle(title)
-        self.label.setText(words)
-#endregion
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QFileDialog
+from PyQt5 import QtCore
+from ui.annot_form import Ui_Annot
 
 class Annot(QMainWindow, Ui_Annot):
     """

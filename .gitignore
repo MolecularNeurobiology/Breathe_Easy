@@ -3,3 +3,4 @@
 venv/
 *.orig
 data/
+*__pycache__*
