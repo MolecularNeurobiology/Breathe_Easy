@@ -58,8 +58,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return [self.signal_files_list.item(i).text() for i in range(self.signal_files_list.count())]
 
     @property
-    def metadata_files(self):
-        return [self.metadata_list.item(i).text() for i in range(self.metadata_list.count())]
+    def metadata_file(self):
+        if self.metadata_list.count() > 1:
+            # TODO: error- too many files
+            raise RuntimeError("too many metadata files!")
+        elif self.metadata_list.count() == 1:
+            return self.metadata_list.item(0).text()
+        else:
+            return None
 
     def delete_setting_file(self):
         a = self.sections_list.currentItem()
@@ -606,7 +612,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
 #endregion
 #region Variable configuration
-    def check_metadata_files(self, metadata_files):
+    def check_metadata_file(self, metadata_file):
         """
         Ensure that the selected metadata file does contain metadata for the signal files selected.
         This method is only called if self.signals is not empty.
@@ -628,44 +634,35 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This specialized dialog tells the user of any mismatches and lists the offending signal file path(s).
         """
 
-        self.hangar.append("Checking metadata files")
+        self.hangar.append(f"Checking {metadata_file}")
+
+        if metadata_file.endswith(".csv"):
+            meta = pd.read_csv(metadata_file)
+        elif metadata_file.endswith(".xlsx"):
+            meta = pd.read_excel(metadata_file)
+        else:
+            self.notify_error("Bad metadata file format")
+            return False
 
         baddies = []
-        final_metadata_files = list(metadata_files)
+        for s in self.signal_files:
+            name = os.path.basename(s).split('.')[0]
+            if '_' in name:
+                mouse_uid, ply_uid = name.split('_')
+                if len(meta.loc[(meta['MUID'] == mouse_uid)])==0:
+                    baddies.append(s)
+                elif len(meta.loc[(meta['PlyUID'] == ply_uid)])==0:
+                    baddies.append(s)
+            elif len(meta.loc[(meta['MUID'] == name)])==0:
+                baddies.append(s)
 
-        for metadata_file in metadata_files:
-            self.hangar.append(f"Checking {metadata_file}")
+        if len(baddies) > 0:
+            self.thumb = Thumbass(self)
+            self.thumb.show()
+            self.thumb.message_received("Metadata and signal files mismatch",f"The following signals files were not found in the selected metadata file:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
+            return False
 
-            if metadata_file.endswith(".csv"):
-                meta = pd.read_csv(metadata_file)
-            elif metadata_file.endswith(".xlsx"):
-                meta = pd.read_excel(metadata_file)
-            else:
-                final_metadata_files.remove(metadata_file)
-
-            if metadata_file in final_metadata_files:
-                for s in self.signal_files:
-                    name = os.path.basename(s).split('.')[0]
-                    if '_' in name:
-                        mouse_uid, ply_uid = name.split('_')
-                        if len(meta.loc[(meta['MUID'] == mouse_uid)])==0:
-                            baddies.append(s)
-                        elif len(meta.loc[(meta['PlyUID'] == ply_uid)])==0:
-                            baddies.append(s)
-                    elif len(meta.loc[(meta['MUID'] == name)])==0:
-                        baddies.append(s)
-
-                if len(baddies) > 0:
-                    self.thumb = Thumbass(self)
-                    self.thumb.show()
-                    self.thumb.message_received("Metadata and signal files mismatch",f"The following signals files were not found in the selected metadata file:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
-
-        # If we had any bad metadata files, show error notice
-        if len(final_metadata_files) != len(metadata_files):
-            bad_metadata_files_str = '\n'.join(list(set(metadata_files) - set(final_metadata_files)))
-            self.notify_error(f"Bad metadata file format:\n{bad_metadata_files_str}")
-
-        return final_metadata_files
+        return True
 
     def get_bp_reqs(self):
         """
@@ -1330,10 +1327,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         metadata_path = os.path.join(self.mothership, 'metadata.csv')
         if Path(metadata_path).exists():
-            # TODO: put this check where it needs to go
-            metadata_files = self.check_metadata_files([metadata_path])
 
-            if not metadata_files:
+            # TODO: put this check where it needs to go
+            if not self.check_metadata_file(metadata_path):
                 return
 
             # We assign the path detected via mothership to the Plethysmography class attribute that will be an argument for the breathcaller command line.
@@ -1591,7 +1587,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if bad_file_formats:
                 self.notify_error(f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_file_formats])}\n\nThey will not be included.")
 
-            self.check_metadata_files(self.metadata_files)
+            if self.metadata_list.count():
+                self.check_metadata_file(self.metadata_file)
 
     def load_metadata(self):
         # There are no checks for quality of file selected in this method. Are they somewhere else?
@@ -1626,16 +1623,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Keep selecting metadata until good data or cancel
         while True:
             # TODO: are we picking one file or multiple? -- may apply to multiple spots
-            filenames, filter = QFileDialog.getOpenFileNames(self, 'Select metadata file', self.mothership)
+            filename, filter = QFileDialog.getOpenFileName(self, 'Select metadata file', self.mothership)
 
             # if files were selected (not cancelled)
-            if filenames:
+            if filename:
 
                 # check files and return only valid ones
-                filenames = self.check_metadata_files(filenames)
 
                 # If there are valid files, keep going
-                if filenames:
+                if self.check_metadata_file(filename):
                     break
             
             # User cancelled
@@ -1643,11 +1639,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 return
 
         self.metadata_list.clear()
-        for f in filenames:
-            self.metadata_list.addItem(f)
+        self.metadata_list.addItem(filename)
 
         # TODO: why do we assign only the first one here?
-        self.metadata = filenames[0]
+        self.metadata = filename
         
         if len(self.breath_df) > 0:
             self.update_breath_df("metadata")
