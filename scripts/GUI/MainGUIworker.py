@@ -86,7 +86,7 @@ class Worker(QRunnable):
 
 
 #region get_jobs
-def get_jobs_py(Plethysmography: Class):
+def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
     """
     Return the string fed to the command line to launch the BASSPRO module.
 
@@ -102,24 +102,24 @@ def get_jobs_py(Plethysmography: Class):
     """
     print('get_jobs_py thread id',threading.get_ident())
     print("get_jobs_py process id",os.getpid())
-    for file_py in Plethysmography.signals:
+    for file_py in signal_files:
         breathcaller_cmd = 'python -u "{module}" -i "{id}" -f "{signal}" -o "{output}" -a "{metadata}" -m "{manual}" -c "{auto}" -p "{basic}"'.format(
             # The path to the BASSPRO script:
-            module = Plethysmography.breathcaller_path,
+            module=module,
             # The path of the signal file's directory:
-            id = os.path.dirname(file_py),
+            id=os.path.dirname(file_py),
             # The path of the BASSPRO output directory as chosen by the user previously:
-            output = Plethysmography.output_dir_py,
+            output=output,
             # The basename of the signal file:
-            signal = os.path.basename(file_py),
+            signal=os.path.basename(file_py),
             # The path of the metadata file:
-            metadata = Plethysmography.metadata,
+            metadata=metadata,
             # The path of the manual settings file - if not selected, it's an empty string "":
-            manual = Plethysmography.mansections,
+            manual=manual,
             # The path of the automated settings file - if not selected, it's an empty string "":
-            auto = Plethysmography.autosections,
+            auto=auto,
             # The path of the basic settings file:
-            basic = Plethysmography.basicap
+            basic=basic
         )
         yield breathcaller_cmd
 
