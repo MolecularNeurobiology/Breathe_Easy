@@ -59,6 +59,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return self.output_path_display.text()
 
     @property
+    def metadata(self):
+        if self.metadata_list.count():
+            return self.metadata_list.item(0).text()
+        else:
+            return None
+
+    @property
     def signal_files(self):
         return [self.signal_files_list.item(i).text() for i in range(self.signal_files_list.count())]
 
@@ -71,6 +78,32 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             return self.metadata_list.item(0).text()
         else:
             return None
+
+    @property
+    def autosections(self):
+        return self.get_settings_file_from_list("auto")
+
+    @property
+    def mansections(self):
+        return self.get_settings_file_from_list("manual")
+
+    @property
+    def basicap(self):
+        return self.get_settings_file_from_list("basic")
+
+    def get_settings_file_from_list(self, type):
+        all_settings = [self.sections_list.item(i).text() for i in range(self.sections_list.count())]
+
+        for settings_file in all_settings:
+
+            if (type == 'auto' and \
+                   (os.path.basename(settings_file).startswith("auto_sections") or os.path.basename(settings_file).startswith("autosections"))) or \
+               (type == 'manual' and \
+                   os.path.basename(settings_file).startswith("manual_sections")) or \
+               (type == 'basic' and \
+                   os.path.basename(settings_file).startswith("basics")):
+                return settings_file
+        return None
 
     def delete_setting_file(self):
         a = self.sections_list.currentItem()
@@ -186,7 +219,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         super(Plethysmography, self).__init__()
 
-#region class methods
         # Access configuration settings for GUI in gui_config.json:
         with open(f'{Path(__file__).parent}/gui_config.json') as config_file:
             self.gui_config = json.load(config_file)
@@ -219,7 +251,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.workers = {}
 
         self.setWindowTitle("Plethysmography Analysis Pipeline")
-        self.isActiveWindow()
         self.showMaximized()
 
         # Load variables with paths for BASSPro and StaGG stored in gui_config dictionary:
@@ -228,19 +259,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.gui_config['Dictionaries']['Paths'].update({'papr':str(Path(f'{Path(__file__).parent.parent}/papr'))})
         print(self.gui_config['Dictionaries']['Paths']['papr'])
 
-#endregion
 
-#region class attributes
         self.breathcaller_path = self.gui_config['Dictionaries']['Paths']['breathcaller']
-        self.output_dir_py=""
         self.input_dir_r=""
         self.output_dir_r=""
-        self.autosections=""
-        self.mansections=""
-        self.basicap=""
-        self.metadata=""
         self.papr_dir = self.gui_config['Dictionaries']['Paths']['papr']
-        self.basspro_output_dir=""
         self.r_output_folder=""
         self.variable_config=""
         self.graph_config=""
@@ -278,11 +301,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.m.preset_menu.addItems([x for x in self.bc_config['Dictionaries']['Manual Settings']['default'].keys()])
         self.a.auto_setting_combo.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
         
-#endregion
 
-#region Analysis parameters
-
+        # Analysis parameters
         os.chdir(os.path.join(Path(__file__).parent.parent.parent))
+
+
+        # TODO: only for development!
+        # Autoload configuration
+        #self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
+        #self.metadata_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv")
+        #self.output_path_display.setText("/home/shaun/Projects/Freelancing/BASSPRO_STAGG")
+        #self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv")
+        #self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv")
         
         
     # method with slot decorator to receive signals from the worker running in
@@ -691,30 +721,45 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.get_autosections()
             This method prompts the user to select a previously made automated or manual or basic BASSPRO settings file via FileDialog.
         """
-        if self.metadata == "":
-            reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-            if reply == QMessageBox.Ok:
-                self.load_metadata()
-            if self.autosections == "" and self.mansections == "":
+        reply = QMessageBox.Ok
+        cancelling = False
+        while not self.metadata or not (self.autosections or self.mansections) or not self.basicap:
+            # TODO: move these loops inside the load function?
+            while not self.metadata:
+                reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+                if reply == QMessageBox.Ok:
+                    self.load_metadata()
+                elif reply == QMessageBox.Cancel:
+                    cancelling = True
+                    break
+
+            if cancelling:
+                break
+
+            while not (self.autosections or self.mansections):
                 reply = QMessageBox.information(self, 'Missing BASSPRO automated/manual settings', 'Please select BASSPRO automated or manual settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
                 if reply == QMessageBox.Ok:
                     self.get_autosections()
-                if self.basicap == "":
-                    reply = QMessageBox.information(self, 'Missing BASSPRO basic settings', 'Please select BASSPRO basic settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-                    if reply == QMessageBox.Ok:
-                        self.get_autosections()
-        elif self.autosections == "" and self.mansections == "":
-            reply = QMessageBox.information(self, 'Missing BASSPRO automated/manual settings', 'Please select BASSPRO automated or manual settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-            if reply == QMessageBox.Ok:
-                self.get_autosections()
-                if self.basicap == "":
-                    reply = QMessageBox.information(self, 'Missing BASSPRO basic settings', 'Please select BASSPRO basic settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-                    if reply == QMessageBox.Ok:
-                        self.get_autosections()
-        elif self.basicap == "":
-            reply = QMessageBox.information(self, 'Missing BASSPRO basic settings', 'Please select BASSPRO basic settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-            if reply == QMessageBox.Ok:
-                self.get_autosections()
+                elif reply == QMessageBox.Cancel:
+                    cancelling = True
+                    break
+
+            if cancelling:
+                break
+
+            while not self.basicap:
+                reply = QMessageBox.information(self, 'Missing BASSPRO basic settings', 'Please select BASSPRO basic settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+                if reply == QMessageBox.Ok:
+                    self.get_autosections()
+                elif reply == QMessageBox.Cancel:
+                    cancelling = True
+                    break
+
+            if cancelling:
+                break
+
+
+        return self.metadata and (self.autosections or self.mansections) and self.basicap
 
     def new_variable_config(self):
         """
@@ -1313,7 +1358,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             Path(basspro_output_dir).mkdir()
 
         curr_timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
-        output_dir_py = os.path.join(self.basspro_output_dir, 'BASSPRO_output_' + curr_timestamp)
+        output_dir_py = os.path.join(basspro_output_dir, 'BASSPRO_output_' + curr_timestamp)
+        Path(output_dir_py).mkdir()
+
         return output_dir_py
     
      
@@ -1465,7 +1512,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("self.get_variable_config()")
         self.v.check_load_variable_config("yes")
 
-    def auto_get_breath_files(self):
+    def auto_get_breath_files(self, basspro_output_dir):
         """
         Populate self.stagg_list with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
 
@@ -1487,14 +1534,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stagg_list: list
             This attribute is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it is SUPPOSED TO append the file paths from the most recent BASSPRO to its existing items but it looks like it just replaces the list of existing items with a new list of the file paths from self.output_dir_py regardless of the user's choice.
         """
-        print("auto_get_breath_files()")
         # This method needs fixing. If they say yes, I want to keep them, then what happens? It looks like self.stagg_list populates with the new files regardless of the user's choice.
         if self.stagg_list != []:
             reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.No:
                 self.breath_list.clear()
                 self.stagg_list = []
-        self.stagg_list = [os.path.join(self.output_dir_py,file) for file in os.listdir(self.output_dir_py) if file.endswith(".json")==True]
+
+        self.stagg_list = [os.path.join(basspro_output_dir, file) for file in os.listdir(basspro_output_dir) if file.endswith(".json")==True]
         for x in self.stagg_list:
             self.breath_list.addItem(x)
            
@@ -1650,9 +1697,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         self.metadata_list.clear()
         self.metadata_list.addItem(filename)
-
-        # TODO: why do we assign only the first one here?
-        self.metadata = filename
         
         if len(self.breath_df) > 0:
             self.update_breath_df("metadata")
@@ -2134,44 +2178,36 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Thumbass.show()
             This method displays the Thumbass dialog.
         """
-        print("get_autosections()")
-        try:
-            filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.output_dir)
-            if not filenames:
-                if self.autosections == "" and self.basicap == "" and self.mansections == "":
-                    print("No BASSPRO settings files selected.")
-            else:
-                n = 0
-                for file in filenames:
-                    if file.endswith('.csv'):
-                        if os.path.basename(file).startswith("auto_sections") | os.path.basename(file).startswith("autosections"):
-                            self.autosections = file
-                            n += 1
-                            for item in self.sections_list.findItems("auto_sections",Qt.MatchContains):
-                                self.sections_list.takeItem(self.sections_list.row(item))
-                            self.sections_list.addItem(self.autosections)
-                        elif os.path.basename(file).startswith("manual_sections"):
-                            self.mansections = file
-                            n += 1
-                            for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
-                                self.sections_list.takeItem(self.sections_list.row(item))
-                            self.sections_list.addItem(self.mansections)
-                        elif os.path.basename(file).startswith("basics"):
-                            self.basicap = file
-                            n += 1
-                            for item in self.sections_list.findItems("basics",Qt.MatchContains):
-                                self.sections_list.takeItem(self.sections_list.row(item))
-                            self.sections_list.addItem(self.basicap)
-                        if n>0:
-                            if len(self.breath_df)>0:
-                                self.update_breath_df("settings")
-                    else:
-                        self.thumb = Thumbass(self)
-                        self.thumb.show()
-                        self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. \nPlease convert your settings files or choose another file.")
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
+        filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.output_dir)
+        if not filenames:
+            if self.autosections == "" and self.basicap == "" and self.mansections == "":
+                print("No BASSPRO settings files selected.")
+        else:
+            n = 0
+            for file in filenames:
+                if file.endswith('.csv'):
+                    if os.path.basename(file).startswith("auto_sections") | os.path.basename(file).startswith("autosections"):
+                        n += 1
+                        for item in self.sections_list.findItems("auto_sections",Qt.MatchContains):
+                            self.sections_list.takeItem(self.sections_list.row(item))
+                        self.sections_list.addItem(file)
+                    elif os.path.basename(file).startswith("manual_sections"):
+                        n += 1
+                        for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
+                            self.sections_list.takeItem(self.sections_list.row(item))
+                        self.sections_list.addItem(file)
+                    elif os.path.basename(file).startswith("basics"):
+                        n += 1
+                        for item in self.sections_list.findItems("basics",Qt.MatchContains):
+                            self.sections_list.takeItem(self.sections_list.row(item))
+                        self.sections_list.addItem(file)
+                    if n > 0:
+                        if len(self.breath_df)>0:
+                            self.update_breath_df("settings")
+                else:
+                    self.thumb = Thumbass(self)
+                    self.thumb.show()
+                    self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. \nPlease convert your settings files or choose another file.")
 
     def input_directory_r(self):
         """
@@ -2235,8 +2271,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if reply == QMessageBox.Yes:
                 self.input_directory_r()
     
-#endregion
-    def py_message(self):
+    def full_run(self):
         """
         Ensure the user has selected an output directory and prompt them to do so if they haven't, check that the required input for BASSPRO has been selected, launch BASSPRO, detect the JSON files produced after BASSPRO has finished and populate self.stagg_list with the file paths to those JSON files.
 
@@ -2246,7 +2281,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This method ensures that the user has selected an output directory and prompts them to do so if they have not.
         self.get_bp_reqs()
             This method ensures that the user has provided metadata, basic BASSPRO settings, and either automated or manual BASSPRO settings before launching BASSPRO.
-        self.pything_to_do()
+        self.launch_basspro()
             This method copies the required BASSPRO input other than the signal files and the breathcaller_config.json file to the timestamped BASSPRO output folder (self.output_dir_py) and runs self.launch_worker().
         self.auto_get_breath_files()
             Populate self.stagg_list with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
@@ -2254,23 +2289,35 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This method compares the input and output of BASSPRO and reports the names of the signal files that did not pass BASSPRO and failed to produce JSON files to the hangar for display on the main GUI.
         """
 
-        try:
-            self.dir_checker()
-            self.get_bp_reqs()
-            self.pything_to_do()
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-        try:
-            self.auto_get_breath_files()
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-        try:
-            self.output_check()
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
+        # Make sure we have an output dir
+        self.dir_checker()
+        
+        # check that the required input for BASSPRO has been selected
+        if not self.get_bp_reqs():
+            self.notify_error("Need settings files")
+            return
+
+        # launch BASSPRO
+        self.status_message("Launching BASSPRO")
+        basspro_output_folder = self.launch_basspro()
+
+        ## RUN STAGG ##
+        self.status_message("Autopopulating STAGG")
+        self.autopopulate_stagg_after_basspro(basspro_output_folder)
+
+        # TODO: auto start of STAGG
+        #self.status_message("Launching STAGG")
+        #self.launch_stagg()
+
+    def status_message(self, msg):
+        self.hangar.append(msg)
+
+    def autopopulate_stagg_after_basspro(self, basspro_output_folder):
+        # detect the JSON files produced after BASSPRO has finished
+        self.auto_get_breath_files(basspro_output_folder)
+
+        # populate self.stagg_list with the file paths to those JSON files.
+        self.output_check()
 
     def r_message(self):
         """
@@ -2374,7 +2421,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     os.makedirs(self.output_folder)
         '''
     
-    def pything_to_do(self):
+    def launch_basspro(self):
         """
         Copy the required BASSPRO input other than the signal files and the breathcaller_config.json file to the timestamped BASSPRO output folder (self.output_dir_py) and run self.launch_worker().
 
@@ -2386,47 +2433,66 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.launch_worker()
             Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
-        print("pything_to_do()")
-        if self.output_folder != "":
-            self.output_dir_py = self.output_folder
+        
+        # TODO: simplify/combine these copy operations
+        #for file in [self.autosections, self.mansections, self.basicap]
 
-            # Copying the relevant config files to the output directory:
-            shutil.copyfile(self.metadata, os.path.join(self.output_dir_py, f"metadata_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-            shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', os.path.join(self.output_dir_py, f"breathcaller_config_{os.path.basename(self.output_dir_py).lstrip('py_output')}.txt"))
-           
-            if self.autosections != "":
-                shutil.copyfile(self.autosections, os.path.join(self.output_dir_py, f"auto_sections_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.csv"))
-      
-            if self.mansections != "":
-                shutil.copyfile(self.mansections, os.path.join(self.output_dir_py, f"manual_sections_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.csv"))
-            if self.basicap != "":
-                shutil.copyfile(self.basicap, os.path.join(self.output_dir_py, f"basics_{os.path.basename(self.output_dir_py).lstrip('py_output')}.csv"))
-            with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-                json.dump(self.gui_config,gconfig_file)
-            shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', os.path.join(self.output_dir_py, f"gui_config_{os.path.basename(self.output_dir_py).lstrip('BASSPRO_output')}.txt"))
-            
-            print('pything_to_do thread id',threading.get_ident())
-            print("pything_to_do process id",os.getpid())
+        # Create new folder for run
+        basspro_output_folder = self.create_basspro_output_folder()
 
-            # Start the BASSPRO module:
-            self.launch_worker("py")
-            try:
-                # Check the BASSPRO output to see which signal files successfully produced JSON files:
-                self.output_check()
-            except Exception as e:
-                print(f'{type(e).__name__}: {e}')
-                print(traceback.format_exc())
+        # Copying over metadata file
+        new_filename = os.path.join(basspro_output_folder, f"metadata_{os.path.basename(basspro_output_folder).lstrip('py_output')}.csv")
+        shutil.copyfile(self.metadata, new_filename)
+
+        # Copying over breathcaller config file
+        new_filename = os.path.join(basspro_output_folder, f"breathcaller_config_{os.path.basename(basspro_output_folder).lstrip('py_output')}.txt")
+        shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', new_filename)
+
+        # Copy over autosections file
+        if self.autosections:
+            new_filename = os.path.join(basspro_output_folder, f"auto_sections_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.csv")
+            shutil.copyfile(self.autosections, new_filename)
     
-    def launch_worker(self,branch):
+        # Copy over mansections file
+        if self.mansections:
+            new_filename = os.path.join(basspro_output_folder, f"manual_sections_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.csv")
+            shutil.copyfile(self.mansections, new_filename)
+
+        # Copy over basic settings file
+        if self.basicap:
+            new_filename = os.path.join(basspro_output_folder, f"basics_{os.path.basename(basspro_output_folder).lstrip('py_output')}.csv")
+            shutil.copyfile(self.basicap, new_filename)
+
+        # Write json config to gui_config location
+        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+            json.dump(self.gui_config,gconfig_file)
+
+        # Copy over config file
+        new_filename = os.path.join(basspro_output_folder, f"gui_config_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.txt")
+        shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', new_filename)
+        
+        print('launch_basspro thread id',threading.get_ident())
+        print("launch_basspro process id",os.getpid())
+
+        # Start the BASSPRO module
+        self.launch_worker("basspro", basspro_output_folder)
+
+        # TODO: isn't this already happening in full_run() ??
+        # Check the BASSPRO output to see which signal files successfully produced JSON files
+        self.output_check()
+
+        return basspro_output_folder
+    
+    def launch_worker(self, task, output_dir):
         """
         Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
         print('launch_worker thread id',threading.get_ident())
         print("launch_worker process id",os.getpid())
-        if branch == "py":
+        if task == "basspro":
             for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
                                                  module=self.breathcaller_path,
-                                                 output=self.output_dir_py,
+                                                 output=output_dir,
                                                  metadata=self.metadata,
                                                  manual=self.mansections,
                                                  auto=self.autosections,
@@ -2438,16 +2504,29 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.q,
                     self
                     )
+
                 self.workers[self.counter].progress.connect(self.B_run)
                 self.workers[self.counter].finished.connect(self.B_Done)
+
+                # TODO: remove invalid inputs -- add label to combobox instead of putting description as option
                 # adjust thread limit for the qthreadpool
-                self.qthreadpool.setMaxThreadCount(int(self.parallel_combo.currentText()))
+                try:
+                    # Try to convert combo box text
+                    thread_limit_combo_selection = self.parallel_combo.currentText()
+                    thread_limit = int(thread_limit_combo_selection)
+                except ValueError:
+                    thread_limit = 1
+
+                self.qthreadpool.setMaxThreadCount(thread_limit)
+
                 # Add the 'QRunnable' worker to the threadpool which will manage how
                 # many are started at a time
                 self.qthreadpool.start(self.workers[self.counter])
+
                 # advance the counter - used to test launching multiple threads
                 self.counter+=1
-        elif branch == "r":
+
+        elif task == "r":
             for job in MainGUIworker.get_jobs_r(self):
                 # create a Worker
                 self.workers[self.counter] = MainGUIworker.Worker(
@@ -2484,10 +2563,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.hangar: QTextEdit
             This TextEdit is appended with a list of othe signal files that did not pass BASSPRO and failed to produce JSON files.
         """
-        if len(self.stagg_list) != len(self.signals):
+        if len(self.stagg_list) != len(self.signal_files):
             goodies = []
             baddies = []
-            for s in self.signals:
+            for s in self.signal_files:
                 name = os.path.basename(s).split('.')[0]
                 for g in self.stagg_list:
                     if '_' in name:
@@ -2498,7 +2577,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                             goodies.append(name)
                 if name not in goodies:
                     baddies.append(name)
-        if len(baddies)>0:
+        if len(baddies) > 0:
             self.hangar.append(f"\nThe following signals files did not pass BASSPRO:\n\n{', '.join([os.path.basename(thumb) for thumb in baddies])}\n")
 
     def rthing_to_do(self):

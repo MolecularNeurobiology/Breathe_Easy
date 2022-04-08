@@ -1,14 +1,11 @@
-#%%
-#region Libraries
 
+import sys
 import os
 from pyclbr import Class
 from queue import Queue
 import subprocess
 import threading
 from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
-
-#endregion
 
 
 class WorkerSignals(QObject):
@@ -72,6 +69,7 @@ class Worker(QRunnable):
             stdout=subprocess.PIPE, 
             stderr=subprocess.STDOUT
             )
+
         # Extract the stdout and feed it to the queue.
         # Emit signals whenever adding to the queue or finishing.
         running = 1
@@ -103,6 +101,20 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
     print('get_jobs_py thread id',threading.get_ident())
     print("get_jobs_py process id",os.getpid())
     for file_py in signal_files:
+        breathcaller_cmd = [
+            'python',
+            #sys.executable,  # TODO: change this back to just 'python'
+            '-u',
+            module,  # path to basspro script
+            '-i', os.path.dirname(file_py),  # signal dir
+            '-f', os.path.basename(file_py),  # signal file
+            '-o', output,
+            '-a', metadata,
+            '-m', manual if manual else "",
+            '-c', auto if auto else "",
+            '-p', basic,
+        ]
+        '''
         breathcaller_cmd = 'python -u "{module}" -i "{id}" -f "{signal}" -o "{output}" -a "{metadata}" -m "{manual}" -c "{auto}" -p "{basic}"'.format(
             # The path to the BASSPRO script:
             module=module,
@@ -115,12 +127,13 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
             # The path of the metadata file:
             metadata=metadata,
             # The path of the manual settings file - if not selected, it's an empty string "":
-            manual=manual,
+            manual=manual if manual else "",
             # The path of the automated settings file - if not selected, it's an empty string "":
-            auto=auto,
+            auto=auto if auto else "",
             # The path of the basic settings file:
             basic=basic
         )
+        '''
         yield breathcaller_cmd
 
 

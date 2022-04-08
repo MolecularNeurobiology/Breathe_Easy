@@ -186,7 +186,7 @@ class Basic(QWidget, Ui_Basic):
         # Populate lineEdit widgets with default basic parameter values from breathcaller configuration file:
         for widget in self.lineEdits:
             widget.setText(str(self.basic_dict[self.lineEdits[widget]]))
-        if self.pleth.basicap != "":
+        if self.pleth.basicap:
             if Path(self.pleth.basicap).exists():
                 self.basic_df = pd.read_csv(self.pleth.basicap)
         else:
