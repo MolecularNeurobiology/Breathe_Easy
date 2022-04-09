@@ -68,9 +68,14 @@ class Auto(QWidget, Ui_Auto):
                 vv.clicked.connect(self.reference_event)
 
         self.auto_setting_combo.addItems([x for x in self.pleth.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
-        self.choose_dict()
 
-    def choose_dict(self):
+        # Set underlying dataframe to defaults
+        self.get_defaults()
+        self.update_tabs()
+
+        self.summary_table.cellChanged.connect(lambda row, col : self.edit_cell(self.summary_table, row, col))
+
+    def get_defaults(self):
         """
         This method populates the automated BASSPRO settings subGUI widgets with default values derived from Plethysmography.bc_config (breathcaller_config.json).
 
@@ -88,20 +93,39 @@ class Auto(QWidget, Ui_Auto):
         
         Outcomes
         --------
-        self.setup_tabs()
-            This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (breathcaller_config.json).
         """
-        print("auto.choose_dict()")
         # Get the appropriate template based on user's choice of experimental condition:
         if self.auto_setting_combo.currentText() in self.pleth.bc_config['Dictionaries']['Auto Settings']['default'].keys():
-            self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default'][self.auto_setting_combo.currentText()]
+            auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default'][self.auto_setting_combo.currentText()]
         else:
-            self.auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['5% Hypercapnia']
+            auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['5% Hypercapnia']
             self.auto_setting_combo.setCurrentText('5% Hypercapnia')
-        self.frame = pd.DataFrame(self.auto_dict).reset_index()
-        self.setup_tabs()
+        
+        self.frame = pd.DataFrame(auto_dict).reset_index()
 
-    def setup_tabs(self):
+    def edit_cell(self, table, row, col):
+        cell = table.item(row, col)
+        new_data = cell.text()
+        prev_data = self.frame.iat[row, col]
+        if prev_data != new_data:
+            self.frame.iat[row, col] = new_data
+
+            # Block signals to prevent endless edit callback loop
+            self.signals_off()
+
+            # Update all table widgets
+            self.update_tabs()
+            
+            # Re-enable signals
+            self.signals_on()
+
+    def signals_off(self):
+        self.summary_table.blockSignals(True)
+
+    def signals_on(self):
+        self.summary_table.blockSignals(False)
+
+    def update_tabs(self):
         """
         This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (breathcaller_config.json).
         
@@ -113,7 +137,7 @@ class Auto(QWidget, Ui_Auto):
             This attribute stores the dataframe converted from self.auto_dict.
         self.{division}_table: QTableWidget
             These TableWidgets display the automated BASSPRO settings is in the appropriate TableWidgets over multiple tabs.
-        self.view_tab: QTableWidget
+        self.summary_table: QTableWidget
             The TableWidget displays the automated BASSPRO settings in one table on the fifth tab.
         
         Outcomes
@@ -121,24 +145,37 @@ class Auto(QWidget, Ui_Auto):
         self.populate_table(frame,table)
             This method populates the self.{division}_table widgets with the appropriate portions of the self.frame dataframe based on the relationship of particular rows to particular divisions as defined in the "Settings Names" dictionary within self.pleth.gui_config.
         """
-        print("auto.setup_tabs()")
-        # Populate table of threshold tab:
+        # Populate table of tabs with appropriately sliced dataframes derived from selected settings template
+
+        # Get labels from Pleth GUI config
         auto_labels = self.pleth.gui_config['Dictionaries']['Settings Names']['Auto Settings']
-        sec_char_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
-        sec_spec_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Interruptions'].values())),:]
-        cal_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
-        gas_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
-        time_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Time Thresholds'].values())),:]
-        inc_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Inclusion Criteria']['Breath Quality Standards'].values())),:]
         
-        # Populate table of tabs with appropriately sliced dataframes derived from selected settings template:
+        # Populate Section Characterization table
+        sec_char_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
         self.populate_table(sec_char_df,self.sections_char_table)
+
+        # Populate Section Spec table
+        sec_spec_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Interruptions'].values())),:]
         self.populate_table(sec_spec_df,self.sections_spec_table)
+        
+        # Populate Section Calibration table
+        cal_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
         self.populate_table(cal_df,self.cal_table)
+
+        # Populate Gass Threshold Settings table
+        gas_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
         self.populate_table(gas_thresh_df,self.gas_thresh_table)
+
+        # Populate Time Threshold Settings table
+        time_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Time Thresholds'].values())),:]
         self.populate_table(time_thresh_df,self.time_thresh_table)
+
+        # Populate Inclusion DF table
+        inc_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Inclusion Criteria']['Breath Quality Standards'].values())),:]
         self.populate_table(inc_df,self.inc_table)
-        self.populate_table(self.frame,self.view_tab)
+
+        # Populate summary table with all data
+        self.populate_table(self.frame,self.summary_table)
     
     def reference_event(self):
         """
@@ -200,7 +237,7 @@ class Auto(QWidget, Ui_Auto):
         Outcomes
         --------
         self.save_auto_file()
-            This methods writes the contents of the self.view_tab TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
+            This methods writes the contents of the self.summary_table TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
         """
         print("auto.save_as()")
         path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
@@ -227,7 +264,7 @@ class Auto(QWidget, Ui_Auto):
         Outcomes
         --------
         self.save_auto_file()
-            This methods writes the contents of the self.view_tab TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI.
+            This methods writes the contents of the self.summary_table TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI.
         """
         print("auto.save_checker()")
         if self.pleth.mothership == "":
@@ -241,7 +278,7 @@ class Auto(QWidget, Ui_Auto):
 
     def save_auto_file(self):
         """
-        Write the contents of the self.view_tab TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, call self.pleth.update_breath_df(), and add self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
+        Write the contents of the self.summary_table TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, call self.pleth.update_breath_df(), and add self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
 
         Parameters
         --------
@@ -249,7 +286,7 @@ class Auto(QWidget, Ui_Auto):
             This attribute stores the file path selected by the user to which the .csv file of the automated BASSPRO settings wll be saved.
         self.pleth.breath_df: list
             This Plethysmography class attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
-        self.view_tab: QTableWidget
+        self.summary_table: QTableWidget
             The TableWidget displays the automated BASSPRO settings in one table on the fifth tab.
         self.pleth.autosections: str
             This Plethysmography class attribute is either an empty string or stores a file path.
@@ -277,16 +314,16 @@ class Auto(QWidget, Ui_Auto):
             with open(self.pleth.autosections,'w',newline = '') as stream:
                     writer = csv.writer(stream)
                     header = []
-                    for row in range(self.view_tab.rowCount()):
-                        item = self.view_tab.item(row,0)
+                    for row in range(self.summary_table.rowCount()):
+                        item = self.summary_table.item(row,0)
                         if item.text() == "nan":
                             header.append("")
                         else:
                             header.append(item.text())
-                    for column in range(self.view_tab.columnCount()):
+                    for column in range(self.summary_table.columnCount()):
                         coldata = []
-                        for row in range(self.view_tab.rowCount()):
-                            item = self.view_tab.item(row, column)
+                        for row in range(self.summary_table.rowCount()):
+                            item = self.summary_table.item(row, column)
                             if item.text() == "nan":
                                 coldata.append("")
                             else:
@@ -321,7 +358,7 @@ class Auto(QWidget, Ui_Auto):
             The path to the user-selected directory for all output.
         self.basic_df: Dataframe
             This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
-        self.view_tab: QTableWidget
+        self.summary_table: QTableWidget
             The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
         reply: QMessageBox
             This specialized dialog communicates information to the user.
@@ -330,12 +367,12 @@ class Auto(QWidget, Ui_Auto):
         --------
         self.basic_df: Dataframe
             This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
-        self.view_tab: QTableWidget
+        self.summary_table: QTableWidget
             The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
         
         Outcomes
         --------
-        self.setup_tabs()
+        self.update_tabs()
             This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (breathcaller_config.json).
         """
         print("auto.load_auto_file()")
@@ -343,6 +380,6 @@ class Auto(QWidget, Ui_Auto):
         file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.mothership))
         try:
             self.frame = pd.read_csv(file[0],index_col='Key').transpose().reset_index()
-            self.setup_tabs()
+            self.update_tabs()
         except Exception as e:
             pass

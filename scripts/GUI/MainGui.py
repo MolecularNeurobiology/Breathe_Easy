@@ -210,11 +210,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
         Outcomes
         --------
-        self.v()
+        self.stagg_settings_window()
             This method instantiates the Config class.
         self.m()
             This method instantiates the Manual class.
-        self.a()
+        self.auto_settings_window()
             This method instantiates the Auto class.
         self.b()
             This method instantiates the Basic class.
@@ -288,13 +288,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.loop_menu = {}
 
         # Initiating subGUIs
-        self.v = Config(self)
+        self.stagg_settings_window = Config(self)
         self.m = Manual(self)
-        self.a = Auto(self)
+        self.auto_settings_window = Auto(self)
         self.b = Basic(self)
         self.g = AnnotGUI.Annot(self)
 
-        self.v.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
+        self.stagg_settings_window.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
 
          # Populate GUI widgets with experimental condition choices: 
         self.necessary_timestamp_box.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
@@ -302,7 +302,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Populate GUI widgets with experimental condition choices:
         self.m.preset_menu.addItems([x for x in self.bc_config['Dictionaries']['Manual Settings']['default'].keys()])
-        self.a.auto_setting_combo.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
+        self.auto_settings_window.auto_setting_combo.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
         
 
         # Analysis parameters
@@ -630,7 +630,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Auto.show()
             This method displays the automated BASSPRO settings subGUI.
         """
-        self.a.show()
+        self.auto_settings_window.show()
 
     def show_basic(self):
         """
@@ -800,18 +800,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         try:
             self.variable_configuration()
             self.n = 0
-            self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
-            self.v.variable_table.cellChanged.connect(self.v.update_loop)
+            self.stagg_settings_window.variable_table.cellChanged.connect(self.stagg_settings_window.no_duplicates)
+            self.stagg_settings_window.variable_table.cellChanged.connect(self.stagg_settings_window.update_loop)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
         try:
-            self.v.show()
+            self.stagg_settings_window.show()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc()) 
         
-    def show_variable_config(self):
+    def stagg_settings_config(self):
         # Shouldn't I be using self.get_bp_reqs() in here?
         """
         Ensure that there is a source of variables to populate Config.variable_table with and run test_configuration() to ensure that those sources are viable, run self.variable_configuration() to populate Config.variable_table (TableWidget), and either show the STAGG settings subGUI or show a Thorbass dialog to guide the user through providing the required input if there is no input.
@@ -869,42 +869,49 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.get_variable_config()
             Call Config.check_load_variable_config("yes").
         """
+        # Ensure that there is a source of variables to populate Config.variable_table with
         if self.buttonDict_variable == {}:
-            if self.v.configs["variable_config"]["path"] != "":
-                self.v.check_load_variable_config("no")
-                self.v.show()
+            if self.stagg_settings_window.configs["variable_config"]["path"] != "":
+                self.stagg_settings_window.check_load_variable_config("no")
+
+                # show the STAGG settings subGUI
+                self.stagg_settings_window.show()
             elif self.stagg_input_files != [] and any(a.endswith(".json") for a in self.stagg_input_files):
                     if self.metadata and (self.autosections or self.mansections):
                         self.thinb = Thinbass(self)
                         self.thinb.show()
                     else:
+                        # run test_configuration() to ensure that those sources are viable
                         self.test_configuration()
-                        try:
-                            self.variable_configuration()
-                            self.n = 0
-                            self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
-                            self.v.variable_table.cellChanged.connect(self.v.update_loop)
-                            self.v.show()
-                        except Exception as e:
-                            print(f'{type(e).__name__}: {e}')
-                            print(traceback.format_exc())
+
+                        # run self.variable_configuration() to populate Config.variable_table (TableWidget)
+                        self.variable_configuration()
+                        self.n = 0
+                        self.stagg_settings_window.variable_table.cellChanged.connect(self.stagg_settings_window.no_duplicates)
+                        self.stagg_settings_window.variable_table.cellChanged.connect(self.stagg_settings_window.update_loop)
+
+                        # show the STAGG settings subGUI
+                        self.stagg_settings_window.show()
             elif self.metadata and (self.autosections or self.mansections):
+                # run test_configuration() to ensure that those sources are viable
                 self.test_configuration()
-                try:
-                    self.variable_configuration()
-                    self.n = 0
-                    self.v.variable_table.cellChanged.connect(self.v.no_duplicates)
-                    self.v.variable_table.cellChanged.connect(self.v.update_loop)
-                    self.v.show()
-                except Exception as e:
-                    print(f'{type(e).__name__}: {e}')
-                    print(traceback.format_exc())
+
+                # run self.variable_configuration() to populate Config.variable_table (TableWidget)
+                self.variable_configuration()
+                self.n = 0
+                self.stagg_settings_window.variable_table.cellChanged.connect(self.stagg_settings_window.no_duplicates)
+                self.stagg_settings_window.variable_table.cellChanged.connect(self.stagg_settings_window.update_loop)
+
+                # show the STAGG settings subGUI
+                self.stagg_settings_window.show()
+
+            # Guide the user through providing the required input if there is no input.
             else:
                 self.thorb = Thorbass(self)
                 self.thorb.show()
                 self.thorb.message_received('Missing source files', f"One or more of the files used to build the variable list has not been selected.\nWould you like to open an existing set of variable configuration files or create a new one?",self.new_variable_config,self.get_variable_config)
         else:
-            self.v.show()
+            self.stagg_settings_window.show()
             
     def update_breath_df(self,updated_file):
         """
@@ -985,12 +992,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if len(non_match)>0:
                 reply = QMessageBox.question(self, f'New {updated_file} selected', 'Would you like to update the variable list in STAGG configuration settings?\n\nUnsaved changes may be lost.\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
-                    self.v.setup_table_config()
+                    self.stagg_settings_window.setup_table_config()
                     try:
-                        for a in self.v.vdf:
-                            self.buttonDict_variable[a]['Alias'].setText(self.v.vdf[a]['Alias'])
+                        for a in self.stagg_settings_window.vdf:
+                            self.buttonDict_variable[a]['Alias'].setText(self.stagg_settings_window.vdf[a]['Alias'])
                             for k in ["Independent","Dependent","Covariate"]:
-                                if self.v.vdf[a][k] == '1':
+                                if self.stagg_settings_window.vdf[a][k] == '1':
                                     try:
                                         self.buttonDict_variable[a][k].setChecked(True)
                                     except:
@@ -998,8 +1005,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         self.n = 0
                         self.variable_table.cellChanged.connect(self.no_duplicates)
                         self.variable_table.cellChanged.connect(self.update_loop)
-                        self.v.load_custom_config()
-                        self.v.load_graph_config()
+                        self.stagg_settings_window.load_custom_config()
+                        self.stagg_settings_window.load_graph_config()
                     except Exception as e:
                         print(f'{type(e).__name__}: {e}')
                         print(traceback.format_exc())
@@ -1152,14 +1159,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("self.variable_configuration() has started")
 
         # I've forgotten what this was specifically about, but I remember it had something to do with spacing or centering text or something.
-        delegate = AlignDelegate(self.v.variable_table)
-        delegate_loop = AlignDelegate(self.v.loop_table)
-        self.v.variable_table.setItemDelegate(delegate)
-        self.v.loop_table.setItemDelegate(delegate_loop)
+        delegate = AlignDelegate(self.stagg_settings_window.variable_table)
+        delegate_loop = AlignDelegate(self.stagg_settings_window.loop_table)
+        self.stagg_settings_window.variable_table.setItemDelegate(delegate)
+        self.stagg_settings_window.loop_table.setItemDelegate(delegate_loop)
 
         # Setting the number of rows in each table upon opening the window:
-        self.v.variable_table.setRowCount(len(self.breath_df))
-        self.v.loop_table.setRowCount(1)
+        self.stagg_settings_window.variable_table.setRowCount(len(self.breath_df))
+        self.stagg_settings_window.loop_table.setRowCount(1)
         
         row = 0
         for item in self.breath_df:
@@ -1184,24 +1191,24 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.buttonDict_variable[item]["group"].addButton(self.buttonDict_variable[item]["Ignore"])
             
             # Populating the table widget with the row:
-            self.v.variable_table.setItem(row,0,self.buttonDict_variable[item]["orig"])
-            self.v.variable_table.setItem(row,1,self.buttonDict_variable[item]["Alias"])
+            self.stagg_settings_window.variable_table.setItem(row,0,self.buttonDict_variable[item]["orig"])
+            self.stagg_settings_window.variable_table.setItem(row,1,self.buttonDict_variable[item]["Alias"])
 
-            self.v.variable_table.setCellWidget(row,2,self.buttonDict_variable[item]["Independent"])
-            self.v.variable_table.setCellWidget(row,3,self.buttonDict_variable[item]["Dependent"])
-            self.v.variable_table.setCellWidget(row,4,self.buttonDict_variable[item]["Covariate"])
-            self.v.variable_table.setCellWidget(row,5,self.buttonDict_variable[item]["Ignore"])
+            self.stagg_settings_window.variable_table.setCellWidget(row,2,self.buttonDict_variable[item]["Independent"])
+            self.stagg_settings_window.variable_table.setCellWidget(row,3,self.buttonDict_variable[item]["Dependent"])
+            self.stagg_settings_window.variable_table.setCellWidget(row,4,self.buttonDict_variable[item]["Covariate"])
+            self.stagg_settings_window.variable_table.setCellWidget(row,5,self.buttonDict_variable[item]["Ignore"])
 
             row += 1
 
-        self.v.n = 0
+        self.stagg_settings_window.n = 0
         for item_1 in self.breath_df:
-            self.buttonDict_variable[item_1]["Independent"].toggled.connect(self.v.add_combos)
-            self.buttonDict_variable[item_1]["Covariate"].toggled.connect(self.v.add_combos)
-        self.v.variable_table.resizeColumnsToContents()
-        self.v.variable_table.resizeRowsToContents()
+            self.buttonDict_variable[item_1]["Independent"].toggled.connect(self.stagg_settings_window.add_combos)
+            self.buttonDict_variable[item_1]["Covariate"].toggled.connect(self.stagg_settings_window.add_combos)
+        self.stagg_settings_window.variable_table.resizeColumnsToContents()
+        self.stagg_settings_window.variable_table.resizeRowsToContents()
         self.loop_menu = {}
-        self.show_loops(self.v.loop_table,1)
+        self.show_loops(self.stagg_settings_window.loop_table,1)
         print("self.variable_configuration() has finished")
 
     def show_loops(self,table,r):
@@ -1235,7 +1242,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.loop_menu[table][row]["Graph"] = QLineEdit()
             self.loop_menu[table][row]["Y axis minimum"] = QLineEdit()
             self.loop_menu[table][row]["Y axis maximum"] = QLineEdit()
-            for role in self.v.role_list[1:6]:
+            for role in self.stagg_settings_window.role_list[1:6]:
                 self.loop_menu[table][row][role] = QComboBox()
                 self.loop_menu[table][row][role].addItems([""])
                 self.loop_menu[table][row][role].addItems([x for x in self.breath_df])
@@ -1516,7 +1523,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This method checks the user-selected files to ensure they exist and they are the correct file format and they begin with either "variable_config", "graph_config", or "other_config", triggering a MessageBox or dialog to inform the user if any do not and loading the file as a dataframe if they do.
         """
         print("self.get_variable_config()")
-        self.v.check_load_variable_config("yes")
+        self.stagg_settings_window.check_load_variable_config("yes")
 
     def auto_get_breath_files(self, basspro_output_dir):
         """
@@ -2371,12 +2378,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             Copy STAGG input to timestamped STAGG output folder, determine which STAGG scripts to use based on the presence or absence of an .RData file, and determine if self.input_dir_r needs to be a str path to directory instead of list because the list has more than 200 files, and run self.rthing_to_do_cntd().
         """
         # Assign the file paths to the attributes
-        self.variable_config = self.v.configs["variable_config"]["path"]
-        self.graph_config = self.v.configs["graph_config"]["path"]
-        self.other_config = self.v.configs["other_config"]["path"]
+        self.variable_config = self.stagg_settings_window.configs["variable_config"]["path"]
+        self.graph_config = self.stagg_settings_window.configs["graph_config"]["path"]
+        self.other_config = self.stagg_settings_window.configs["other_config"]["path"]
 
         # ensure that all required STAGG input has been selected
-        if any([self.v.configs[key]['path'] == "" for key in self.v.configs]):
+        if any([self.stagg_settings_window.configs[key]['path'] == "" for key in self.stagg_settings_window.configs]):
             if self.stagg_input_files == []:
                 self.notify_error("No STAGG input files")
             else:
