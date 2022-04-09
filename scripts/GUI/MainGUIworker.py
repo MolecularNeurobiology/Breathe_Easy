@@ -102,8 +102,8 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
     print("get_jobs_py process id",os.getpid())
     for file_py in signal_files:
         breathcaller_cmd = [
-            'python',
-            #sys.executable,  # TODO: change this back to just 'python'
+            #'python',
+            sys.executable,  # TODO: change this back to just 'python'
             '-u',
             module,  # path to basspro script
             '-i', os.path.dirname(file_py),  # signal dir

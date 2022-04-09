@@ -1,5 +1,6 @@
 
 from PyQt5.QtWidgets import QStyledItemDelegate
+from PyQt5.QtCore import Qt
 
 class AlignDelegate(QStyledItemDelegate):
     """

@@ -55,7 +55,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
 
     @property
-    def output_dir(self):
+    def workspace_dir(self):
         return self.output_path_display.text()
 
     @property
@@ -104,6 +104,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                    os.path.basename(settings_file).startswith("basics")):
                 return settings_file
         return None
+
+    @property
+    def stagg_input_files(self):
+        return [self.breath_list.item(i).text() for i in range(self.breath_list.count())]
 
     def delete_setting_file(self):
         a = self.sections_list.currentItem()
@@ -164,7 +168,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             The path to the basic BASSPRO settings file. Required input for BASSPRO.
         self.metadata: str
             The path to the metadata file. Required input for BASSPRO.
-        self.stagg_list: list
+        self.stagg_input_files: list
             The list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
         self.output_dir_r: str
             The path to the STAGG output directory. Required input for STAGG.
@@ -279,7 +283,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.tsbyfile = {}
         self.image_format = ""
         self.buttonDict_variable = {}
-        self.stagg_list = []
         self.rscript_des = ""
         self.pipeline_des = ""
         self.loop_menu = {}
@@ -308,11 +311,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # TODO: only for development!
         # Autoload configuration
-        #self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
-        #self.metadata_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv")
-        #self.output_path_display.setText("/home/shaun/Projects/Freelancing/BASSPRO_STAGG")
-        #self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv")
-        #self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv")
+        self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
+        self.metadata_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv")
+        self.output_path_display.setText("/home/shaun/Projects/Freelancing/BASSPRO_STAGG")
+        self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv")
+        self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv")
         
         
     # method with slot decorator to receive signals from the worker running in
@@ -819,7 +822,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is a nested dictionary used to populate and save the text and RadioButton states of Config.variable_table (TableWidget) in the Config subGUI.
         Config.configs: dict
             This attribute is populated with a nested dictionary in which each item contains a dictionary unique to each settings file - variable_config.csv, graph_config.csv, and other_config.csv. Each dictionary has the following key, value items: "variable", the Plethysmography class attribute that refers to the file path to the settings file; "path", the string file path to the settings file; "frame", the Config class attribute that refers to the dataframe; "df", the dataframe.
-        self.stagg_list: list
+        self.stagg_input_files: list
             This attribute is a list of user-selected signal file paths.
         self.metadata: str
             This attribute refers to the file path of the metadata file.
@@ -870,8 +873,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if self.v.configs["variable_config"]["path"] != "":
                 self.v.check_load_variable_config("no")
                 self.v.show()
-            elif self.stagg_list != [] and any(a.endswith(".json") for a in self.stagg_list):
-                    if self.metadata != "" and (self.autosections != "" or self.mansections != ""):
+            elif self.stagg_input_files != [] and any(a.endswith(".json") for a in self.stagg_input_files):
+                    if self.metadata and (self.autosections or self.mansections):
                         self.thinb = Thinbass(self)
                         self.thinb.show()
                     else:
@@ -885,7 +888,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         except Exception as e:
                             print(f'{type(e).__name__}: {e}')
                             print(traceback.format_exc())
-            elif self.metadata != "" and (self.autosections != "" or self.mansections != ""):
+            elif self.metadata and (self.autosections or self.mansections):
                 self.test_configuration()
                 try:
                     self.variable_configuration()
@@ -958,12 +961,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Config.load_graph_config()
             This Config class method populates the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes with the variables selected as independent or covariate according to the variable_config .csv file; if there is no variable_config file, then it populates those comboBoxes with the variables in the dataframe read from the graph_config file and sets the comboBoxes current text.
         """
-        print("update_breath_df()")
         self.old_bdf = self.breath_df
         self.breath_df = []
-        self.missing_meta = []
+        missing_meta = []
         for p in [self.metadata,self.autosections,self.mansections]:
-            self.try_open(p)
+            if not self.try_open(p):
+                missing_meta.append(p)
+
         try:
             with open(self.breathcaller_path) as bc:
                 soup = bs(bc, 'html.parser')
@@ -972,7 +976,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
-            self.missing_meta.append(self.breathcaller_path)
+            missing_meta.append(self.breathcaller_path)
+
         if set(self.breath_df) != set(self.old_bdf):
             non_match_old = set(self.old_bdf) - set(self.breath_df)
             non_match_new = set(self.breath_df) - set(self.old_bdf)
@@ -1022,7 +1027,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.missing_meta: list
             This attribute is populated with file paths that were not accessible.  
         """
-        print("try_open()")
         try:
             with open(path,encoding='utf-8') as file:
                 columns = next(csv.reader(file))
@@ -1033,9 +1037,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 else:
                     self.breath_df.append(column)
         except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-            self.missing_meta.append(path)
+            return False
+        return True
 
     def test_configuration(self):
         """
@@ -1078,36 +1081,39 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.get_autosections()
             This method prompts the user to select a previously made automated or manual or basic BASSPRO settings file via FileDialog.
         """
-        print("test_configuration() has started")
-        self.missing_meta = []
-        for p in [self.metadata,self.autosections,self.mansections]:
-            if p != "":
-                self.try_open(p)
+
+        # Ensure that the file paths that populate the attributes required to show the 
+        #   STAGG settings subGUI exist and their contents are accessible
+        missing_meta = []
+        for p in [self.metadata, self.autosections, self.mansections]:
+            if p and not self.try_open(p):
+                missing_meta.append(p)
+
         try:
             with open(self.breathcaller_path) as bc:
                 soup = bs(bc, 'html.parser')
             for child in soup.breathcaller_outputs.stripped_strings:
                 self.breath_df.append(child)
         except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-            self.missing_meta.append(self.breathcaller_path)
-        if len(self.missing_meta)>0:
-            reply = QMessageBox.information(self, 'Missing source files', f"One or more of the files used to build the variable list was not found:\n{os.linesep.join([m for m in self.missing_meta])}\nWould you like to select a different file?", QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
+            missing_meta.append(self.breathcaller_path)
+
+        #  provide feedback to the user on what is missing if anything.
+        if len(missing_meta) > 0:
+            reply = QMessageBox.information(self, 'Missing source files', f"One or more of the files used to build the variable list was not found:\n{os.linesep.join([m for m in missing_meta])}\nWould you like to select a different file?", QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
             if reply == QMessageBox.Ok:
-                for m in self.missing_meta:
-                    # wut? Why would m ever by self.output_dir?? I'm changing it to self.metadata.
-                    if m is self.metadata:
+                for m in missing_meta:
+                    # wut? Why would m ever by self.workspace_dir?? I'm changing it to self.metadata.
+                    if m == self.metadata:
                         reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                         if reply == QMessageBox.Ok:
                             self.load_metadata()
                         if reply == QMessageBox.Cancel:
                             self.metadata_list.clear()
-                    if m is self.autosections or m is self.mansections:
+                    if m == self.autosections or m == self.mansections:
                         reply = QMessageBox.information(self, 'Missing BASSPRO settings', 'Please select BASSPRO settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                         if reply == QMessageBox.Ok:
                             self.get_autosections()
-                    if m is self.breathcaller_path:
+                    if m == self.breathcaller_path:
                         reply = QMessageBox.information(self, "How is this program even running?", f"The program cannot find the following file: \n{self.breathcaller_path}\nPlease reinstall BASSPRO-STAGG.", QMessageBox.Ok)
 
     def variable_configuration(self):
@@ -1299,8 +1305,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.update_breath_df()
             This method updates self.breath_df to reflect any changes to the variable list used to populate Config.variable_table if the user chooses to replace previously selected input with input detected in the selected output directory.
         """
-        if self.output_dir:
-            selection_dir = str(Path(self.output_dir).parent.absolute())
+        if self.workspace_dir:
+            selection_dir = str(Path(self.workspace_dir).parent.absolute())
         else:
             selection_dir = None
 
@@ -1352,7 +1358,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         output_dir_py: str
             Newly created output dir
         """
-        basspro_output_dir = os.path.join(self.output_dir, 'BASSPRO_output')
+        basspro_output_dir = os.path.join(self.workspace_dir, 'BASSPRO_output')
 
         if not Path(basspro_output_dir).exists():
             Path(basspro_output_dir).mkdir()
@@ -1370,7 +1376,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute is set as the file path to the user-selected output directory.
         self.metadata_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file path of the current metadata file intended as input for BASSPRO or as a source of variables for the populating of self.breath_df and the display of the STAGG settings subGUI.
@@ -1378,11 +1384,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Outputs
         --------
         self.metadata_list: QListWidget
-            This ListWidget is populated with the file path of the metadata.csv file detected in the user-selected self.output_dir output directory.
+            This ListWidget is populated with the file path of the metadata.csv file detected in the user-selected self.workspace_dir output directory.
         self.metadata: str
-            This attribute is set as the file path to the metadata.csv file detected in the user-selected self.output_dir output directory.
+            This attribute is set as the file path to the metadata.csv file detected in the user-selected self.workspace_dir output directory.
         """
-        metadata_path = os.path.join(self.output_dir, 'metadata.csv')
+        metadata_path = os.path.join(self.workspace_dir, 'metadata.csv')
         if Path(metadata_path).exists():
 
             # TODO: put this check where it needs to go
@@ -1405,7 +1411,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute is set as the file path to the user-selected output directory.
         self.sections_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file path of the current BASSPRO settings files intended as input for BASSPRO or as a source of variables for the populating of self.breath_df and the display of the STAGG settings subGUI.
@@ -1413,12 +1419,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Outputs
         --------
         self.sections_list: QListWidget
-            This ListWidget is populated with the file path of the basic.csv file detected in the user-selected self.output_dir output directory.
+            This ListWidget is populated with the file path of the basic.csv file detected in the user-selected self.workspace_dir output directory.
         self.basicap: str
-            This attribute is set as the file path to the basic.csv file detected in the user-selected self.output_dir output directory.
+            This attribute is set as the file path to the basic.csv file detected in the user-selected self.workspace_dir output directory.
         """
         print("auto_get_basic()")
-        basic_path=os.path.join(self.output_dir, 'basics.csv')
+        basic_path=os.path.join(self.workspace_dir, 'basics.csv')
         if Path(basic_path).exists():
             for item in self.sections_list.findItems("basic",Qt.MatchContains):
             # and we remove them from the widget.
@@ -1438,7 +1444,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute is set as the file path to the user-selected output directory.
         self.sections_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file path of the current BASSPRO settings files intended as input for BASSPRO or as a source of variables for the populating of self.breath_df and the display of the STAGG settings subGUI.
@@ -1446,12 +1452,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Outputs
         --------
         self.sections_list: QListWidget
-            This ListWidget is populated with the file path of the autosections.csv file detected in the user-selected self.output_dir output directory.
+            This ListWidget is populated with the file path of the autosections.csv file detected in the user-selected self.workspace_dir output directory.
         self.autosections: str
-            This attribute is set as the file path to the autosections.csv file detected in the user-selected self.output_dir output directory.
+            This attribute is set as the file path to the autosections.csv file detected in the user-selected self.workspace_dir output directory.
         """
         print("auto_get_autosections()")
-        autosections_path=os.path.join(self.output_dir, 'auto_sections.csv')
+        autosections_path=os.path.join(self.workspace_dir, 'auto_sections.csv')
         if Path(autosections_path).exists():
             for item in self.sections_list.findItems("auto",Qt.MatchContains):
             # and we remove them from the widget.
@@ -1472,7 +1478,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute is set as the file path to the user-selected output directory.
         self.sections_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file path of the current BASSPRO settings files intended as input for BASSPRO or as a source of variables for the populating of self.breath_df and the display of the STAGG settings subGUI.
@@ -1480,12 +1486,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Outputs
         --------
         self.sections_list: QListWidget
-            This ListWidget is populated with the file path of the manual_sections.csv file detected in the user-selected self.output_dir output directory.
+            This ListWidget is populated with the file path of the manual_sections.csv file detected in the user-selected self.workspace_dir output directory.
         self.mansections: str
-            This attribute is set as the file path to the manual_sections.csv file detected in the user-selected self.output_dir output directory.
+            This attribute is set as the file path to the manual_sections.csv file detected in the user-selected self.workspace_dir output directory.
         """
         print("auto_get_mansections()")
-        mansections_path=os.path.join(self.output_dir, 'manual_sections.csv')
+        mansections_path=os.path.join(self.workspace_dir, 'manual_sections.csv')
         if Path(mansections_path).exists():
             for item in self.sections_list.findItems("man",Qt.MatchContains):
                 # and we remove them from the widget.
@@ -1514,35 +1520,34 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def auto_get_breath_files(self, basspro_output_dir):
         """
-        Populate self.stagg_list with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
+        Populate self.stagg_input_files with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
 
         Parameters
         --------
         self.output_dir_py: str
-            This attribute is set as a file path to the timestamped BASSPRO_output_{time} folder within the BASSPRO_output directory within the user-selected directory self.output_dir. It is not spawned until self.dir_checker() is called when BASSPRO is launched.
+            This attribute is set as a file path to the timestamped BASSPRO_output_{time} folder within the BASSPRO_output directory within the user-selected directory self.workspace_dir. It is not spawned until self.dir_checker() is called when BASSPRO is launched.
         self.breath_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file paths of the STAGG input.
-        self.stagg_list: list
+        self.stagg_input_files: list
             This attribute is either an empty list or is a list of file paths for STAGG input (either JSON files or .RData file or both).
         
         Outputs
         --------
         reply: QMessageBox
-            If self.stagg_list is not empty, this MessageBox asks the user if they would like to keep the previously selected STAGG input files or replace them.
+            If self.stagg_input_files is not empty, this MessageBox asks the user if they would like to keep the previously selected STAGG input files or replace them.
         self.breath_list: QListWidget
             This ListWidget is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it appends the files paths from the most recent BASSPRO run to its existing population.
-        self.stagg_list: list
+        self.stagg_input_files: list
             This attribute is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it is SUPPOSED TO append the file paths from the most recent BASSPRO to its existing items but it looks like it just replaces the list of existing items with a new list of the file paths from self.output_dir_py regardless of the user's choice.
         """
-        # This method needs fixing. If they say yes, I want to keep them, then what happens? It looks like self.stagg_list populates with the new files regardless of the user's choice.
-        if self.stagg_list != []:
+        # This method needs fixing. If they say yes, I want to keep them, then what happens? It looks like self.stagg_input_files populates with the new files regardless of the user's choice.
+        if self.stagg_input_files != []:
             reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.No:
                 self.breath_list.clear()
-                self.stagg_list = []
 
-        self.stagg_list = [os.path.join(basspro_output_dir, file) for file in os.listdir(basspro_output_dir) if file.endswith(".json")==True]
-        for x in self.stagg_list:
+        stagg_input_files = [os.path.join(basspro_output_dir, file) for file in os.listdir(basspro_output_dir) if file.endswith(".json")==True]
+        for x in stagg_input_files:
             self.breath_list.addItem(x)
            
     def auto_get_output_dir_r(self):
@@ -1551,18 +1556,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute is set as the file path to the user-selected output directory.
         
         Outputs
         --------
         self.r_output_folder: str
-            This attribute is set as a file path to the STAGG_output directory in the user-selected directory self.output_dir and the directory itself is spawned if it does not exist.
+            This attribute is set as a file path to the STAGG_output directory in the user-selected directory self.workspace_dir and the directory itself is spawned if it does not exist.
         self.output_dir_r: str
-            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.output_dir. It is not spawned until self.dir_checker() is called when STAGG is launched.
+            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.workspace_dir. It is not spawned until self.dir_checker() is called when STAGG is launched.
         """
         print("auto_get_output_dir_r()")
-        self.r_output_folder=os.path.join(self.output_dir,'STAGG_output')
+        self.r_output_folder=os.path.join(self.workspace_dir,'STAGG_output')
         if Path(self.r_output_folder).exists():
             self.output_dir_r=os.path.join(self.r_output_folder, 'STAGG_output_'+datetime.datetime.now().strftime(
                 '%Y%m%d_%H%M%S'
@@ -1654,7 +1659,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute refers to the directory path of the user-selected output directory.
         QFileDialog: class
             A standard FileDialog allows the user to select multiple signal files from one directory.
@@ -1680,7 +1685,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Keep selecting metadata until good data or cancel
         while True:
             # TODO: are we picking one file or multiple? -- may apply to multiple spots
-            filename, filter = QFileDialog.getOpenFileName(self, 'Select metadata file', self.output_dir)
+            filename, filter = QFileDialog.getOpenFileName(self, 'Select metadata file', self.workspace_dir)
 
             # if files were selected (not cancelled)
             if filename:
@@ -1760,7 +1765,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is a list of file paths of the selected signal files intended as BASSPRO input.
         self.metadata_list: QListWidget
             This ListWidget inherited from Ui_Plethysmography class displays the file path of the current metadata file on the main GUI.
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute refers to the path of the user-selected output directory.
         
         Outputs
@@ -1819,7 +1824,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.get_study()
             self.dir_checker()
             self.metadata_list.clear()
-            if os.path.exists(self.output_dir):
+            if os.path.exists(self.workspace_dir):
                 self.save_filemaker()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
@@ -2116,7 +2121,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute refers to the path of the user-selected output directory.
         self.metadata_list: QListWidget
             This ListWidget inherited from Ui_Pletysmography class displays the file path of the current metadata file on the main GUI.
@@ -2128,13 +2133,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.metadata_list: QListWidget
             This ListWidget is populated with the file path of the metadata file created from the information grabbed from the database for display on the main GUI.
         self.metadata: str
-            This attribute is set as the file path of the metadata.csv file that was made from the self.assemble_df dataframe saved in self.output_dir.
+            This attribute is set as the file path of the metadata.csv file that was made from the self.assemble_df dataframe saved in self.workspace_dir.
         reply: QMessageBox
             This MessageBox tells the user if they have a file open in another program that shares the same file path as self.metadata.
         """
         print("save_filemaker()")
         self.metadata_list.addItem("Creating csv file...")
-        self.metadata = os.path.join(self.output_dir,"metadata.csv")
+        self.metadata = os.path.join(self.workspace_dir,"metadata.csv")
         try:
             self.assemble_df.to_csv(self.metadata, index = False)
             self.metadata_list.clear()
@@ -2153,7 +2158,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         QFileDialog: class
             A standard FileDialog.
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute refers to the path of the user-selected output directory.
         self.sections_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file path of the current BASSPRO settings files intended as input for BASSPRO or as a source of variables for the populating of self.breath_df and the display of the STAGG settings subGUI.
@@ -2178,7 +2183,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Thumbass.show()
             This method displays the Thumbass dialog.
         """
-        filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.output_dir)
+        filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.workspace_dir)
         if not filenames:
             if self.autosections == "" and self.basicap == "" and self.mansections == "":
                 print("No BASSPRO settings files selected.")
@@ -2209,7 +2214,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.thumb.show()
                     self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. \nPlease convert your settings files or choose another file.")
 
-    def input_directory_r(self):
+    def select_stagg_input_files(self):
         """
         Prompt the user to select input files for STAGG. Only .RData files or JSON files are accepted.
 
@@ -2217,9 +2222,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         QFileDialog: class
             A standard FileDialog.
-        self.stagg_list: list
+        self.stagg_input_files: list
             This attribute is either an empty list or a list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute refers to the path of the user-selected output directory.
         self.breath_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file paths of the STAGG input.
@@ -2230,50 +2235,68 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         self.breath_list: QListWidget
             This ListWidget is emptied and repopulated or just populated with the file paths selected by the user via FileDialog.
-        self.stagg_list: list
+        self.stagg_input_files: list
             This attribute is either emptied and repopulated or appended with the file paths of any user-selected files that end in ".RData" or ".json".
         reply: QMessageBox
-            This MessageBox informs the user that none of the files they've selected are the right file format and prompts the user to resolve this by calling self.input_directory_r() again.
+            This MessageBox informs the user that none of the files they've selected are the right file format and prompts the user to resolve this by calling self.select_stagg_input_files() again.
         
         Outcomes
         --------
         Thumbass.show()
             This methods displays the Thumbass dialog with lists the file paths of the files that did not meet criteria (namely wrong file type).
-        self.input_directory_r()
+        self.select_stagg_input_files()
             This method is called again if the user selected bad files.
         """
-        print("input_directory_r()")
-        input_dir_r = QFileDialog.getOpenFileNames(self, 'Choose STAGG input files from BASSPRO output', self.output_dir)
-        if all(file.endswith(".json") or file.endswith(".RData") for file in input_dir_r[0]):
-            if self.stagg_list != []:
-                reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+        cancelled = False
+        # Keep trying to select good files until user cancels
+        while not cancelled:
+            filenames, filter = QFileDialog.getOpenFileNames(self, 'Choose STAGG input files from BASSPRO output', self.workspace_dir)
+
+            # No files chosen, cancelled dialog
+            if not filenames:
+                break
+
+            # If all files are right type
+            if all(file.endswith(".json") or file.endswith(".RData") for file in filenames):
+                # if we already have a selection, check about overwrite
+                if self.breath_list.count():
+                    reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                    if reply == QMessageBox.No:
+                        self.breath_list.clear()
+                for x in filenames:
+                    self.breath_list.addItem(x)
+
+            # If any of the files are right type
+            elif any(file_1.endswith(".json") or file_1.endswith(".RData") for file_1 in filenames):
+                baddies = []
+                good_files = []
+                
+                # Choose only the good files
+                for file_2 in filenames:
+                    if file_2.endswith(".json") or file_2.endswith(".RData"):
+                        good_files.append(file_2)
+                    else:
+                        baddies.append(file_2)
+
+                # Add files to widget
+                for x in good_files:
+                    self.breath_list.addItem(x)
+
+                # Notify user of files not included
+                if len(baddies) > 0:
+                    self.thumb = Thumbass(self)
+                    self.thumb.show()
+                    self.thumb.message_received("Incorrect file format",f"One or more of the files selected are neither JSON nor RData files:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\nThey will not be included.")        
+
+            # If none of the files are right type
+            else:
+                reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file(s) are not formatted correctly.\nWould you like to select different files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.No:
-                    self.breath_list.clear()
-                    self.stagg_list = []
-            self.stagg_list = [file for file in input_dir_r[0] if file.endswith(".json")==True or file.endswith(".RData")==True]
-            for x in self.stagg_list:
-                self.breath_list.addItem(x)
-        elif any(file_1.endswith(".json") or file_1.endswith(".RData") for file_1 in input_dir_r[0]):
-            baddies = []
-            for file_2 in input_dir_r[0]:
-                if file_2.endswith(".json") == True or file_2.endswith(".RData") == True:
-                    self.stagg_list.append(file_2)
-                else:
-                    baddies.append(file_2)
-            for x in self.stagg_list:
-                self.breath_list.addItem(x)
-            if len(baddies)>0:
-                self.thumb = Thumbass(self)
-                self.thumb.show()
-                self.thumb.message_received("Incorrect file format",f"One or more of the files selected are neither JSON nor RData files:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\nThey will not be included.")        
-        else:
-            reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file(s) are not formatted correctly.\nWould you like to select different files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-            if reply == QMessageBox.Yes:
-                self.input_directory_r()
+                    cancelled = True
     
     def full_run(self):
         """
-        Ensure the user has selected an output directory and prompt them to do so if they haven't, check that the required input for BASSPRO has been selected, launch BASSPRO, detect the JSON files produced after BASSPRO has finished and populate self.stagg_list with the file paths to those JSON files.
+        Ensure the user has selected an output directory and prompt them to do so if they haven't, check that the required input for BASSPRO has been selected, launch BASSPRO, detect the JSON files produced after BASSPRO has finished and populate self.stagg_input_files with the file paths to those JSON files.
 
         Outcomes
         --------
@@ -2284,13 +2307,16 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.launch_basspro()
             This method copies the required BASSPRO input other than the signal files and the breathcaller_config.json file to the timestamped BASSPRO output folder (self.output_dir_py) and runs self.launch_worker().
         self.auto_get_breath_files()
-            Populate self.stagg_list with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
+            Populate self.stagg_input_files with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
         self.output_check()
             This method compares the input and output of BASSPRO and reports the names of the signal files that did not pass BASSPRO and failed to produce JSON files to the hangar for display on the main GUI.
         """
 
         # Make sure we have an output dir
-        self.dir_checker()
+        if not self.dir_checker():
+            self.notify_error("Need output folder")
+            return
+
         
         # check that the required input for BASSPRO has been selected
         if not self.get_bp_reqs():
@@ -2316,10 +2342,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # detect the JSON files produced after BASSPRO has finished
         self.auto_get_breath_files(basspro_output_folder)
 
-        # populate self.stagg_list with the file paths to those JSON files.
+        # populate stagg_input_files with the file paths to those JSON files.
         self.output_check()
 
-    def r_message(self):
+    def stagg_run(self):
         """
         Assign the file paths to the attributes, ensure that all required STAGG input has been selected and prompt the user to select whatever is missing, and launch STAGG.
 
@@ -2327,7 +2353,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         Config.configs: dict
             This attribute is populated with a nested dictionary in which each item contains a dictionary unique to each settings file - variable_config.csv, graph_config.csv, and other_config.csv. Each dictionary has the following key, value items: "variable", the Plethysmography class attribute that refers to the file path to the settings file; "path", the string file path to the settings file; "frame", the Config class attribute that refers to the dataframe; "df", the dataframe.
-        self.stagg_list: list
+        self.stagg_input_files: list
             This attribute is a list of user-selected signal file paths.
         
         Outputs
@@ -2344,16 +2370,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.rthing_to_do()
             Copy STAGG input to timestamped STAGG output folder, determine which STAGG scripts to use based on the presence or absence of an .RData file, and determine if self.input_dir_r needs to be a str path to directory instead of list because the list has more than 200 files, and run self.rthing_to_do_cntd().
         """
-        print("r_message()")
+        # Assign the file paths to the attributes
         self.variable_config = self.v.configs["variable_config"]["path"]
         self.graph_config = self.v.configs["graph_config"]["path"]
         self.other_config = self.v.configs["other_config"]["path"]
+
+        # ensure that all required STAGG input has been selected
         if any([self.v.configs[key]['path'] == "" for key in self.v.configs]):
-            if self.stagg_list == []:
-                print("no stagg for you")
+            if self.stagg_input_files == []:
+                self.notify_error("No STAGG input files")
             else:
-                QMessageBox.question(self, 'Missing STAGG settings', f"One or more STAGG settings files are missing.", QMessageBox.OK, QMessageBox.OK)
+                # and prompt the user to select whatever is missing
+                QMessageBox.question(self, 'Missing STAGG settings', f"One or more STAGG settings files are missing.", QMessageBox.Ok, QMessageBox.Ok)
         else:
+            # launch stagg
             self.rthing_to_do()
 
     def dir_checker(self, a=None, b=None, text=None):
@@ -2363,12 +2393,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Parameters
         --------
         output_folder: str
-            This argument is either self.output_dir_py or self.output_dir_r, the timestamped output directories within either BASSPRO_output or STAGG_output respectively within the self.output_dir directory. These attributes are either empty strings or a directory path.
+            This argument is either self.output_dir_py or self.output_dir_r, the timestamped output directories within either BASSPRO_output or STAGG_output respectively within the self.workspace_dir directory. These attributes are either empty strings or a directory path.
         output_folder_parent: str
-            This argument is either self.basspro_output_dir or self.r_output_folder, the directory paths to either BASSPRO_output or STAGG_output respectively within the self.output_dir directory. These attributes are either empty strings or a directory path.
+            This argument is either self.basspro_output_dir or self.r_output_folder, the directory paths to either BASSPRO_output or STAGG_output respectively within the self.workspace_dir directory. These attributes are either empty strings or a directory path.
         text: str
             This argument provides the text needed to customize the FileDialog window title.
-        self.output_dir: str
+        self.workspace_dir: str
             This attribute is either an empty string or refers to the file path of the user-selected output directory.
         QFileDialog: class
             A standard FileDialog allows the user to select a directory.
@@ -2400,13 +2430,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if a or b or text:
             raise NotImplementedError(f"Need to implement dir checker for {text}")
 
+        '''
         # If no output dir or invalid output dir
-        if self.output_dir == "" or not os.path.exists(self.output_dir):
+        if self.workspace_dir == "" or not os.path.exists(self.workspace_dir):
             # open a dialog that prompts the user to choose the directory:
             self.select_output_dir()
+        '''
+
+        # If no output dir or invalid output dir
+        while self.workspace_dir == "" or not os.path.exists(self.workspace_dir):
+            # open a dialog that prompts the user to choose the directory:
+            reply = QMessageBox.information(self, 'No Output Folder', 'Please select an output folder.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+            if reply == QMessageBox.Ok:
+                self.select_output_dir()
+            elif reply == QMessageBox.Cancel:
+                return False
 
         # TODO: what other folders do we need to check?
-
 
         # Checking to see if we have anything other than just configs in the directory
         '''
@@ -2420,6 +2460,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
                     os.makedirs(self.output_folder)
         '''
+        return True
     
     def launch_basspro(self):
         """
@@ -2553,8 +2594,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         self.signals: list
             This attribute is a list of the file paths of the current signal files selected.
-        self.stagg_list: list
-            This attribute is a list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
+        self.stagg_input_files: list
+            This attribute is a list of one of the following:
+              - JSON files produced by the most recent run of BASSPRO in the same session;
+              - JSON files produced by BASSPRO selected by user with a FileDialog;
+              - An .RData file produced by a previous run of STAGG;
+              - An .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
         self.hangar: QTextEdit
             This TextEdit displays feedback on user activity and either BASSPRO or STAGG processing.
         
@@ -2563,12 +2608,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.hangar: QTextEdit
             This TextEdit is appended with a list of othe signal files that did not pass BASSPRO and failed to produce JSON files.
         """
-        if len(self.stagg_list) != len(self.signal_files):
+        if len(self.stagg_input_files) != len(self.signal_files):
             goodies = []
             baddies = []
             for s in self.signal_files:
                 name = os.path.basename(s).split('.')[0]
-                for g in self.stagg_list:
+                for g in self.stagg_input_files:
                     if '_' in name:
                         if os.path.basename(g).split('.')[0] == name:
                             goodies.append(name)
@@ -2596,21 +2641,21 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute refers to the file path of the other_config.csv file.
         self.papr_dir: str
             This attribute refers to the directory path of the STAGG scripts folder.
-        self.stagg_list: list
+        self.stagg_input_files: list
             This attribute is a list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
         
         Outputs
         --------
         self.output_dir_r: str
-            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.output_dir. It is not spawned until self.dir_checker() is called when STAGG is launched.
+            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.workspace_dir. It is not spawned until self.dir_checker() is called when STAGG is launched.
         self.image_format: str
             This attribute is set as either ".svg" or ".jpeg" depending on which RadioButton is checked on the main GUI.
         self.pipeline_des: str
-            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_list has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_list consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
+            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_input_files has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_input_files consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
         self.input_dir_r: str
-            This attribute is set as the directory path of the first file in self.stagg_list if self.stagg_list contains the file paths of more than 200 files from the same directory.
+            This attribute is set as the directory path of the first file in self.stagg_input_files if self.stagg_input_files contains the file paths of more than 200 files from the same directory.
         reply: QMessageBox
-            This MessageBox informs the user that they have more than 200 file paths in self.stagg_list from more than one directory and asks the user to put the file in one directory.
+            This MessageBox informs the user that they have more than 200 file paths in self.stagg_input_files from more than one directory and asks the user to put the file in one directory.
 
         Outcomes
         --------
@@ -2632,22 +2677,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             except Exception as e:
                 print(f'{type(e).__name__}: {e}')
                 print(traceback.format_exc())
-            if any(os.path.basename(b).endswith("RData") for b in self.stagg_list):
+            if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
                 self.pipeline_des = os.path.join(self.papr_dir, "Pipeline_env_multi.R")
             else:
                 self.pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
-            if len(self.stagg_list)>200:
-                # If there are more than 200 files in Main.stagg_list, STAGG has troubles importing all of them when provided as a list of file paths, so in these cases, we would want args$JSON to be a directory path instead:
-                if len(set([os.path.dirname(y) for y in self.stagg_list]))>1:
-                    # If there are more than 200 files in Main.stagg_list and they come from more than one directory, we would need to have a different command line, so instead we'll regulate the user:
+            if len(self.stagg_input_files)>200:
+                # If there are more than 200 files in Main.stagg_input_files, STAGG has troubles importing all of them when provided as a list of file paths, so in these cases, we would want args$JSON to be a directory path instead:
+                if len(set([os.path.dirname(y) for y in self.stagg_input_files]))>1:
+                    # If there are more than 200 files in Main.stagg_input_files and they come from more than one directory, we would need to have a different command line, so instead we'll regulate the user:
                     reply = QMessageBox.information(self, "That's a lot of JSON", 'The STAGG input provided consists of more than 200 files from multiple directories.\nPlease condense the files into one directory for STAGG to analyze.', QMessageBox.Ok, QMessageBox.Ok)
                 else:
-                    # If there are more than 200 files in Main.stagg_list but they all come from the same directory, then args$JSON (Main.input_dir_r on our end) needs to be a directory path instead.
-                    self.input_dir_r = os.path.dirname(self.stagg_list[0])
+                    # If there are more than 200 files in Main.stagg_input_files but they all come from the same directory, then args$JSON (Main.input_dir_r on our end) needs to be a directory path instead.
+                    self.input_dir_r = os.path.dirname(self.stagg_input_files[0])
                     self.rthing_to_do_cntd()
             else:
-                # If there aren't a ridiculous number of json files in Main.stagg_list, then we just need to render the list of file paths into an unbracketed string so that STAGG can recognize it as a list. STAGG didn't like the brackets.
-                self.input_dir_r = ','.join(item for item in self.stagg_list)
+                # If there aren't a ridiculous number of json files in Main.stagg_input_files, then we just need to render the list of file paths into an unbracketed string so that STAGG can recognize it as a list. STAGG didn't like the brackets.
+                self.input_dir_r = ','.join(item for item in self.stagg_input_files)
                 self.rthing_to_do_cntd()
     
     def rthing_to_do_cntd(self):
@@ -2658,7 +2703,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         self.pipeline_des: str
             self.pipeline_des: str
-            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_list has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_list consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
+            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_input_files has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_input_files consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
         self.gui_config: dict
             This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail. 
         
@@ -2688,7 +2733,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     reply = QMessageBox.information(self, 'Rscript not found', 'Rscript.exe path not defined. Would you like to select the R executable?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                     if reply == QMessageBox.Ok:
                         # User provides the path to the Rscript executable and it's saved as a string in gui_config.json:
-                        pre_des = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.output_dir))
+                        pre_des = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.workspace_dir))
                         if os.path.basename(pre_des[0]) == "Rscript.exe":
                             self.rscript_des = pre_des[0]
                             self.gui_config['Dictionaries']['Paths']['rscript'] = pre_des[0]
@@ -2697,7 +2742,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             else:
                 reply = QMessageBox.information(self, 'Rscript not found', 'Rscript.exe path not defined. Would you like to select the R executable?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
                 if reply == QMessageBox.Ok:
-                    pre_des = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.output_dir))
+                    pre_des = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.workspace_dir))
                     if os.path.basename(pre_des[0]) == "Rscript.exe":
                         self.rscript_des = pre_des[0]
                         self.gui_config['Dictionaries']['Paths']['rscript'] = pre_des[0]
