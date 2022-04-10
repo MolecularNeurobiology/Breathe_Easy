@@ -71,9 +71,27 @@ class Auto(QWidget, Ui_Auto):
 
         # Set underlying dataframe to defaults
         self.get_defaults()
+
+        # Rename column names for much easier pandas usage
+        #   Make column named 'index' capitalized to 'Index'
+        #   having a column named 'index' collides with the built-in `index` attribute of dataframes
+        #   spaces are problematic, but tolerable for now
+        self.frame.columns = ['Index' if col == 'index' else col for col in self.frame.columns]
+
         self.update_tabs()
 
-        self.summary_table.cellChanged.connect(lambda row, col : self.edit_cell(self.summary_table, row, col))
+        for table in self.all_tables():
+            table.cellChanged.connect(lambda row, col, t=table : self.edit_cell(t, row, col))
+
+
+    def all_tables(self):
+        return [self.sections_char_table,
+                self.sections_spec_table,
+                self.cal_table,
+                self.gas_thresh_table,
+                self.time_thresh_table,
+                self.inc_table,
+                self.summary_table]
 
     def get_defaults(self):
         """
@@ -104,13 +122,39 @@ class Auto(QWidget, Ui_Auto):
         self.frame = pd.DataFrame(auto_dict).reset_index()
 
     def edit_cell(self, table, row, col):
-        cell = table.item(row, col)
-        new_data = cell.text()
-        prev_data = self.frame.iat[row, col]
-        if prev_data != new_data:
-            self.frame.iat[row, col] = new_data
+        """
+        Receive callback for editing a table cell
+        Update underlying dataframe and propogate to other tables
+        """
 
-            # Block signals to prevent endless edit callback loop
+        # Get edited cell
+        cell = table.item(row, col)
+        
+        # Get new data
+        new_data = cell.text()
+        
+        # Get index_name of setting
+        index_name = table.item(row, 0).text()
+        
+        # Find the df item that matches the index name of the edited cell
+        df_match = self.frame[self.frame.Index == index_name]
+        
+        # Make sure there is only 1 match!
+        if len(df_match) == 1:
+            # Get dataframe index of edited item
+            df_idx = df_match.index[0]
+            
+            # Get currently stored data value
+            prev_data = df_match.iloc[0, col]
+        else:
+            raise RuntimeError(f"Multiple matches for index name '{index_name}'")
+        
+        # If data changed, perform update
+        if prev_data != new_data:
+            # Set new data
+            self.frame.iat[df_idx, col] = new_data
+
+            # Block signals to prevent endless table edit callback loop
             self.signals_off()
 
             # Update all table widgets
@@ -120,10 +164,12 @@ class Auto(QWidget, Ui_Auto):
             self.signals_on()
 
     def signals_off(self):
-        self.summary_table.blockSignals(True)
+        for table in self.all_tables():
+            table.blockSignals(True)
 
     def signals_on(self):
-        self.summary_table.blockSignals(False)
+        for table in self.all_tables():
+            table.blockSignals(False)
 
     def update_tabs(self):
         """
@@ -151,27 +197,27 @@ class Auto(QWidget, Ui_Auto):
         auto_labels = self.pleth.gui_config['Dictionaries']['Settings Names']['Auto Settings']
         
         # Populate Section Characterization table
-        sec_char_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
-        self.populate_table(sec_char_df,self.sections_char_table)
+        sec_char_df = self.frame.loc[(self.frame.Index.isin(auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
+        self.populate_table(sec_char_df, self.sections_char_table)
 
         # Populate Section Spec table
-        sec_spec_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Characterization']['Interruptions'].values())),:]
-        self.populate_table(sec_spec_df,self.sections_spec_table)
+        sec_spec_df = self.frame.loc[(self.frame.Index.isin(auto_labels['Section Characterization']['Interruptions'].values())),:]
+        self.populate_table(sec_spec_df, self.sections_spec_table)
         
         # Populate Section Calibration table
-        cal_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
+        cal_df = self.frame.loc[(self.frame.Index.isin(auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
         self.populate_table(cal_df,self.cal_table)
 
         # Populate Gass Threshold Settings table
-        gas_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
+        gas_thresh_df = self.frame.loc[(self.frame.Index.isin(auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
         self.populate_table(gas_thresh_df,self.gas_thresh_table)
 
         # Populate Time Threshold Settings table
-        time_thresh_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Threshold Settings']['Time Thresholds'].values())),:]
+        time_thresh_df = self.frame.loc[(self.frame.Index.isin(auto_labels['Threshold Settings']['Time Thresholds'].values())),:]
         self.populate_table(time_thresh_df,self.time_thresh_table)
 
         # Populate Inclusion DF table
-        inc_df = self.frame.loc[(self.frame['index'].isin(auto_labels['Inclusion Criteria']['Breath Quality Standards'].values())),:]
+        inc_df = self.frame.loc[(self.frame.Index.isin(auto_labels['Inclusion Criteria']['Breath Quality Standards'].values())),:]
         self.populate_table(inc_df,self.inc_table)
 
         # Populate summary table with all data
@@ -209,7 +255,6 @@ class Auto(QWidget, Ui_Auto):
         self.{division}_table: QTableWidget
             The TableWidget referred to by the argument "table" is populated with the appropriate settings from self.frame dataframe as contained in the argument "frame".
         """
-        print("auto.populate_table()")
         # Populate tablewidgets with views of uploaded csv. Currently editable.
         table.setColumnCount(len(frame.columns))
         table.setRowCount(len(frame))
@@ -267,13 +312,13 @@ class Auto(QWidget, Ui_Auto):
             This methods writes the contents of the self.summary_table TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI.
         """
         print("auto.save_checker()")
-        if self.pleth.mothership == "":
+        if not self.pleth.workspace_dir:
             path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
             if os.path.exists(path):
                 self.path = path
                 self.save_auto_file()
         else:
-            self.path = os.path.join(self.pleth.mothership, "auto_sections.csv")
+            self.path = os.path.join(self.pleth.workspace_dir, "auto_sections.csv")
             self.save_auto_file()
 
     def save_auto_file(self):
@@ -377,7 +422,7 @@ class Auto(QWidget, Ui_Auto):
         """
         print("auto.load_auto_file()")
         # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.mothership))
+        file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.workspace_dir))
         try:
             self.frame = pd.read_csv(file[0],index_col='Key').transpose().reset_index()
             self.update_tabs()

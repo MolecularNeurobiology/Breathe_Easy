@@ -83,6 +83,16 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def autosections(self):
         return self.get_settings_file_from_list("auto")
 
+    @autosections.setter
+    def autosections(self, file):
+        # TODO: put validation in here??
+        # Remove old autosections
+        for item in self.sections_list.findItems("auto", Qt.MatchContains):
+            self.sections_list.takeItem(self.sections_list.row(item))
+        
+        # Add new one
+        self.sections_list.addItem(file)
+
     @property
     def mansections(self):
         return self.get_settings_file_from_list("manual")
@@ -971,7 +981,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.old_bdf = self.breath_df
         self.breath_df = []
         missing_meta = []
-        for p in [self.metadata,self.autosections,self.mansections]:
+        for p in [self.metadata, self.autosections, self.mansections]:
             if not self.try_open(p):
                 missing_meta.append(p)
 
@@ -1463,19 +1473,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.autosections: str
             This attribute is set as the file path to the autosections.csv file detected in the user-selected self.workspace_dir output directory.
         """
-        print("auto_get_autosections()")
-        autosections_path=os.path.join(self.workspace_dir, 'auto_sections.csv')
+        autosections_path = os.path.join(self.workspace_dir, 'auto_sections.csv')
         if Path(autosections_path).exists():
-            for item in self.sections_list.findItems("auto",Qt.MatchContains):
-            # and we remove them from the widget.
-                self.sections_list.takeItem(self.sections_list.row(item))
-            if self.autosections == "":
-            # We assign the path detected via output_dir to the Plethysmography class attribute that will be an argument for the breathcaller command line.
-                self.autosections=autosections_path
-                self.sections_list.addItem(self.autosections)
-            else:
-                self.autosections=autosections_path
-                self.sections_list.addItem(self.autosections)
+            self.autosections = autosections_path
         else:
             print("Autosection parameters file not detected.")
 
@@ -2192,28 +2192,30 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.workspace_dir)
         if not filenames:
-            if self.autosections == "" and self.basicap == "" and self.mansections == "":
+            if not self.autosections and not self.basicap and not self.mansections:
                 print("No BASSPRO settings files selected.")
         else:
-            n = 0
+            new_files_added = False
             for file in filenames:
                 if file.endswith('.csv'):
                     if os.path.basename(file).startswith("auto_sections") | os.path.basename(file).startswith("autosections"):
-                        n += 1
-                        for item in self.sections_list.findItems("auto_sections",Qt.MatchContains):
-                            self.sections_list.takeItem(self.sections_list.row(item))
-                        self.sections_list.addItem(file)
+                        self.autosections = file
+                        new_files_added = True
+
                     elif os.path.basename(file).startswith("manual_sections"):
-                        n += 1
+                        new_files_added = True
                         for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
                             self.sections_list.takeItem(self.sections_list.row(item))
                         self.sections_list.addItem(file)
+
                     elif os.path.basename(file).startswith("basics"):
-                        n += 1
+                        new_files_added = True
                         for item in self.sections_list.findItems("basics",Qt.MatchContains):
                             self.sections_list.takeItem(self.sections_list.row(item))
                         self.sections_list.addItem(file)
-                    if n > 0:
+
+                    # If we added files
+                    if new_files_added:
                         if len(self.breath_df)>0:
                             self.update_breath_df("settings")
                 else:
