@@ -1,21 +1,15 @@
 
-import os
+from PyQt5.QtWidgets import QMessageBox, QFileDialog
 
-# TODO: change name to indicate specificity, or make more general -- what valid files? what's valid about them?
-def dir_contains_valid_files(dir):
+def notify_error(msg, title="Error"):
+    QMessageBox.critical(None, title, msg)
+
+def notify_info(msg, title="Info"):
+    QMessageBox.information(None, title, msg)
+
+def choose_save_location(default_filename, file_types="*.csv"):
     """
-    Check if `dir` contains any of the valid files
+    Pick a file location for basic settings
     """
-
-    valid_files = [
-        'metadata.csv',
-        'basics.csv',
-        'autosections.csv',
-        'mansections.csv',
-    ]
-
-    files = os.listdir(dir)
-    for file in files:
-        if file in valid_files:
-            return True
-    return False
+    path, filter = QFileDialog.getSaveFileName(None, 'Save file', default_filename, file_types)
+    return path

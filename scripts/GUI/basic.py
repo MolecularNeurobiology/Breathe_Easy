@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QFileDialog, QMessageBox
 from PyQt5.QtCore import QObject
 from ui.basic_form import Ui_Basic
 from PyQt5.QtCore import Qt
+from util import choose_save_location, notify_error, notify_info
 
 class Basic(QWidget, Ui_Basic):
     """
@@ -19,7 +20,7 @@ class Basic(QWidget, Ui_Basic):
     Ui_Basic: class
         The Basic class inherits widgets and layouts defined in the Ui_Basic class.
     """
-    def __init__(self,Plethysmography):
+    def __init__(self, Plethysmography):
         """
         Instantiate the Basic class.
 
@@ -49,7 +50,6 @@ class Basic(QWidget, Ui_Basic):
         self.isMaximized()
         self.setup_variables()
         self.setup_tabs()
-        self.path = ""
         
     def setup_variables(self):
         """
@@ -341,101 +341,25 @@ class Basic(QWidget, Ui_Basic):
         self.basic_df: Dataframe
             This attribute stores a dataframe made from the "current" dictionary that was updated with the values of the corresponding LineEdits.
         """
-        print("basic.get_parameter()")
+        # Read lineEdit widgets
         for k,v in self.lineEdits.items():
+            # Update current dictionary
             self.pleth.bc_config['Dictionaries']['AP']['current'].update({v:k.text()})
-        self.basic_df = pd.DataFrame.from_dict(self.pleth.bc_config['Dictionaries']['AP']['current'],orient='index').reset_index()
+
+        # Update the dataframe with new dict values
+        self.basic_df = pd.DataFrame.from_dict(self.pleth.bc_config['Dictionaries']['AP']['current'], orient='index').reset_index()
         self.basic_df.columns = ['Parameter','Setting']
-    
-    def save_checker(self,folder,title):
-        """
-        Check the existence of the file being saved and the directory it's being saved to - if an output folder has not been selected, prompt the user to save as via FileDialog. 
 
-        Parameters
-        --------
-        folder: str
-            The directory in which the .csv file for basic BASSPRO settings will be saved.
-        title: str
-            The name of the file being saved.
-        path: str
-            This variable stores the path of the file the user saved via the FileDialog.
-        
-        Outputs
-        --------
-        self.path: str
-            The path of the file being saved.
+    def save_as(self):
         """
-        print("basic.save_checker()")
-        if folder == "":
-            path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics", ".csv(*.csv))")[0]
-            if os.path.exists(path):
-                self.path = path
-        else:
-            self.path = os.path.join(folder, f"{title}.csv")
-    
-    def saveas_basic_path(self):
         """
-        Call self.get_parameter(), prompt the user to save as via FileDialog, and then call self.actual_saving().
+        save_path = choose_save_location(default_filename="basics.csv")
+        # Cancelled - No path chosen
+        if not save_path:
+            return
+        self.save(save_path)
 
-        Parameters
-        --------
-        path: str
-            The file path selected by the user via FileDialog.
-        
-        Outputs
-        --------
-        self.path: str
-            This attribute stores the file path selected by the user via FileDialog.
-
-        Outcomes
-        --------
-        self.get_parameter()
-            Scrape the values of the LineEdits to update the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config.
-        self.actual_saving()
-            Write self.basic_df dataframe to a .csv file, dump the nested dictionary stored in Plethysmography.bc_config to breathcaller_config.json to save changes made to the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config, and add the file path self.basicap to the ListWidget self.sections_list for display in the main GUI.
-        """
-        print("basic.saveas_basic_path()")
-        self.get_parameter()
-        path = QFileDialog.getSaveFileName(self, 'Save BASSPRO basic parameters file', f"basics", ".csv(*.csv))")[0]
-        self.path = path
-        self.actual_saving()
-
-    def save_basic_path(self):
-        """
-        Call self.get_parameter to update "current" dictionary in Plethysmography.bc_config, check the existence of a user-selected output directory - if an output folder has not been selected, call self.saveas_basic_path() to prompt the user to save as via FileDialog, check the existance of the file path, and call self.actual_saving(). 
-
-        Parameters
-        --------
-        path: str
-            This variable stores the file path automatically generated based on the user-selected output directory.
-        
-        Outputs
-        --------
-        self.path: str
-            This attribute stores the file path automatically generated based on the user-selected output directory.
-        
-        Outcomes
-        --------
-        self.get_parameter()
-            Scrape the values of the LineEdits to update the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config.
-        self.saveas_basic_path()
-            Call self.get_parameter(), prompt the user to save as via FileDialog, and then call self.actual_saving().
-        self.actual_saving()
-            Write self.basic_df dataframe to a .csv file, dump the nested dictionary stored in Plethysmography.bc_config to breathcaller_config.json to save changes made to the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config, and add the file path self.basicap to the ListWidget self.sections_list for display in the main GUI.
-        """
-        print("basic.save_basic_path()")
-        self.get_parameter()
-        if self.pleth.mothership == "":
-            self.saveas_basic_path()
-        else:
-            path = os.path.join(self.pleth.mothership, f"basics.csv")
-        if not path:
-            print("dialog cancelled")
-        else:
-            self.path = path
-            self.actual_saving()
-    
-    def actual_saving(self):
+    def save(self, save_path=None):
         """
         Write self.basic_df dataframe to a .csv file, dump the nested dictionary stored in Plethysmography.bc_config to breathcaller_config.json to save changes made to the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config, and add the file path self.basicap to the ListWidget self.sections_list for display in the main GUI.
 
@@ -468,23 +392,36 @@ class Basic(QWidget, Ui_Basic):
         breathcaller_config.json: JSON file
             The JSON file that the updated Plethysmography.bc_config dictionary is dumped to.
         """
-        print("basic.actual_saving_basic()")
-        self.pleth.basicap = self.path
+        # Get save path if not passed in
+        if not save_path:
+
+            # Try to create path with workspace_dir
+            if self.pleth.workspace_dir:
+                save_path = os.path.join(self.pleth.workspace_dir, "basics.csv")
+
+            # Try asking user
+            else:
+                save_path = choose_save_location(default_filename="basics.csv")
+                # Cancelled - No path chosen
+                if not save_path:
+                    return
+
+        if not os.path.exists(os.path.split(save_path)[0]):
+            notify_error(f"Bad save path: {save_path}")
+
+        # Update parameters
+        self.get_parameter()
+
+        self.pleth.basicap = save_path
+
         # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
         self.basic_df.set_index('Parameter').to_csv(self.pleth.basicap)
     
         with open(f'{Path(__file__).parent}/breathcaller_config.json','w') as bconfig_file:
             json.dump(self.pleth.bc_config,bconfig_file)
         
-        if self.pleth.basicap != "":
-        # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
-            for item in self.pleth.sections_list.findItems("basic",Qt.MatchContains):
-                self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
-            if self.pleth.autosections != "" or self.pleth.mansections != "":
-                for item in self.pleth.sections_list.findItems("selected",Qt.MatchContains):
-                    self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
-            self.pleth.sections_list.addItem(self.pleth.basicap)
-            self.pleth.hangar.append("BASSPRO basic settings files saved.")
+        notify_info("Basic settings saved")
+        self.pleth.hangar.append("BASSPRO basic settings file saved.")
 
     def load_basic_file(self):
         """

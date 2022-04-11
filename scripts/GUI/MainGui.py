@@ -34,13 +34,12 @@ from auto import Auto
 from manual import Manual
 from checkable_combo_box import CheckableComboBox
 from config import Config
-from util import dir_contains_valid_files
+from util import notify_error
 
 from ui.form import Ui_Plethysmography
 
-
-#region class Variable
-#endregion
+# TODO: only for development!
+AUTOLOAD = False
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -54,6 +53,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         The Plethysmography class inherits widgets and layouts defined in the Ui_Plethysmography class.
     """
 
+    ## Getters & Setters ##
     @property
     def workspace_dir(self):
         return self.output_path_display.text()
@@ -101,23 +101,60 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def basicap(self):
         return self.get_settings_file_from_list("basic")
 
+    @basicap.setter
+    def basicap(self, file):
+        # Remove old basic settings
+        for item in self.sections_list.findItems("basics",Qt.MatchContains):
+            self.sections_list.takeItem(self.sections_list.row(item))
+        
+        # Add new one
+        self.sections_list.addItem(file)
+
+    @property
+    def stagg_input_files(self):
+        return [self.breath_list.item(i).text() for i in range(self.breath_list.count())]
+    ##         ##
+
+
+    ## Validation Methods ##
+    def valid_metadata(self, file):
+        return os.path.basename(file).startswith("metadata") and os.path.splitext(file)[1] == '.csv'
+
+    def valid_autosections(self, file):
+        return os.path.basename(file).startswith("auto_sections") or os.path.basename(file).startswith("autosections")
+
+    def valid_mansections(self, file):
+        return os.path.basename(file).startswith("manual_sections")
+
+    def valid_basicap(self, file):
+        return os.path.basename(file).startswith("basics")
+    ##         ##
+
+
     def get_settings_file_from_list(self, type):
         all_settings = [self.sections_list.item(i).text() for i in range(self.sections_list.count())]
 
         for settings_file in all_settings:
 
-            if (type == 'auto' and \
-                   (os.path.basename(settings_file).startswith("auto_sections") or os.path.basename(settings_file).startswith("autosections"))) or \
-               (type == 'manual' and \
-                   os.path.basename(settings_file).startswith("manual_sections")) or \
-               (type == 'basic' and \
-                   os.path.basename(settings_file).startswith("basics")):
+            if (type == 'auto' and self.valid_autosections(settings_file)) or \
+               (type == 'manual' and self.valid_mansections(settings_file)) or \
+               (type == 'basic' and self.valid_basicap(settings_file)):
                 return settings_file
         return None
 
-    @property
-    def stagg_input_files(self):
-        return [self.breath_list.item(i).text() for i in range(self.breath_list.count())]
+    def dir_contains_valid_import_files(self, dir):
+        """
+        Check if `dir` contains any valid files for importing
+        """
+        files = os.listdir(dir)
+        for file in files:
+            for checker in [self.valid_metadata,
+                            self.valid_autosections,
+                            self.valid_mansections,
+                            self.valid_basicap]:
+                if checker(file):
+                    return True
+        return False
 
     def delete_setting_file(self):
         a = self.sections_list.currentItem()
@@ -125,10 +162,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.hangar.append(f"Deleted settings: {a.text()}")
             self.sections_list.takeItem(self.sections_list.row(a))
             del a
-
-    # TODO: move to utility function
-    def notify_error(self, msg):
-        QMessageBox.critical(None, "Error", msg)
 
     def __init__(self):
         """
@@ -319,13 +352,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         os.chdir(os.path.join(Path(__file__).parent.parent.parent))
 
 
-        # TODO: only for development!
         # Autoload configuration
-        self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
-        self.metadata_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv")
-        self.output_path_display.setText("/home/shaun/Projects/Freelancing/BASSPRO_STAGG")
-        self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv")
-        self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv")
+        if AUTOLOAD:
+            self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
+            self.metadata_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv")
+            self.output_path_display.setText("/home/shaun/Projects/Freelancing/BASSPRO_STAGG")
+            self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv")
+            self.sections_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv")
         
         
     # method with slot decorator to receive signals from the worker running in
@@ -684,7 +717,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         elif metadata_file.endswith(".xlsx"):
             meta = pd.read_excel(metadata_file)
         else:
-            self.notify_error("Bad metadata file format")
+            notify_error("Bad metadata file format")
             return False
 
         baddies = []
@@ -1333,10 +1366,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # Set output dir
             self.output_path_display.setText(output_dir)
             
-            if dir_contains_valid_files(output_dir):
+            if self.dir_contains_valid_import_files(output_dir):
 
                 # If any data exists already
-                if self.breath_df != [] or self.metadata != "" or self.autosections != "" or self.basicap != "" or self.mansections != "":
+                if self.breath_df or self.metadata or self.autosections or self.basicap or self.mansections:
 
                     reply = QMessageBox.question(self, f'Input detected', 'The selected directory has recognizable input.\n\nWould you like to overwrite your current input selection?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                     if reply == QMessageBox.Yes:
@@ -1654,7 +1687,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     bad_file_formats.append(file)
 
             if bad_file_formats:
-                self.notify_error(f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_file_formats])}\n\nThey will not be included.")
+                notify_error(f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_file_formats])}\n\nThey will not be included.")
 
             if self.metadata_list.count():
                 self.check_metadata_file(self.metadata_file)
@@ -2210,9 +2243,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                     elif os.path.basename(file).startswith("basics"):
                         new_files_added = True
-                        for item in self.sections_list.findItems("basics",Qt.MatchContains):
-                            self.sections_list.takeItem(self.sections_list.row(item))
-                        self.sections_list.addItem(file)
+                        self.basicap = file
 
                     # If we added files
                     if new_files_added:
@@ -2323,13 +2354,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Make sure we have an output dir
         if not self.dir_checker():
-            self.notify_error("Need output folder")
+            notify_error("Need output folder")
             return
 
         
         # check that the required input for BASSPRO has been selected
         if not self.get_bp_reqs():
-            self.notify_error("Need settings files")
+            notify_error("Need settings files")
             return
 
         # launch BASSPRO
@@ -2387,7 +2418,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # ensure that all required STAGG input has been selected
         if any([self.stagg_settings_window.configs[key]['path'] == "" for key in self.stagg_settings_window.configs]):
             if self.stagg_input_files == []:
-                self.notify_error("No STAGG input files")
+                notify_error("No STAGG input files")
             else:
                 # and prompt the user to select whatever is missing
                 QMessageBox.question(self, 'Missing STAGG settings', f"One or more STAGG settings files are missing.", QMessageBox.Ok, QMessageBox.Ok)
