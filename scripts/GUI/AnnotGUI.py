@@ -93,13 +93,13 @@ class Annot(QMainWindow, Ui_Annot):
             This method closes the Annot subGUI if the user chooses not to provide a metadata file.
         """
         print("annot.show_metadata_file()")
-        if self.pleth.metadata == "" and self.metadata is None:
+        if not self.pleth.metadata and self.metadata is None:
             reply = QMessageBox.information(self, 'Missing metadata file', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
             if reply == QMessageBox.Ok:
                 self.load_metadata_file()
             if reply == QMessageBox.Cancel:
                 self.close()
-        elif self.pleth.metadata != "" and self.metadata is None:
+        elif self.pleth.metadata and self.metadata is None:
             if Path(self.pleth.metadata).exists():
                 if self.pleth.metadata.endswith('.xlsx'):
                     self.metadata = pd.read_excel(self.pleth.metadata)
@@ -178,16 +178,16 @@ class Annot(QMainWindow, Ui_Annot):
         self.kids={}
         self.groups=[]
 
-    # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select metadata file', str(self.pleth.mothership))
+        # Opens open file dialog
+        file, filter = QFileDialog.getOpenFileName(self, 'Select metadata file', str(self.pleth.workspace_dir))
 
-    # If you the file you chose sucks, the GUI won't crap out.
-        if os.path.exists(file[0]):
-            if Path(file[0]).suffix == ".xlsx":
-                self.metadata = pd.read_excel(file[0])
+        # If you the file you chose sucks, the GUI won't crap out.
+        if os.path.exists(file):
+            if Path(file).suffix == ".xlsx":
+                self.metadata = pd.read_excel(file)
                 self.populate_list_columns()
-            elif Path(file[0]).suffix == ".csv":
-                self.metadata = pd.read_csv(file[0])
+            elif Path(file).suffix == ".csv":
+                self.metadata = pd.read_csv(file)
                 self.populate_list_columns()
             else:
                 reply = QMessageBox.information(self, 'Incorrect file format', 'Only .csv or .xlsx files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
@@ -778,15 +778,14 @@ class Annot(QMainWindow, Ui_Annot):
         """
         print("annot.save_config()")
         try:
-            file = QFileDialog.getSaveFileName(self, 'Save File', '', ".csv(*.csv))")
-            self.metadata.to_csv(file[0], index = False)
-            self.pleth.metadata = file[0]
-            self.pleth.metadata_list.clear()
-            self.pleth.metadata_list.addItem(self.pleth.metadata)
+            file, filter = QFileDialog.getSaveFileName(self, 'Save File', '', ".csv(*.csv))")
+            self.metadata.to_csv(file, index = False)
+            self.pleth.metadata = file
         except PermissionError:
             reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
+
         if self.pleth.breath_df != []:
             self.pleth.update_breath_df()
 

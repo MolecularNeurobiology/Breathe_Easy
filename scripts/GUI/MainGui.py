@@ -255,13 +255,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         self.stagg_settings_window()
             This method instantiates the Config class.
-        self.m()
+        self.manual_settings_window()
             This method instantiates the Manual class.
         self.auto_settings_window()
             This method instantiates the Auto class.
-        self.b()
+        self.basic_settings_window()
             This method instantiates the Basic class.
-        self.g()
+        self.metadata_annot_window()
             This method instantiates the Annot class.
         """
         super(Plethysmography, self).__init__()
@@ -332,10 +332,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Initiating subGUIs
         self.stagg_settings_window = Config(self)
-        self.m = Manual(self)
+        self.manual_settings_window = Manual(self)
         self.auto_settings_window = Auto(self)
-        self.b = Basic(self)
-        self.g = AnnotGUI.Annot(self)
+        self.basic_settings_window = Basic(self)
+        self.metadata_annot_window = AnnotGUI.Annot(self)
 
         self.stagg_settings_window.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
 
@@ -344,7 +344,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.parallel_combo.addItems([str(num) for num in list(range(1,os.cpu_count()+1))])
 
         # Populate GUI widgets with experimental condition choices:
-        self.m.preset_menu.addItems([x for x in self.bc_config['Dictionaries']['Manual Settings']['default'].keys()])
+        self.manual_settings_window.preset_menu.addItems([x for x in self.bc_config['Dictionaries']['Manual Settings']['default'].keys()])
         self.auto_settings_window.auto_setting_combo.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
         
 
@@ -650,8 +650,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Annot.show_metadata_file()
             This method determines the source of the metadata that will be manipulated by the user in the Annot subGUI.
         """
-        self.g.show()
-        self.g.show_metadata_file()
+        self.metadata_annot_window.show()
+        self.metadata_annot_window.show_metadata_file()
 
     def show_manual(self):
         """
@@ -662,7 +662,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Manual.show()
             This method displays the manual BASSPRO settings subGUI.
         """
-        self.m.show()
+        self.manual_settings_window.show()
 
     def show_auto(self):
         """
@@ -684,7 +684,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Basic.show()
             This method displays the basic BASSPRO settings subGUI.
         """
-        self.b.show()
+        self.basic_settings_window.show()
         
 #endregion
 #region Variable configuration
