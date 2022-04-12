@@ -5,6 +5,7 @@ import pandas as pd
 from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QFileDialog, QMessageBox
 from PyQt5.QtCore import Qt
 from ui.auto_form import Ui_Auto
+from util import choose_save_location, notify_error, notify_info
 
 class Auto(QWidget, Ui_Auto):
     """
@@ -284,44 +285,13 @@ class Auto(QWidget, Ui_Auto):
         self.save_auto_file()
             This methods writes the contents of the self.summary_table TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
         """
-        print("auto.save_as()")
-        path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
-        if os.path.exists(path):
-            self.path = path
-            self.save_auto_file()
-    
-    def save_checker(self):
-        """
-        Ensure the existence of a user-selected output directory, prompt the user to select one if they have not, and call self.save_auto_file().
+        save_path = choose_save_location(default_filename="auto_sections.csv")
+        # Cancelled - No path chosen
+        if not save_path:
+            return
+        self.save(save_path)
 
-        Parameters
-        --------
-        self.pleth.mothership: str
-            The path to the user-selected directory for all output.
-        path: str
-            This variable stores the file path selected by the user to which the .csv file of the automated BASSPRO settings wll be saved.
-
-        Outputs
-        --------
-        self.path: str
-            This attribute stores the file path.
-
-        Outcomes
-        --------
-        self.save_auto_file()
-            This methods writes the contents of the self.summary_table TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, calls self.pleth.update_breath_df(), and adds self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI.
-        """
-        print("auto.save_checker()")
-        if not self.pleth.workspace_dir:
-            path = QFileDialog.getSaveFileName(self, 'Save File', "auto_sections", ".csv(*.csv))")[0]
-            if os.path.exists(path):
-                self.path = path
-                self.save_auto_file()
-        else:
-            self.path = os.path.join(self.pleth.workspace_dir, "auto_sections.csv")
-            self.save_auto_file()
-
-    def save_auto_file(self):
+    def save(self, save_path=None):
         """
         Write the contents of the self.summary_table TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, call self.pleth.update_breath_df(), and add self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
 
@@ -352,10 +322,28 @@ class Auto(QWidget, Ui_Auto):
         self.update_breath_df()
             This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the metadata.
         """
-        print("auto.save_auto_file()")
-        self.pleth.autosections = self.path
+        # TODO: make this part of parent class??
+        # Get save path if not passed in
+        if not save_path:
+
+            # Try to create path with workspace_dir
+            if self.pleth.workspace_dir:
+                save_path = os.path.join(self.pleth.workspace_dir, "auto_sections.csv")
+
+            # Try asking user
+            else:
+                save_path = choose_save_location(default_filename="auto_sections.csv")
+                # Cancelled - No path chosen
+                if not save_path:
+                    return
+
+        if not os.path.exists(os.path.split(save_path)[0]):
+            notify_error(f"Bad save path: {save_path}")
+
+        self.pleth.autosections = save_path
+
         try:
-        # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
+            # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
             with open(self.pleth.autosections,'w',newline = '') as stream:
                     writer = csv.writer(stream)
                     header = []
@@ -374,20 +362,19 @@ class Auto(QWidget, Ui_Auto):
                             else:
                                 coldata.append(item.text())
                         writer.writerow(coldata)
+
             # This is ridiculous.
             auto = pd.read_csv(self.pleth.autosections)
             auto['Key'] = auto['Alias']
-            auto.to_csv(self.pleth.autosections,index=False)
+            auto.to_csv(self.pleth.autosections, index=False)
             if self.pleth.breath_df != []:
                 self.pleth.update_breath_df("automated settings")
 
-            # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
-            for item in self.pleth.sections_list.findItems("auto_sections",Qt.MatchContains):
-                self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
-            self.pleth.sections_list.addItem(self.pleth.autosections)
-        except Exception as e:
-            if type(e) == PermissionError:
-                reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
+        except PermissionError:
+            QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
+
+        notify_info("Automated settings saved")
+        self.pleth.hangar.append("BASSPRO auto settings file saved.")
 
     def load_auto_file(self):
         """
