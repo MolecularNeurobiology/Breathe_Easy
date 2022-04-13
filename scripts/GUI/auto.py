@@ -18,7 +18,7 @@ class Auto(QWidget, Ui_Auto):
     Ui_Auto: class
         The Auto class inherits widgets and layouts defined in the Ui_Auto class.
     """
-    def __init__(self,Plethysmography):
+    def __init__(self, Plethysmography):
         """
         Instantiate the Auto class.
 
@@ -68,22 +68,26 @@ class Auto(QWidget, Ui_Auto):
             for vv in v:
                 vv.clicked.connect(self.reference_event)
 
-        self.auto_setting_combo.addItems([x for x in self.pleth.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
+        # Populate default template keys
+        self.auto_setting_combo.addItems([x for x in self.pleth.bc_config['Dictionaries']['Auto Settings']['default']])
 
-        # Set underlying dataframe to defaults
-        self.get_defaults()
+        # If we've already selected a file, load it in
+        if self.pleth.autosections:
+            # Add custom option
+            self.auto_setting_combo.addItem('Custom')
+            # Set to current
+            self.auto_setting_combo.setCurrentIndex(self.auto_setting_combo.count()-1)
 
-        # Rename column names for much easier pandas usage
-        #   Make column named 'index' capitalized to 'Index'
-        #   having a column named 'index' collides with the built-in `index` attribute of dataframes
-        #   spaces are problematic, but tolerable for now
-        self.frame.columns = ['Index' if col == 'index' else col for col in self.frame.columns]
+        # Otherwise, set to defaults
+        else:
+            # First item is instruction text, set to index 2
+            self.auto_setting_combo.setCurrentIndex(1)
 
-        self.update_tabs()
+        ## NOTE: ^^ The update will automatically trigger on index change ^^
+        # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
         for table in self.all_tables():
             table.cellChanged.connect(lambda row, col, t=table : self.edit_cell(t, row, col))
-
 
     def all_tables(self):
         return [self.sections_char_table,
@@ -94,33 +98,41 @@ class Auto(QWidget, Ui_Auto):
                 self.inc_table,
                 self.summary_table]
 
-    def get_defaults(self):
+    def update_template_selection(self):
         """
-        This method populates the automated BASSPRO settings subGUI widgets with default values derived from Plethysmography.bc_config (breathcaller_config.json).
+        This method populates the automated BASSPRO settings
+          subGUI widgets with default values derived from 
+          Plethysmography.bc_config (breathcaller_config.json).
 
         Parameters
         --------
         self.auto_setting_combo: QComboBox
             A comboBox that is populated with the experimental setups for which the GUI has default automated BASSPRO settings. These experimental setups are sourced from the keys of the "default" dictionary nested in the "Auto Settings" dictionary from Plethysmography.bc_config.
-        
+
         Outputs
         --------
         self.auto_dict: dict
             This attribute stores the nested dictionary in Plethysmography.bc_config that contains the default automated BASSPRO settings of multiple experimental setups.
         self.frame: Dataframe
             This attribute stores the dataframe converted from self.auto_dict.
-        
+
         Outcomes
         --------
         """
+
         # Get the appropriate template based on user's choice of experimental condition:
-        if self.auto_setting_combo.currentText() in self.pleth.bc_config['Dictionaries']['Auto Settings']['default'].keys():
-            auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default'][self.auto_setting_combo.currentText()]
+        curr_selection = self.auto_setting_combo.currentText()
+        if curr_selection == 'Custom':
+            self.frame = self.read_csv(self.pleth.autosections)
         else:
-            auto_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']['5% Hypercapnia']
-            self.auto_setting_combo.setCurrentText('5% Hypercapnia')
-        
-        self.frame = pd.DataFrame(auto_dict).reset_index()
+            default_options_dict = self.pleth.bc_config['Dictionaries']['Auto Settings']['default']
+            auto_dict = default_options_dict[curr_selection]
+            self.frame = pd.DataFrame(auto_dict).reset_index()
+
+        self.update_tabs()
+
+    def read_csv(self, file):
+        return pd.read_csv(file, index_col='Key').transpose().reset_index()
 
     def edit_cell(self, table, row, col):
         """
@@ -193,6 +205,12 @@ class Auto(QWidget, Ui_Auto):
             This method populates the self.{division}_table widgets with the appropriate portions of the self.frame dataframe based on the relationship of particular rows to particular divisions as defined in the "Settings Names" dictionary within self.pleth.gui_config.
         """
         # Populate table of tabs with appropriately sliced dataframes derived from selected settings template
+
+        # Rename column names for much easier pandas usage
+        #   Make column named 'index' capitalized to 'Index'
+        #   having a column named 'index' collides with the built-in `index` attribute of dataframes
+        #   spaces are problematic, but tolerable for now
+        self.frame.columns = ['Index' if col == 'index' else col for col in self.frame.columns]
 
         # Get labels from Pleth GUI config
         auto_labels = self.pleth.gui_config['Dictionaries']['Settings Names']['Auto Settings']
@@ -407,11 +425,8 @@ class Auto(QWidget, Ui_Auto):
         self.update_tabs()
             This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (breathcaller_config.json).
         """
-        print("auto.load_auto_file()")
         # Opens open file dialog
-        file = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.workspace_dir))
-        try:
-            self.frame = pd.read_csv(file[0],index_col='Key').transpose().reset_index()
+        file, filter = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.workspace_dir))
+        if file:
+            self.frame = self.read_csv(file)
             self.update_tabs()
-        except Exception as e:
-            pass

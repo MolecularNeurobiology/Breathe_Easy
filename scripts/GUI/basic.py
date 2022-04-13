@@ -417,6 +417,7 @@ class Basic(QWidget, Ui_Basic):
         # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
         self.basic_df.set_index('Parameter').to_csv(self.pleth.basicap)
     
+        # TODO: remove this -- should be no need to edit basic settings and replace defaults - akt2
         with open(f'{Path(__file__).parent}/breathcaller_config.json','w') as bconfig_file:
             json.dump(self.pleth.bc_config,bconfig_file)
         

@@ -39,7 +39,7 @@ from util import notify_error
 from ui.form import Ui_Plethysmography
 
 # TODO: only for development!
-AUTOLOAD = False
+AUTOLOAD = True
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -333,7 +333,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Initiating subGUIs
         self.stagg_settings_window = Config(self)
         self.manual_settings_window = Manual(self)
-        self.auto_settings_window = Auto(self)
         self.basic_settings_window = Basic(self)
         self.metadata_annot_window = AnnotGUI.Annot(self)
 
@@ -345,8 +344,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Populate GUI widgets with experimental condition choices:
         self.manual_settings_window.preset_menu.addItems([x for x in self.bc_config['Dictionaries']['Manual Settings']['default'].keys()])
-        self.auto_settings_window.auto_setting_combo.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
-        
 
         # Analysis parameters
         os.chdir(os.path.join(Path(__file__).parent.parent.parent))
@@ -673,7 +670,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Auto.show()
             This method displays the automated BASSPRO settings subGUI.
         """
-        self.auto_settings_window.show()
+        auto_settings_window = Auto(self)
+        auto_settings_window.show()
 
     def show_basic(self):
         """
@@ -919,7 +917,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                 # show the STAGG settings subGUI
                 self.stagg_settings_window.show()
-            elif self.stagg_input_files != [] and any(a.endswith(".json") for a in self.stagg_input_files):
+            elif len(self.stagg_input_files) and any(a.endswith(".json") for a in self.stagg_input_files):
                     if self.metadata and (self.autosections or self.mansections):
                         self.thinb = Thinbass(self)
                         self.thinb.show()
@@ -1581,7 +1579,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it is SUPPOSED TO append the file paths from the most recent BASSPRO to its existing items but it looks like it just replaces the list of existing items with a new list of the file paths from self.output_dir_py regardless of the user's choice.
         """
         # This method needs fixing. If they say yes, I want to keep them, then what happens? It looks like self.stagg_input_files populates with the new files regardless of the user's choice.
-        if self.stagg_input_files != []:
+        if len(self.stagg_input_files):
             reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
             if reply == QMessageBox.No:
                 self.breath_list.clear()

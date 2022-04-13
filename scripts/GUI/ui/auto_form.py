@@ -1056,7 +1056,7 @@ class Ui_Auto(object):
 
         self.retranslateUi(Auto)
         self.autotabs.setCurrentIndex(4)
-        self.auto_setting_combo.currentIndexChanged['int'].connect(Auto.get_defaults)
+        self.auto_setting_combo.currentIndexChanged['int'].connect(Auto.update_template_selection)
         self.load_auto_button.clicked.connect(Auto.load_auto_file)
         self.save_as_button.clicked.connect(Auto.save_as)
         self.save_button.clicked.connect(Auto.save)
