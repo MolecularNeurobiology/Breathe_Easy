@@ -331,7 +331,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Initiating subGUIs
         self.stagg_settings_window = Config(self)
-        self.metadata_annot_window = AnnotGUI.Annot(self)
 
         self.stagg_settings_window.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
 
@@ -641,7 +640,16 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Annot.show_metadata_file()
             This method determines the source of the metadata that will be manipulated by the user in the Annot subGUI.
         """
-        self.metadata_annot_window.show()
+        self.metadata_annot_window = AnnotGUI.Annot(self)
+
+        # TODO: make this window a QDialog so we can use common class
+        #new_metadata = MetadataSettings.edit(self)
+        new_metadata = self.metadata_annot_window.show()
+        if new_metadata:
+            #self.metadata = new_metadata
+            pass
+        #self.metadata_annot_window.show()
+        #MetadataSettings.editor_class(self).show_metadata_file()
         self.metadata_annot_window.show_metadata_file()
 
     def show_manual(self):

@@ -6,7 +6,7 @@ import pandas as pd
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QFileDialog
 from PyQt5 import QtCore
 from ui.annot_form import Ui_Annot
-from util import Settings, notify_error
+from util import Settings, notify_info
 
 class Annot(QMainWindow, Ui_Annot):
     """
@@ -779,16 +779,17 @@ class Annot(QMainWindow, Ui_Annot):
         """
         print("annot.save_config()")
         try:
-            file, filter = QFileDialog.getSaveFileName(self, 'Save File', '', ".csv(*.csv))")
+            file, filter = QFileDialog.getSaveFileName(self, 'Save File', '', "*.csv")
             self.metadata.to_csv(file, index = False)
             self.pleth.metadata = file
         except PermissionError:
             reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
 
         if self.pleth.breath_df != []:
             self.pleth.update_breath_df()
+
+        notify_info("Metadata file saved")
+        self.pleth.hangar.append("Metadata file saved.")
 
     def cancel_annot(self):
         print("annot.cancel_annot()")
