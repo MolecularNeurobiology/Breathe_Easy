@@ -37,13 +37,13 @@ class Ui_Annot(object):
         self.horizontalLayout_3.addWidget(self.label)
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem2)
-        self.metadata_button = QtWidgets.QPushButton(self.centralwidget)
+        self.load_metadata_button = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(12)
-        self.metadata_button.setFont(font)
-        self.metadata_button.setIconSize(QtCore.QSize(18, 18))
-        self.metadata_button.setObjectName("metadata_button")
-        self.horizontalLayout_3.addWidget(self.metadata_button)
+        self.load_metadata_button.setFont(font)
+        self.load_metadata_button.setIconSize(QtCore.QSize(18, 18))
+        self.load_metadata_button.setObjectName("load_metadata_button")
+        self.horizontalLayout_3.addWidget(self.load_metadata_button)
         spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_3.addItem(spacerItem3)
         self.horizontalLayout_3.setStretch(0, 1)
@@ -207,9 +207,9 @@ class Ui_Annot(object):
         Annot.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(Annot)
-        self.metadata_button.clicked.connect(Annot.load_metadata_file) # type: ignore
+        self.load_metadata_button.clicked.connect(Annot.load_metadata_file) # type: ignore
         self.variable_list_columns.itemSelectionChanged.connect(Annot.populate_list_values) # type: ignore
-        self.add_configuration.clicked.connect(Annot.add_config) # type: ignore
+        self.add_configuration.clicked.connect(Annot.add_column) # type: ignore
         self.save_button.clicked.connect(Annot.save_config) # type: ignore
         self.group_list.doubleClicked['QModelIndex'].connect(Annot.relabel_group) # type: ignore
         self.move_button.clicked.connect(Annot.recode) # type: ignore
@@ -227,7 +227,7 @@ class Ui_Annot(object):
         _translate = QtCore.QCoreApplication.translate
         Annot.setWindowTitle(_translate("Annot", "Variable_config"))
         self.label.setText(_translate("Annot", "Variable Annotation"))
-        self.metadata_button.setText(_translate("Annot", "Open File"))
+        self.load_metadata_button.setText(_translate("Annot", "Open File"))
         self.label_2.setText(_translate("Annot", "Metadata columns"))
         self.label_3.setText(_translate("Annot", "Values"))
         self.bin_value.setText(_translate("Annot", "Bin by value"))

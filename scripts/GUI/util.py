@@ -8,6 +8,10 @@ def notify_error(msg, title="Error"):
 
 def notify_info(msg, title="Info"):
     QMessageBox.information(None, title, msg)
+    
+def ask_user(title, msg):
+    reply = QMessageBox.question(None, title, msg, QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
+    return reply
 
 def choose_save_location(default_filename, file_types="*.csv"):
     """
