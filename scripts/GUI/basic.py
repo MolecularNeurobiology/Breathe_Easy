@@ -3,13 +3,13 @@ import os
 import json
 from pathlib import Path
 import pandas as pd
-from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QFileDialog, QMessageBox
 from PyQt5.QtCore import QObject
 from ui.basic_form import Ui_Basic
 from PyQt5.QtCore import Qt
-from util import choose_save_location, notify_error, notify_info
+from util import choose_save_location, notify_error, notify_info, Settings
 
-class Basic(QWidget, Ui_Basic):
+class Basic(QDialog, Ui_Basic):
     """
     The Basic class defines the the properties, attributes, and methods used by the basic BASSPRO settings subGUI.
 
@@ -50,7 +50,7 @@ class Basic(QWidget, Ui_Basic):
         self.isMaximized()
         self.setup_variables()
         self.setup_tabs()
-        
+
     def setup_variables(self):
         """
         Organize widgets in dictionaries and assign signals and slots to relevant buttons.
@@ -182,25 +182,33 @@ class Basic(QWidget, Ui_Basic):
         self.populate_table()
             This method populates self.view_tab (TableWidget) with the self.basic_df dataframe.
         """
-        print("basic.setup_tabs()")
         # Populate lineEdit widgets with default basic parameter values from breathcaller configuration file:
         for widget in self.lineEdits:
             widget.setText(str(self.basic_dict[self.lineEdits[widget]]))
+
+        # If user has selected basic settings, load these in
         if self.pleth.basicap:
-            if Path(self.pleth.basicap).exists():
-                self.basic_df = pd.read_csv(self.pleth.basicap)
+            dataframe = BasicSettings.attempt_load(self.pleth.basicap)
+            if dataframe is not None:
+                self.basic_df = dataframe
+            else:
+                notify_error("Current basic settings file could not be loaded")
+
+        # Otherwise, load defaults
         else:
-            self.basic_df = pd.DataFrame.from_dict(self.basic_dict,orient='index').reset_index()
+            self.basic_df = pd.DataFrame.from_dict(self.basic_dict, orient='index').reset_index()
             self.basic_df.columns = ['Parameters','Settings']
-            # Populate table of summary tab:
-        self.populate_table(self.basic_df,self.view_tab)
+
+        # Populate table of summary tab:
+        self.populate_table()
+        self.update_tabs()
     
     def reference_event(self):
         """
-        Respond to the signal emitted by the self.help_{setting} ToolButton clicked by the user by calling self.populate_reference(self.sender.objectName()) to populate the appropriate TextBrowser with the definition, description, and default value of corresponding setting.
+        Respond to the signal emitted by the self.help_{setting} ToolButton clicked by the user by calling self.display_help(self.sender.objectName()) to populate the appropriate TextBrowser with the definition, description, and default value of corresponding setting.
         """
         sbutton = self.sender()
-        self.populate_reference(sbutton.objectName())
+        self.display_help(sbutton.objectName())
     
     def reset_event(self):
         """
@@ -216,7 +224,7 @@ class Basic(QWidget, Ui_Basic):
         sbutton = self.sender()
         self.update_table(sbutton.objectName())
 
-    def populate_reference(self,buttoned):
+    def display_help(self, buttoned):
         """
         Populate the appropriate reference TextBrowser with the definition, description, and default values of the appropriate setting as indicated by the suffix of the ToolButton's objectName(), e.g. "help_{setting}" from Plethysmography.rc_config (reference_config.json).
         """
@@ -226,7 +234,7 @@ class Basic(QWidget, Ui_Basic):
                     k.setPlainText(self.pleth.rc_config['References']['Definitions'][buttoned.replace("help_","")])
                     k.setOpenExternalLinks(True)
    
-    def populate_table(self,frame,table):
+    def populate_table(self):
         """
         Populate self.view_tab (TableWidget) with the self.basic_df dataframe.
 
@@ -242,15 +250,18 @@ class Basic(QWidget, Ui_Basic):
         self.view_tab: QTableWidget
             The TableWidget is populated by the contents of the self.basic_df dataframe, assigned cellChanged signals slotted to self.update_tabs, and cell dimensions adjusted to accommodate the text.
         """
-        print("basic.populate_table()")
+        frame = self.basic_df
+
         # Populate tablewidgets with views of uploaded csv. Currently editable.
-        table.setColumnCount(len(frame.columns))
-        table.setRowCount(len(frame))
-        for col in range(table.columnCount()):
-            for row in range(table.rowCount()):
-                table.setItem(row, col, QTableWidgetItem(str(frame.iloc[row,col])))
-                table.item(row,0).setFlags(Qt.ItemIsEditable)
-        table.setHorizontalHeaderLabels(frame.columns)
+        self.view_tab.setColumnCount(len(frame.columns))
+        self.view_tab.setRowCount(len(frame))
+
+        for col in range(self.view_tab.columnCount()):
+            for row in range(self.view_tab.rowCount()):
+                self.view_tab.setItem(row, col, QTableWidgetItem(str(frame.iloc[row, col])))
+                self.view_tab.item(row,0).setFlags(Qt.ItemIsEditable)
+
+        self.view_tab.setHorizontalHeaderLabels(frame.columns)
         self.view_tab.cellChanged.connect(self.update_tabs)
         self.view_tab.resizeColumnsToContents()
         self.view_tab.resizeRowsToContents()
@@ -273,7 +284,6 @@ class Basic(QWidget, Ui_Basic):
         self.view_tab: QTableWidget
             The cell that contains the value of the setting that was updated by the user editing a LineEdit is updated to reflect the edit.
         """
-        print("basic.update_table()")
         # The first loop grabs the widget with the text we need because donor is passed to this method as a QObject.objectName(), not the actual object.
         for l in self.lineEdits:
             if donor == l.objectName():
@@ -298,10 +308,9 @@ class Basic(QWidget, Ui_Basic):
         self.lineEdit_{settings}: QLineEdit
             The LineEdit whose objectName suffix matches the setting that was edited by the user in self.view_tab (TableWidget) is updated to reflect the edit.
         """
-        print("basic.update_tabs()")
         for row in range(self.view_tab.rowCount()):
             for l in self.lineEdits:
-                if self.view_tab.item(row,0).text() == l.objectName().replace("lineEdit_",""):
+                if self.view_tab.item(row, 0).text() == l.objectName().replace("lineEdit_", ""):
                     l.setText(self.view_tab.item(row,1).text())
 
     def reset_parameter(self,butts):
@@ -412,17 +421,21 @@ class Basic(QWidget, Ui_Basic):
         # Update parameters
         self.get_parameter()
 
-        self.pleth.basicap = save_path
-
-        # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
-        self.basic_df.set_index('Parameter').to_csv(self.pleth.basicap)
+        # Save basic settings csv
+        self.basic_df.set_index('Parameter').to_csv(save_path)
     
         # TODO: remove this -- should be no need to edit basic settings and replace defaults - akt2
         with open(f'{Path(__file__).parent}/breathcaller_config.json','w') as bconfig_file:
             json.dump(self.pleth.bc_config,bconfig_file)
+
+        # TODO: this messes things up if put before -- there is a check if it exists!
+        self.pleth.basicap = save_path
         
         notify_info("Basic settings saved")
         self.pleth.hangar.append("BASSPRO basic settings file saved.")
+
+        # Close gracefully
+        self.accept()
 
     def load_basic_file(self):
         """
@@ -434,7 +447,7 @@ class Basic(QWidget, Ui_Basic):
             This variable stores the path of the file the user selected via the FileDialog.
         yes: int
             This variable is used to indicate whether or not self.basic_df was successfully populated with a dataframe from the user-selected file.
-        Plethysmography.mothership: str
+        Plethysmography.workspace_dir: str
             The path to the user-selected directory for all output.
         self.basic_df: Dataframe
             This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
@@ -457,28 +470,52 @@ class Basic(QWidget, Ui_Basic):
         self.load_basic_file()
             Prompt the user to indicate the location of a previously made file - either .csv, .xlsx, or .json formatted file - detailing the basic BASSPRO settings of a previous run, populate self.basic_df with a dataframe from that file, call self.populate_table(), and warn the user if they chose files in formats that are not accepted and ask if they would like to select a different file.
         """
-        print("basic.load_basic_file()")
-        # Opens open file dialog
-        yes = 0
-        file = QFileDialog.getOpenFileName(self, 'Select breathcaller configuration file to edit basic parameters:', str(self.pleth.mothership))
-        if os.path.exists(file[0]):
-            try:
-                if Path(file[0]).suffix == ".json":
-                    with open(file[0]) as config_file:
-                        basic_json = json.load(config_file)
-                    self.basic_df = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
-                    self.basic_df.columns = ['Parameter','Setting']
-                    yes = 1
-                elif Path(file[0]).suffix == ".csv":
-                    self.basic_df = pd.read_csv(file[0])
-                    yes = 1
-                elif Path(file[0]).suffix == ".xlsx":
-                    self.basic_df = pd.read_excel(file[0])
-                    yes = 1
-                if yes == 1:
-                    self.populate_table(self.basic_df,self.view_tab)
-            except Exception as e:
-                reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file is not in the correct format. Only .csv, .xlsx, or .JSON files are accepted.\nWould you like to select a different file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
-                if reply == QMessageBox.Ok:
-                    self.load_basic_file()
+        while True:
+            # Opens open file dialog
+            filepath = BasicSettings.choose_file(self.pleth.workspace_dir)
+
+            # Catch cancel
+            if not filepath:
+                break
+
+            dataframe = BasicSettings.attempt_load(filepath)
+            if dataframe is not None:
+                self.basic_df = dataframe
+                # TODO: these always go hand in hand -- put them in single update func!
+                self.populate_table()
+                self.update_tabs()
+                break
+            
+            # If no dataframe, loop again and try to open a different file
+
+
+
+class BasicSettings(Settings):
+
+    valid_filetypes = ['.csv', '.xlsx', '.json']
+    file_chooser_message = 'Select breathcaller configuration file to edit basic parameters'
+    editor_class = Basic
+
+    @staticmethod
+    def _right_filename(filepath):
+        """
+        Overwrite in derived class if necessary
+        """
+        right_filename = os.path.basename(filepath).startswith("basics")
+        return right_filename
+
+    @staticmethod
+    def attempt_load(file):
+        if Path(file).suffix == ".json":
+            with open(file) as config_file:
+                basic_json = json.load(config_file)
+            basic_df = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
+            basic_df.columns = ['Parameter','Setting']
+        elif Path(file).suffix == ".csv":
+            basic_df = pd.read_csv(file)
+        elif Path(file).suffix == ".xlsx":
+            basic_df = pd.read_excel(file)
+        else:
+            return None
+        return basic_df
         

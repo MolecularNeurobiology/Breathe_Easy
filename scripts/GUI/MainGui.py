@@ -29,9 +29,10 @@ from thumbass_controller import Thumbass
 from thinbass_controller import Thinbass
 from thorbass_controller import Thorbass
 from align_delegate import AlignDelegate
-from basic import Basic
-from auto import Auto
-from manual import Manual
+from auto import AutoSettings
+from basic import BasicSettings
+from manual import ManualSettings
+from AnnotGUI import MetadataSettings
 from checkable_combo_box import CheckableComboBox
 from config import Config
 from util import notify_error
@@ -65,6 +66,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         else:
             return None
 
+    @metadata.setter
+    def metadata(self, filename):
+        self.metadata_list.clear()
+        self.metadata_list.addItem(filename)
+
     @property
     def signal_files(self):
         return [self.signal_files_list.item(i).text() for i in range(self.signal_files_list.count())]
@@ -97,6 +103,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def mansections(self):
         return self.get_settings_file_from_list("manual")
 
+    @mansections.setter
+    def mansections(self, file):
+        # Remove old mansections
+        for item in self.sections_list.findItems("manual", Qt.MatchContains):
+            self.sections_list.takeItem(self.sections_list.row(item))
+
+        # Add new one
+        self.sections_list.addItem(file)
+
     @property
     def basicap(self):
         return self.get_settings_file_from_list("basic")
@@ -115,30 +130,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return [self.breath_list.item(i).text() for i in range(self.breath_list.count())]
     ##         ##
 
-
-    ## Validation Methods ##
-    def valid_metadata(self, file):
-        return os.path.basename(file).startswith("metadata") and os.path.splitext(file)[1] == '.csv'
-
-    def valid_autosections(self, file):
-        return os.path.basename(file).startswith("auto_sections") or os.path.basename(file).startswith("autosections")
-
-    def valid_mansections(self, file):
-        return os.path.basename(file).startswith("manual_sections")
-
-    def valid_basicap(self, file):
-        return os.path.basename(file).startswith("basics")
-    ##         ##
-
-
     def get_settings_file_from_list(self, type):
         all_settings = [self.sections_list.item(i).text() for i in range(self.sections_list.count())]
 
         for settings_file in all_settings:
 
-            if (type == 'auto' and self.valid_autosections(settings_file)) or \
-               (type == 'manual' and self.valid_mansections(settings_file)) or \
-               (type == 'basic' and self.valid_basicap(settings_file)):
+            if (type == 'auto' and AutoSettings.validate(settings_file)) or \
+               (type == 'manual' and ManualSettings.validate(settings_file)) or \
+               (type == 'basic' and BasicSettings.validate(settings_file)):
                 return settings_file
         return None
 
@@ -148,10 +147,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         files = os.listdir(dir)
         for file in files:
-            for checker in [self.valid_metadata,
-                            self.valid_autosections,
-                            self.valid_mansections,
-                            self.valid_basicap]:
+            for checker in [MetadataSettings.validate,
+                            AutoSettings.validate,
+                            ManualSettings.validate,
+                            BasicSettings.validate]:
                 if checker(file):
                     return True
         return False
@@ -332,8 +331,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Initiating subGUIs
         self.stagg_settings_window = Config(self)
-        self.manual_settings_window = Manual(self)
-        self.basic_settings_window = Basic(self)
         self.metadata_annot_window = AnnotGUI.Annot(self)
 
         self.stagg_settings_window.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
@@ -341,9 +338,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
          # Populate GUI widgets with experimental condition choices: 
         self.necessary_timestamp_box.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
         self.parallel_combo.addItems([str(num) for num in list(range(1,os.cpu_count()+1))])
-
-        # Populate GUI widgets with experimental condition choices:
-        self.manual_settings_window.preset_menu.addItems([x for x in self.bc_config['Dictionaries']['Manual Settings']['default'].keys()])
 
         # Analysis parameters
         os.chdir(os.path.join(Path(__file__).parent.parent.parent))
@@ -659,7 +653,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Manual.show()
             This method displays the manual BASSPRO settings subGUI.
         """
-        self.manual_settings_window.show()
+        # Populate GUI widgets with experimental condition choices:
+        new_settings = ManualSettings.edit(self)
+        if new_settings:
+            #self.mansections = new_settings
+            pass
 
     def show_auto(self):
         """
@@ -670,8 +668,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Auto.show()
             This method displays the automated BASSPRO settings subGUI.
         """
-        auto_settings_window = Auto(self)
-        auto_settings_window.show()
+        # TODO: clean these names
+        new_settings = AutoSettings.edit(self)
+        if new_settings:
+            #self.autosections = new_settings
+            pass
 
     def show_basic(self):
         """
@@ -682,61 +683,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Basic.show()
             This method displays the basic BASSPRO settings subGUI.
         """
-        self.basic_settings_window.show()
+        #self.basic_settings_window.show()
+        new_settings = BasicSettings.edit(self)
+        if new_settings:
+            #self.basicap = new_settings
+            pass
         
 #endregion
 #region Variable configuration
-    def check_metadata_file(self, metadata_file):
-        """
-        Ensure that the selected metadata file does contain metadata for the signal files selected.
-        This method is only called if self.signals is not empty.
-
-        Parameters
-        --------
-        baddies: list
-            This variable is set as an empty list and is populated with the file path(s) of the signal file(s) that failed to meet criteria.
-        self.metadata: str
-            This attribute refers to the file path of the metadata file selected by the user.
-        self.signals: list
-            The list of file paths of the user-selected .txt signal files that are analyzed by BASSPRO.
-        
-        Outputs
-        ---------
-        baddies: list
-            This variable is populated with the file path(s) of the signal file(s) whose IDs were not found in the selected metadata file.
-        reply: QMessageBox
-            This specialized dialog tells the user of any mismatches and lists the offending signal file path(s).
-        """
-
-        self.hangar.append(f"Checking {metadata_file}")
-
-        if metadata_file.endswith(".csv"):
-            meta = pd.read_csv(metadata_file)
-        elif metadata_file.endswith(".xlsx"):
-            meta = pd.read_excel(metadata_file)
-        else:
-            notify_error("Bad metadata file format")
-            return False
-
-        baddies = []
-        for s in self.signal_files:
-            name = os.path.basename(s).split('.')[0]
-            if '_' in name:
-                mouse_uid, ply_uid = name.split('_')
-                if len(meta.loc[(meta['MUID'] == mouse_uid)])==0:
-                    baddies.append(s)
-                elif len(meta.loc[(meta['PlyUID'] == ply_uid)])==0:
-                    baddies.append(s)
-            elif len(meta.loc[(meta['MUID'] == name)])==0:
-                baddies.append(s)
-
-        if len(baddies) > 0:
-            self.thumb = Thumbass(self)
-            self.thumb.show()
-            self.thumb.message_received("Metadata and signal files mismatch",f"The following signals files were not found in the selected metadata file:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
-            return False
-
-        return True
 
     def get_bp_reqs(self):
         """
@@ -1437,19 +1391,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is set as the file path to the metadata.csv file detected in the user-selected self.workspace_dir output directory.
         """
         metadata_path = os.path.join(self.workspace_dir, 'metadata.csv')
-        if Path(metadata_path).exists():
-
-            # TODO: put this check where it needs to go
-            if not self.check_metadata_file(metadata_path):
-                return
-
-            # We assign the path detected via output_dir to the Plethysmography class attribute that will be an argument for the breathcaller command line.
-            for item in self.metadata_list.findItems("metadata",Qt.MatchContains):
-                # and we remove them from the widget.
-                self.metadata_list.takeItem(self.metadata_list.row(item))
-
+        if MetadataSettings.validate():
             self.metadata = metadata_path
-            self.metadata_list.addItem(self.metadata)
         else:
             print("No metadata file selected.")
 
@@ -1471,18 +1414,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.basicap: str
             This attribute is set as the file path to the basic.csv file detected in the user-selected self.workspace_dir output directory.
         """
-        print("auto_get_basic()")
-        basic_path=os.path.join(self.workspace_dir, 'basics.csv')
-        if Path(basic_path).exists():
-            for item in self.sections_list.findItems("basic",Qt.MatchContains):
-            # and we remove them from the widget.
-                self.sections_list.takeItem(self.sections_list.row(item))
-            if self.basicap == "":
-                self.basicap=basic_path
-                self.sections_list.addItem(self.basicap)
-            else:
-                self.basicap=basic_path
-                self.sections_list.addItem(self.basicap)
+        basic_path = os.path.join(self.workspace_dir, 'basics.csv')
+        if BasicSettings.validate(basic_path):
+            self.basicap = basic_path
         else:
             print("Basic parameters settings file not detected.")
 
@@ -1529,18 +1463,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is set as the file path to the manual_sections.csv file detected in the user-selected self.workspace_dir output directory.
         """
         print("auto_get_mansections()")
-        mansections_path=os.path.join(self.workspace_dir, 'manual_sections.csv')
-        if Path(mansections_path).exists():
-            for item in self.sections_list.findItems("man",Qt.MatchContains):
-                # and we remove them from the widget.
-                self.sections_list.takeItem(self.sections_list.row(item))
-            if self.mansections == "":
-            # We assign the path detected via output_dir to the Plethysmography class attribute that will be an argument for the breathcaller command line.
-                self.mansections=mansections_path
-                self.sections_list.addItem(self.mansections)
-            else:
-                self.mansections=mansections_path
-                self.sections_list.addItem(self.mansections)
+        mansections_path = os.path.join(self.workspace_dir, 'manual_sections.csv')
+        if ManualSettings.validate(mansections_path):
+            self.mansections = mansections_path
         else:
             print("Manual sections parameters file not detected.")
 
@@ -1688,7 +1613,54 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 notify_error(f"One or more of the files selected are not text formatted:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in bad_file_formats])}\n\nThey will not be included.")
 
             if self.metadata_list.count():
-                self.check_metadata_file(self.metadata_file)
+                # Print message to user if there is a mismatch with metadata
+                MetadataSettings.test_signal_metadata_match(self.metadata_file)
+
+    def test_signal_metadata_match(signal_files, metadata_file):
+        """
+        Ensure that the selected metadata file does contain metadata for the signal files selected.
+        This method is only called if self.signals is not empty.
+
+        Parameters
+        --------
+        baddies: list
+            This variable is set as an empty list and is populated with the file path(s) of the signal file(s) that failed to meet criteria.
+        self.metadata: str
+            This attribute refers to the file path of the metadata file selected by the user.
+        self.signals: list
+            The list of file paths of the user-selected .txt signal files that are analyzed by BASSPRO.
+        
+        Outputs
+        ---------
+        baddies: list
+            This variable is populated with the file path(s) of the signal file(s) whose IDs were not found in the selected metadata file.
+        reply: QMessageBox
+            This specialized dialog tells the user of any mismatches and lists the offending signal file path(s).
+        """
+
+        meta = MetadataSettings.attempt_load(metadata_file)
+        if not meta:
+            return False
+
+        baddies = []
+        for s in signal_files:
+            name = os.path.basename(s).split('.')[0]
+            if '_' in name:
+                mouse_uid, ply_uid = name.split('_')
+                if len(meta.loc[(meta['MUID'] == mouse_uid)])==0:
+                    baddies.append(s)
+                elif len(meta.loc[(meta['PlyUID'] == ply_uid)])==0:
+                    baddies.append(s)
+            elif len(meta.loc[(meta['MUID'] == name)])==0:
+                baddies.append(s)
+
+        if len(baddies) > 0:
+            thumb = Thumbass()
+            thumb.show()
+            thumb.message_received("Metadata and signal files mismatch",f"The following signals files were not found in the selected metadata file:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\n")
+            return False
+
+        return True
 
     def load_metadata(self):
         # There are no checks for quality of file selected in this method. Are they somewhere else?
@@ -1720,29 +1692,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.check_metadata_file()
             If self.signals is not empty, this method checks whether or not references to the selected signals files are found in the current metadata file.
         """
-        # Keep selecting metadata until good data or cancel
         while True:
-            # TODO: are we picking one file or multiple? -- may apply to multiple spots
-            filename, filter = QFileDialog.getOpenFileName(self, 'Select metadata file', self.workspace_dir)
-
-            # if files were selected (not cancelled)
-            if filename:
-
-                # check files and return only valid ones
-
-                # If there are valid files, keep going
-                if self.check_metadata_file(filename):
-                    break
-            
-            # User cancelled
-            else:
+            meta_file = MetadataSettings.choose_file(self.workspace_dir)
+            # break out of cancel
+            if not meta_file:
                 return
 
-        self.metadata_list.clear()
-        self.metadata_list.addItem(filename)
-        
-        if len(self.breath_df) > 0:
-            self.update_breath_df("metadata")
+            # If there are not valid files, try again
+            if self.test_signal_metadata_match(meta_file):
+                self.metadata = meta_file
+
+                if len(self.breath_df) > 0:
+                    self.update_breath_df("metadata")
 
 
     def mp_parser(self):
@@ -2228,29 +2189,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         else:
             new_files_added = False
             for file in filenames:
-                if file.endswith('.csv'):
-                    if os.path.basename(file).startswith("auto_sections") | os.path.basename(file).startswith("autosections"):
-                        self.autosections = file
-                        new_files_added = True
+                if AutoSettings.validate(file):
+                    self.autosections = file
+                    new_files_added = True
 
-                    elif os.path.basename(file).startswith("manual_sections"):
-                        new_files_added = True
-                        for item in self.sections_list.findItems("manual_sections",Qt.MatchContains):
-                            self.sections_list.takeItem(self.sections_list.row(item))
-                        self.sections_list.addItem(file)
+                elif ManualSettings.validate(file):
+                    self.mansections = file
+                    new_files_added = True
 
-                    elif os.path.basename(file).startswith("basics"):
-                        new_files_added = True
-                        self.basicap = file
+                elif BasicSettings.validate(file):
+                    self.basicap = file
+                    new_files_added = True
 
-                    # If we added files
-                    if new_files_added:
-                        if len(self.breath_df)>0:
-                            self.update_breath_df("settings")
-                else:
-                    self.thumb = Thumbass(self)
-                    self.thumb.show()
-                    self.thumb.message_received("Incorrect file format","The settings files for BASSPRO must be in csv format. \nPlease convert your settings files or choose another file.")
+                # If we added files
+                if new_files_added:
+                    if len(self.breath_df)>0:
+                        self.update_breath_df("settings")
 
     def select_stagg_input_files(self):
         """

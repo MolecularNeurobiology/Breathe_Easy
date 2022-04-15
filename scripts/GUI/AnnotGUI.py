@@ -6,6 +6,7 @@ import pandas as pd
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QFileDialog
 from PyQt5 import QtCore
 from ui.annot_form import Ui_Annot
+from util import Settings, notify_error
 
 class Annot(QMainWindow, Ui_Annot):
     """
@@ -789,13 +790,27 @@ class Annot(QMainWindow, Ui_Annot):
         if self.pleth.breath_df != []:
             self.pleth.update_breath_df()
 
-#endregion
     def cancel_annot(self):
         print("annot.cancel_annot()")
         self.metadata = None
 
-    
+class MetadataSettings(Settings):
 
-#endregion
+    valid_filetypes = ['.csv', '.xlsx']
+    file_chooser_message = 'Select metadata file'
+    editor_class = Annot
 
+    @staticmethod
+    def _right_filename(filepath):
+        file_basename = os.path.basename(filepath) 
+        return file_basename.startswith("metadata")
 
+    def attempt_load(metadata_file):
+        # Check file types
+        if metadata_file.endswith(".csv"):
+            return pd.read_csv(metadata_file)
+        elif metadata_file.endswith(".xlsx"):
+            return pd.read_excel(metadata_file)
+        else:
+            return None
+        

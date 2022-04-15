@@ -2,12 +2,12 @@
 import os
 import csv
 import pandas as pd
-from PyQt5.QtWidgets import QWidget, QTableWidgetItem, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QFileDialog, QMessageBox
 from PyQt5.QtCore import Qt
 from ui.auto_form import Ui_Auto
-from util import choose_save_location, notify_error, notify_info
+from util import choose_save_location, notify_error, notify_info, Settings
 
-class Auto(QWidget, Ui_Auto):
+class Auto(QDialog, Ui_Auto):
     """
     The Auto class defines the the properties, attributes, and methods used by the automated BASSPRO settings subGUI.
 
@@ -358,11 +358,9 @@ class Auto(QWidget, Ui_Auto):
         if not os.path.exists(os.path.split(save_path)[0]):
             notify_error(f"Bad save path: {save_path}")
 
-        self.pleth.autosections = save_path
-
         try:
             # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
-            with open(self.pleth.autosections,'w',newline = '') as stream:
+            with open(save_path,'w',newline = '') as stream:
                     writer = csv.writer(stream)
                     header = []
                     for row in range(self.summary_table.rowCount()):
@@ -382,17 +380,20 @@ class Auto(QWidget, Ui_Auto):
                         writer.writerow(coldata)
 
             # This is ridiculous.
-            auto = pd.read_csv(self.pleth.autosections)
+            auto = pd.read_csv(save_path)
             auto['Key'] = auto['Alias']
-            auto.to_csv(self.pleth.autosections, index=False)
+            auto.to_csv(save_path, index=False)
             if self.pleth.breath_df != []:
                 self.pleth.update_breath_df("automated settings")
 
         except PermissionError:
             QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
 
+        self.pleth.autosections = save_path
+
         notify_info("Automated settings saved")
         self.pleth.hangar.append("BASSPRO auto settings file saved.")
+        self.accept()
 
     def load_auto_file(self):
         """
@@ -426,7 +427,38 @@ class Auto(QWidget, Ui_Auto):
             This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (breathcaller_config.json).
         """
         # Opens open file dialog
-        file, filter = QFileDialog.getOpenFileName(self, 'Select automatic selection file to edit:', str(self.pleth.workspace_dir))
+        file = AutoSettings.choose_file(self.pleth.workspace_dir)
         if file:
             self.frame = self.read_csv(file)
             self.update_tabs()
+
+class AutoSettings(Settings):
+
+    valid_filetypes = ['.csv']
+    file_chooser_message = 'Select auto sections file to edit'
+    editor_class = Auto
+
+    def __init__(self) -> None:
+        super().__init__(Auto)
+
+    @staticmethod
+    def _right_filename(filepath):
+        file_basename = os.path.basename(filepath) 
+        return file_basename.startswith("auto_sections") or \
+               file_basename.startswith("autosections")
+
+    @classmethod
+    def attempt_load(file):
+        if Path(file).suffix == ".json":
+            with open(file) as config_file:
+                basic_json = json.load(config_file)
+            basic_df = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
+            basic_df.columns = ['Parameter','Setting']
+        elif Path(file).suffix == ".csv":
+            basic_df = pd.read_csv(file)
+        elif Path(file).suffix == ".xlsx":
+            basic_df = pd.read_excel(file)
+        else:
+            return None
+        return basic_df
+        
