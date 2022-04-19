@@ -6,7 +6,9 @@ from ui.thinbass import Ui_Thinbass
 
 class Thinbass(QDialog,Ui_Thinbass):
     """
-    This class is used when the user has metadata and BASSPRO settings files as well as JSON files - either can be a source for building the variable list that populates the STAGG Settings subGUI. This dialog prompts them to decide which source they'd like to use.
+    This class is used when the user has metadata and BASSPRO settings files as well as JSON files
+        - either can be a source for building the variable list that populates the STAGG Settings subGUI.
+      This dialog prompts them to decide which source they'd like to use.
 
     Parameters
     --------
@@ -31,10 +33,16 @@ class Thinbass(QDialog,Ui_Thinbass):
         self.setupUi(self)
         self.setWindowTitle("Variables list sources")
         self.setAttribute(Qt.WA_DeleteOnClose)
+        self.variables_source = None
+
+    def get_value(self):
+        return self.variables_source
     
     def settings(self):
         """
-        Populate Config.variable_table and the comboBoxes in Config.loop_table with the list of variables (Plethysmography.breath_df) compiled from BASSPRO settings and metadata and show the STAGG settings subGUI.
+        Populate Config.variable_table and the comboBoxes in Config.loop_table
+          with the list of variables (Plethysmography.breath_df) compiled from
+          BASSPRO settings and metadata and show the STAGG settings subGUI.
 
         Parameters
         --------
@@ -57,21 +65,18 @@ class Thinbass(QDialog,Ui_Thinbass):
         self.pleth.Config.show()
             This Plethysmography method displays the STAGG settings subGUI.
         """
-        print("thinbass.settings()")
-        self.pleth.test_configuration()
-        try:
-            self.pleth.variable_configuration()
-            self.pleth.n = 0
-            self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.no_duplicates)
-            self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.update_loop)
-        except Exception as e:
-            pass
-        self.pleth.v.show()
-    
+        self.variables_source = "settings"
+        self.accept()
+
     def output(self):
-        # This method was written before we developed the means to accept .RData files are STAGG input. We need to add functionality that checks to make sure that Plethysmography.stagg_list[0] is actually a JSON file and not an .RData file and nexts until it finds one.
+        # This method was written before we developed the means to accept
+        #   .RData files as STAGG input. We need to add functionality that
+        #   checks to make sure that Plethysmography.stagg_list[0] is actually
+        #   a JSON file and not an .RData file and nexts until it finds one.
         """
-        Populate Config.variable_table and the comboBoxes in Config.loop_table with the list of variables (Plethysmography.breath_df) compiled from BASSPRO output JSON file and show the STAGG settings subGUI.
+        Populate Config.variable_table and the comboBoxes in Config.loop_table
+          with the list of variables (Plethysmography.breath_df) compiled from
+          BASSPRO output JSON file and show the STAGG settings subGUI.
 
         Parameters
         --------
@@ -100,19 +105,5 @@ class Thinbass(QDialog,Ui_Thinbass):
         self.pleth.Config.show()
             This Plethysmography method displays the STAGG settings subGUI.
         """
-        print("thinbass.output()")
-        try:
-            with open(self.pleth.stagg_list[0]) as first_json:
-                bp_output = json.load(first_json)
-            for k in bp_output.keys():
-                self.pleth.breath_df.append(k)
-            try:
-                self.pleth.variable_configuration()
-                self.n = 0
-                self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.no_duplicates)
-                self.pleth.v.variable_table.cellChanged.connect(self.pleth.v.update_loop)
-                self.pleth.v.show()
-            except Exception as e:
-                pass
-        except Exception as e:
-            pass
+        self.variables_source = "output"
+        self.accept()

@@ -6,6 +6,9 @@ from PyQt5.QtWidgets import QMessageBox, QFileDialog
 def notify_error(msg, title="Error"):
     QMessageBox.critical(None, title, msg)
 
+def notify_warning(msg, title="Warning"):
+    QMessageBox.warning(None, title, msg)
+
 def notify_info(msg, title="Info"):
     QMessageBox.information(None, title, msg)
     
@@ -81,3 +84,42 @@ class Settings:
 
     def attempt_load(filepath):
         raise NotImplemented
+
+def avert_name_collision(column_name, columns):
+    """
+    Change the name of the new column by appending a suffix "_recode_#" to avoid duplicate column names in the metadata.
+
+    Parameters
+    --------
+    self.metadata: Dataframe
+        This attribute is a dataframe.
+    self.column: str
+        This attribute is the text of the ListWidgetItem in self.variable_list_columns (ListWidget) selected by the user. It is one of the headers of the self.metadata dataframe.
+    
+    Outputs
+    --------
+    """
+
+    # No issue, send it back
+    if column_name not in columns:
+        return column_name
+    
+    name_taken = True
+    count = 0
+    # Keep incrementing count until we get a unique name
+    while name_taken:
+        # Generate new name with count appended
+        new_column_name = f"{column_name}_{count+1}"
+
+        # Assume new name
+        name_taken = False
+        
+        # Check if any are named the same
+        for col in columns:
+            if col == new_column_name:
+                name_taken = True
+        
+        # Increment and try again
+        count += 1
+
+    return new_column_name

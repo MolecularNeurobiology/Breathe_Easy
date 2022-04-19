@@ -7,7 +7,7 @@ import pandas as pd
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QTreeWidgetItem, QFileDialog
 from PyQt5 import QtCore
 from ui.annot_form import Ui_Annot
-from util import Settings, ask_user, notify_error, notify_info
+from util import Settings, ask_user, avert_name_collision, notify_error, notify_info
 
 class Annot(QMainWindow, Ui_Annot):
     """
@@ -642,42 +642,6 @@ class Annot(QMainWindow, Ui_Annot):
             # Rename column old_name to new_name
             self.metadata.rename(columns = {old_name: new_name}, inplace=True, errors='raise')
 
-    @staticmethod
-    def avert_name_collision(column_name, columns):
-        """
-        Change the name of the new column by appending a suffix "_recode_#" to avoid duplicate column names in the metadata.
-
-        Parameters
-        --------
-        self.metadata: Dataframe
-            This attribute is a dataframe.
-        self.column: str
-            This attribute is the text of the ListWidgetItem in self.variable_list_columns (ListWidget) selected by the user. It is one of the headers of the self.metadata dataframe.
-        
-        Outputs
-        --------
-        """
-        name_taken = True
-        count = 0
-        
-        # Keep incrementing count until we get a unique name
-        while name_taken:
-            # Generate new name with count appended
-            new_column_name = f"{column_name}_recode_{count+1}"
-
-            # Assume new name
-            name_taken = False
-            
-            # Check if any are named the same
-            for col in columns:
-                if col == new_column_name:
-                    name_taken = True
-            
-            # Increment and try again
-            count += 1
-
-        return new_column_name
-
     def add_column(self):
         """
         Create a new column in the self.metadata dataframe from self.groups
@@ -720,7 +684,7 @@ class Annot(QMainWindow, Ui_Annot):
         curr_column = curr_item.text()
 
         # Find unique column name
-        new_column = self.avert_name_collision(curr_column, self.metadata.columns)
+        new_column = avert_name_collision(curr_column + "_recode", self.metadata.columns)
         
         # Add new group to metadata
         for group in self.groups:

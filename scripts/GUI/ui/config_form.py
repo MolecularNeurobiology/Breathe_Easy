@@ -612,7 +612,7 @@ class Ui_Config(object):
         self.gridLayout.addLayout(self.verticalLayout_13, 0, 0, 1, 1)
 
         self.retranslateUi(Config)
-        self.load_config.clicked.connect(Config.to_check_load_variable_config)
+        self.load_config.clicked.connect(Config.check_load_variable_config)
         self.minus_loop_button.clicked.connect(Config.minus_loop)
         self.add_loop_button.clicked.connect(Config.add_loop)
         self.custom_config_button.clicked.connect(Config.show_custom)
