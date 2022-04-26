@@ -3702,8 +3702,7 @@ def populate_baseline_values_for_calibration_calculations(
 def calculate_calibrated_volume_and_respiration(
         breath_list,
         volume_list,
-        calibration_parameters,
-        analysis_parameters
+        calibration_parameters
         ):
     """
     
@@ -3717,8 +3716,6 @@ def calculate_calibrated_volume_and_respiration(
         for later use in calculations
     calibration_parameters : Dict
         Dict containing parameters needed for calculating calibrated volumes
-    analysis_parameters : Dict
-        Dict of settings to use for analysis
 
     Returns
     -------
