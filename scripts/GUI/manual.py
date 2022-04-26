@@ -1,5 +1,6 @@
 
 import os
+from copy import deepcopy
 import pandas as pd
 from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox, QTableWidgetItem
 from PyQt5.QtCore import Qt
@@ -20,7 +21,7 @@ class Manual(QDialog, Ui_Manual):
     Ui_Manual: class
         The Manual class inherits widgets and layouts defined in the Ui_Manual class.
     """
-    def __init__(self,Plethysmography):
+    def __init__(self, defaults, data=None, workspace_dir=""):
         """
         Instantiates the Manual class.
         
@@ -48,9 +49,13 @@ class Manual(QDialog, Ui_Manual):
         super(Manual, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Manual sections file creation")
-        self.pleth = Plethysmography
-        self.preset_menu.addItems([x for x in self.pleth.bc_config['Dictionaries']['Manual Settings']['default'].keys()])
         self.isMaximized()
+        self.defaults = defaults
+        self.data = deepcopy(data)
+        self.workspace_dir = workspace_dir
+
+        self.preset_menu.addItems([x for x in self.defaults.keys()])
+
         self.datapad = None
         self.preset = None
         self.manual_df = None
@@ -117,17 +122,13 @@ class Manual(QDialog, Ui_Manual):
                 dc['start'] = dc['start_time'].dt.total_seconds()
                 dc['stop_time'] = pd.to_timedelta(dc['stop'],errors='coerce')
                 dc['stop'] = dc['stop_time'].dt.total_seconds()
-                if len(dc['start'].isna())>0:
-                    bob=dc[dc['start'].isna()][['animal id','PLYUID']].drop_duplicates()
-                    if self.pleth.signal_files:
-                        for file in self.pleth.signal_files:
-                            print(f"{bob['animal id']}_{bob['PLYUID']}")
+
                 self.datapad = dc
                 self.populate_table(self.datapad, self.datapad_view)
+
+            # TODO: catch a specific error
             except Exception as e:
-                self.thumb = Thumbass(self)
-                self.thumb.show()
-                self.thumb.message_received(f"{type(e).__name__}: {e}","Please ensure that the datapad is formatted as indicated in the documentation.")
+                notify_error(title=f"{type(e).__name__}: {e}", msg="Please ensure that the datapad is formatted as indicated in the documentation.")
 
     def get_preset(self):
         """
@@ -154,7 +155,7 @@ class Manual(QDialog, Ui_Manual):
         self.populate_table(self.preset, self.settings_view)
             This method populates self.settings_view (TableWidget) with the self.preset dataframe.
         """
-        self.preset = pd.DataFrame.from_dict(self.pleth.bc_config['Dictionaries']['Manual Settings']['default'][self.preset_menu.currentText()].values())
+        self.preset = pd.DataFrame.from_dict(self.defaults[self.preset_menu.currentText()].values())
         self.populate_table(self.preset, self.settings_view)    
     
     def manual_merge(self):
@@ -243,33 +244,7 @@ class Manual(QDialog, Ui_Manual):
                 view.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
         view.setHorizontalHeaderLabels(frame.columns)
 
-    def save_checker(self,folder,title):
-        """
-        Check the existence of the file being saved and the directory it's being saved to.
-
-        Parameters
-        --------
-        folder: str
-            The directory in which the manual_sections.csv file will be saved.
-        title: str
-            The name of the file being saved.
-        path: str
-            This variable stores the path of the file the user saved via the FileDialog.
-        
-        Outputs
-        --------
-        self.path: str
-            The path of the file being saved.
-        """
-        print("manual.save_checker()")
-        if folder == "":
-            path = QFileDialog.getSaveFileName(self, 'Save File', f"{title}", ".csv(*.csv))")[0]
-            if os.path.exists(path):
-                self.path = path
-        else:
-            self.path = os.path.join(folder, f"{title}.csv")
-
-    def save_manual_file(self):
+    def save_as(self):
         """
         Call self.save_check(), assign the file path determined in self.save_checker() to self.pleth.mansections (str), save self.manual_df dataframe as a .csv file to the file path location, populate self.pleth.sections_list (ListWidget) with the file path (self.pleth.mansections), and update self.breath_df (list).
 
@@ -301,31 +276,8 @@ class Manual(QDialog, Ui_Manual):
         self.update_breath_df()
             This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the manual BASSPRO settings.
         """
-        if self.manual_df is None:
-            # Nothing to save
-            notify_info("Nothing to save")
-            return
-
-        self.save_checker(self.pleth.workspace_dir, "manual_sections")
-    
-        # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
-        self.manual_df.to_csv(self.path, index=False)
-
-        self.pleth.mansections = self.path
-
-        if self.pleth.breath_df != []:
-            self.pleth.update_breath_df("manual settings")
-
-        notify_info("Manual sections file saved")
-        self.pleth.hangar.append("Manual sections file saved.")
-
-        self.accept()
-    
-    # Clearing the sections panel of the mainGUI and adding to it to reflect changes:
-        for item in self.pleth.sections_list.findItems("manual_sections",Qt.MatchContains):
-            self.pleth.sections_list.takeItem(self.pleth.sections_list.row(item))
-        self.pleth.sections_list.addItem(self.pleth.mansections)
-        self.pleth.hangar.append("Manual sections file saved.")
+        if ManualSettings.save_file(self.data, workspace_dir=self.workspace_dir):
+            notify_info("Manual sections file saved")
     
     def load_manual_file(self):
         """
@@ -354,19 +306,23 @@ class Manual(QDialog, Ui_Manual):
         self.populate_table(self.manual_df, self.manual_view)
             This method populates self.manual_view (TableWidget) with the self.manual_df dataframe.
         """
-        file = ManualSettings.choose_file(self.pleth.workspace_dir)
+        file = ManualSettings.choose_file(self.workspace_dir)
+        if file:
 
-        self.manual_df = pd.read_csv(file)
-        self.datapad = self.manual_df.loc[:,[x for x in self.vals]]
-        self.preset = self.manual_df.loc[:,[x for x in self.manual_df.columns if x not in self.datapad.columns]].drop_duplicates()
-        self.populate_table(self.manual_df,self.manual_view)
-        self.populate_table(self.datapad, self.datapad_view)
-        self.populate_table(self.preset, self.settings_view)
+            data = pd.read_csv(file)
+            self.datapad = data.loc[:, [x for x in self.vals]]
+            self.preset = data.loc[:, [x for x in data.columns if x not in self.datapad.columns]].drop_duplicates()
+            self.data = data
+
+            self.populate_table(self.data, self.manual_view)
+            self.populate_table(self.datapad, self.datapad_view)
+            self.populate_table(self.preset, self.settings_view)
 
 class ManualSettings(Settings):
 
     valid_filetypes = ['.csv']
     file_chooser_message = 'Select manual sections file to edit'
+    default_filename = 'mansections.csv'
     editor_class = Manual
 
     @staticmethod
@@ -374,18 +330,7 @@ class ManualSettings(Settings):
         file_basename = os.path.basename(filepath) 
         return file_basename.startswith("manual_sections")
 
-    @classmethod
-    def attempt_load(file):
-        if Path(file).suffix == ".json":
-            with open(file) as config_file:
-                basic_json = json.load(config_file)
-            basic_df = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
-            basic_df.columns = ['Parameter','Setting']
-        elif Path(file).suffix == ".csv":
-            basic_df = pd.read_csv(file)
-        elif Path(file).suffix == ".xlsx":
-            basic_df = pd.read_excel(file)
-        else:
-            return None
-        return basic_df
-        
+    @staticmethod
+    def _save_file(filepath, data):
+        # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
+        data.to_csv(filepath, index=False)

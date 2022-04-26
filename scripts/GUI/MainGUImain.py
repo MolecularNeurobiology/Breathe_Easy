@@ -1,5 +1,4 @@
-#%%
-#region Libraries
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -10,9 +9,6 @@ import logging
 import MainGui
 from multiprocessing import freeze_support
 
-#endregion
-
-#region Main
 def main():
     root = os.path.dirname(os.path.abspath(__file__))        
     QDir.addSearchPath('resources', root)

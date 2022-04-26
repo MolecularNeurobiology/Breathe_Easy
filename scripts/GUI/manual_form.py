@@ -182,9 +182,8 @@ class Ui_Manual(object):
 
         self.retranslateUi(Manual)
         self.datapad_load.clicked.connect(Manual.get_datapad)
-        self.dialog_button.accepted.connect(Manual.save_manual_file)
-        self.dialog_button.rejected.connect(Manual.close)
-        self.dialog_button.accepted.connect(Manual.close)
+        self.dialog_button.rejected.connect(Manual.reject)
+        self.dialog_button.accepted.connect(Manual.accept)
         self.merge_button.clicked.connect(Manual.manual_merge)
         self.preset_menu.currentIndexChanged['QString'].connect(Manual.get_preset)
         self.load_manual_button.clicked.connect(Manual.load_manual_file)

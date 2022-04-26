@@ -1,7 +1,8 @@
 
+from abc import abstractstaticmethod
 import os
 from pathlib import Path
-from PyQt5.QtWidgets import QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem
 
 def notify_error(msg, title="Error"):
     QMessageBox.critical(None, title, msg)
@@ -39,35 +40,21 @@ class Settings:
         return cls._right_filename(filepath) and \
                right_filetype and Path(filepath).exists()
 
-    @classmethod
-    def choose_file(cls, workspace_dir=""):
-        while True:
-            file, filter = QFileDialog.getOpenFileName(None, cls.file_chooser_msg, workspace_dir)
-
-            # Break if cancelled
-            if not file:
-                return None
-
-            # If good file, return
-            if cls.validate(file):
-                return file
-
-            # If bad file display error and try again
-            notify_error( 'The selected file is not in the correct format. Only .csv, .xlsx, or .JSON files are accepted.')
+    @abstractstaticmethod
+    def _save_file(filename, data):
+        pass
 
     @classmethod
-    def edit(cls, *args, **kwargs):
-        editor = cls.editor_class(*args, **kwargs)
-        if editor.exec():
-            # returned gracefully!
-            # return settings
-            pass
-        else:
-            # cancelled or closed
-            return None
+    def save_file(cls, data, save_filepath=None, workspace_dir=""):
+        if not save_filepath:
+            save_filepath, filter = QFileDialog.getSaveFileName(None, 'Save File', cls.default_filename, "*.csv")
+            if not save_filepath:
+                return False
+        cls._save_file(save_filepath, data)
+        return True
 
     @classmethod
-    def choose_file(cls, workspace_dir):
+    def open_file(cls, workspace_dir=""):
         while True:
             file, filter = QFileDialog.getOpenFileName(None, cls.file_chooser_message, workspace_dir)
 
@@ -80,10 +67,34 @@ class Settings:
                 return file
 
             # If bad file display error and try again
-            notify_error(f'The selected file is not in the correct format. Only {", ".join(cls.valid_filetypes)} files are accepted.')
+            filetypes_str = ", ".join([ft for ft in cls.valid_filetypes])
+            notify_error(f"The selected file is not in the correct format. Only {filetypes_str} files are accepted.")
 
+    @classmethod
+    def edit(cls, *args, **kwargs):
+        editor = cls.editor_class(*args, **kwargs)
+        # If editor gui is accepted (Ok)
+        if editor.exec():
+            return editor.data
+        # If rejected (Cancel)
+        else:
+            return None
+
+    @staticmethod
     def attempt_load(filepath):
         raise NotImplemented
+
+    @classmethod
+    def require_load(cls, workspace_dir=""):
+        while True:
+            file = cls.open_file(workspace_dir=workspace_dir)
+            if file and cls.validate(file):
+                data = cls.attempt_load(file)
+                return data
+
+            if not ask_user("File is required", "You must choose a file to proceed"):
+                return None
+
 
 def avert_name_collision(column_name, columns):
     """
@@ -123,3 +134,29 @@ def avert_name_collision(column_name, columns):
         count += 1
 
     return new_column_name
+
+def populate_table(frame, table):
+    """
+    This method populates the self.{division}_table widgets with the appropriate portions of the self.data dataframe based on the relationship of particular rows to particular divisions as defined in the "Settings Names" dictionary within self.pleth.gui_config.
+
+    Parameters
+    --------
+    frame: Dataframe
+        This variable refers to the appropriate portion of the self.data dataframe.
+    table: QTableWidget
+        This variable refers to the appropriate self.{division}_table.
+
+    Outputs
+    --------
+    self.{division}_table: QTableWidget
+        The TableWidget referred to by the argument "table" is populated with the appropriate settings from self.data dataframe as contained in the argument "frame".
+    """
+    # Populate tablewidgets with views of uploaded csv. Currently editable.
+    table.setColumnCount(len(frame.columns))
+    table.setRowCount(len(frame))
+    for col in range(table.columnCount()):
+        for row in range(table.rowCount()):
+            table.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
+    table.setHorizontalHeaderLabels(frame.columns)
+    table.resizeColumnsToContents()
+    table.resizeRowsToContents()
