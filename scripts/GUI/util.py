@@ -2,7 +2,58 @@
 from abc import abstractstaticmethod
 import os
 from pathlib import Path
-from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem, QComboBox, QCheckBox
+from checkable_combo_box import CheckableComboBox
+
+# TODO: split into PyQt-specific utils
+
+def update_combo_values(combo, valid_values, renamed=None, default_value=""):
+    combo.blockSignals(True)
+
+    # Store current value
+    curr_value = combo.currentText()
+
+    # Clear out and add new items
+    combo.clear()
+    combo.addItems([default_value])
+    combo.addItems(valid_values)
+
+    # Check if I need to update the name of my selected value
+    if renamed:
+        old_name, new_name = renamed
+        if curr_value == old_name:
+            curr_value = new_name
+
+    # if curr selection is still indep/cov, keep in box
+    if curr_value in valid_values:
+        combo.setCurrentText(curr_value)
+
+    combo.blockSignals(False)
+
+def read_widget(widget):
+
+    if type(widget) is QTableWidgetItem:
+        widget_data = widget.text()
+
+    elif type(widget) is QCheckBox:
+        widget_data = int(widget.isChecked())
+
+    elif type(widget) is QComboBox:
+        widget_data = widget.currentText()
+
+    elif type(widget) is CheckableComboBox:
+        widget_data = widget.currentData()
+
+    else:
+        raise RuntimeError(f"Cannot read {type(widget)}!!")
+
+    return widget_data
+
+def write_widget(widget, text):
+    if widget is QComboBox:
+        widget.setCurrentText(text)
+    else:
+        raise RuntimeError(f"Cannot write {type(widget)}!!")
 
 def notify_error(msg, title="Error"):
     QMessageBox.critical(None, title, msg)
@@ -15,7 +66,7 @@ def notify_info(msg, title="Info"):
     
 def ask_user(title, msg):
     reply = QMessageBox.question(None, title, msg, QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-    return reply
+    return reply == QMessageBox.Ok
 
 def choose_save_location(default_filename, file_types="*.csv"):
     """
@@ -81,14 +132,15 @@ class Settings:
             return None
 
     @staticmethod
+    @abstractstaticmethod
     def attempt_load(filepath):
-        raise NotImplemented
+        pass
 
     @classmethod
     def require_load(cls, workspace_dir=""):
         while True:
             file = cls.open_file(workspace_dir=workspace_dir)
-            if file and cls.validate(file):
+            if file:
                 data = cls.attempt_load(file)
                 return data
 
@@ -96,44 +148,43 @@ class Settings:
                 return None
 
 
-def avert_name_collision(column_name, columns):
+def avert_name_collision(new_name, existing_names):
     """
-    Change the name of the new column by appending a suffix "_recode_#" to avoid duplicate column names in the metadata.
-
-    Parameters
-    --------
-    self.metadata: Dataframe
-        This attribute is a dataframe.
-    self.column: str
-        This attribute is the text of the ListWidgetItem in self.variable_list_columns (ListWidget) selected by the user. It is one of the headers of the self.metadata dataframe.
-    
-    Outputs
-    --------
     """
 
     # No issue, send it back
-    if column_name not in columns:
-        return column_name
+    if new_name not in existing_names:
+        return new_name
     
     name_taken = True
     count = 0
     # Keep incrementing count until we get a unique name
     while name_taken:
         # Generate new name with count appended
-        new_column_name = f"{column_name}_{count+1}"
+        modified_name = f"{new_name}_{count+1}"
 
         # Assume new name
         name_taken = False
         
         # Check if any are named the same
-        for col in columns:
-            if col == new_column_name:
-                name_taken = True
+        name_taken = modified_name in existing_names
         
         # Increment and try again
         count += 1
 
-    return new_column_name
+    msg = f"The column name {new_name} already exists."
+    msg += f"\nWould you like to use {modified_name} instead?"
+    reply = ask_user("Duplicate Column Name", msg)
+
+    # Use modified name
+    if reply:
+        new_name = modified_name
+
+    # Cancel, tell calling function the user cancelled
+    else:
+        new_name = None
+
+    return new_name
 
 def populate_table(frame, table):
     """

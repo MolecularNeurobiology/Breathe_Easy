@@ -96,12 +96,19 @@ class CheckableComboBox(QComboBox):
         elidedText = metrics.elidedText(text, Qt.ElideRight, self.lineEdit().width())
         self.lineEdit().setText(elidedText)
 
-    def loadCustom(self,tran):
-        for t in tran:
-            for i in range(self.model().rowCount()):
-                if self.model().item(i).text() == t:
-                    print("checking t")
-                    self.model().item(i).setCheckState(Qt.Checked)
+    def loadCustom(self, tran):
+        """
+        Check all the items listed in tran
+        """
+        # Each index in model
+        for i in range(self.model().rowCount()):
+            # If this one selected, check it
+            if self.model().item(i).text() in tran:
+                self.model().item(i).setCheckState(Qt.Checked)
+
+            # Otherwise, uncheck it
+            else:
+                self.model().item(i).setCheckState(Qt.Unchecked)
 
     def addItem(self, text, data=None):
         item = QStandardItem()

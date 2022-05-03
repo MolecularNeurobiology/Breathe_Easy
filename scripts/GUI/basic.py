@@ -1,5 +1,6 @@
 
 import os
+from copy import deepcopy
 import json
 from pathlib import Path
 import pandas as pd
@@ -48,7 +49,7 @@ class Basic(QDialog, Ui_Basic):
         self.setWindowTitle("Basic BASSPRO settings")
         self.defaults = defaults
         self.ref_definitions = ref_definitions
-        self.data = data
+        self.data = deepcopy(data)
         self.workspace_dir = workspace_dir
         self.isMaximized()
         
@@ -478,7 +479,7 @@ class Basic(QDialog, Ui_Basic):
         """
         while True:
             # Opens open file dialog
-            filepath = BasicSettings.choose_file(self.workspace_dir)
+            filepath = BasicSettings.open_file(self.workspace_dir)
 
             # Catch cancel
             if not filepath:
@@ -507,7 +508,7 @@ class BasicSettings(Settings):
         """
         Overwrite in derived class if necessary
         """
-        right_filename = os.path.basename(filepath).startswith("basics")
+        right_filename = "basic" in os.path.basename(filepath)
         return right_filename
 
     @staticmethod

@@ -21,25 +21,23 @@ import threading
 import MainGUIworker
 from bs4 import BeautifulSoup as bs
 
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QButtonGroup, QTableWidgetItem, QRadioButton, QLineEdit, QComboBox, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PyQt5.QtCore import QThreadPool, pyqtSlot, Qt
 
 from thumbass_controller import Thumbass
 from thinbass_controller import Thinbass
 from thorbass_controller import Thorbass
-from align_delegate import AlignDelegate
 from auto import AutoSettings
 from basic import BasicSettings
-from manual import Manual, ManualSettings
+from manual import ManualSettings
 from AnnotGUI import MetadataSettings
-from checkable_combo_box import CheckableComboBox
-from config import Config
+from config import GraphSettings, OtherSettings, VariableSettings, ConfigSettings
 from util import ask_user, notify_error, notify_info, notify_warning
 
 from ui.form import Ui_Plethysmography
 
 # TODO: only for development!
-AUTOLOAD = True
+AUTOLOAD = False
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -71,6 +69,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     @metadata.setter
     def metadata(self, filepath):
+        # TODO: handle None or "" input
         if MetadataSettings.validate(filepath):
             self.metadata_df = MetadataSettings.attempt_load(filepath)
             if self.metadata_df is not None:
@@ -87,6 +86,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     @autosections.setter
     def autosections(self, filepath):
+        # TODO: handle None or "" input
         if AutoSettings.validate(filepath):
             self.autosections_df = AutoSettings.attempt_load(filepath)
             if self.autosections_df is not None:
@@ -103,6 +103,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     @mansections.setter
     def mansections(self, filepath):
+        # TODO: handle None or "" input
         if ManualSettings.validate(filepath):
             self.mansections_df = ManualSettings.attempt_load(filepath)
             if self.mansections_df is not None:
@@ -112,6 +113,100 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                 # Add new one
                 self.sections_list.addItem(filepath)
+
+    @property
+    def config_data(self):
+        # Get all config data collectively
+        var_df = self.variable_config_df
+        graph_df = self.graph_config_df
+        other_df = self.other_config_df
+        # If all configs are None, return None
+        if all([config is None for config in [var_df, graph_df, other_df]]):
+            return None
+        # Otherwise return dict of data
+        else:
+            return {'variable': var_df, 'graph': graph_df, 'other': other_df}
+    
+    @config_data.setter
+    def config_data(self, new_data):
+        # Set all config data collectively
+        if new_data is None:
+            self.variable_config_df = None
+            self.graph_config_df = None
+            self.other_config_df = None
+        else:
+            self.variable_config_df = new_data['variable'].copy()
+            self.graph_config_df = new_data['graph'].copy()
+            self.other_config_df = new_data['other'].copy()
+
+    @property
+    def variable_config(self):
+        return self.get_config_file_from_list("variable")
+
+    @variable_config.setter
+    def variable_config(self, filepath):
+        # Setting to None or ""
+        if not filepath:
+            self.variable_config_df = None
+            # Remove old config
+            for item in self.variable_list.findItems("variable", Qt.MatchContains):
+                self.variable_list.takeItem(self.variable_list.row(item))
+
+        elif VariableSettings.validate(filepath):
+            self.variable_config_df = VariableSettings.attempt_load(filepath)
+            if self.variable_config_df is not None:
+                # Remove old config
+                for item in self.variable_list.findItems("variable", Qt.MatchContains):
+                    self.variable_list.takeItem(self.variable_list.row(item))
+
+                # Add new one
+                self.variable_list.addItem(filepath)
+
+    @property
+    def graph_config(self):
+        return self.get_config_file_from_list("graph")
+
+    @graph_config.setter
+    def graph_config(self, filepath):
+        # Setting to None or ""
+        if not filepath:
+            self.graph_config_df = None
+            # Remove old config
+            for item in self.variable_list.findItems("graph", Qt.MatchContains):
+                self.variable_list.takeItem(self.variable_list.row(item))
+
+        elif GraphSettings.validate(filepath):
+            self.graph_config_df = GraphSettings.attempt_load(filepath)
+            if self.graph_config_df is not None:
+                # Remove old config
+                for item in self.variable_list.findItems("graph", Qt.MatchContains):
+                    self.variable_list.takeItem(self.variable_list.row(item))
+
+                # Add new one
+                self.variable_list.addItem(filepath)
+
+    @property
+    def other_config(self):
+        return self.get_config_file_from_list("other")
+
+    @other_config.setter
+    def other_config(self, filepath):
+        # Setting to None or ""
+        if not filepath:
+            self.other_config_df = None
+            # Remove old config
+            for item in self.variable_list.findItems("other", Qt.MatchContains):
+                self.variable_list.takeItem(self.variable_list.row(item))
+
+        elif OtherSettings.validate(filepath):
+            self.other_config_df = OtherSettings.attempt_load(filepath)
+            if self.other_config_df is not None:
+                # Remove old config
+                for item in self.variable_list.findItems("other", Qt.MatchContains):
+                    self.variable_list.takeItem(self.variable_list.row(item))
+
+                # Add new one
+                self.variable_list.addItem(filepath)
 
     @property
     def basicap(self):
@@ -317,10 +412,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.r_output_folder=""
 
         # STAGG Settings
-        self.variable_config=""
-        self.graph_config=""
-        self.other_config=""
-
         self.variable_config_df = None
         self.graph_config_df = None
         self.other_config_df = None
@@ -343,10 +434,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.mansections_df = None
         self.metadata_df = None
         self.basicap_df = None
-
-        # TODO: make this not a self attribute
-        self.stagg_settings_window = Config(self,
-                                            self.rc_config['References']['Definitions'])
 
          # Populate GUI widgets with experimental condition choices: 
         self.necessary_timestamp_box.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
@@ -815,8 +902,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
         Outputs
         --------
-        self.n: int
-            This integer is incremented when variables are given duplicate names and appended to the existing variable's name so that the edited variable retains the user's edits.
         Config.variable_table: QTableWidget
             cellChanged signals are assigned to the TableWidgets cells for two slots: Config.no_duplicates() and Config.update_loop().
         
@@ -840,17 +925,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.check_stagg_settings_inputs()
 
         # run self.setup_table_config() to populate Config.variable_table (TableWidget)
-        self.stagg_settings_window.setup_table_config()
-
-        self.n = 0
+        stagg_settings_window.setup_table_config()
 
         # show the STAGG settings subGUI
-        self.stagg_settings_window.show()
-
-        # Set attributes
-        self.variable_config = None
-        self.graph_config = None
-        self.other_config = None
+        self.stagg_settings_window.exec()
         
     def show_stagg_settings(self):
         """
@@ -881,8 +959,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
         Outputs
         --------
-        self.n: int
-            This integer is incremented when variables are given duplicate names and appended to the existing variable's name so that the edited variable retains the user's edits.
         Config.variable_table: QTableWidget
             cellChanged signals are assigned to the TableWidgets cells for two slots: Config.no_duplicates() and Config.update_loop().]
 
@@ -911,78 +987,138 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Ensure that there is a source of variables to populate Config.variable_table with
         # Can be sourced from:
         #   - metadata and (autosections or mansections)
-        #   - self.variable_config
+        #   - self.variable_config   ------------- Get this from the listwidget ???????? ----------
         #   - self.stagg_input_files[0]
 
-        # If buttonDict is empty
-        if self.buttonDict_variable == {}:
+        # make sure we have everything we need to open these settings
+        self.check_stagg_settings_inputs()
 
-            # If we already have working data, use that
-            if self.variable_config_df is not None:
-                self.stagg_settings_window.check_load_variable_config(open_file=False)
 
-                # show the STAGG settings subGUI
-                self.stagg_settings_window.show()
+        # If we already have data for all the configs, use this
+        if self.config_data is not None:
+            input_data = self.config_data
+        
+        # Check for import options
+        else:
+            # Gather input options
+            import_options = []
+            if self.stagg_input_files and any(a.endswith(".json") for a in self.stagg_input_files):
+                import_options.append('basspro_output')
+            if self.metadata and (self.autosections or self.mansections):
+                import_options.append('settings')
 
-            # If we have json stagg input files
-            elif self.stagg_input_files and any(a.endswith(".json") for a in self.stagg_input_files):
+            if len(import_options) == 0:
+                error_msg = "Missing settings data!"
+                error_msg += "\nPlease add sections files or basspro input"
+                notify_info(error_msg)
 
-                # If we also have metadata and sections file
-                if self.metadata and (self.autosections or self.mansections):
+            # If we only have one option, choose it
+            if len(import_options) == 1:
+                selected_option = import_options[0]
 
-                    # Ask user which they want to use
-                    thinb = Thinbass(self)
-                    if thinb.exec():
-                        source = thinb.get_value()
-                        
-                        # Use settings files
-                        if source == 'settings':
-                            pass
+            # Otherwise, ask user what they want to do
+            else:
+                thinb = Thinbass(self)
+                if thinb.exec():
+                    selected_option = thinb.get_value()
+                else:
+                    return
 
-                        # Use stagg input (basspro output)
-                        elif source == 'output':
-                            # TODO
-                            notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
-                            return
-                            with open(self.stagg_input_files[0]) as first_json:
-                                bp_output = json.load(first_json)
-                            for k in bp_output.keys():
-                                self.breath_df.append(k)
+            if selected_option == 'basspro_output':
+                # load basspro output files
+                # TODO
+                notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
+                return
+                with open(self.stagg_input_files[0]) as first_json:
+                    bp_output = json.load(first_json)
+                for k in bp_output.keys():
+                    self.breath_df.append(k)
 
-                        else:
-                            return
+                input_data = self.load_bp_output()
 
-                        self.new_variable_config()
+            elif selected_option == 'settings':
+                breath_df = []
+                with open(self.basspro_path) as bc:
+                    soup = bs(bc, 'html.parser')
+                for child in soup.breathcaller_outputs.stripped_strings:
+                    breath_df.append(child)
+                print(breath_df)
+                input_data = None
 
-                    # Cancelled
+
+        # Open Config editor GUI
+        # TODO: align variable_config name with variable_table name in Config class
+        new_config_data = ConfigSettings.edit(breath_df,
+                                              input_data,
+                                              self.rc_config['References']['Definitions'],
+                                              self.workspace_dir)
+        if new_config_data is not None:
+            self.config_data = new_config_data
+
+
+        # If we already have working data, use that
+        if self.variable_config_df is not None:
+            stagg_settings_window.check_load_variable_config(open_file=False)
+
+            # show the STAGG settings subGUI
+            stagg_settings_window.exec()
+
+        # If we have json stagg input files
+        elif self.stagg_input_files and any(a.endswith(".json") for a in self.stagg_input_files):
+
+            # If we also have metadata and sections file
+            if self.metadata and (self.autosections or self.mansections):
+
+                # Ask user which they want to use
+                thinb = Thinbass(self)
+                if thinb.exec():
+                    source = thinb.get_value()
+                    
+                    # Use settings files
+                    if source == 'settings':
+                        pass
+
+                    # Use stagg input (basspro output)
+                    elif source == 'output':
+                        # TODO
+                        notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
+                        return
+                        with open(self.stagg_input_files[0]) as first_json:
+                            bp_output = json.load(first_json)
+                        for k in bp_output.keys():
+                            self.breath_df.append(k)
+
                     else:
                         return
-                        
-                # Use settings files
-                else:
-                    # TODO
-                    notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
-                    return
+
                     self.new_variable_config()
 
-            # Use settings files if we have them
-            elif self.metadata and (self.autosections or self.mansections):
+                # Cancelled
+                else:
+                    return
+                    
+            # Use settings files
+            else:
+                # TODO
+                notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
+                return
                 self.new_variable_config()
 
-            # Guide the user through providing the required input if there is no input.
-            else:
-                self.thorb = Thorbass(self)
-                self.thorb.show()
-                self.thorb.message_received(
-                    'Missing source files',
-                    f"One or more of the files used to build the variable list has not been selected.\n" + \
-                        "Would you like to open an existing set of variable configuration files or create a new one?",
-                    self.new_variable_config,
-                    lambda : self.stagg_settings_window.check_load_variable_config(open_file=True))
+        # Use settings files if we have them
+        elif self.metadata and (self.autosections or self.mansections):
+            self.new_variable_config()
 
-        # If buttonDict is already populated
+        # Guide the user through providing the required input if there is no input.
         else:
-            self.stagg_settings_window.show()
+            self.thorb = Thorbass(self)
+            self.thorb.show()
+            self.thorb.message_received(
+                'Missing source files',
+                f"One or more of the files used to build the variable list has not been selected.\n" + \
+                    "Would you like to open an existing set of variable configuration files or create a new one?",
+                self.new_variable_config,
+                lambda : stagg_settings_window.check_load_variable_config(open_file=True))
+
 
         # Update MainGUI with config paths
         for config_name in self.configs:
@@ -1027,8 +1163,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is a list of file paths for files that could not be accessed.
         self.buttonDict_variable: dict
             The relevant items of this nested dictionary are updated based on corresponding values in Config.vdf (dict).
-        self.n: int
-            This integer is incremented when variables are given duplicate names and appended to the existing variable's name so that the edited variable retains the user's edits.
         Config.variable_table: QTableWidget
             cellChanged signals are assigned to the TableWidgets cells for two slots: Config.no_duplicates() and Config.update_loop().
 
@@ -1071,15 +1205,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                              f'New {updated_file} selected',
                                              'Would you like to update the variable list in STAGG configuration settings?\n\nUnsaved changes may be lost.\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
                 if reply == QMessageBox.Yes:
-                    self.stagg_settings_window.setup_table_config()
+                    stagg_settings_window.setup_table_config()
 
-                    for a in self.stagg_settings_window.variable_table_df:
-                        self.buttonDict_variable[a]['Alias'].setText(self.stagg_settings_window.vdf[a]['Alias'])
+                    for a in stagg_settings_window.variable_table_df:
+                        self.buttonDict_variable[a]['Alias'].setText(stagg_settings_window.vdf[a]['Alias'])
                         for k in ["Independent","Dependent","Covariate"]:
-                            if self.stagg_settings_window.vdf[a][k] == '1':
+                            if stagg_settings_window.vdf[a][k] == '1':
                                 self.buttonDict_variable[a][k].setChecked(True)
-                    self.stagg_settings_window.load_custom_config()
-                    self.stagg_settings_window.load_graph_config()
+                    stagg_settings_window.load_custom_config()
+                    stagg_settings_window.load_graph_config()
                 else:
                     self.breath_df = old_bdf
 
@@ -1163,9 +1297,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Ensure that the file paths that populate the attributes required to show the 
         #   STAGG settings subGUI exist and their contents are accessible
         missing_meta = []
-        for p in [self.metadata, self.autosections, self.mansections]:
-            if p and not self.try_open(p):
-                missing_meta.append(p)
+        # TODO: I think this try_open() function is broken
+        #for p in [self.metadata, self.autosections, self.mansections]:
+        #    if p and not self.try_open(p):
+        #        missing_meta.append(p)
 
         # TODO: catch specific error
         try:
@@ -2283,10 +2418,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.rthing_to_do()
             Copy STAGG input to timestamped STAGG output folder, determine which STAGG scripts to use based on the presence or absence of an .RData file, and determine if self.input_dir_r needs to be a str path to directory instead of list because the list has more than 200 files, and run self.rthing_to_do_cntd().
         """
+        # TODO: just get the data and save it to file
         # Assign the file paths to the attributes
-        self.variable_config = self.stagg_settings_window.configs["variable_config"]["path"]
-        self.graph_config = self.stagg_settings_window.configs["graph_config"]["path"]
-        self.other_config = self.stagg_settings_window.configs["other_config"]["path"]
+        variable_config = stagg_settings_window.configs["variable_config"]["path"]
+        graph_config = stagg_settings_window.configs["graph_config"]["path"]
+        other_config = stagg_settings_window.configs["other_config"]["path"]
 
         # ensure that all required STAGG input has been selected
         if any([self.stagg_settings_window.configs[key]['path'] == "" for key in self.stagg_settings_window.configs]):
@@ -2644,14 +2780,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         elif self.jpeg_radioButton.isChecked() == True:
             self.image_format = ".jpeg"
 
+        # TODO: don't copy, just save the df
         # Copy variable config over
-        shutil.copyfile(self.variable_config, os.path.join(stagg_output_folder, f"variable_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
+        shutil.copyfile(variable_config, os.path.join(stagg_output_folder, f"variable_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
         
         # Copy graph config over
-        shutil.copyfile(self.graph_config, os.path.join(stagg_output_folder, f"graph_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
+        shutil.copyfile(graph_config, os.path.join(stagg_output_folder, f"graph_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
         
         # Copy other config over  ?? TODO: rename other
-        shutil.copyfile(self.other_config, os.path.join(stagg_output_folder, f"other_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
+        shutil.copyfile(other_config, os.path.join(stagg_output_folder, f"other_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
 
         # Set pipeline destination
         if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):

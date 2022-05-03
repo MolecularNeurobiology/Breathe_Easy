@@ -3,9 +3,10 @@ import os
 from copy import deepcopy
 import csv
 import pandas as pd
-from PyQt5.QtWidgets import QDialog, QMessageBox
-from ui.auto_form import Ui_Auto
+from PyQt5.QtWidgets import QDialog, QMessageBox, QLabel, QVBoxLayout, qApp
+from PyQt5.QtCore import Qt
 from util import notify_info, Settings, populate_table
+from ui.auto_form import Ui_Auto
 
 class Auto(QDialog, Ui_Auto):
     """
@@ -172,6 +173,18 @@ class Auto(QDialog, Ui_Auto):
         Outcomes
         --------
         """
+
+        ''' TODO: display loading dialog
+        loading_window = QDialog(self) #flags=Qt.FramelessWindowHint)
+        loading_window.setModal(True)
+        layout = QVBoxLayout()
+        label = QLabel("Loading...")
+        layout.addWidget(label)
+        loading_window.setLayout(layout)
+        loading_window.show()
+        '''
+
+
         # Get the appropriate template based on user's choice of experimental condition
         curr_selection = self.auto_setting_combo.currentText()
         if curr_selection == 'Custom':
@@ -182,6 +195,7 @@ class Auto(QDialog, Ui_Auto):
             self.data = pd.DataFrame(auto_dict).reset_index()
 
         self.update_tabs()
+
 
     def edit_cell(self, table, row, col):
         """
@@ -374,21 +388,27 @@ class Auto(QDialog, Ui_Auto):
             This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (basspro_config.json).
         """
         # Opens open file dialog
-        filepath = AutoSettings.choose_file(self.workspace_dir)
+        filepath = AutoSettings.open_file(self.workspace_dir)
         if filepath:
             first_time_loading = self.loaded_data is None
             self.loaded_data = AutoSettings.attempt_load(filepath)
 
-            if self.loaded_data:
+            if self.loaded_data is not None:
 
                 # If we haven't loaded anything yet
                 if first_time_loading:
                     # Add custom option
                     self.auto_setting_combo.addItem('Custom')
 
-                # Set to current
-                self.auto_setting_combo.setCurrentIndex(self.auto_setting_combo.count()-1)
-                # ^this should eventually trigger update_tabs()
+                # If 'Custom' is already selected, we need to manually call the update function
+                if self.auto_setting_combo.currentText() == 'Custom':
+                    self.update_template_selection()
+
+                # Otherwise, set to custom and let it automatically update
+                else:
+                    # Set to Custom
+                    self.auto_setting_combo.setCurrentIndex(self.auto_setting_combo.count()-1)
+                    # ^this should eventually trigger update_tabs()
 
 class AutoSettings(Settings):
 
@@ -397,14 +417,10 @@ class AutoSettings(Settings):
     default_filename = 'autosections.csv'
     editor_class = Auto
 
-    def __init__(self) -> None:
-        super().__init__(Auto)
-
     @staticmethod
     def _right_filename(filepath):
         file_basename = os.path.basename(filepath) 
-        return file_basename.startswith("auto_sections") or \
-               file_basename.startswith("autosections")
+        return "auto" in file_basename and "sections" in file_basename
 
     def attempt_load(filepath):
         return pd.read_csv(filepath, index_col='Key').transpose().reset_index()

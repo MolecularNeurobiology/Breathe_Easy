@@ -58,7 +58,7 @@ class Annot(QDialog, Ui_Annot):
             if data is None:
                 self.reject()
 
-        self.data = data
+        self.data = data.copy()
         self.populate_list_columns()
 
         # Initialize attributes
@@ -206,6 +206,7 @@ class Annot(QDialog, Ui_Annot):
         # Get currently selected column
         curr_column = self.variable_list_columns.currentItem().text()
         
+        # TODO: this breaks when there are new columns
         # Populate values in this column
         #   skip null values
         for y in sorted(set([m for m in self.data[curr_column] if not pd.isnull(m)])):
@@ -602,15 +603,8 @@ class Annot(QDialog, Ui_Annot):
 
             # Prevent duplicate names
             if new_name in self.data.columns:
-                modified_name = avert_name_collision(new_name, self.data.columns)
-                reply = ask_user("Duplicate Column Name", f"The column name {new_name} already exists. Would you like to use {modified_name} instead?")
-
-                # Use modified name
-                if reply:
-                    new_name = modified_name
-
-                # Cancel, set back to old name
-                else:
+                new_name = avert_name_collision(new_name, self.data.columns)
+                if new_name is None:
                     new_name = old_name
 
         # If there is *still* a name change

@@ -105,5 +105,5 @@ class Thinbass(QDialog,Ui_Thinbass):
         self.pleth.Config.show()
             This Plethysmography method displays the STAGG settings subGUI.
         """
-        self.variables_source = "output"
+        self.variables_source = "basspro_output"
         self.accept()
