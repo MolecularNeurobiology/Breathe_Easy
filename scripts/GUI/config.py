@@ -1,14 +1,73 @@
 
 import os
-import csv
 import pandas as pd
+import numpy as np
 from PyQt5.QtWidgets import QDialog, QSpacerItem, QSizePolicy, QButtonGroup, QTableWidgetItem, QRadioButton, QLineEdit, QComboBox, QFileDialog
 from PyQt5.QtCore import QObject, Qt
 from checkable_combo_box import CheckableComboBox
 from align_delegate import AlignDelegate
 from custom import Custom
-from util import Settings, avert_name_collision, notify_error, notify_info, write_widget, update_combo_values
+from util import Settings, avert_name_collision, notify_error, notify_info, write_widget, update_combo_values, update_checkable_combo_values
 from ui.config_form import Ui_Config
+from ordering import OrderingWindow
+
+''' TODO
+    Trying to find a common way to define the widgets
+    Need to put in UI file and just maintain a "LOOP" as a UI element
+
+loop_widget_config = [
+    {'column_name': 'Graph Name',  # 0
+        'df_index_name': 'Graph name',
+        'read_func': lambda widg: widg.text(),
+        'widget_class': QLineEdit,
+        'valid_values_values': lambda : self.variable_names},
+    {'column_name': 'Variable',  # 1
+        'df_index_name': 'Variable',
+        'read_func': lambda widg: widg.currentText(),
+        'widget_class': self.new_other_settings_combo_box,
+        'valid_values_func': self.get_independent_covariate_vars},
+    {'column_name': 'Xvar',  # 2
+        'df_index_name': 'Xvar',
+        'read_func': lambda widg: widg.currentText(),
+        'widget_class': self.new_other_settings_combo_box,
+        'valid_values_func': self.get_independent_covariate_vars},
+    {'column_name': 'Pointdodge',  # 3
+        'df_index_name': 'Pointdodge',
+        'read_func': lambda widg: widg.currentText(),
+        'widget_class': self.new_other_settings_combo_box,
+        'valid_values_func': self.get_independent_covariate_vars},
+    {'column_name': 'Facet1',  # 4
+        'df_index_name': 'Facet1',
+        'read_func': lambda widg: widg.currentText(),
+        'widget_class': self.new_other_settings_combo_box,
+        'valid_values_func': self.get_independent_covariate_vars},
+    {'column_name': 'Facet2',  # 5
+        'df_index_name': 'Facet2',
+        'read_func': lambda widg: widg.currentText(),
+        'widget_class': self.new_other_settings_combo_box,
+        'valid_values_func': self.get_independent_covariate_vars},
+    {'column_name': 'Covariates',  # 6
+        'df_index_name': 'Covariates',
+        'read_func': lambda widg: '@'.join(widg.current_data()),
+        'widget_class': self.new_covariates_checkable_combo,
+        'valid_values_func': lambda : self.variable_names},
+    {'column_name': 'Y axis minimum',  # 7
+        'df_index_name': 'Y axis minimum',
+        'read_func': lambda widg: widg.text(),
+        'widget_class': QLineEdit,
+        'valid_values': None},
+    {'column_name': 'Y axis maximum',  # 8
+        'df_index_name': 'Y axis maximum',
+        'read_func': lambda widg: widg.text(),
+        'widget_class': QLineEdit,
+        'valid_values': None},
+    {'column_name': 'Inclusion',  # 9
+        'df_index_name': 'Inclusion',
+        'read_func': lambda widg: widg.currentText() == "Yes",
+        'widget_class': self.new_inclusion_combo_box,
+        'valid_values': lambda : ["Yes", "No"]},
+]
+'''
 
 class Config(QDialog, Ui_Config):
     """
@@ -21,7 +80,7 @@ class Config(QDialog, Ui_Config):
     Ui_Config: class
         The Config class inherits widgets and layouts defined in the Ui_Config class.
     """
-    def __init__(self, variable_names, data, ref_definitions, workspace_dir=""):
+    def __init__(self, ref_definitions, variable_names=None, data=None, workspace_dir=""):
         """
         Instantiate the Config class.
 
@@ -55,13 +114,11 @@ class Config(QDialog, Ui_Config):
 
         # GET INPUTS #
         # We must have column names
-        if not variable_names:
+        if not variable_names and not data:
             notify_error("Must provide columns for STAGG settings")
             return
         
-        self.variable_names = variable_names
-        self.aliases = variable_names
-        self.loop_widgets = []
+        self.workspace_dir = workspace_dir
         self.ref_definitions = ref_definitions
         self.custom_data = None
 
@@ -72,17 +129,20 @@ class Config(QDialog, Ui_Config):
                 self.reject()   
         '''
 
-        # Populate the table of all the variables
-        self.update_variable_table()
-
         # We can allow "None" current information
         # These setters will populate GUI with df data
-        if data is None:
-            self.variable_table_df = None
-            self.graph_config_dpassf = None
-            self.other_config_df = None
+        # TODO: streamline this to construct default df
+        if data is not None:
+            variable_config_df = data['variable']
+        elif variable_names:
+            variable_config_df = self.get_default_variable_df(variable_names)
         else:
-            self.variable_table_df = data['variable'].copy()
+            RuntimeError("Config must receive past data or list of variable names")
+
+        self.populate_variable_table(variable_config_df)
+
+        # Do this after populating variable table
+        if data is not None:
             self.graph_config_df = data['graph'].copy()
             self.other_config_df = data['other'].copy()
 
@@ -161,8 +221,11 @@ class Config(QDialog, Ui_Config):
         ## PREVENT DUPLICATES ##
         curr_row = self.variable_table.currentRow()
         curr_item = self.variable_table.currentItem()
-        new_name = curr_item.text()
         num_variables = self.variable_table.rowCount()
+
+        # Get old name and new name
+        old_name = self.aliases[curr_row]
+        new_name = curr_item.text()
 
         # Get all var names, skipping curr row
         existing_vars = [self.variable_table.item(row, 1).text() for row in range(num_variables) if row != curr_row]
@@ -172,14 +235,15 @@ class Config(QDialog, Ui_Config):
         if not new_name:
             # TODO: need to keep around the last text this was changed to
             #  rather than going back to default
-            new_name = self.variable_table.item(curr_row, 0).text()
+            new_name = old_name
         
         # Set text
         curr_item.setText(new_name)
-        old_name = self.aliases[curr_row]
         self.aliases[curr_row] = new_name
 
         # Cascade changes to
+        self.update_custom_data(old_name, new_name)
+
         #   Graph config
         self.update_graph_config(renamed=(old_name, new_name))
 
@@ -213,8 +277,6 @@ class Config(QDialog, Ui_Config):
         Outcomes
         --------
         """
-        self.blockSignals(True)
-
         '''
         # Update dict
         for row_num in range(self.loop_table.rowCount()):
@@ -236,13 +298,38 @@ class Config(QDialog, Ui_Config):
 
         # Update widgets
         for row_num in range(self.loop_table.rowCount()):
-            combos_to_update = [self.loop_table.cellWidget(row_num, col_num) for col_num in range(1, 6)]
-            self.update_graph_config(combos=combos_to_update)
+
+            response_var_combo = self.loop_table.cellWidget(row_num, 1)
+            resp_var_default_value = None
+            valid_values = self.aliases
+            # Update value based on valid values and any renamed variables
+            update_combo_values(response_var_combo, valid_values, renamed=renamed, default_value=resp_var_default_value)
+
+            # Check if the combo is still on the default value, or if a selection has been made
+            curr_resp_var = response_var_combo.currentText()
+
+            # Remove the response var selection from the options available to the rest
+            valid_values = valid_values[valid_values != curr_resp_var]
+
+            covariate_combo = self.loop_table.cellWidget(row_num, 6)
+            covariate_values = covariate_combo.currentData()
+            valid_values_no_covariate = valid_values[~np.isin(valid_values, covariate_values)]
+
+            # All of these are dependent on the previous and use the same indep/covar variables
+            combos_to_update = [self.loop_table.cellWidget(row_num, col_num) for col_num in range(2, 6)]
+            default_value = ""
+            self.update_hierarchical_combos(valid_values_no_covariate, combos_to_update, default_value, renamed=renamed, first_required=True)
+
+            # Extract current status for use in populating covariate combo box
+            combo_set_vals = [combo.currentText() for combo in combos_to_update]
+            curr_xvar = combo_set_vals[0]
+            xvar_selected = (curr_xvar != default_value)
 
             # do special update for covariate
-            covariate_combo = self.loop_table.cellWidget(row_num, 6)
-            valid_names = self.variable_names
-            update_combo_values(covariate_combo, valid_names, renamed)
+            covariate_combo.setEnabled(xvar_selected)
+            valid_values_no_combo_set = [val for val in self.aliases if val not in combo_set_vals]
+            update_checkable_combo_values(covariate_combo, sorted(valid_values_no_combo_set, key=str.lower), renamed, default_value="")
+
             '''
                 new_text = read_widget(self.loop_table.cellWidget(row_num, header_idx))
                 # TODO: catching weird condition skipping the "Covariates" slot
@@ -252,14 +339,11 @@ class Config(QDialog, Ui_Config):
 
             '''
             # If Covariates is filled
-            # TODO: why join '@' and then split again??
-            covariates = '@'.join(self.loop_widgets[row_num]["Covariates"].currentData())
+            covariates = self.loop_widgets[row_num]["Covariates"].currentData()
             if covariates != "":
-                self.loop_widgets[row_num]['Covariates'].loadCustom(covariates.split('@'))
+                self.loop_widgets[row_num]['Covariates'].loadCustom(covariates)
                 self.loop_widgets[row_num]['Covariates'].updateText()
             '''
-
-        self.blockSignals(False)
 
     def setup_transform_combo(self):
         """
@@ -268,15 +352,17 @@ class Config(QDialog, Ui_Config):
         spacerItem64 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.verticalLayout_25.addItem(spacerItem64)
         self.transform_combo = CheckableComboBox()
-        self.transform_combo.addItems(["raw","log10","ln","sqrt","Custom","None"])
+        self.transform_combo.addItems(["raw","log10","ln","sqrt","None"])
         self.verticalLayout_25.addWidget(self.transform_combo)
         spacerItem65 = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
         self.verticalLayout_25.addItem(spacerItem65)
 
     @property
     def loop_table_headers(self):
+        headers = []
         for i in range(self.loop_table.columnCount()):
-            yield self.loop_table.horizontalHeaderItem(i).text()
+            headers.append(self.loop_table.horizontalHeaderItem(i).text())
+        return headers
 
     def setup_variables_config(self): 
         """
@@ -371,8 +457,27 @@ class Config(QDialog, Ui_Config):
 
         for button in help_buttons:
             button.clicked.connect(self.reference_event)
+    
+    @staticmethod
+    def get_default_variable_df(variable_names):
+        default_values = [0, 0, 0, 0, 0, 0, 0, []]
+        default_data = [[var_name, var_name] + default_values for var_name in variable_names]
+        variable_table_df = pd.DataFrame(
+            default_data,
+            columns=["Column",
+                     "Alias",
+                     "Independent",
+                     "Dependent",
+                     "Covariate",
+                     "ymin",
+                     "ymax",
+                     "Poincare",
+                     "Spectral",
+                     "Transformation"])
+        return variable_table_df
 
-    def update_variable_table(self):
+
+    def populate_variable_table(self, variable_table_df):
         """
         Assign delegates to self.variable_table and self.loop_table
         Set self.buttonDict_variable as an empty dictionary
@@ -413,66 +518,57 @@ class Config(QDialog, Ui_Config):
         self.loop_table.setItemDelegate(delegate_loop)
 
         # Setting the number of rows in each table upon opening the window:
-        self.variable_table.setRowCount(len(self.variable_names))
-        
-        # Establishing the dictionary in which the table contents will be stored for delivery to r_config.csv:
-        self.buttonDict_variable = {}
+        self.variable_table.setRowCount(len(variable_table_df))
 
+        self.variable_names = variable_table_df['Column'].values
+        self.aliases = variable_table_df['Alias'].values
+
+        self.variable_table.blockSignals(True)
+        
         # Grabbing every item in variable_names and making a row for each: 
-        row = 0
-        for var_name in self.variable_names:
-            # Establishing each row as its own group to ensure mutual exclusivity for each row within the table:
-            self.buttonDict_variable[var_name]={"group": QButtonGroup()}
-            # self.buttonDict_variable[var_name]["group"].buttonClicked.connect(self.check_buttons)
+        for row, record in enumerate(variable_table_df.to_dict('records')):
+            var_name = record['Column']
+            alias_name = record['Alias']
 
             # The first two columns are the text of the variable name. Alias should be text editable.
-            self.buttonDict_variable[var_name]["orig"] = QTableWidgetItem(var_name)
-            self.buttonDict_variable[var_name]["Alias"] = QTableWidgetItem(var_name)
-
-            # Creating the radio buttons that will populate the cells in each row:
-            self.buttonDict_variable[var_name]["Independent"] = QRadioButton("Independent")
-            self.buttonDict_variable[var_name]["Dependent"] = QRadioButton("Dependent")
-            self.buttonDict_variable[var_name]["Covariate"] = QRadioButton("Covariate")
-            self.buttonDict_variable[var_name]["Ignore"] = QRadioButton("Ignore")
-            self.buttonDict_variable[var_name]["Ignore"].setChecked(True)
-
-            # Adding those radio buttons to the group to ensure mutual exclusivity across the row:
-            self.buttonDict_variable[var_name]["group"].addButton(self.buttonDict_variable[var_name]["Independent"])
-            self.buttonDict_variable[var_name]["group"].addButton(self.buttonDict_variable[var_name]["Dependent"])
-            self.buttonDict_variable[var_name]["group"].addButton(self.buttonDict_variable[var_name]["Covariate"])
-            self.buttonDict_variable[var_name]["group"].addButton(self.buttonDict_variable[var_name]["Ignore"])
+            orig_widget = QTableWidgetItem(var_name)
+            self.variable_table.setItem(row, 0, orig_widget)
             
-            # Populating the table widget with the row:
-            self.variable_table.setItem(row,0,self.buttonDict_variable[var_name]["orig"])
-            self.variable_table.setItem(row,1,self.buttonDict_variable[var_name]["Alias"])
+            alias_widget = QTableWidgetItem(alias_name)
+            self.variable_table.setItem(row, 1, alias_widget)
 
-            self.variable_table.setCellWidget(row,2,self.buttonDict_variable[var_name]["Independent"])
-            self.variable_table.setCellWidget(row,3,self.buttonDict_variable[var_name]["Dependent"])
-            self.variable_table.setCellWidget(row,4,self.buttonDict_variable[var_name]["Covariate"])
-            self.variable_table.setCellWidget(row,5,self.buttonDict_variable[var_name]["Ignore"])
+            button_group = QButtonGroup(self)
+            #button_group.idClicked.connect(self.cascade_variable_table_update)
+            for i, label in enumerate(["Independent", "Dependent", "Covariate", "Ignore"]):
+                new_radio_button = QRadioButton(label)
+                new_radio_button.toggled.connect(self.cascade_variable_table_update)
+                button_group.addButton(new_radio_button, id=i)
+                self.variable_table.setCellWidget(row, 2 + i, new_radio_button)
 
-            row += 1
-            # you have to iteratively create the widgets for each row, not just iteratively
-            # add the widgets for each row because it'll only do the last row
-
-        # Add callbacks for Independent/Covariate toggles
-        for item_1 in self.variable_names:
-            self.buttonDict_variable[item_1]["Independent"].toggled.connect(self.cascade_variable_table_update)
-            self.buttonDict_variable[item_1]["Covariate"].toggled.connect(self.cascade_variable_table_update)
-            self.buttonDict_variable[item_1]["Dependent"].toggled.connect(self.cascade_variable_table_update)
-        
         self.variable_table.resizeColumnsToContents()
         self.variable_table.resizeRowsToContents()
 
-    def cascade_variable_table_update(self, box=None, a=None):
+        self.variable_table.blockSignals(False)
+
+    def cascade_variable_table_update(self):
         self.update_graph_config()
         self.update_loop()
+
+    def update_custom_data(self, old_name, new_name):
+        if self.custom_data is None:
+            return
+
+        # Update variable name with new alias
+        for var_name in self.custom_data:
+            if var_name == old_name:
+                val = self.custom_data.pop(var_name)
+                self.custom_data[new_name] = val
+                break
 
     def get_all_dep_variables(self):
         return self.variable_table_df.loc[(self.variable_table_df["Dependent"] == 1)]["Alias"]
 
-    @property
-    def variable_table_df(self):
+    def get_variable_table_df(self):
         """
         - Populate several list attributes and self.variable_table_df dataframe with text
            and widget statuses from self.buttonDict_variable (dict)
@@ -508,20 +604,28 @@ class Config(QDialog, Ui_Config):
         covariate = []
 
         # populate lists with user selections from all buttons
-        for item in self.buttonDict_variable:
-            origin.append(item)
-            alias.append(self.buttonDict_variable[item]["Alias"].text())
-            independent.append(self.buttonDict_variable[item]["Independent"].isChecked())
-            dependent.append(self.buttonDict_variable[item]["Dependent"].isChecked())
-            covariate.append(self.buttonDict_variable[item]["Covariate"].isChecked())
-            
+        for row in range(self.variable_table.rowCount()):
+            var_name = self.variable_table.item(row, 0).text()
+            origin.append(var_name)
+
+            alias_name = self.variable_table.item(row, 1).text()
+            alias.append(alias_name)
+
+            # Radio buttons
+            indep = self.variable_table.cellWidget(row, 2).isChecked()
+            independent.append(int(indep))
+            dep = self.variable_table.cellWidget(row, 3).isChecked()
+            dependent.append(int(dep))
+            covar = self.variable_table.cellWidget(row, 4).isChecked()
+            covariate.append(int(covar))
+
         # Update dataframe with user selections
         variable_table_df["Column"] = origin
         variable_table_df["Alias"] = alias
         variable_table_df["Independent"] = independent
         variable_table_df["Dependent"] = dependent
         variable_table_df["Covariate"] = covariate
-        variable_table_df[["Independent","Dependent","Covariate"]] = variable_table_df[["Independent","Dependent","Covariate"]].astype(int)
+
         if self.Poincare_combo.currentText() == "All":
             variable_table_df["Poincare"] = 1
         elif self.Poincare_combo.currentText() == "None":
@@ -545,15 +649,18 @@ class Config(QDialog, Ui_Config):
         variable_table_df["ymax"] = variable_table_df["ymax"].fillna(0)
 
         transform_data = self.transform_combo.currentData()
+        # If we have custom selections, fill it in
         if 'Custom' in transform_data and self.custom_data:
             custom_data_list = [[val['Transformation']] for val in self.custom_data.values()]
             variable_table_df.loc[variable_table_df.Alias.isin(self.custom_data.keys()), ["Transformation"]] = custom_data_list
-        elif 'None' in transform_data:
-            variable_table_df["Transformation"] = ""
+        # Otherwise, fill in for group
         else:
             all_checked = [item for item in ['raw', 'log10', 'ln', 'sqrt'] if item in transform_data]
-            variable_table_df["Transformation"] = [all_checked for _ in variable_table_df.index]
+            # Must assign each row independently b/c pandas doesnt like lists
+            for idx in np.array(dependent).nonzero()[0]:
+                variable_table_df.at[idx, "Transformation"] = all_checked
 
+        # Default to null string ""
         variable_table_df["Transformation"] = variable_table_df["Transformation"].fillna("")
 
         # Make this much cleaner, decide on a data structure!
@@ -569,8 +676,7 @@ class Config(QDialog, Ui_Config):
 
         return variable_table_df
 
-    @variable_table_df.setter
-    def variable_table_df(self, new_data):
+    def set_variable_table_df(self, new_data):
         if new_data is None:
             # TODO: this does weird things with widget placement...
             #self.reset_config()
@@ -581,7 +687,8 @@ class Config(QDialog, Ui_Config):
 
     @property
     def dependent_vars(self):
-        dependent_vars = self.variable_table_df.loc[(self.variable_table_df["Dependent"] == 1)]["Alias"]
+        var_table_df = self.get_variable_table_df()
+        dependent_vars = var_table_df.loc[(var_table_df["Dependent"] == 1)]["Alias"]
         return dependent_vars
 
     def show_custom(self):
@@ -632,42 +739,92 @@ class Config(QDialog, Ui_Config):
             return
 
         # Get this from widgets
-        variable_df = self.variable_table_df
+        variable_df = self.get_variable_table_df()
+
+        # Open Custom window
         custom_window = Custom(variable_df, self.dependent_vars)
         reply = custom_window.exec()
+
         if reply:
             # Apply results back to widgets
             self.custom_data = custom_window.data
+            self.load_custom()
 
-            # distribute updates to combo boxes
-            for var_key, combo_box in {"Poincare plot": self.Poincare_combo, "Spectral graph": self.Spectral_combo}.items():
+    def load_custom(self): 
+        # distribute updates to combo boxes
+        for var_key, combo_box in {"Poincare plot": self.Poincare_combo, "Spectral graph": self.Spectral_combo}.items():
 
-                if all([data_row[var_key] == 1 for data_row in self.custom_data.values()]):
-                    combo_box.setCurrentText("All")
+            all_options = [combo_box.itemText(i) for i in range(combo_box.count())]
+            if "Custom" in all_options:
+                combo_box.removeItem(all_options.index("Custom"))
 
-                elif any([data_row[var_key] == 1 for data_row in self.custom_data.values()]):
-                    combo_box.setCurrentText("Custom")
+            if all([data_row[var_key] == 1 for data_row in self.custom_data.values()]):
+                combo_box.setCurrentText("All")
 
-                else:
-                    combo_box.setCurrentText("None")
-                
-            # Check if we can group them without customization
-            all_selections = [tuple(data_row['Transformation']) for data_row in self.custom_data.values()]
-            
-            # If they are all the same selections
-            if len(set(all_selections)) == 1:
-                selected_options = list(set(all_selections))[0]
-                if len(selected_options) == 0:
-                    self.transform_combo.loadCustom(["None"])
-                else:
-                    self.transform_combo.loadCustom(selected_options)
+            elif any([data_row[var_key] == 1 for data_row in self.custom_data.values()]):
+                combo_box.addItem("Custom")
+                combo_box.setCurrentText("Custom")
 
-            # Otherwise we have a custom setup!
             else:
-                self.transform_combo.loadCustom(["Custom"])
+                combo_box.setCurrentText("None")
+            
+        # Check if we can group them without customization
+        all_selections = [tuple(data_row['Transformation']) for data_row in self.custom_data.values()]
+        unique_selections = set(all_selections)
+        
+        # If the set has only one value, the selections are all the same
+        if len(unique_selections) == 1:
+            selected_options = list(unique_selections)[0]
 
+            # None are selected
+            if len(selected_options) == 0:
+                self.transform_combo.loadCustom(["None"])
 
-    def update_graph_config(self, __checked=None, renamed=None, combos=None, default_value=""):
+            # or some set is selected
+            else:
+                self.transform_combo.loadCustom(selected_options)
+
+        # Otherwise we have a custom setup!
+        else:
+            self.transform_combo.loadCustom(["Custom"])
+
+    def update_hierarchical_combos(self, valid_values, combos, default_value, renamed=None, enable_set=True, first_required=False):
+        """ Populate a sequence of combo boxes which maintain dependencies on their previous sibling
+        Dependencies:
+            - Combo box enabled only if previous sibling has a selected value other than the `default_value`
+            - Valid values are the previous valid values, less the selected value of the previous sibling
+        
+        Args:
+            valid_values: initial valid values used to populate the first combo box
+            combos: list of combo boxes to populate, in order
+            default_value: default option used to populate the first index of the combos
+            renamed: tuple mapping a renamed value from its old value to its new value
+            enable_set: bool determining whether the set of combo boxes should be enabled
+                        in case there is an external dependency
+        """
+        prev_selected = enable_set
+        for i, combo in enumerate(combos):
+            combo.setEnabled(prev_selected)
+
+            # Immediately restore all following to defaults if previous not selected
+            if not prev_selected:
+                combo.blockSignals(True)
+                combo.setCurrentText(default_value)
+                combo.blockSignals(False)
+                continue
+
+            # Update value based on valid values and any renamed variables
+            _default_value = None if (first_required and i==0) else default_value
+            update_combo_values(combo, valid_values, renamed=renamed, default_value=_default_value)
+
+            # Check if the curr_value was set back to default
+            curr_value = combo.currentText()
+            prev_selected = (curr_value != default_value)
+
+            # remove this value from the options for the next boxes
+            valid_values = valid_values[valid_values != curr_value]
+
+    def update_graph_config(self, __checked=None, renamed=None):
         """
         Update the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes whenever the user selects
           a new independent variable or covariate variable via RadioButton in the variable_table
@@ -690,41 +847,12 @@ class Config(QDialog, Ui_Config):
             Populate several list attributes and dataframe attributes with text and widget statuses from self.buttonDict_variable (dict).
         """
 
+        combos = self.graph_config_combos.values()
+        default_value = "Select variable:"
         valid_values = self.get_independent_covariate_vars()
 
-        if combos is None:
-            combos = self.graph_config_combos.values()
-            default_value = "Select variable:"
+        self.update_hierarchical_combos(valid_values, combos, default_value, renamed=renamed)
 
-        prev_selected = True
-        for combo in combos:
-            combo.setEnabled(prev_selected)
-
-            # Immediately restore all following to defaults if previous not selected
-            if not prev_selected:
-                combo.blockSignals(True)
-                combo.setCurrentText(default_value)
-                combo.blockSignals(False)
-                continue
-
-            # Get current value
-            curr_value = combo.currentText()
-            # Update value based on valid values and any renamed variables
-            update_combo_values(combo, valid_values, renamed=renamed, default_value=default_value)
-
-            # Get newly updated value
-            curr_value = combo.currentText()
-            # Check if the curr_value is now back to default
-            prev_selected = (curr_value != default_value)
-
-            if prev_selected:
-                if renamed:
-                    old_name, new_name = renamed
-                    if curr_value == old_name:
-                        curr_value = new_name
-
-                # remove this value from the options for the next boxes
-                valid_values = valid_values[valid_values != curr_value]
 
     # TODO: group utilities together
     def get_independent_covariate_vars(self, df=None):
@@ -733,7 +861,7 @@ class Config(QDialog, Ui_Config):
         """
         # Default to variable table
         if df is None:
-            df = self.variable_table_df
+            df = self.get_variable_table_df()
         return df.loc[(df["Independent"] == 1) | (df['Covariate'] == 1)]['Alias'].values
 
     @property
@@ -777,19 +905,37 @@ class Config(QDialog, Ui_Config):
     def get_loop_widget_rows(self):
         headers = self.loop_table_headers
         for row in range(self.loop_table.rowCount()):
-            loop_row = {
-                "Graph name": self.loop_table.cellWidget(row, headers.index("Graph name")).text(),
-                "Variable": self.loop_table.cellWidget(row, headers.index("Variable")).currentText(),
-                "Xvar": self.loop_table.cellWidget(row, headers.index("Xvar")).currentText(),
-                "Pointdodge": self.loop_table.cellWidget(row, headers.index("Pointdodge")).currentText(),
-                "Facet1": self.loop_table.cellWidget(row, headers.index("Facet1")).currentText(),
-                "Facet2": self.loop_table.cellWidget(row, headers.index("Facet2")).currentText(),
-                "Covariates": '@'.join(self.loop_table.cellWidget(row, headers.index("Covariates")).currentData()),
-                "Inclusion": int(self.loop_table.cellWidget(row, headers.index("Inclusion")).currentText() == "Yes"),
-                "Y axis minimum": self.loop_table.cellWidget(row, headers.index("Y axis minimum")).text(),
-                "Y axis maximum": self.loop_table.cellWidget(row, headers.index("Y axis maximum")).text()}
+            loop_row = [
+                self.loop_table.cellWidget(row, headers.index("Graph name")).text(),
+                self.loop_table.cellWidget(row, headers.index("Response variable")).currentText(),
+                self.loop_table.cellWidget(row, headers.index("Xvar")).currentText(),
+                self.loop_table.cellWidget(row, headers.index("Pointdodge")).currentText(),
+                self.loop_table.cellWidget(row, headers.index("Facet1")).currentText(),
+                self.loop_table.cellWidget(row, headers.index("Facet2")).currentText(),
+                self.loop_table.cellWidget(row, headers.index("Covariates")).currentData(),
+                self.loop_table.cellWidget(row, headers.index("Y axis minimum")).text(),
+                self.loop_table.cellWidget(row, headers.index("Y axis maximum")).text(),
+                int(self.loop_table.cellWidget(row, headers.index("Include all breaths")).currentText() == "Yes")
+            ]
 
             yield loop_row
+
+    def new_other_settings_combo_box(self):
+        new_combo_box = QComboBox()
+        new_combo_box.currentIndexChanged.connect(self.update_loop)
+        return new_combo_box
+
+    def new_inclusion_combo_box(self):
+        inclusion_combo_box = QComboBox()
+        inclusion_combo_box.addItems(["No", "Yes"])
+        inclusion_combo_box.currentIndexChanged.connect(self.update_loop)
+        return inclusion_combo_box
+
+    def new_covariates_checkable_combo(self):
+        covariates_checkable_combo = CheckableComboBox()
+        covariates_checkable_combo.currentIndexChanged.connect(self.update_loop)
+        return covariates_checkable_combo
+
     
     @property
     def other_config_df(self):
@@ -812,11 +958,21 @@ class Config(QDialog, Ui_Config):
         self.other_config_df: Dataframe
             This attribute is set as a dataframe populated from self.clades_other_dict and the self.feature_combo selection.
         """
-        clades_other_dict = {row_num: widget_row_dict for row_num, widget_row_dict in enumerate(self.get_loop_widget_rows())}
-            
-        other_config_df = pd.DataFrame.from_dict(clades_other_dict)
-        other_config_df = other_config_df.transpose()
+        other_config_widget_data = self.get_loop_widget_rows()
+        other_config_df = pd.DataFrame(other_config_widget_data,
+                                       columns=["Graph",
+                                                "Variable",
+                                                "Xvar",
+                                                "Pointdodge",
+                                                "Facet1",
+                                                "Facet2",
+                                                "Covariates",
+                                                "Y axis minimum",
+                                                "Y axis maximum",
+                                                "Inclusion"])
 
+
+        # TODO: what is this trying to do?
         if self.feature_combo.currentText() != "None":
             loop_table_rows = self.loop_table.rowCount()
             if self.feature_combo.currentText() == "All":
@@ -825,11 +981,17 @@ class Config(QDialog, Ui_Config):
             else:
                 other_config_df.at[loop_table_rows-1, "Graph"] = self.feature_combo.currentText()
         
+        # TODO: notify user instead?
         # Drop anywhere with empty Graph or Variable columns
-        other_config_df.drop(
-            other_config_df.loc[
-                (other_config_df["Graph"]=="") &
-                (other_config_df["Variable"]=="")].index, inplace=True)
+        if len(other_config_df):
+            other_config_df.drop(
+                other_config_df.loc[
+                    (other_config_df["Graph"]=="") |
+                    (other_config_df["Variable"]=="")].index, inplace=True)
+        
+        # Correcting some issue with filling nas on Apnea/Sighs stuff
+        other_config_df['Inclusion'] = other_config_df['Inclusion'].fillna(0).astype(int)
+
         return other_config_df
 
     @other_config_df.setter
@@ -842,64 +1004,6 @@ class Config(QDialog, Ui_Config):
             # Populate widgets
             self.load_other_config(df=new_data)
 
-    def classy_save(self):
-        """
-        Call self.get_variable_table_df() to update self.variable_table_df with
-          the latest user selections from self.variable_table TableWidget
-        Update the relevant cells in self.variable_table_df with any custom settings
-          stored in self.custom_port
-        Update the self.configs dictionary with the new dataframe for "variable_config",
-          "graph_config", and "other_config"
-        Call self.update_graph_config_df() and self.update_other_config_df() to populate self.graph_config_df and self.other_config_df.
-
-        Parameters
-        --------
-        Custom: class
-            The Custom class inherits widgets and layouts of Ui_Custom and defines the subGUI within the STAGG settings subGUI that allows users to customize the settings for each dependent variable.
-        self.custom_port: dict
-            This attribute is either empty or a deep copy of self.custom_dict,
-            which stores the text and widgets that populate Custom.custom_table.
-        self.variable_table_df: Dataframe
-            This attribute is populated with a dataframe that contains the states of the self.variable_table widgets for each variable as stored in self.buttonDict_variable (dict).
-        self.configs: dict
-            This attribute is populated with a nested dictionary in which each item contains a dictionary unique to each settings file - variable_config.csv, graph_config.csv, and other_config.csv.
-        
-        Outputs
-        --------
-        self.variable_table_df: Dataframe
-            This attribute's dataframe is updated to include the user-selected custom settings stored in self.custom_port.
-        self.configs: dict
-            The "df" key is updated with the updated dataframes for "variable_config", "graph_config", and "other_config".
-
-        Outcomes
-        --------
-        self.get_variable_table_df()
-            This method populates several list attributes and dataframe attributes with text and widget statuses from self.buttonDict_variable (dict).
-        self.update_graph_config_df()
-            Populate self.graph_config_df with a dataframe containing the settings selected in the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes.
-        self.update_other_config_df()
-            Populate self.other_config_df with a dataframe derived from the contents of self.clades_other_dict after the latter was updated with the current states of the widgets stored in self.loop_widgets (dict).
-        """
-        # Grabbing the user's selections from the widgets and storing them in dataframes:
-        if self.custom_port == {}:
-            self.c = Custom(self)
-            self.c.save_custom()
-
-        for cladcol in self.variable_table_df:
-            for item in self.custom_port:
-                for col in self.custom_port[item]:
-                    if self.custom_port[item][col] != None:
-                        if col == "Transformation":
-                            self.custom_port[item][col] = [x.replace("raw","non") for x in self.custom_port[item][col]]
-                            self.custom_port[item][col] = [x.replace("ln","log") for x in self.custom_port[item][col]]
-                            # TODO: this need fixing?
-                            #self.variable_table_df.loc[(self.variable_table_df["Alias"] == self.custom_port[item]["Alias"]) & (cladcol == col),cladcol] = "@".join(self.custom_port[item][col])
-                            pass
-                        else:
-                            # TODO: this need fixing?
-                            #self.variable_table_df.loc[(self.variable_table_df["Alias"] == self.custom_port[item]["Alias"]),col] = self.custom_port[item][col]
-                            pass
-        
     def save_as(self):
         """
         Save the dataframes
@@ -917,39 +1021,27 @@ class Config(QDialog, Ui_Config):
         if not save_dir:
             return
 
-        # TODO: save only when starting run?
-        self.classy_save()
-
         # Determine if there are any bad files
-        for config_name, config_df in self.configs.items():
+        for config_name, (config_df, settings_class) in self.configs.items():
 
-            notify_error(f"Shaun -- Path was blank, check save function to see why: config '{config_name}'")
             path = os.path.join(save_dir, f"{config_name}.csv")
-
-            # Write df to csv at `path`
-            config_df.to_csv(path, index=False)
+            settings_class.save_file(config_df, path, self.workspace_dir)
 
         notify_info("All settings files have been saved")
 
     @property
     def configs(self):
         return {
-            'variable_config': self.variable_table_df,
-            'graph_config': self.graph_config_df,
-            'other_config': self.other_config_df}
+            'variable_config': (self.get_variable_table_df(), VariableSettings),
+            'graph_config': (self.graph_config_df, GraphSettings),
+            'other_config': (self.other_config_df, OtherSettings)}
 
     def confirm(self):
         # set data to be retrieved by caller
-        raise NotImplemented
-        # Update each dataframe
-        self.graph_config_df = None
-        self.other_config_df = None
-
-        self.data = [
-            self.variable_table_df,
-            self.graph_config_df,
-            self.other_config_df
-        ]
+        self.data = {
+            'variable': self.get_variable_table_df(),
+            'graph': self.graph_config_df,
+            'other': self.other_config_df}
         self.accept()
 
     def add_loop(self):
@@ -958,36 +1050,26 @@ class Config(QDialog, Ui_Config):
         - add another row to self.loop_table
         ]- and populate the row with the text and widgets stored in self.loop_widgets.
         """
-        #self.loop_widgets[loop_row]['Graph'] = self.loop_table.cellWidget(loop_row, 0)
+
         loop_row = self.loop_table.rowCount()
         self.loop_table.insertRow(loop_row)
 
         self.loop_table.setCellWidget(loop_row, 0, QLineEdit())
+
+        # Response Var, Xvar, Pointdodge, Facet1, Facet2
+        for idx in range(6):
+            new_combo_box = self.new_other_settings_combo_box()
+            self.loop_table.setCellWidget(loop_row, idx+1, new_combo_box)
+
+        covariates_checkable_combo = self.new_covariates_checkable_combo()
+        self.loop_table.setCellWidget(loop_row, 6, covariates_checkable_combo)
+
         self.loop_table.setCellWidget(loop_row, 7, QLineEdit())
         self.loop_table.setCellWidget(loop_row, 8, QLineEdit())
 
-        inclusion_combo_box = QComboBox()
-        inclusion_combo_box.addItems(["No", "Yes"])
-        inclusion_combo_box.currentIndexChanged.connect(self.update_loop)
+        inclusion_combo_box = self.new_inclusion_combo_box()
         self.loop_table.setCellWidget(loop_row, 9, inclusion_combo_box)
 
-        covariates_checkable_combo = CheckableComboBox()
-        #covariates_checkable_combo.addItems(self.dependent_vars)
-        covariates_checkable_combo.addItems(self.variable_names)
-        covariates_checkable_combo.currentIndexChanged.connect(self.update_loop)
-        self.loop_table.setCellWidget(loop_row, 6, covariates_checkable_combo)
-
-        # Add all combo boxes
-        for idx in range(6):
-            new_combo_box = QComboBox()
-            new_combo_box.addItems([""])
-            new_combo_box.currentIndexChanged.connect(self.update_loop)
-            #new_combo_box.addItems(self.dependent_vars)
-            new_combo_box.addItems(self.variable_names)
-            self.loop_table.setCellWidget(loop_row, idx+1, new_combo_box)
-
-        #self.loop_table.resizeColumnsToContents()
-        #self.loop_table.resizeRowsToContents()
         self.update_loop()
 
     def reset_config(self):
@@ -1000,15 +1082,31 @@ class Config(QDialog, Ui_Config):
            the updated (rebuilt) dictionaries self.loop_widgets
            and self.buttonDict_variable respectively.
         """
-        self.update_variable_table()
+        variable_table_df = self.get_default_variable_df(self.variable_names)
+        self.populate_variable_table(variable_table_df)
 
         for combo_box in self.graph_config_combos.values():
+            combo_box.blockSignals(True)
             combo_box.clear()
             combo_box.addItem("Select variable:")
+            combo_box.blockSignals(False)
 
         for combo in self.additional_dict.values():
-            combo.setCurrentText("None")
+            combo.blockSignals(True)
+            if type(combo) is CheckableComboBox:
+                combo.loadCustom(["None"])
+            else:
+                combo.setCurrentText("None")
+            combo.blockSignals(False)
 
+        self.clear_loops()
+
+    def clear_loops(self):
+        for _ in range(self.loop_table.rowCount()):
+            # CheckableComboBox keeps emitting signal as it dies...
+            # Blocking signals
+            self.loop_table.cellWidget(0, 6).blockSignals(True)
+            self.loop_table.removeRow(0)
 
     def load_configs(self, __checked, files=None):
         """
@@ -1050,31 +1148,72 @@ class Config(QDialog, Ui_Config):
 
         # Convert dataframe...
         self.variable_names = df['Column'].tolist()
+        self.aliases = df['Alias'].tolist()
 
-        self.update_variable_table()
-        '''
-        self.variable_config_dict = {}
-
-        with open(var_config_path, 'r') as f:
-            r = csv.DictReader(f)
-            for row in r:
-                for k in dict(row):
-                    if dict(row)[k] == "1":
-                        self.variable_config_dict.update({dict(row)['Column']: dict(row)})
-        '''
+        self.populate_variable_table(df)
 
         #for a in self.variable_config_dict:
         # TODO: bad! use df iteration!
-        for a, val in df.to_dict().items():
-            self.buttonDict_variable[a]['Alias'].setText(self.variable_config_dict[a]['Alias'])
-            for k in ["Independent","Dependent","Covariate"]:
-                if self.variable_config_dict[a][k] == '1':
-                    self.buttonDict_variable[a][k].setChecked(True)
+        for row_num, record in enumerate(df.to_dict('records')):
+            var_name = record['Column']  # TODO: remove - unused
+            alias_name = record['Alias']
+            self.variable_table.item(row_num, 1).setText(alias_name)
+            for i, k in enumerate(["Independent","Dependent","Covariate"]):
+                if record[k] == 1:
+                    widget = self.variable_table.cellWidget(row_num, i + 2)
+                    widget.blockSignals(True)
+                    widget.setChecked(True)
+                    widget.blockSignals(False)
+                    # we can break as there should be only one checked!
+                    break
 
-        '''
-        self.load_custom_config()
-        '''
+        # Load custom data
+        all_custom = df[df["Dependent"] == 1]
+        self.custom_data = {}
+        for record in all_custom.to_dict('records'):
+            # Clean transform values and create list
+            # Replace all 'non' with 'raw'
+            transform = [t.replace("non","raw") for t in record['Transformation'].split('@')]
+            # Replace all 'log' with 'ln', unless the text is 'log10'
+            transform = [t.replace("log","ln") if t != "log10" else t for t in transform ]
 
+            new_custom = {
+                'Variable': record['Alias'],
+                'Y axis minimum': record['ymin'],
+                'Y axis maximum': record['ymax'],
+                'Transformation': transform,
+                'Poincare plot': record['Poincare'],
+                'Spectral graph': record['Spectral']}
+            self.custom_data[record['Alias']] = new_custom
+
+        self.load_custom()
+
+        #    alias: {
+        #        'Variable': alias,
+        #        'Y axis minimum': '0',
+        #        'Y axis maximum': '0',
+        #        'Transformation': [],
+        #        'Poincare plot': 1,
+        #        'Spectral graph': 0},
+        #    }
+
+    def order_xvar(self):
+        group_name = self.Xvar_combo.currentText()
+        xvar_items = ['a', 'b', 'c']
+        new_items = self.order_items("XVAR", group_name, xvar_items)
+        # set new items to xvar
+        print("new items", new_items)
+
+    def order_items(self, window_title, group_name, items):
+        # Skip anything set to default
+        if group_name == "Select variable:":
+            return
+
+        order_window = OrderingWindow(window_title, group_name, items)
+        reply = order_window.exec()
+
+        # Return new items if user 'accepted'
+        return order_window.get_items() if reply else items
 
     def load_custom_config(self):
         """
@@ -1087,7 +1226,7 @@ class Config(QDialog, Ui_Config):
 
         self.custom_data = {}
         #for k, val in self.variable_config_dict.items():
-        for k, val in self.variable_table_df.iterrows():
+        for k, val in self.get_variable_table_df().iterrows():
             new_custom_data = {
                 'Poincare': 0,
                 'Spectral': 0,
@@ -1098,22 +1237,19 @@ class Config(QDialog, Ui_Config):
 
             if val['Poincare'] == "1":
                 new_custom_data['Poincare'] = 1
-                self.custom_dict[k]['Poincare'].setChecked(True)
 
             if val['Spectral'] == "1":
                 new_custom_data['Spectral'] = 1
-                self.custom_dict[k]['Spectral'].setChecked(True)
 
             for y in ['ymin','ymax']:
                 if val[y] != "":
                     new_custom_data[y] = val[y]
-                    self.custom_dict[k][y].setText(val[y])
 
             if val['Transformation'] != "":
                 transform = [s.replace("non","raw") and s.replace("log","ln") for s in val['Transformation'].split('@')]
                 transform = [z.replace("ln10","log10") for z in transform]
-                self.additional_dict['Transformation'].loadCustom(transform)
-                self.additional_dict['Transformation'].updateText()
+                self.transform_combo.loadCustom(transform)
+                self.transform_combo.updateText()
 
     def load_graph_config(self, graph_config_file=None, df=None):
         """
@@ -1134,10 +1270,6 @@ class Config(QDialog, Ui_Config):
         # Try getting from variable_table first
         indep_covariate_vars = self.get_independent_covariate_vars()
         
-        # If empty, then use loaded gdf
-        if not len(indep_covariate_vars):
-            indep_covariate_vars = self.get_independent_covariate_vars(gdf)
-
         for idx, combo in enumerate(self.graph_config_combos.values()):
             combo.clear()
             combo.addItem("Select variable:")
@@ -1146,7 +1278,9 @@ class Config(QDialog, Ui_Config):
 
                 # Set each box to the value stored for it's Role
                 combo_role = idx + 1
-                combo.setCurrentText([x for x in gdf.loc[(gdf['Role'] == combo_role)]['Alias'] if pd.notna(x)][0])
+                curr_selection = gdf.loc[(gdf['Role'] == combo_role) & pd.notna(gdf['Alias'])]
+                if len(curr_selection):
+                    combo.setCurrentText(curr_selection["Alias"].values[0])
 
     def load_other_config(self, other_config_file=None, df=None):
         """
@@ -1158,10 +1292,10 @@ class Config(QDialog, Ui_Config):
             odf = OtherSettings.attempt_load(other_config_file)
         else:
             odf = df.copy()
+            odf = odf.fillna("")
 
         # Reset feature comboBox
         self.feature_combo.setCurrentText("None")
-
         if "Apneas" in set(odf["Graph"]):
             self.feature_combo.setCurrentText("Apneas")
 
@@ -1171,56 +1305,42 @@ class Config(QDialog, Ui_Config):
         if ("Apneas" and "Sighs") in set(odf["Graph"]):
             self.feature_combo.setCurrentText("All")
 
-        # Remove all Apneas and Sighs items
+        # Remove all Apneas and Sighs items to leave just loop items
         odf.drop(odf.loc[(odf["Graph"]=="Apneas") | (odf["Graph"]=="Sighs")].index, inplace = True)
 
-        # Skip processing if df is empty
-        if len(odf)==0:
+        # Skip loop processing if df is empty
+        if len(odf) == 0:
             return
 
-        # Update each row of loop_table
-        for row_num in range(self.loop_table.rowCount()):
+        odf['Inclusion'] = odf['Inclusion'].astype(int)
+
+        # Clear loop table
+        self.clear_loops()
+
+        # Populate each row of loop_table
+        for row_num in odf.index:
+            self.add_loop()
             for table_idx, header in enumerate(self.loop_table_headers):
                 if header == "Covariates":
                     # TODO: we care about having dependent variables?
-                    if odf.at[row_num, 'Covariates'] != "" and len(self.dependent_vars):
-                        self.loop_widgets[row_num]['Covariates'].loadCustom(odf.at[row_num, 'Covariates'].split('@'))
-                        self.loop_widgets[row_num]['Covariates'].updateText()
+                    covariates_str = odf.at[row_num, 'Covariates']
+                    if covariates_str and len(self.dependent_vars):
+                        covariate_combo = self.loop_table.cellWidget(row_num, table_idx)
+                        covariate_combo.loadCustom(covariates_str.split('@'))
+                        covariate_combo.updateText()
                     continue
 
-                if header == "Inclusion":
-                    new_text = "Yes" if odf.at[row_num, "Covariate"] else "No"
+                if header == "Include all breaths":
+                    new_text = "Yes" if odf.at[row_num, "Inclusion"] else "No"
+                elif header == "Graph name":
+                    new_text = str(odf.at[row_num, "Graph"])
+                elif header == "Response variable":
+                    new_text = str(odf.at[row_num, "Variable"])
                 else:
                     new_text = str(odf.at[row_num, header])
 
                 write_widget(self.loop_table.cellWidget(row_num, table_idx), new_text)
 
-            # TODO: just clear loops first, then add?
-            # If row is not last row
-            if row_num < (len(odf)-1):
-                self.add_loop()
-
-        '''
-        for row_1 in range(len(odf)):
-            self.loop_table.cellWidget(row_1, 0).setText(str(odf.at[row_1, 'Graph']))
-            self.loop_table.cellWidget(row_1, 7).setText(str(odf.at[row_1, 'Y axis minimum']))
-            self.loop_table.cellWidget(row_1, 8).setText(str(odf.at[row_1, 'Y axis maximum']))
-            self.loop_table.cellWidget(row_1, 1).setCurrentText(str(odf.at[row_1, 'Variable']))
-            self.loop_table.cellWidget(row_1, 2).setCurrentText(str(odf.at[row_1, 'Xvar']))
-            self.loop_table.cellWidget(row_1, 3).setCurrentText(str(odf.at[row_1, 'Pointdodge']))
-            self.loop_table.cellWidget(row_1, 4).setCurrentText(str(odf.at[row_1, 'Facet1']))
-            self.loop_table.cellWidget(row_1, 5).setCurrentText(str(odf.at[row_1, 'Facet2']))
-
-            if odf.at[row_1,'Inclusion'] == 1:
-                self.loop_table.cellWidget(row_1, 9).setCurrentText("Yes")
-            else:
-                self.loop_table.cellWidget(row_1, 9).setCurrentText("No")
-
-            if odf.at[row_1, 'Covariates'] != "":
-                if self.dependent_vars != []:
-                    self.loop_widgets[row_1]['Covariates'].loadCustom([w for w in odf.at[row_1, 'Covariates'].split('@')])
-                    self.loop_widgets[row_1]['Covariates'].updateText()
-        '''
 
     def checkable_ind(self):
         """
@@ -1281,11 +1401,11 @@ class ConfigSettings(Settings):
         return {'variable': variable_data, 'graph': graph_data, 'other': other_data}
 
     # Overwriting parent method for list of files
-    @classmethod
-    def validate(files):
+    @staticmethod
+    def validate_list(files):
         right_size = len(files) == 3
         valid_files = []
-        files_represented = []
+        files_represented = set()
         for file in files:
             if 'variable' in file:
                 valid_files.append(VariableSettings.validate(file))
@@ -1311,7 +1431,7 @@ class ConfigSettings(Settings):
                 return None
 
             # If good file, return
-            if cls.validate(file):
+            if cls.validate_list(files):
                 return_data = {}
                 for file in files:
                     if 'variable' in file:
@@ -1329,6 +1449,11 @@ class ConfigSettings(Settings):
             error_msg+= "\n  - graph config"
             error_msg+= "\n  - other config"
             notify_error(error_msg)
+
+    @staticmethod
+    def _save_file(filepath, df):
+        # Write df to csv at `path`
+        df.to_csv(filepath, index=False)
 
 
 class VariableSettings(ConfigSettings):
@@ -1350,39 +1475,16 @@ class VariableSettings(ConfigSettings):
         return df
 
     @staticmethod
-    def _save_file(filepath, data):
-        raise NotImplemented
-        # TODO: make this actual data, not widget
-        summary_table = data
+    def _save_file(filepath, df):
+        # Rename transform labels
+        populated_trans = df[df["Transformation"] != ""]
+        for i, record in populated_trans.iterrows():
+            trans = record['Transformation']
+            trans = [t.replace("raw", "non") for t in trans]
+            trans = [t.replace("ln", "log") for t in trans]
+            df.at[i, 'Transformation'] = '@'.join(trans)
 
-        # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
-        with open(filepath, 'w', newline = '') as stream:
-            writer = csv.writer(stream)
-            header = []
-
-            for row in range(summary_table.rowCount()):
-                item = summary_table.item(row,0)
-                if item.text() == "nan":
-                    header.append("")
-                else:
-                    header.append(item.text())
-
-            for column in range(summary_table.columnCount()):
-                coldata = []
-
-                for row in range(summary_table.rowCount()):
-                    item = summary_table.item(row, column)
-                    if item.text() == "nan":
-                        coldata.append("")
-                    else:
-                        coldata.append(item.text())
-                writer.writerow(coldata)
-
-        # This is ridiculous.
-        auto = pd.read_csv(filepath)
-        auto['Key'] = auto['Alias']
-        auto.to_csv(filepath, index=False)
-        
+        df.to_csv(filepath, index=False)
 
 class GraphSettings(ConfigSettings):
 
@@ -1397,40 +1499,6 @@ class GraphSettings(ConfigSettings):
         gdf = pd.read_csv(filepath, index_col=False)
         return gdf
 
-    @staticmethod
-    def _save_file(filepath, data):
-        raise NotImplemented
-        # TODO: make this actual data, not widget
-        summary_table = data
-
-        # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
-        with open(filepath, 'w', newline = '') as stream:
-            writer = csv.writer(stream)
-            header = []
-
-            for row in range(summary_table.rowCount()):
-                item = summary_table.item(row,0)
-                if item.text() == "nan":
-                    header.append("")
-                else:
-                    header.append(item.text())
-
-            for column in range(summary_table.columnCount()):
-                coldata = []
-
-                for row in range(summary_table.rowCount()):
-                    item = summary_table.item(row, column)
-                    if item.text() == "nan":
-                        coldata.append("")
-                    else:
-                        coldata.append(item.text())
-                writer.writerow(coldata)
-
-        # This is ridiculous.
-        auto = pd.read_csv(filepath)
-        auto['Key'] = auto['Alias']
-        auto.to_csv(filepath, index=False)
-        
 
 class OtherSettings(ConfigSettings):
 
@@ -1442,40 +1510,21 @@ class OtherSettings(ConfigSettings):
         return "other" in file_basename and "config" in file_basename
 
     def attempt_load(filepath):
-        odf = pd.read_csv(filepath, index_col=False)
+        odf = pd.read_csv(filepath, index_col=False, keep_default_na=False)
         return odf
 
     @staticmethod
-    def _save_file(filepath, data):
-        raise NotImplemented
-        # TODO: make this actual data, not widget
-        summary_table = data
+    def _save_file(filepath, df):
+        # If there are covariates, join them into a string with sep='@'
+        #func = lambda x : '@'.join(x) if x else x
+        #df['Covariates'] = df['Covariates'].apply(func)
 
-        # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
-        with open(filepath, 'w', newline = '') as stream:
-            writer = csv.writer(stream)
-            header = []
+        df = df.fillna("")
 
-            for row in range(summary_table.rowCount()):
-                item = summary_table.item(row,0)
-                if item.text() == "nan":
-                    header.append("")
-                else:
-                    header.append(item.text())
+        # Rename transform labels
+        for i, record in df.iterrows():
+            covariates = record['Covariates']
+            if covariates:
+                df.at[i, 'Covariates'] = '@'.join(covariates)
 
-            for column in range(summary_table.columnCount()):
-                coldata = []
-
-                for row in range(summary_table.rowCount()):
-                    item = summary_table.item(row, column)
-                    if item.text() == "nan":
-                        coldata.append("")
-                    else:
-                        coldata.append(item.text())
-                writer.writerow(coldata)
-
-        # This is ridiculous.
-        auto = pd.read_csv(filepath)
-        auto['Key'] = auto['Alias']
-        auto.to_csv(filepath, index=False)
-        
+        df.to_csv(filepath, index=False)

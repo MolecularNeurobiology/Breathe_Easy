@@ -121,7 +121,7 @@ class Auto(QDialog, Ui_Auto):
         self.workspace_dir = workspace_dir
 
         # Populate default template keys
-        self.auto_setting_combo.addItems([x for x in self.defaults])
+        self.auto_setting_combo.addItems(self.defaults)
 
         # If we've already selected a file, load it in
         if self.loaded_data is not None:

@@ -1004,8 +1004,10 @@ class Ui_Auto(object):
         self.autotabs.addTab(self.inc_tab, "")
         self.frame_tab = QtWidgets.QWidget()
         self.frame_tab.setObjectName("frame_tab")
+
         self.frame_tab_layout = QtWidgets.QHBoxLayout()
         self.frame_tab_layout.setObjectName("frame_tab_layout")
+
         self.summary_table = QtWidgets.QTableWidget(self.frame_tab)
         self.summary_table.setGeometry(QtCore.QRect(0, 0, 2701, 1251))
         self.summary_table.setObjectName("summary_table")
@@ -1014,6 +1016,7 @@ class Ui_Auto(object):
         self.frame_tab_layout.addWidget(self.summary_table)
         self.frame_tab.setLayout(self.frame_tab_layout)
         self.autotabs.addTab(self.frame_tab, "")
+
         self.horizontalLayout_2.addWidget(self.autotabs)
         spacerItem172 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem172)

@@ -2,10 +2,34 @@
 from abc import abstractstaticmethod
 import os
 from pathlib import Path
-from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem, QComboBox, QCheckBox
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem, QComboBox, QCheckBox, QLineEdit
 from checkable_combo_box import CheckableComboBox
 
 # TODO: split into PyQt-specific utils
+def update_checkable_combo_values(combo, valid_values, renamed=None, default_value=""):
+    combo.blockSignals(True)
+
+    # Store current value
+    curr_values = combo.currentData()
+
+    # Clear out and add new items
+    combo.clear()
+    if default_value is not None:
+        combo.addItem(default_value)
+    combo.addItems(valid_values)
+
+    # Check if I need to update the name of my selected value
+    if renamed:
+        old_name, new_name = renamed
+        if old_name in curr_values:
+            idx = curr_values.index(old_name)
+            curr_values[idx] = new_name
+
+    # if curr selection is still indep/cov, keep in box
+    still_selected = [val for val in curr_values if val in valid_values]
+    combo.loadCustom(still_selected)
+
+    combo.blockSignals(False)
 
 def update_combo_values(combo, valid_values, renamed=None, default_value=""):
     combo.blockSignals(True)
@@ -15,7 +39,8 @@ def update_combo_values(combo, valid_values, renamed=None, default_value=""):
 
     # Clear out and add new items
     combo.clear()
-    combo.addItems([default_value])
+    if default_value is not None:
+        combo.addItem(default_value)
     combo.addItems(valid_values)
 
     # Check if I need to update the name of my selected value
@@ -50,10 +75,14 @@ def read_widget(widget):
     return widget_data
 
 def write_widget(widget, text):
-    if widget is QComboBox:
+    widget.blockSignals(True)
+    if type(widget) is QComboBox:
         widget.setCurrentText(text)
+    elif type(widget) is QLineEdit:
+        widget.setText(text)
     else:
         raise RuntimeError(f"Cannot write {type(widget)}!!")
+    widget.blockSignals(False)
 
 def notify_error(msg, title="Error"):
     QMessageBox.critical(None, title, msg)

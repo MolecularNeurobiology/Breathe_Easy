@@ -3,17 +3,17 @@ from PyQt5.QtWidgets import QComboBox, QStyledItemDelegate, qApp
 from PyQt5.QtGui import QPalette, QFontMetrics, QStandardItem
 from PyQt5.QtCore import QEvent, Qt
 
+# Subclass Delegate to increase item height
+class Delegate(QStyledItemDelegate):
+    def sizeHint(self, option, index):
+        size = super().sizeHint(option, index)
+        return size
 
 class CheckableComboBox(QComboBox):
     # source: https://gis.stackexchange.com/questions/350148/qcombobox-multiple-selection-pyqt5
     """
     The CheckableComboBox class populates a comboBox with checkable items (checkboxes).
     """
-    # Subclass Delegate to increase item height
-    class Delegate(QStyledItemDelegate):
-        def sizeHint(self, option, index):
-            size = super().sizeHint(option, index)
-            return size
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -27,10 +27,10 @@ class CheckableComboBox(QComboBox):
         self.lineEdit().setPalette(palette)
 
         # Use custom delegate
-        self.setItemDelegate(CheckableComboBox.Delegate())
+        self.setItemDelegate(Delegate())
 
         # Update the text when an item is toggled
-        self.model().dataChanged.connect(self.updateText)
+        self.model().dataChanged.connect(self.updateData)
 
         # Hide and show popup when clicking the line edit
         self.lineEdit().installEventFilter(self)
@@ -44,8 +44,53 @@ class CheckableComboBox(QComboBox):
         self.updateText()
         super().resizeEvent(event)
 
-    def eventFilter(self, object, event):
+    def updateData(self, new_index):
+        new_item = new_index.data()
 
+        model = self.model()
+        checked_items = [model.item(i).text() for i in range(model.rowCount()) if model.item(i).checkState() == Qt.Checked]
+
+        # If none is selected, clear everything
+        if new_item == "None":
+            self.check_items(["None"])
+        elif new_item == "Custom":
+            self.check_items(["Custom"])
+        # If something other than custom is selected, unselect custom
+        elif "Custom" in checked_items and len(checked_items) > 1:
+            self.uncheck_custom()
+
+    def check_items(self, items):
+
+        model = self.model()
+        all_options = [model.item(i).text() for i in range(model.rowCount())]
+
+        # If we pick custom, let that be the only thing we pick
+        if "Custom" in items:
+            items = ["Custom"]
+            # Make sure it's an option in the list
+            if "Custom" not in all_options:
+                self.addItem("Custom")
+                all_options.append("Custom")
+        elif "None" in items:
+            items = []
+
+        # Prevent any callbacks used for user selection on modifying model
+        model.blockSignals(True)
+
+        # Each index in model
+        for i, text in enumerate(all_options):
+            # If this one selected, check it
+            if text in items:
+                model.item(i).setCheckState(Qt.Checked)
+
+            # Otherwise, uncheck it
+            else:
+                model.item(i).setCheckState(Qt.Unchecked)
+
+        model.blockSignals(False)
+
+    def eventFilter(self, object, event):
+        # If clicking lineedit, toggle popup
         if object == self.lineEdit():
             if event.type() == QEvent.MouseButtonRelease:
                 if self.closeOnLineEditClick:
@@ -55,8 +100,12 @@ class CheckableComboBox(QComboBox):
                 return True
             return False
 
-        if object == self.view().viewport():
+        # If clicking an item in the viewport
+        elif object == self.view().viewport():
+
+            # If mouse released, toggle the check of the item under cursor
             if event.type() == QEvent.MouseButtonRelease:
+
                 index = self.view().indexAt(event.pos())
                 item = self.model().item(index.row())
 
@@ -71,11 +120,22 @@ class CheckableComboBox(QComboBox):
         super().showPopup()
         # When the popup is displayed, a click on the lineedit should close it
         self.closeOnLineEditClick = True
+        
+        # Display nothing while selecting in the popup
+        # Will update on close
+        self.lineEdit().clear()
 
     def hidePopup(self):
         super().hidePopup()
         # Used to prevent immediate reopening when clicking on the lineEdit
         self.startTimer(100)
+
+        # Remove Custom from list if it's not being used
+        #model = self.model()
+        #checked_items = [model.item(i).text() for i in range(model.rowCount()) if model.item(i).checkState() == Qt.Checked]
+        #if "Custom" not in checked_items:
+        #    self.remove_custom()
+
         # Refresh the display text when closing
         self.updateText()
 
@@ -89,26 +149,41 @@ class CheckableComboBox(QComboBox):
         for i in range(self.model().rowCount()):
             if self.model().item(i).checkState() == Qt.Checked:
                 texts.append(self.model().item(i).text())
+
         text = ", ".join(texts)
 
         # Compute elided text (with "...")
         metrics = QFontMetrics(self.lineEdit().font())
         elidedText = metrics.elidedText(text, Qt.ElideRight, self.lineEdit().width())
+        old_text = self.lineEdit().text()
         self.lineEdit().setText(elidedText)
 
-    def loadCustom(self, tran):
+        if old_text != elidedText:
+            self.currentIndexChanged.emit(1)
+
+    def uncheck_custom(self):
+        model = self.model()
+        all_text = [model.item(i).text() for i in range(model.rowCount())]
+        if "Custom" in all_text:
+            custom_idx = all_text.index("Custom")
+            self.model().blockSignals(True)
+            model.item(custom_idx).setCheckState(Qt.Unchecked)
+            self.model().blockSignals(False)
+
+    def remove_custom(self):
+        model = self.model()
+        all_text = [model.item(i).text() for i in range(model.rowCount())]
+        if "Custom" in all_text:
+            custom_idx = all_text.index("Custom")
+            self.removeItem(custom_idx)
+
+    def loadCustom(self, items):
         """
         Check all the items listed in tran
         """
-        # Each index in model
-        for i in range(self.model().rowCount()):
-            # If this one selected, check it
-            if self.model().item(i).text() in tran:
-                self.model().item(i).setCheckState(Qt.Checked)
-
-            # Otherwise, uncheck it
-            else:
-                self.model().item(i).setCheckState(Qt.Unchecked)
+        self.remove_custom()
+        self.check_items(items)
+        self.updateText()
 
     def addItem(self, text, data=None):
         item = QStandardItem()
@@ -123,10 +198,10 @@ class CheckableComboBox(QComboBox):
 
     def addItems(self, texts, datalist=None):
         for i, text in enumerate(texts):
-            try:
-                data = datalist[i]
-            except Exception as e:
+            if datalist is None:
                 data = None
+            else:
+                data = datalist[i]
             self.addItem(text, data)
 
     def currentData(self):

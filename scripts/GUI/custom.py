@@ -1,8 +1,8 @@
 
-from PyQt5.QtWidgets import QDialog, QTableWidget, QComboBox, QTableWidgetItem, QCheckBox
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QCheckBox
 from PyQt5.QtCore import Qt
 from checkable_combo_box import CheckableComboBox
-from util import read_widget, notify_info
+from util import read_widget
 from ui.custom_config import Ui_Custom
 
 class Custom(QDialog, Ui_Custom):
@@ -125,11 +125,10 @@ class Custom(QDialog, Ui_Custom):
             'Transformation': ""
         }
 
-        # TODO: man, we need to stop using pandas...
         for row, var_name in enumerate(self.dependent_vars):
             vals = custom_data[custom_data.Alias == var_name]
             if len(vals):
-                vals = vals.to_dict('r')[0]
+                vals = vals.to_dict('records')[0]
             else:
                 vals = default_vals
 

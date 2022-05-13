@@ -64,6 +64,10 @@ class Ui_Basic(object):
         self.autotabs.setObjectName("autotabs")
         self.basic_tab = QtWidgets.QWidget()
         self.basic_tab.setObjectName("basic_tab")
+
+        self.basic_tab_layout = QtWidgets.QHBoxLayout()
+        self.basic_tab_layout.setObjectName("basic_tab_layout")
+
         self.layoutWidget_2 = QtWidgets.QWidget(self.basic_tab)
         self.layoutWidget_2.setGeometry(QtCore.QRect(0, 0, 2451, 1291))
         self.layoutWidget_2.setObjectName("layoutWidget_2")
@@ -396,9 +400,16 @@ class Ui_Basic(object):
         self.horizontalLayout_11.setStretch(2, 1)
         self.horizontalLayout_11.setStretch(3, 5)
         self.horizontalLayout_11.setStretch(4, 1)
+        self.basic_tab_layout.addWidget(self.layoutWidget_2)
+        self.basic_tab.setLayout(self.basic_tab_layout)
         self.autotabs.addTab(self.basic_tab, "")
+
         self.rig_tab = QtWidgets.QWidget()
         self.rig_tab.setObjectName("rig_tab")
+
+        self.rig_tab_layout = QtWidgets.QHBoxLayout()
+        self.rig_tab_layout.setObjectName("rig_tab_layout")
+
         self.layoutWidget_3 = QtWidgets.QWidget(self.rig_tab)
         self.layoutWidget_3.setGeometry(QtCore.QRect(0, 0, 2451, 1291))
         self.layoutWidget_3.setObjectName("layoutWidget_3")
@@ -864,9 +875,16 @@ class Ui_Basic(object):
         self.horizontalLayout_10.setStretch(2, 1)
         self.horizontalLayout_10.setStretch(3, 5)
         self.horizontalLayout_10.setStretch(4, 1)
+        self.rig_tab_layout.addWidget(self.layoutWidget_3)
+        self.rig_tab.setLayout(self.rig_tab_layout)
         self.autotabs.addTab(self.rig_tab, "")
+
         self.filter_tab = QtWidgets.QWidget()
         self.filter_tab.setObjectName("filter_tab")
+
+        self.filter_tab_layout = QtWidgets.QHBoxLayout()
+        self.filter_tab_layout.setObjectName("filter_tab_layout")
+
         self.layoutWidget_4 = QtWidgets.QWidget(self.filter_tab)
         self.layoutWidget_4.setGeometry(QtCore.QRect(0, 0, 2451, 1291))
         self.layoutWidget_4.setObjectName("layoutWidget_4")
@@ -1135,20 +1153,29 @@ class Ui_Basic(object):
         self.horizontalLayout_18.setStretch(2, 1)
         self.horizontalLayout_18.setStretch(3, 5)
         self.horizontalLayout_18.setStretch(4, 1)
+
+        self.filter_tab_layout.addWidget(self.layoutWidget_4)
+        self.filter_tab.setLayout(self.filter_tab_layout)
         self.autotabs.addTab(self.filter_tab, "")
+
         self.frame_tab = QtWidgets.QWidget()
         self.frame_tab.setObjectName("frame_tab")
+
+        self.frame_tab_layout = QtWidgets.QHBoxLayout()
+        self.frame_tab_layout.setObjectName("frame_tab_layout")
+
         self.summary_table = QtWidgets.QTableWidget(self.frame_tab)
         self.summary_table.setGeometry(QtCore.QRect(0, 0, 2451, 1261))
-        font = QtGui.QFont()
-        font.setPointSize(8)
-        self.summary_table.setFont(font)
         self.summary_table.setSizeAdjustPolicy(QtWidgets.QAbstractScrollArea.AdjustToContents)
         self.summary_table.setObjectName("summary_table")
         self.summary_table.setColumnCount(0)
         self.summary_table.setRowCount(0)
         self.summary_table.horizontalHeader().setCascadingSectionResizes(True)
+
+        self.frame_tab_layout.addWidget(self.summary_table)
+        self.frame_tab.setLayout(self.frame_tab_layout)
         self.autotabs.addTab(self.frame_tab, "")
+
         self.horizontalLayout_2.addWidget(self.autotabs)
         spacerItem213 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem213)

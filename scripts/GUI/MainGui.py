@@ -37,7 +37,7 @@ from util import ask_user, notify_error, notify_info, notify_warning
 from ui.form import Ui_Plethysmography
 
 # TODO: only for development!
-AUTOLOAD = False
+AUTOLOAD = True
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -436,8 +436,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.basicap_df = None
 
          # Populate GUI widgets with experimental condition choices: 
-        self.necessary_timestamp_box.addItems([x for x in self.bc_config['Dictionaries']['Auto Settings']['default'].keys()])
-        self.parallel_combo.addItems([str(num) for num in list(range(1,os.cpu_count()+1))])
+        self.necessary_timestamp_box.addItems(list(self.bc_config['Dictionaries']['Auto Settings']['default'].keys()))
+        self.parallel_combo.addItems([str(num) for num in range(1, os.cpu_count()+1)])
 
         # Analysis parameters
         os.chdir(os.path.join(Path(__file__).parent.parent.parent))
@@ -997,6 +997,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # If we already have data for all the configs, use this
         if self.config_data is not None:
             input_data = self.config_data
+            breath_df = None
         
         # Check for import options
         else:
@@ -1026,7 +1027,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             if selected_option == 'basspro_output':
                 # load basspro output files
-                # TODO
+                # TODO: still need metadata file -- jk, metadata should be embedded in json
+                # TODO: get them to write a function to import a json file
+                #   need to check all json files to make sure we have all the right/consistent information ??
+                #   let BCM write function
                 notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
                 return
                 with open(self.stagg_input_files[0]) as first_json:
@@ -1042,90 +1046,19 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     soup = bs(bc, 'html.parser')
                 for child in soup.breathcaller_outputs.stripped_strings:
                     breath_df.append(child)
-                print(breath_df)
                 input_data = None
 
 
         # Open Config editor GUI
         # TODO: align variable_config name with variable_table name in Config class
-        new_config_data = ConfigSettings.edit(breath_df,
+        new_config_data = ConfigSettings.edit(self.rc_config['References']['Definitions'],
+                                              breath_df,
                                               input_data,
-                                              self.rc_config['References']['Definitions'],
                                               self.workspace_dir)
         if new_config_data is not None:
             self.config_data = new_config_data
 
 
-        # If we already have working data, use that
-        if self.variable_config_df is not None:
-            stagg_settings_window.check_load_variable_config(open_file=False)
-
-            # show the STAGG settings subGUI
-            stagg_settings_window.exec()
-
-        # If we have json stagg input files
-        elif self.stagg_input_files and any(a.endswith(".json") for a in self.stagg_input_files):
-
-            # If we also have metadata and sections file
-            if self.metadata and (self.autosections or self.mansections):
-
-                # Ask user which they want to use
-                thinb = Thinbass(self)
-                if thinb.exec():
-                    source = thinb.get_value()
-                    
-                    # Use settings files
-                    if source == 'settings':
-                        pass
-
-                    # Use stagg input (basspro output)
-                    elif source == 'output':
-                        # TODO
-                        notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
-                        return
-                        with open(self.stagg_input_files[0]) as first_json:
-                            bp_output = json.load(first_json)
-                        for k in bp_output.keys():
-                            self.breath_df.append(k)
-
-                    else:
-                        return
-
-                    self.new_variable_config()
-
-                # Cancelled
-                else:
-                    return
-                    
-            # Use settings files
-            else:
-                # TODO
-                notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
-                return
-                self.new_variable_config()
-
-        # Use settings files if we have them
-        elif self.metadata and (self.autosections or self.mansections):
-            self.new_variable_config()
-
-        # Guide the user through providing the required input if there is no input.
-        else:
-            self.thorb = Thorbass(self)
-            self.thorb.show()
-            self.thorb.message_received(
-                'Missing source files',
-                f"One or more of the files used to build the variable list has not been selected.\n" + \
-                    "Would you like to open an existing set of variable configuration files or create a new one?",
-                self.new_variable_config,
-                lambda : stagg_settings_window.check_load_variable_config(open_file=True))
-
-
-        # Update MainGUI with config paths
-        for config_name in self.configs:
-            for item in self.variable_list.findItems(config_name,Qt.MatchContains):
-                self.variable_list.takeItem(self.variable_list.row(item))
-            self.variable_list.addItem(self.configs[config_name]['path'])
-            
     def update_breath_df(self, updated_file):
         """
         Ask the user if they want to update the self.breath_df list to include the

@@ -54,7 +54,7 @@ class Manual(QDialog, Ui_Manual):
         self.data = deepcopy(data)
         self.workspace_dir = workspace_dir
 
-        self.preset_menu.addItems([x for x in self.defaults.keys()])
+        self.preset_menu.addItems(list(self.defaults.keys()))
 
         self.datapad = None
         self.preset = None
