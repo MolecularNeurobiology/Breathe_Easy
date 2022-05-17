@@ -80,7 +80,7 @@ class Config(QDialog, Ui_Config):
     Ui_Config: class
         The Config class inherits widgets and layouts defined in the Ui_Config class.
     """
-    def __init__(self, ref_definitions, variable_names=None, data=None, workspace_dir=""):
+    def __init__(self, ref_definitions, data, col_vals, workspace_dir=""):
         """
         Instantiate the Config class.
 
@@ -113,13 +113,9 @@ class Config(QDialog, Ui_Config):
         ##   ##   ##   ##   ##
 
         # GET INPUTS #
-        # We must have column names
-        if not variable_names and not data:
-            notify_error("Must provide columns for STAGG settings")
-            return
-        
         self.workspace_dir = workspace_dir
         self.ref_definitions = ref_definitions
+        self.col_vals = col_vals
         self.custom_data = None
 
         ''' TODO: do we need to require loading configs?
@@ -129,22 +125,12 @@ class Config(QDialog, Ui_Config):
                 self.reject()   
         '''
 
-        # We can allow "None" current information
-        # These setters will populate GUI with df data
-        # TODO: streamline this to construct default df
-        if data is not None:
-            variable_config_df = data['variable']
-        elif variable_names:
-            variable_config_df = self.get_default_variable_df(variable_names)
-        else:
-            RuntimeError("Config must receive past data or list of variable names")
-
+        variable_config_df = data['variable']
         self.populate_variable_table(variable_config_df)
 
         # Do this after populating variable table
-        if data is not None:
-            self.graph_config_df = data['graph'].copy()
-            self.other_config_df = data['other'].copy()
+        self.graph_config_df = data['graph'].copy() if data['graph'] else None
+        self.other_config_df = data['other'].copy() if data['other'] else None
 
         self.update_loop()
         self.cascade_variable_table_update()
@@ -458,24 +444,6 @@ class Config(QDialog, Ui_Config):
         for button in help_buttons:
             button.clicked.connect(self.reference_event)
     
-    @staticmethod
-    def get_default_variable_df(variable_names):
-        default_values = [0, 0, 0, 0, 0, 0, 0, []]
-        default_data = [[var_name, var_name] + default_values for var_name in variable_names]
-        variable_table_df = pd.DataFrame(
-            default_data,
-            columns=["Column",
-                     "Alias",
-                     "Independent",
-                     "Dependent",
-                     "Covariate",
-                     "ymin",
-                     "ymax",
-                     "Poincare",
-                     "Spectral",
-                     "Transformation"])
-        return variable_table_df
-
 
     def populate_variable_table(self, variable_table_df):
         """
@@ -520,8 +488,8 @@ class Config(QDialog, Ui_Config):
         # Setting the number of rows in each table upon opening the window:
         self.variable_table.setRowCount(len(variable_table_df))
 
-        self.variable_names = variable_table_df['Column'].values
-        self.aliases = variable_table_df['Alias'].values
+        self.variable_names = variable_table_df['Column'].tolist()
+        self.aliases = variable_table_df['Alias']
 
         self.variable_table.blockSignals(True)
         
@@ -967,8 +935,8 @@ class Config(QDialog, Ui_Config):
                                                 "Facet1",
                                                 "Facet2",
                                                 "Covariates",
-                                                "Y axis minimum",
-                                                "Y axis maximum",
+                                                "ymin",
+                                                "ymax",
                                                 "Inclusion"])
 
 
@@ -1082,7 +1050,7 @@ class Config(QDialog, Ui_Config):
            the updated (rebuilt) dictionaries self.loop_widgets
            and self.buttonDict_variable respectively.
         """
-        variable_table_df = self.get_default_variable_df(self.variable_names)
+        variable_table_df = ConfigSettings.get_default_variable_df(self.variable_names)
         self.populate_variable_table(variable_table_df)
 
         for combo_box in self.graph_config_combos.values():
@@ -1104,7 +1072,7 @@ class Config(QDialog, Ui_Config):
     def clear_loops(self):
         for _ in range(self.loop_table.rowCount()):
             # CheckableComboBox keeps emitting signal as it dies...
-            # Blocking signals
+            # Blocking signals to prevent errors
             self.loop_table.cellWidget(0, 6).blockSignals(True)
             self.loop_table.removeRow(0)
 
@@ -1148,7 +1116,7 @@ class Config(QDialog, Ui_Config):
 
         # Convert dataframe...
         self.variable_names = df['Column'].tolist()
-        self.aliases = df['Alias'].tolist()
+        self.aliases = df['Alias']
 
         self.populate_variable_table(df)
 
@@ -1168,7 +1136,7 @@ class Config(QDialog, Ui_Config):
                     break
 
         # Load custom data
-        all_custom = df[df["Dependent"] == 1]
+        all_custom = df[df["Dependent"] == 1].fillna("")
         self.custom_data = {}
         for record in all_custom.to_dict('records'):
             # Clean transform values and create list
@@ -1197,23 +1165,25 @@ class Config(QDialog, Ui_Config):
         #        'Spectral graph': 0},
         #    }
 
-    def order_xvar(self):
-        group_name = self.Xvar_combo.currentText()
-        xvar_items = ['a', 'b', 'c']
-        new_items = self.order_items("XVAR", group_name, xvar_items)
-        # set new items to xvar
-        print("new items", new_items)
+    def order_items(self, combo_name):
+        combo = self.graph_config_combos[combo_name]
+        alias_name = combo.currentText()
+        alias_idx, = np.where(self.aliases == alias_name)[0]
+        print(np.where(self.aliases == alias_name))
+        print(alias_idx)
+        group_name = self.variable_names[alias_idx]
 
-    def order_items(self, window_title, group_name, items):
         # Skip anything set to default
         if group_name == "Select variable:":
             return
 
-        order_window = OrderingWindow(window_title, group_name, items)
-        reply = order_window.exec()
+        items = self.col_vals[group_name]
 
-        # Return new items if user 'accepted'
-        return order_window.get_items() if reply else items
+        order_window = OrderingWindow(combo_name, group_name, items)
+        reply = order_window.exec()
+        if reply:
+            # set new items
+            self.col_vals[group_name] = order_window.get_items()
 
     def load_custom_config(self):
         """
@@ -1454,6 +1424,25 @@ class ConfigSettings(Settings):
     def _save_file(filepath, df):
         # Write df to csv at `path`
         df.to_csv(filepath, index=False)
+
+    @staticmethod
+    def get_default_variable_df(variable_names):
+        default_values = [0, 0, 0, 0, 0, 0, 0, []]
+        default_data = [[var_name, var_name] + default_values for var_name in variable_names]
+        variable_table_df = pd.DataFrame(
+            default_data,
+            columns=["Column",
+                     "Alias",
+                     "Independent",
+                     "Dependent",
+                     "Covariate",
+                     "ymin",
+                     "ymax",
+                     "Poincare",
+                     "Spectral",
+                     "Transformation"])
+        return variable_table_df
+
 
 
 class VariableSettings(ConfigSettings):

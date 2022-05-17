@@ -7,7 +7,9 @@ version 5 trillion
 """
 
 import csv
+from glob import glob
 import queue
+import sys
 import traceback
 from pathlib import Path
 import datetime
@@ -21,20 +23,65 @@ import threading
 import MainGUIworker
 from bs4 import BeautifulSoup as bs
 
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog
-from PyQt5.QtCore import QThreadPool, pyqtSlot, Qt
+from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog, QApplication
+from PyQt5.QtCore import QThreadPool, pyqtSlot, Qt, QTimer, QThread, pyqtSignal
 
 from thumbass_controller import Thumbass
 from thinbass_controller import Thinbass
-from thorbass_controller import Thorbass
 from auto import AutoSettings
 from basic import BasicSettings
 from manual import ManualSettings
 from AnnotGUI import MetadataSettings
 from config import GraphSettings, OtherSettings, VariableSettings, ConfigSettings
-from util import ask_user, notify_error, notify_info, notify_warning
+from util import Settings, ask_user_ok, ask_user_yes, notify_error, notify_info, notify_warning
+
+sys.path.append("scripts")
+from columns_and_values_tools import columns_and_values_from_jsons, columns_and_values_from_settings
 
 from ui.form import Ui_Plethysmography
+
+class Thread(QThread):
+    progress = pyqtSignal(str)
+
+    def __init__(self, json_paths):
+        super().__init__()
+        self.json_paths = json_paths
+        self._quit = False
+        self.output = None
+
+    def run(self):
+        """
+        Loop through yielded progress messages
+        Catch return value as StopIteration value
+        Break early if `quit()` has been called
+        """
+
+        # Get an iterator from the function call
+        it = columns_and_values_from_jsons(self.json_paths)
+
+        while True:
+            # Exit if quit flag is set
+            if self._quit:
+                self.progress.emit("Thread terminated")
+                break
+
+            try:
+                # Process code up to next yielded message
+                progress_message = next(it)
+
+                # Emit the message
+                self.progress.emit(progress_message)
+
+            # Get return value
+            except StopIteration as e:
+                self.output = e.value
+                break
+
+    def quit(self):
+        """
+        Set `_quit` boolean to true, for exit on iterator loop
+        """
+        self._quit = True
 
 # TODO: only for development!
 AUTOLOAD = True
@@ -395,6 +442,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.qthreadpool.setMaxThreadCount(1)
         self.threads = {}
         self.workers = {}
+        self.import_thread = None
+        self.imported_files = None
+        self.col_vals = None
 
         self.setWindowTitle("Plethysmography Analysis Pipeline")
         self.showMaximized()
@@ -450,6 +500,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.workspace_dir = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG"
             self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
             self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
+
+            # Pick either RData or json
+            if False:
+                self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
+            else:
+                json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/JSON files/*"
+                for json_path in glob(json_glob):
+                    self.breath_list.addItem(json_path)
         
         
     # method with slot decorator to receive signals from the worker running in
@@ -930,7 +988,151 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # show the STAGG settings subGUI
         self.stagg_settings_window.exec()
         
-    def show_stagg_settings(self):
+    def prepare_stagg_settings(self):
+        # TODO: clean this up
+        # Ensure that there is a source of variables to populate Config.variable_table with
+        # Can be sourced from:
+        #   - metadata and (autosections or mansections)
+        #   - self.variable_config   ------------- Get this from the listwidget ???????? ----------
+        #   - self.stagg_input_files[0]
+
+        # Reset button color in case indicating import completion
+        self.stagg_settings_button.setStyleSheet("background-color: #eee")
+
+        # make sure we have everything we need to open these settings
+        self.check_stagg_settings_inputs()
+
+        # If we already have data for all the configs, use this
+        if self.config_data is not None:
+            input_data = self.config_data
+            self.show_stagg_settings(input_data, self.col_vals)
+        
+        # Check for import options
+        else:
+
+            # Gather input options
+            import_options = []
+            if self.stagg_input_files:
+                import_options.append('basspro_output')
+            if self.metadata and (self.autosections or self.mansections):
+                import_options.append('settings')
+
+            # We have no options!
+            if len(import_options) == 0:
+                error_msg = "Missing settings data!"
+                error_msg += "\nPlease add sections files or basspro input"
+                notify_info(error_msg)
+                return
+
+            # If we only have one option, choose it
+            if len(import_options) == 1:
+                selected_option = import_options[0]
+
+            # If more than 1 option, ask user what they want to do
+            else:
+                thinb = Thinbass(self)
+                if thinb.exec():
+                    selected_option = thinb.get_value()
+                else:
+                    return
+
+            if selected_option == 'basspro_output':
+                # Import currently running
+                if self.import_thread:
+                    if ask_user_yes("Import in progress",
+                                    "An import is currently running. Would you like to terminate the process?"):
+                        self.finish_import(kill_thread=True)
+
+                # If we have imported and no selection change and there is data present
+                #   - use this data!
+                elif self.col_vals and self.imported_files == self.stagg_input_files and len(self.col_vals):
+                    # Create default df with imported variables
+                    variable_names = self.col_vals.keys()
+                    var_config_df = ConfigSettings.get_default_variable_df(variable_names)
+
+                    # graph_df/other_df are None
+                    input_data = {
+                        'variable': var_config_df,
+                        'graph': None,
+                        'other': None}
+                    self.show_stagg_settings(input_data, self.col_vals)
+
+                # Run a new import!
+                else:
+
+                    # load basspro output files
+                    self.import_thread = Thread(self.stagg_input_files)
+                    self.import_thread.progress.connect(self.hangar.append)
+                    self.import_thread.finished.connect(self.finish_import)
+
+                    self.hangar.append("Importing columns and values from json...")
+
+                    # Disable any change in stagg input files
+                    self.breath_files_button.setEnabled(False)
+                    self.import_thread.start()
+                    notify_info("Starting import, try again when import is done")
+
+            elif selected_option == 'settings':
+                self.col_vals = columns_and_values_from_settings(self.metadata_df, self.autosections_df, self.mansections_df)
+
+                #breath_df = []
+                #with open(self.basspro_path) as bc:
+                #    soup = bs(bc, 'html.parser')
+                #for child in soup.breathcaller_outputs.stripped_strings:
+                #    breath_df.append(child)
+                #input_data = None
+
+                # Create default df with imported variables
+                variable_names = self.col_vals.keys()
+                var_config_df = ConfigSettings.get_default_variable_df(variable_names)
+
+                # graph_df/other_df are None
+                input_data = {
+                    'variable': var_config_df,
+                    'graph': None,
+                    'other': None}
+                self.show_stagg_settings(input_data, self.col_vals)
+
+    @staticmethod
+    def get_default_variable_df(self, variable_names):
+        default_values = [0, 0, 0, 0, 0, 0, 0, []]
+        default_data = [[var_name, var_name] + default_values for var_name in variable_names]
+        variable_table_df = pd.DataFrame(
+            default_data,
+            columns=["Column",
+                     "Alias",
+                     "Independent",
+                     "Dependent",
+                     "Covariate",
+                     "ymin",
+                     "ymax",
+                     "Poincare",
+                     "Spectral",
+                     "Transformation"])
+        return variable_table_df
+
+    def finish_import(self, kill_thread=False):
+        """
+        Called at the conclusion of reading columns and values from Basspro json output
+        """
+
+        if self.import_thread:
+            if kill_thread:
+                self.hangar.append("Killing thread...")
+                # TODO: ensure the thread cleans up properly!
+                # Remove finished callback
+                self.import_thread.quit()
+
+            else:
+                self.hangar.append("Done!")
+                self.stagg_settings_button.setStyleSheet("background-color: #0f0")
+                self.col_vals = self.import_thread.output
+                self.imported_files = self.stagg_input_files
+
+            self.breath_files_button.setEnabled(True)
+            self.import_thread = None
+
+    def show_stagg_settings(self, input_data, col_vals):
         """
         Ensure that there is a source of variables to populate Config.variable_table with and run check_stagg_settings_inputs() to ensure that those sources are viable, run self.setup_table_config() to populate Config.variable_table (TableWidget), and either show the STAGG settings subGUI or show a Thorbass dialog to guide the user through providing the required input if there is no input.
 
@@ -983,77 +1185,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.new_variable_config()
             Run self.get_bp_reqs() and self.check_stagg_settings_inputs() to ensure that BASSPRO has the required input, run self.setup_table_config() to populate Config.variable_table (TableWidget), and show the STAGG settings subGUI.
         """
-        # TODO: clean this up
-        # Ensure that there is a source of variables to populate Config.variable_table with
-        # Can be sourced from:
-        #   - metadata and (autosections or mansections)
-        #   - self.variable_config   ------------- Get this from the listwidget ???????? ----------
-        #   - self.stagg_input_files[0]
-
-        # make sure we have everything we need to open these settings
-        self.check_stagg_settings_inputs()
-
-
-        # If we already have data for all the configs, use this
-        if self.config_data is not None:
-            input_data = self.config_data
-            breath_df = None
-        
-        # Check for import options
-        else:
-            # Gather input options
-            import_options = []
-            if self.stagg_input_files and any(a.endswith(".json") for a in self.stagg_input_files):
-                import_options.append('basspro_output')
-            if self.metadata and (self.autosections or self.mansections):
-                import_options.append('settings')
-
-            if len(import_options) == 0:
-                error_msg = "Missing settings data!"
-                error_msg += "\nPlease add sections files or basspro input"
-                notify_info(error_msg)
-
-            # If we only have one option, choose it
-            if len(import_options) == 1:
-                selected_option = import_options[0]
-
-            # Otherwise, ask user what they want to do
-            else:
-                thinb = Thinbass(self)
-                if thinb.exec():
-                    selected_option = thinb.get_value()
-                else:
-                    return
-
-            if selected_option == 'basspro_output':
-                # load basspro output files
-                # TODO: still need metadata file -- jk, metadata should be embedded in json
-                # TODO: get them to write a function to import a json file
-                #   need to check all json files to make sure we have all the right/consistent information ??
-                #   let BCM write function
-                notify_error("json files are incomplete, need to add data from csv files as well\nTalk to Shaun")
-                return
-                with open(self.stagg_input_files[0]) as first_json:
-                    bp_output = json.load(first_json)
-                for k in bp_output.keys():
-                    self.breath_df.append(k)
-
-                input_data = self.load_bp_output()
-
-            elif selected_option == 'settings':
-                breath_df = []
-                with open(self.basspro_path) as bc:
-                    soup = bs(bc, 'html.parser')
-                for child in soup.breathcaller_outputs.stripped_strings:
-                    breath_df.append(child)
-                input_data = None
-
-
         # Open Config editor GUI
         # TODO: align variable_config name with variable_table name in Config class
         new_config_data = ConfigSettings.edit(self.rc_config['References']['Definitions'],
-                                              breath_df,
                                               input_data,
+                                              col_vals,
                                               self.workspace_dir)
         if new_config_data is not None:
             self.config_data = new_config_data
@@ -1603,7 +1739,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             if self.metadata_list.count():
                 # Print message to user if there is a mismatch with metadata
-                MetadataSettings.test_signal_metadata_match(self.metadata)
+                self.test_signal_metadata_match(self.metadata)
 
     def test_signal_metadata_match(signal_files, metadata_file):
         """
@@ -1628,7 +1764,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
 
         meta = MetadataSettings.attempt_load(metadata_file)
-        if not meta:
+        if meta is None:
             return False
 
         baddies = []
@@ -1682,11 +1818,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             If self.signals is not empty, this method checks whether or not references to the selected signals files are found in the current metadata file.
         """
         while True:
-            meta_file = MetadataSettings.choose_file(self.workspace_dir)
+            meta_file = MetadataSettings.open_file(self.workspace_dir)
             # break out of cancel
             if not meta_file:
                 return
 
+            # TODO: this should be done in `attempt_load()` ?? Need to push validation back -- is this function really just require_load()?
             # If there are not valid files, try again
             if self.test_signal_metadata_match(meta_file):
                 self.metadata = meta_file
@@ -1813,8 +1950,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if not self.require_workspace_dir():
                 return
             self.metadata_list.clear()
-            if os.path.exists(self.workspace_dir):
-                self.save_filemaker()
+            self.save_filemaker()
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -2229,53 +2365,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.select_stagg_input_files()
             This method is called again if the user selected bad files.
         """
-        # Keep trying to select good files until user cancels
-        while True:
-            filenames, filter = QFileDialog.getOpenFileNames(self, 'Choose STAGG input files from BASSPRO output', self.workspace_dir)
+        files = STAGGInputSettings.open_files(self.workspace_dir)
+        if files:
+            # if we already have a selection, check about overwrite
+            if self.breath_list.count():
+                if ask_user_yes('Clear STAGG input list?',
+                                'Would you like to remove the previously selected STAGG input files?'):
+                    self.breath_list.clear()
 
-            # No files chosen, cancelled dialog
-            if not filenames:
-                break
-
-            # If all files are right type
-            if all(file.endswith(".json") or file.endswith(".RData") for file in filenames):
-                # if we already have a selection, check about overwrite
-                if self.breath_list.count():
-                    reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-                    if reply == QMessageBox.No:
-                        self.breath_list.clear()
-
-                for x in filenames:
-                    self.breath_list.addItem(x)
-                break
-
-            # If any of the files are right type
-            elif any(file_1.endswith(".json") or file_1.endswith(".RData") for file_1 in filenames):
-                baddies = []
-                good_files = []
-                
-                # Choose only the good files
-                for file_2 in filenames:
-                    if file_2.endswith(".json") or file_2.endswith(".RData"):
-                        good_files.append(file_2)
-                    else:
-                        baddies.append(file_2)
-
-                # Add files to widget
-                for x in good_files:
-                    self.breath_list.addItem(x)
-
-                # Notify user of files not included
-                if len(baddies) > 0:
-                    notify_warning(title="Incorrect file format", msg=f"One or more of the files selected are neither JSON nor RData files:\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n\nThey will not be included.")
-                break
-
-            # If none of the files are right type
-            else:
-                reply = QMessageBox.information(self, 'Incorrect file format', 'The selected file(s) are not formatted correctly.\nWould you like to select different files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                if reply == QMessageBox.No:
-                    break
+            for x in files:
+                self.breath_list.addItem(x)
     
+
     def full_run(self):
         """
         Ensure the user has selected an output directory and prompt them to do so if they haven't, check that the required input for BASSPRO has been selected, launch BASSPRO, detect the JSON files produced after BASSPRO has finished and populate self.stagg_input_files with the file paths to those JSON files.
@@ -2422,10 +2523,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # If no output dir or invalid output dir
         while not self.workspace_dir or not os.path.exists(self.workspace_dir):
             # open a dialog that prompts the user to choose the directory:
-            reply = ask_user('No Output Folder', 'Please select an output folder.')
-            if reply == QMessageBox.Ok:
+            if ask_user_ok('No Output Folder', 'Please select an output folder.'):
                 self.select_output_dir()
-            elif reply == QMessageBox.Cancel:
+                break
+            else:
                 notify_error("Need output folder")
                 return False
 
@@ -2457,6 +2558,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.launch_worker()
             Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
+
         
         # TODO: simplify/combine these copy operations
         #for file in [self.autosections, self.mansections, self.basicap]
@@ -2742,10 +2844,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             not os.path.exists(self.gui_config['Dictionaries']['Paths']['rscript']):
             
             # Ask user to choose new Rscript
-            reply = ask_user('Rscript not found', 'Rscript.exe path not defined. Would you like to select the R executable?')
-            if reply == QMessageBox.Cancel:
+            if not ask_user_yes('Rscript not found',
+                                'Rscript.exe path not defined. Would you like to select the R executable?'):
                 return
-            elif reply == QMessageBox.Ok:
+            else:
                 # Keep trying to select valid Rscrip
                 while True:
                     pre_des, filter = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.workspace_dir), "Rscript.exe")
@@ -2769,3 +2871,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print('rthing_to_do thread id',threading.get_ident())
         print("rthing_to_do process id",os.getpid())
         self.launch_worker("r")
+
+class STAGGInputSettings(Settings):
+
+    valid_filetypes = ['.json', '.RData']
+    file_chooser_message = 'Choose STAGG input files from BASSPRO output'

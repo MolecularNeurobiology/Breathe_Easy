@@ -655,7 +655,10 @@ class Ui_Config(object):
         self.check_dep.clicked.connect(Config.checkable_dep)
         self.check_ign.clicked.connect(Config.checkable_ign)
         self.check_ind.clicked.connect(Config.checkable_ind)
-        self.xvar_order_button.clicked.connect(Config.order_xvar)
+        self.xvar_order_button.clicked.connect(lambda : Config.order_items('Xvar'))
+        self.pointdodge_order_button.clicked.connect(lambda : Config.order_items('Pointdodge'))
+        self.facet1_order_button.clicked.connect(lambda : Config.order_items('Facet1'))
+        self.facet2_order_button.clicked.connect(lambda : Config.order_items('Facet2'))
         QtCore.QMetaObject.connectSlotsByName(Config)
 
     def retranslateUi(self, Config):

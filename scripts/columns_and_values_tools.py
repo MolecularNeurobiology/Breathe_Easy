@@ -131,17 +131,26 @@ def columns_and_values_from_jsons(
         truncate_all = False
         ):
     
+    yield 'loading jsons...'
+
     # load jsons
     main_df = pandas.concat(
         [pandas.read_json(i) for i in paths_to_jsons]
         )
     
+    yield 'reading cols...'
+
     # initialize output dict
     output = {}
     # iterate through columns
     for col in main_df.columns:
         output[col] = list(main_df[col].unique())
+
+
+    i = 1
     for col in output:
+        yield f"Column {col} ({i}/{len(output)})"
+        i += 1
         
         if col in known_continuous:
         
@@ -149,6 +158,7 @@ def columns_and_values_from_jsons(
         elif truncate_all == True:
         
             output[col] = output[col][0:min(truncate_to,len(output[col]))]
+
     return output
 
 

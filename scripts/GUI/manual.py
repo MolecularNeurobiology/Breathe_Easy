@@ -86,49 +86,52 @@ class Manual(QDialog, Ui_Manual):
         self.populate_table(self.datapad, self.datapad_view)
             This method populates self.datapad_view (TableWidget) with the self.datapad dataframe.
         """
-        file, filter = QFileDialog.getOpenFileName(self, 'Select Labchart datapad export file')
-        if os.path.exists(file):
-            dfs=[]
-            try:
-                for f in file:
-                    if f.endswith('.csv'):
-                        df = pd.read_csv(f,header=[2])
-                        mp = os.path.basename(f).rsplit(".csv")[0]
-                    elif f.endswith('.txt'):
-                        df = pd.read_csv(f,sep="\t",header=[2])
-                        mp = os.path.basename(f).rsplit(".txt")[0]
-                    elif f.endswith('.xlsx'):
-                        df = pd.read_excel(f,header=[0])
-                        mp = os.path.basename(f).rsplit(".xlsx")[0]
+        files, filter = QFileDialog.getOpenFileNames(self, 'Select Labchart datapad export file')
+        # Catch cancel
+        if not files:
+            return
 
-                    if "_" in mp:
-                        df['animal id'] = mp.rsplit("_")[0]
-                        df['PLYUID'] = mp.rsplit("_")[1]
-                    else:
-                        df['animal id'] = mp
-                        df['PLYUID'] = ""
+        dfs=[]
+        try:
+            for f in files:
+                if f.endswith('.csv'):
+                    df = pd.read_csv(f,header=[2])
+                    mp = os.path.basename(f).rsplit(".csv")[0]
+                elif f.endswith('.txt'):
+                    df = pd.read_csv(f,sep="\t",header=[2])
+                    mp = os.path.basename(f).rsplit(".txt")[0]
+                elif f.endswith('.xlsx'):
+                    df = pd.read_excel(f,header=[0])
+                    mp = os.path.basename(f).rsplit(".xlsx")[0]
 
-                    dfs.append(df)
+                if "_" in mp:
+                    df['animal id'] = mp.rsplit("_")[0]
+                    df['PLYUID'] = mp.rsplit("_")[1]
+                else:
+                    df['animal id'] = mp
+                    df['PLYUID'] = ""
 
-                dc = pd.concat(dfs, ignore_index=True)
-                dc.insert(0,'PLYUID',dc.pop('PLYUID'))
-                dc.insert(0,'animal id',dc.pop('animal id'))
-                keys = dc.columns
-                mand = {}
-                for key,val in zip(keys,self.vals):
-                    mand.update({key: val})
-                dc = dc.rename(columns = mand)
-                dc['start_time'] = pd.to_timedelta(dc['start'],errors='coerce')
-                dc['start'] = dc['start_time'].dt.total_seconds()
-                dc['stop_time'] = pd.to_timedelta(dc['stop'],errors='coerce')
-                dc['stop'] = dc['stop_time'].dt.total_seconds()
+                dfs.append(df)
 
-                self.datapad = dc
-                self.populate_table(self.datapad, self.datapad_view)
+            dc = pd.concat(dfs, ignore_index=True)
+            dc.insert(0,'PLYUID',dc.pop('PLYUID'))
+            dc.insert(0,'animal id',dc.pop('animal id'))
+            keys = dc.columns
+            mand = {}
+            for key,val in zip(keys,self.vals):
+                mand.update({key: val})
+            dc = dc.rename(columns = mand)
+            dc['start_time'] = pd.to_timedelta(dc['start'],errors='coerce')
+            dc['start'] = dc['start_time'].dt.total_seconds()
+            dc['stop_time'] = pd.to_timedelta(dc['stop'],errors='coerce')
+            dc['stop'] = dc['stop_time'].dt.total_seconds()
 
-            # TODO: catch a specific error
-            except Exception as e:
-                notify_error(title=f"{type(e).__name__}: {e}", msg="Please ensure that the datapad is formatted as indicated in the documentation.")
+            self.datapad = dc
+            self.populate_table(self.datapad, self.datapad_view)
+
+        # TODO: catch a specific error
+        except Exception as e:
+            notify_error(title=f"{type(e).__name__}: {e}", msg="Please ensure that the datapad is formatted as indicated in the documentation.")
 
     def get_preset(self):
         """

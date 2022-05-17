@@ -21,7 +21,7 @@ class OrderingWindow(QDialog, Ui_GroupOrdering):
 
     def set_items(self, items):
         self.item_list.clear()
-        [self.item_list.addItem(item) for item in items]
+        [self.item_list.addItem(str(item)) for item in items]
 
     def move(self, idx, new_idx):
         items = self.get_items()

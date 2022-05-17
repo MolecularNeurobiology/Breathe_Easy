@@ -92,8 +92,12 @@ def notify_warning(msg, title="Warning"):
 
 def notify_info(msg, title="Info"):
     QMessageBox.information(None, title, msg)
+
+def ask_user_yes(title, msg):
+    reply = QMessageBox.question(None, title, msg, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
+    return reply == QMessageBox.Yes
     
-def ask_user(title, msg):
+def ask_user_ok(title, msg):
     reply = QMessageBox.question(None, title, msg, QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
     return reply == QMessageBox.Ok
 
@@ -132,6 +136,23 @@ class Settings:
                 return False
         cls._save_file(save_filepath, data)
         return True
+
+    @classmethod
+    def open_files(cls, workspace_dir=""):
+        while True:
+            files, filter = QFileDialog.getOpenFileNames(None, cls.file_chooser_message, workspace_dir)
+
+            # Break if cancelled
+            if not files:
+                return None
+
+            # If good files, return
+            if all([cls.validate(file) for file in files]):
+                return files
+
+            # If bad file display error and try again
+            filetypes_str = ", ".join([ft for ft in cls.valid_filetypes])
+            notify_error(f"The selected file is not in the correct format. Only {filetypes_str} files are accepted.")
 
     @classmethod
     def open_file(cls, workspace_dir=""):
@@ -173,7 +194,7 @@ class Settings:
                 data = cls.attempt_load(file)
                 return data
 
-            if not ask_user("File is required", "You must choose a file to proceed"):
+            if not ask_user_ok("File is required", "You must choose a file to proceed"):
                 return None
 
 
@@ -203,7 +224,7 @@ def avert_name_collision(new_name, existing_names):
 
     msg = f"The column name {new_name} already exists."
     msg += f"\nWould you like to use {modified_name} instead?"
-    reply = ask_user("Duplicate Column Name", msg)
+    reply = ask_user_ok("Duplicate Column Name", msg)
 
     # Use modified name
     if reply:

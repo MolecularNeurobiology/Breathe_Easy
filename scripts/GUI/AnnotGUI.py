@@ -7,7 +7,7 @@ import pandas as pd
 from PyQt5.QtWidgets import QDialog, QMessageBox, QTreeWidgetItem
 from PyQt5 import QtCore
 from ui.annot_form import Ui_Annot
-from util import Settings, ask_user, avert_name_collision, notify_error, notify_info
+from util import Settings, ask_user_ok, avert_name_collision, notify_error, notify_info
 
 class Annot(QDialog, Ui_Annot):
     """
@@ -254,7 +254,7 @@ class Annot(QDialog, Ui_Annot):
         # Catch any null values
         elif pd.isna(value_list).any():
             # Ask user if they want to continue
-            reply = ask_user('Missing values', 'The selected variable has missing values.\n\nWould you like to continue?\n')
+            reply = ask_user_ok('Missing values', 'The selected variable has missing values.\n\nWould you like to continue?\n')
             if not reply:
                 return False
 
