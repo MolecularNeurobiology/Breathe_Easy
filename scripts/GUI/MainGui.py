@@ -84,7 +84,7 @@ class ColValImportThread(QThread):
         self._quit = True
 
 # TODO: only for development!
-AUTOLOAD = True
+AUTOLOAD = False
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -489,22 +489,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
 
         # Autoload configuration
-        #if AUTOLOAD:
-        #    self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
-        #    self.metadata = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv"
-        #    #self.workspace_dir = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG"
-        #    self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
-        #    self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
+        if AUTOLOAD:
+            self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
+            self.metadata = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv"
+            #self.workspace_dir = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG"
+            self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
+            self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
 
-        #    # Pick either RData or json
-        #    if False:
-        #        self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
-        #    else:
-        #        json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/JSON files/*"
-        #        for json_path in glob(json_glob):
-        #            self.breath_list.addItem(json_path)
-        
-        
+            # Pick either RData or json
+            if False:
+                self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
+            else:
+                json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/JSON files/*"
+                for json_path in glob(json_glob):
+                    self.breath_list.addItem(json_path)
+
+
     # method with slot decorator to receive signals from the worker running in
     # a seperate thread...B_run is triggered by the worker's 'progress' signal
     @pyqtSlot(int)
