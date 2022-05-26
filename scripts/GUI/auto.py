@@ -1,12 +1,13 @@
 
-import os
-from copy import deepcopy
-import csv
 import pandas as pd
-from PyQt5.QtWidgets import QDialog, QMessageBox, QLabel, QVBoxLayout, qApp
+from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import Qt
 from util import notify_info, Settings, populate_table
 from ui.auto_form import Ui_Auto
+
+import sys
+sys.path.append("scripts")
+from convert_timestamps_to_autosections import convert_timestamps_to_autosections
 
 class Auto(QDialog, Ui_Auto):
     """
@@ -19,7 +20,7 @@ class Auto(QDialog, Ui_Auto):
     Ui_Auto: class
         The Auto class inherits widgets and layouts defined in the Ui_Auto class.
     """
-    def __init__(self, defaults, auto_labels, ref_definitions, data=None, workspace_dir=""):
+    def __init__(self, defaults, auto_labels, ref_definitions, signal_files, data=None, workspace_dir=""):
         """
         Instantiate the Auto class.
 
@@ -117,14 +118,15 @@ class Auto(QDialog, Ui_Auto):
         self.defaults = defaults
         self.auto_labels = auto_labels
         self.ref_definitions = ref_definitions
-        self.loaded_data = deepcopy(data)
+        self.signal_files = signal_files
         self.workspace_dir = workspace_dir
 
         # Populate default template keys
         self.auto_setting_combo.addItems(self.defaults)
 
-        # If we've already selected a file, load it in
-        if self.loaded_data is not None:
+        # If we've already got data, use this
+        if data is not None:
+            self.loaded_data = data.copy()
 
             # Add custom option
             self.auto_setting_combo.addItem('Custom')
@@ -134,12 +136,15 @@ class Auto(QDialog, Ui_Auto):
 
         # Otherwise, set to defaults
         else:
+            self.loaded_data = None
+
             # First item is instruction text, set to index 1
             self.auto_setting_combo.setCurrentIndex(1)
 
         ## NOTE: ^^ The update will automatically trigger on index change ^^
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
+        # Set callback for any table item edits
         for table in self.all_tables():
             table.cellChanged.connect(lambda row, col, t=table : self.edit_cell(t, row, col))
 
@@ -151,6 +156,15 @@ class Auto(QDialog, Ui_Auto):
                 self.time_thresh_table,
                 self.inc_table,
                 self.summary_table]
+
+    def timestamps_from_signals(self):
+        if not self.signal_files:
+            notify_info("Must load signal files to generate auto template")
+            return
+
+        df = convert_timestamps_to_autosections(self.signal_files)
+        df = AutoSettings.transform_loaded_data(df)
+        self.load_data(df)
 
     def update_template_selection(self):
         """
@@ -192,10 +206,12 @@ class Auto(QDialog, Ui_Auto):
             self.data = self.loaded_data
         else:
             auto_dict = self.defaults[curr_selection]
-            self.data = pd.DataFrame(auto_dict).reset_index()
+            df = pd.DataFrame(auto_dict)
+            df = df.drop(index='Alias')
+            df.insert(0, 'Variable', df.index)
+            self.data = df
 
         self.update_tabs()
-
 
     def edit_cell(self, table, row, col):
         """
@@ -209,35 +225,16 @@ class Auto(QDialog, Ui_Auto):
         # Get new data
         new_data = cell.text()
         
-        # Get index_name of setting
-        index_name = table.item(row, 0).text()
-        
-        # Find the df item that matches the index name of the edited cell
-        df_match = self.data[self.data.Index == index_name]
-        
-        # Make sure there is only 1 match!
-        if len(df_match) == 1:
-            # Get dataframe index of edited item
-            df_idx = df_match.index[0]
-            
-            # Get currently stored data value
-            prev_data = df_match.iloc[0, col]
-        else:
-            raise RuntimeError(f"Multiple matches for index name '{index_name}'")
+        # Get the value currently stored in the df
+        prev_data = self.data.iloc[row, col]
         
         # If data changed, perform update
         if prev_data != new_data:
             # Set new data
-            self.data.iat[df_idx, col] = new_data
-
-            # Block signals to prevent endless table edit callback loop
-            self.signals_off()
+            self.data.iloc[row, col] = new_data
 
             # Update all table widgets
             self.update_tabs()
-            
-            # Re-enable signals
-            self.signals_on()
 
     def signals_off(self):
         for table in self.all_tables():
@@ -267,40 +264,40 @@ class Auto(QDialog, Ui_Auto):
         populate_table(frame,table)
             This method populates the self.{division}_table widgets with the appropriate portions of the self.data dataframe based on the relationship of particular rows to particular divisions as defined in the "Settings Names" dictionary within self.pleth.gui_config.
         """
-        # Populate table of tabs with appropriately sliced dataframes derived from selected settings template
+        # Block signals to prevent endless table edit callback loop
+        self.signals_off()
 
-        # Rename column names for much easier pandas usage
-        #   Make column named 'index' capitalized to 'Index'
-        #   having a column named 'index' collides with the built-in `index` attribute of dataframes
-        #   spaces are problematic, but tolerable for now
-        self.data.columns = ['Index' if col == 'index' else col for col in self.data.columns]
+        # Populate table of tabs with appropriately sliced dataframes derived from selected settings template
         
         # Populate Section Characterization table
-        sec_char_df = self.data.loc[(self.data.Index.isin(self.auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
+        sec_char_df = self.data.loc[(self.data.index.isin(self.auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
         populate_table(sec_char_df, self.sections_char_table)
 
         # Populate Section Spec table
-        sec_spec_df = self.data.loc[(self.data.Index.isin(self.auto_labels['Section Characterization']['Interruptions'].values())),:]
+        sec_spec_df = self.data.loc[(self.data.index.isin(self.auto_labels['Section Characterization']['Interruptions'].values())),:]
         populate_table(sec_spec_df, self.sections_spec_table)
         
         # Populate Section Calibration table
-        cal_df = self.data.loc[(self.data.Index.isin(self.auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
+        cal_df = self.data.loc[(self.data.index.isin(self.auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
         populate_table(cal_df,self.cal_table)
 
         # Populate Gass Threshold Settings table
-        gas_thresh_df = self.data.loc[(self.data.Index.isin(self.auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
+        gas_thresh_df = self.data.loc[(self.data.index.isin(self.auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
         populate_table(gas_thresh_df,self.gas_thresh_table)
 
         # Populate Time Threshold Settings table
-        time_thresh_df = self.data.loc[(self.data.Index.isin(self.auto_labels['Threshold Settings']['Time Thresholds'].values())),:]
+        time_thresh_df = self.data.loc[(self.data.index.isin(self.auto_labels['Threshold Settings']['Time Thresholds'].values())),:]
         populate_table(time_thresh_df,self.time_thresh_table)
 
         # Populate Inclusion DF table
-        inc_df = self.data.loc[(self.data.Index.isin(self.auto_labels['Inclusion Criteria']['Breath Quality Standards'].values())),:]
+        inc_df = self.data.loc[(self.data.index.isin(self.auto_labels['Inclusion Criteria']['Breath Quality Standards'].values())),:]
         populate_table(inc_df,self.inc_table)
 
         # Populate summary table with all data
         populate_table(self.data,self.summary_table)
+
+        # Re-enable signals
+        self.signals_on()
     
     def reference_event(self):
         """
@@ -349,14 +346,27 @@ class Auto(QDialog, Ui_Auto):
             This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the metadata.
         """
         try:
-            # TODO: set data during run, not just summary table
-            if AutoSettings.save_file(data=self.summary_table, workspace_dir=self.workspace_dir):
+            if AutoSettings.save_file(data=self.data, workspace_dir=self.workspace_dir):
                 notify_info("Automated settings saved")
 
         except PermissionError:
-            QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
+            notify_info(title='File in use',
+                        msg='One or more of the files you are trying to save is open in another program.')
 
-    def load(self):
+    def load_file(self):
+        # TODO: streamline this like the other settings
+        # Opens open file dialog
+        filepath = AutoSettings.open_file(self.workspace_dir)
+        # Catch cancel
+        if not filepath:
+            return
+
+        data = AutoSettings.attempt_load(filepath)
+
+        if data is not None:
+            self.load_data(data)
+
+    def load_data(self, df):
         """
         Prompt the user to indicate the location of a previously made file - either .csv, .xlsx, or .json formatted file - detailing the basic BASSPRO settings of a previous run, populate self.basic_df with a dataframe from that file, call populate_table(), and warn the user if they chose files in formats that are not accepted and ask if they would like to select a different file.
 
@@ -387,74 +397,97 @@ class Auto(QDialog, Ui_Auto):
         self.update_tabs()
             This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (basspro_config.json).
         """
-        # Opens open file dialog
-        filepath = AutoSettings.open_file(self.workspace_dir)
-        if filepath:
-            first_time_loading = self.loaded_data is None
-            self.loaded_data = AutoSettings.attempt_load(filepath)
 
-            if self.loaded_data is not None:
+        first_time_loading = self.loaded_data is None
+        # If we haven't loaded anything yet
+        if first_time_loading:
+            # Add custom option
+            self.auto_setting_combo.addItem('Custom')
 
-                # If we haven't loaded anything yet
-                if first_time_loading:
-                    # Add custom option
-                    self.auto_setting_combo.addItem('Custom')
+        self.loaded_data = df
 
-                # If 'Custom' is already selected, we need to manually call the update function
-                if self.auto_setting_combo.currentText() == 'Custom':
-                    self.update_template_selection()
+        # If 'Custom' is already selected, we need to manually call the update function
+        if self.auto_setting_combo.currentText() == 'Custom':
+            for table in self.all_tables():
+                table.blockSignals(True)
+            self.update_template_selection()
+            for table in self.all_tables():
+                table.blockSignals(False)
 
-                # Otherwise, set to custom and let it automatically update
-                else:
-                    # Set to Custom
-                    self.auto_setting_combo.setCurrentIndex(self.auto_setting_combo.count()-1)
-                    # ^this should eventually trigger update_tabs()
+        # Otherwise, set to custom and let it automatically update
+        else:
+            # Set to Custom
+            self.auto_setting_combo.setCurrentIndex(self.auto_setting_combo.count()-1)
+            # ^this should eventually trigger update_tabs()
 
 class AutoSettings(Settings):
 
     valid_filetypes = ['.csv']
+    naming_requirements = ['auto', 'sections']
     file_chooser_message = 'Select auto sections file to edit'
     default_filename = 'autosections.csv'
     editor_class = Auto
 
+    def transform_loaded_data(df):
+        df = df.fillna("")
+
+        # Set df index (these will become the columns)
+        df = df.set_index('Alias')
+
+        # Swap rows and columns
+        df = df.T
+        
+        # The original df columns are now the index,
+        #   but we want them actually included as a new column in the transposed df
+        df.insert(0, 'Variable', df.index)
+
+        return df
+
+    @classmethod
+    def attempt_load(cls, filepath):
+        #df = pd.read_csv(filepath, index_col='Alias').transpose().reset_index().fillna("")
+        #df = pd.read_csv(filepath).set_index('Alias', drop=False).transpose().fillna("")
+
+        # This can get confusing, so lets take it step-by-step
+        df = pd.read_csv(filepath)
+        df = cls.transform_loaded_data(df)
+        return df
+
     @staticmethod
-    def _right_filename(filepath):
-        file_basename = os.path.basename(filepath) 
-        return "auto" in file_basename and "sections" in file_basename
+    def _save_file(filepath, df):
+        # Re-transpose data back to file format
+        df = df.drop(columns='Variable')
+        df = df.transpose()
+        df = df.reset_index()
 
-    def attempt_load(filepath):
-        return pd.read_csv(filepath, index_col='Key').transpose().reset_index()
+        ## TODO: make this actual data, not widget
+        #summary_table = data
 
-    @staticmethod
-    def _save_file(filepath, data):
-        # TODO: make this actual data, not widget
-        summary_table = data
+        ## Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
+        #with open(filepath, 'w', newline = '') as stream:
+        #    writer = csv.writer(stream)
+        #    header = []
 
-        # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
-        with open(filepath, 'w', newline = '') as stream:
-            writer = csv.writer(stream)
-            header = []
+        #    for row in range(summary_table.rowCount()):
+        #        item = summary_table.item(row,0)
+        #        if item.text() == "nan":
+        #            header.append("")
+        #        else:
+        #            header.append(item.text())
 
-            for row in range(summary_table.rowCount()):
-                item = summary_table.item(row,0)
-                if item.text() == "nan":
-                    header.append("")
-                else:
-                    header.append(item.text())
+        #    for column in range(summary_table.columnCount()):
+        #        coldata = []
 
-            for column in range(summary_table.columnCount()):
-                coldata = []
+        #        for row in range(summary_table.rowCount()):
+        #            item = summary_table.item(row, column)
+        #            if item.text() == "nan":
+        #                coldata.append("")
+        #            else:
+        #                coldata.append(item.text())
+        #        writer.writerow(coldata)
 
-                for row in range(summary_table.rowCount()):
-                    item = summary_table.item(row, column)
-                    if item.text() == "nan":
-                        coldata.append("")
-                    else:
-                        coldata.append(item.text())
-                writer.writerow(coldata)
-
-        # This is ridiculous.
-        auto = pd.read_csv(filepath)
-        auto['Key'] = auto['Alias']
-        auto.to_csv(filepath, index=False)
+        ## This is ridiculous.
+        #auto = pd.read_csv(filepath)
+        #auto['Key'] = auto['Alias']
+        df.to_csv(filepath, index=False)
         

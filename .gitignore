@@ -4,3 +4,4 @@ venv/
 *.orig
 data/
 *__pycache__*
+*.csv

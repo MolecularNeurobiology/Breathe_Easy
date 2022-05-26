@@ -33,14 +33,14 @@ from basic import BasicSettings
 from manual import ManualSettings
 from AnnotGUI import MetadataSettings
 from config import GraphSettings, OtherSettings, VariableSettings, ConfigSettings
-from util import Settings, ask_user_ok, ask_user_yes, notify_error, notify_info, notify_warning
+from util import Settings, ask_user_ok, ask_user_yes, generate_unique_id, notify_error, notify_info, notify_warning
 
 sys.path.append("scripts")
 from columns_and_values_tools import columns_and_values_from_jsons, columns_and_values_from_settings
 
 from ui.form import Ui_Plethysmography
 
-class Thread(QThread):
+class ColValImportThread(QThread):
     progress = pyqtSignal(str)
 
     def __init__(self, json_paths):
@@ -335,12 +335,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is a shallow dictionary loaded from reference_config.json. It contains definitions, descriptions, and recommended values for every basic, manual, and automated BASSPRO setting.
         self.q: Queue
             A first-in, first-out queue constructor for safely exchanging information between threads.
-        self.counter: int
-            The worker's number.
         self.finished_count: int
             The number of finished workers.
         self.qThreadpool: QThreadPool
-        self.threads: dict
         self.workers: dict
             Workers spawned.
         
@@ -436,12 +433,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.setupUi(self)
 
         self.q = queue.Queue()
-        self.counter = 0
-        self.finished_count = 0
         self.qthreadpool = QThreadPool()
         self.qthreadpool.setMaxThreadCount(1)
-        self.threads = {}
         self.workers = {}
+        
+        # Use for importing cols/vals from basspro json files
         self.import_thread = None
         self.imported_files = None
         self.col_vals = None
@@ -459,7 +455,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.basspro_path = self.gui_config['Dictionaries']['Paths']['basspro']
         self.input_dir_r=""
         self.papr_dir = self.gui_config['Dictionaries']['Paths']['papr']
-        self.r_output_folder=""
 
         # STAGG Settings
         self.variable_config_df = None
@@ -494,20 +489,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
 
         # Autoload configuration
-        if AUTOLOAD:
-            self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
-            self.metadata = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv"
-            self.workspace_dir = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG"
-            self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
-            self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
+        #if AUTOLOAD:
+        #    self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
+        #    self.metadata = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv"
+        #    #self.workspace_dir = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG"
+        #    self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
+        #    self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
 
-            # Pick either RData or json
-            if False:
-                self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
-            else:
-                json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/JSON files/*"
-                for json_path in glob(json_glob):
-                    self.breath_list.addItem(json_path)
+        #    # Pick either RData or json
+        #    if False:
+        #        self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
+        #    else:
+        #        json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/JSON files/*"
+        #        for json_path in glob(json_glob):
+        #            self.breath_list.addItem(json_path)
         
         
     # method with slot decorator to receive signals from the worker running in
@@ -529,9 +524,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     # method with slot decorator to receive signals from the worker running in
     # a seperate thread...B_Done is triggered by the worker's 'finished' signal
     @pyqtSlot(int)
-    def B_Done(self,worker_id):
+    def B_Done(self, worker_id):
         self.hangar.append('Worker_{} finished'.format(worker_id))
-        self.finished_count += 1   
+        self.workers.pop(worker_id)
 
 #endregion
 
@@ -811,13 +806,21 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Annot.show_metadata_file()
             This method determines the source of the metadata that will be manipulated by the user in the Annot subGUI.
         """
+
+        # If no metadata files in play
+        if self.metadata_df is None:
+            notify_info("Please import a metadata file")
+            self.load_metadata()
+            if self.metadata_df is None:
+                return
+
         new_metadata = MetadataSettings.edit(self.metadata_df,
                                              self.workspace_dir)
         if new_metadata is not None:
             self.metadata_df = new_metadata
 
-            if self.breath_df != []:
-                self.update_breath_df("metadata")
+            #if self.breath_df != []:
+            #    self.update_breath_df("metadata")
 
     def show_manual(self):
         """
@@ -835,8 +838,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if new_settings is not None:
             self.mansections_df = new_settings
 
-            if self.breath_df != []:
-                self.update_breath_df("manual settings")
+            #if self.breath_df != []:
+            #    self.update_breath_df("manual settings")
 
     def show_auto(self):
         """
@@ -850,6 +853,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         new_settings = AutoSettings.edit(self.bc_config['Dictionaries']['Auto Settings']['default'],
                                          self.gui_config['Dictionaries']['Settings Names']['Auto Settings'],
                                          self.rc_config['References']['Definitions'],
+                                         self.signal_files,
                                          data=self.autosections_df,
                                          workspace_dir=self.workspace_dir)
 
@@ -857,8 +861,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.autosections_df = new_settings
 
             # TODO: why?
-            if self.breath_df != []:
-                self.update_breath_df("automated settings")
+            #if self.breath_df != []:
+            #    self.update_breath_df("automated settings")
 
 
     def show_basic(self):
@@ -879,7 +883,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.basicap_df = new_settings
 
         
-    def get_bp_reqs(self):
+    def check_bp_reqs(self):
         """
         Ensure that the user has provided metadata, basic BASSPRO settings,
           and either automated or manual BASSPRO settings before launching BASSPRO.
@@ -907,44 +911,28 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.get_autosections()
             This method prompts the user to select a previously made automated or manual or basic BASSPRO settings file via FileDialog.
         """
-        cancelling = False
-        while not self.metadata or not (self.autosections or self.mansections) or not self.basicap:
-            # TODO: move these loops inside the load function?
-            while not self.metadata:
-                reply = QMessageBox.information(self, 'Missing metadata', 'Please select a metadata file.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-                if reply == QMessageBox.Ok:
-                    self.load_metadata()
-                elif reply == QMessageBox.Cancel:
-                    cancelling = True
-                    break
+        if len(self.signal_files) == 0:
+            notify_error("Please select signal files")
+            return False
 
-            if cancelling:
-                break
+        if self.metadata_df is None:
+            notify_error("Please select a metadata file")
+            return False
 
-            while not (self.autosections or self.mansections):
-                reply = QMessageBox.information(self, 'Missing BASSPRO automated/manual settings', 'Please select BASSPRO automated or manual settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-                if reply == QMessageBox.Ok:
-                    self.get_autosections()
-                elif reply == QMessageBox.Cancel:
-                    cancelling = True
-                    break
+        if self.autosections_df is None and self.mansections_df is None:
+            notify_error("Please select a sections file")
+            return False
+        
+        if self.basicap_df is None:
+            notify_error("Please select a basic settings file")
+            return False
 
-            if cancelling:
-                break
+        # Make sure we have an output dir
+        if not self.require_workspace_dir():
+            return False
+        
+        return True
 
-            while not self.basicap:
-                reply = QMessageBox.information(self, 'Missing BASSPRO basic settings', 'Please select BASSPRO basic settings files.', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Cancel)
-                if reply == QMessageBox.Ok:
-                    self.get_autosections()
-                elif reply == QMessageBox.Cancel:
-                    cancelling = True
-                    break
-
-            if cancelling:
-                break
-
-
-        return self.metadata and (self.autosections or self.mansections) and self.basicap
 
     def new_variable_config(self):
         """
@@ -1060,9 +1048,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 # Run a new import!
                 else:
 
+                    # If we have an RData file, get jsons from same directory
+                    if len(self.stagg_input_files) == 1 and self.stagg_input_files[0].lower().endswith('.rdata'):
+                        rdata_dir = os.path.dirname(self.stagg_input_files[0])
+                        json_files = glob(os.path.join(rdata_dir, '*.json'))
+                        
+                        # If no jsons, notify and quit
+                        if len(json_files) == 0:
+                            notify_error(f"Cannot find json files in RData directory:\n{rdata_dir}")
+                            return
+                    else:
+                        json_files = self.stagg_input_files
+
                     # load basspro output files
-                    self.import_thread = Thread(self.stagg_input_files)
+                    self.import_thread = ColValImportThread(json_files)
+                    
+                    # Print out any progress messages emitted by thread
                     self.import_thread.progress.connect(self.hangar.append)
+                    
+                    # Call finish method on emitting finished signal
                     self.import_thread.finished.connect(self.finish_import)
 
                     self.hangar.append("Importing columns and values from json...")
@@ -1114,8 +1118,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def finish_import(self, kill_thread=False):
         """
         Called at the conclusion of reading columns and values from Basspro json output
+             OR
+               at the cancellation of existing import process
         """
 
+        # TODO: Make sure there is no overlap of new thread and an old thread waiting to die
+        #   -do proper cleanup!
         if self.import_thread:
             if kill_thread:
                 self.hangar.append("Killing thread...")
@@ -1399,7 +1407,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     if m == self.basspro_path:
                         reply = QMessageBox.information(self, "How is this program even running?", f"The program cannot find the following file: \n{self.basspro_path}\nPlease reinstall BASSPRO-STAGG.", QMessageBox.Ok)
 
-    def select_output_dir(self):
+    def select_workspace_dir(self):
         """
         Prompt the user to choose an output directory where both BASSPRO and STAGG output will be written to, detect any relevant input that may already be present in that directory, ask the user if they would like to keep previous selections for input or replace them with the contents of the selected directory if there are previous selections for input and update self.breath_df (list).
     
@@ -1435,13 +1443,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             Detect a manual BASSPRO settings file, set self.mansections as its file path, and populate self.sections_list with the file path for display to the user.
         self.auto_get_metadata()
             Detect a metadata file, set self.metadata as its file path, and populate self.metadata_list with the file path for display to the user.
-        self.auto_get_output_dir_r()
-            Check whether or not a STAGG_output directory exists in the user-selected directory and make it if it does not exist, and make a timestamped STAGG output folder for the current session's next run of STAGG.
         self.auto_get_basic()
             Detect a basic BASSPRO settings file, set self.basicap as its file path, and populate self.sections_list with the file path for display to the user.
         self.update_breath_df()
             This method updates self.breath_df to reflect any changes to the variable list used to populate Config.variable_table if the user chooses to replace previously selected input with input detected in the selected output directory.
         """
+
+        # If we already have a workspace dir, set the initial choosing dir to the workspace parent
         if self.workspace_dir:
             selection_dir = str(Path(self.workspace_dir).parent.absolute())
         else:
@@ -1453,30 +1461,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             return
 
         # Set output dir
-        self.output_path_display.setText(output_dir)
+        self.workspace_dir = output_dir
         
+        # Try to auto-import
         if self.dir_contains_valid_import_files(output_dir):
 
-            # If any data exists already
+            # If any data exists already, ask user before overwriting
             if self.breath_df or self.metadata or self.autosections or self.basicap or self.mansections:
 
-                reply = QMessageBox.question(self, f'Input detected', 'The selected directory has recognizable input.\n\nWould you like to overwrite your current input selection?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                if reply == QMessageBox.Yes:
-                    self.auto_get_autosections()
-                    self.auto_get_mansections()
-                    self.auto_load_metadata()
-                    self.auto_get_output_dir_r()
-                    self.auto_get_basic()
+                reply = ask_user_ok('Input detected',
+                                    'The selected directory has recognizable input.\n\nWould you like to overwrite your current input selection?')
+                if not reply:
+                    return
                 
-            # If we have no data yet
-            else:
-                self.auto_get_autosections()
-                self.auto_get_mansections()
-                self.auto_load_metadata()
-                self.auto_get_output_dir_r()
-                self.auto_get_basic()
-                if len(self.breath_df)>0:
-                    self.update_breath_df("settings")
+            self.auto_get_autosections()
+            self.auto_get_mansections()
+            self.auto_load_metadata()
+            self.auto_get_basic()
+            #if len(self.breath_df) > 0:
+            #    self.update_breath_df("settings")
         
     def create_output_folder(self, toolname):
         """
@@ -1628,44 +1631,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stagg_input_files: list
             This attribute is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it is SUPPOSED TO append the file paths from the most recent BASSPRO to its existing items but it looks like it just replaces the list of existing items with a new list of the file paths from self.output_dir_py regardless of the user's choice.
         """
+        # TODO: message below
         # This method needs fixing. If they say yes, I want to keep them, then what happens? It looks like self.stagg_input_files populates with the new files regardless of the user's choice.
         if len(self.stagg_input_files):
-            reply = QMessageBox.information(self, 'Clear STAGG input list?', 'Would you like to keep the previously selected STAGG input files?', QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
-            if reply == QMessageBox.No:
+            reply = ask_user_yes('Clear STAGG input list?', 'Would you like to remove the previously selected STAGG input files?')
+            if reply:
                 self.breath_list.clear()
 
-        stagg_input_files = [os.path.join(basspro_output_dir, file) for file in os.listdir(basspro_output_dir) if file.endswith(".json")==True]
-        for x in stagg_input_files:
-            self.breath_list.addItem(x)
-           
-    def auto_get_output_dir_r(self):
-        """
-        Check whether or not a STAGG_output directory exists in the user-selected directory and make it if it does not exist, and make a timestamped STAGG output folder for the current session's next run of STAGG.
-
-        Parameters
-        --------
-        self.workspace_dir: str
-            This attribute is set as the file path to the user-selected output directory.
-        
-        Outputs
-        --------
-        self.r_output_folder: str
-            This attribute is set as a file path to the STAGG_output directory in the user-selected directory self.workspace_dir and the directory itself is spawned if it does not exist.
-        self.output_dir_r: str
-            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.workspace_dir. It is not spawned until self.require_workspace_dir() is called when STAGG is launched.
-        """
-        print("auto_get_output_dir_r()")
-        self.r_output_folder=os.path.join(self.workspace_dir,'STAGG_output')
-        if Path(self.r_output_folder).exists():
-            self.output_dir_r=os.path.join(self.r_output_folder, 'STAGG_output_'+datetime.datetime.now().strftime(
-                '%Y%m%d_%H%M%S'
-            ))
-        else:
-            Path(self.r_output_folder).mkdir()
-            self.output_dir_r=os.path.join(self.r_output_folder, 'STAGG_output_'+datetime.datetime.now().strftime(
-                '%Y%m%d_%H%M%S'
-            ))
-#endregion
+        #stagg_input_files = [os.path.join(basspro_output_dir, file) for file in os.listdir(basspro_output_dir) if file.endswith(".json")==True]
+        stagg_input_files = glob(os.path.join(basspro_output_dir, "*.json"))
+        for file in stagg_input_files:
+            self.breath_list.addItem(file)
 
     def open_click(self,item):
         """
@@ -1713,6 +1689,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.check_metadata_file()
             This method checks whether or not references to the selected signals files are found in the current metadata file.
         """
+        # TODO: Move this logic to Settings sub-class
+        # TODO: add setter
         filenames, filter = QFileDialog.getOpenFileNames(self, 'Select signal files')
 
         # len(filenames) == 0 when dialog is cancelled
@@ -1739,8 +1717,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             if self.metadata_list.count():
                 # Print message to user if there is a mismatch with metadata
-                self.test_signal_metadata_match(self.metadata)
+                self.test_signal_metadata_match(self.signal_files, self.metadata)
 
+    @staticmethod
     def test_signal_metadata_match(signal_files, metadata_file):
         """
         Ensure that the selected metadata file does contain metadata for the signal files selected.
@@ -1765,6 +1744,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         meta = MetadataSettings.attempt_load(metadata_file)
         if meta is None:
+            notify_info(f"cannot load metadata file: {metadata_file}")
             return False
 
         baddies = []
@@ -1788,7 +1768,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return True
 
     def load_metadata(self):
-        # There are no checks for quality of file selected in this method. Are they somewhere else?
         """
         Prompt the user to select a previously made metadata file via FileDialog, clear and repopulated self.metadata_list (ListWidget) to display the file path of the metadata file on the main GUI, call self.update_breath_df() if self.breath_df is not empty, and call self.check_metadata_file() if self.signals is not empty.
 
@@ -1825,11 +1804,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             # TODO: this should be done in `attempt_load()` ?? Need to push validation back -- is this function really just require_load()?
             # If there are not valid files, try again
-            if self.test_signal_metadata_match(meta_file):
+            if self.test_signal_metadata_match(self.signal_files, meta_file):
                 self.metadata = meta_file
+                break
 
-                if len(self.breath_df) > 0:
-                    self.update_breath_df("metadata")
+                #if len(self.breath_df) > 0:
+                #    self.update_breath_df("metadata")
 
 
     def mp_parser(self):
@@ -2309,28 +2289,36 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This method displays the Thumbass dialog.
         """
         filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.workspace_dir)
+        # Catch cancel
         if not filenames:
-            if not self.autosections and not self.basicap and not self.mansections:
-                print("No BASSPRO settings files selected.")
+            return
+
+        added_files = []
+        for file in filenames:
+            if AutoSettings.validate(file):
+                self.autosections = file
+                added_files.append(file)
+
+            elif ManualSettings.validate(file):
+                self.mansections = file
+                added_files.append(file)
+
+            elif BasicSettings.validate(file):
+                self.basicap = file
+                added_files.append(file)
+
+            # If we added files
+            if len(added_files):
+                #if len(self.breath_df)>0:
+                #    self.update_breath_df("settings")
+                pass
+
+        if len(added_files):
+            msg = "Added files: "
+            msg += ", ".join(added_files)
+            notify_info(msg)
         else:
-            new_files_added = False
-            for file in filenames:
-                if AutoSettings.validate(file):
-                    self.autosections = file
-                    new_files_added = True
-
-                elif ManualSettings.validate(file):
-                    self.mansections = file
-                    new_files_added = True
-
-                elif BasicSettings.validate(file):
-                    self.basicap = file
-                    new_files_added = True
-
-                # If we added files
-                if new_files_added:
-                    if len(self.breath_df)>0:
-                        self.update_breath_df("settings")
+            notify_info("No files added")
 
     def select_stagg_input_files(self):
         """
@@ -2391,31 +2379,49 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This method copies the required BASSPRO input other than the signal files and the breathcaller_config.json file to the timestamped BASSPRO output folder (self.output_dir_py) and runs self.launch_worker().
         self.auto_get_breath_files()
             Populate self.stagg_input_files with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
-        self.output_check()
-            This method compares the input and output of BASSPRO and reports the names of the signal files that did not pass BASSPRO and failed to produce JSON files to the hangar for display on the main GUI.
         """
 
-        # Make sure we have an output dir
-        if not self.require_workspace_dir():
+        is_full_run = self.full_run_checkbox.isChecked()
+
+        # check that the required input for BASSPRO has been selected
+        if not self.check_bp_reqs():
             return
 
-        
-        # check that the required input for BASSPRO has been selected
-        if not self.get_bp_reqs():
-            notify_error("Need settings files")
+        # If doing full run, check stagg reqs
+        if is_full_run and not self.check_stagg_reqs(full_run=True):
             return
 
         # launch BASSPRO
         self.status_message("Launching BASSPRO")
         basspro_output_folder = self.launch_basspro()
 
+        # Kick off stagg later if doing a full-run!
+        if is_full_run:
+            self.pickup_after_basspro(1, basspro_output_folder)
+
+    def pickup_after_basspro(self, count, basspro_output_folder):
+        # If any of our workers are still working
+        if len(self.workers) > 0:
+            # TODO: implement BASSPRO cancel, not just STAGG continuation
+            # Every 60s, check in with the user
+            if count == 60:
+                reply = ask_user_yes("Long process",
+                                     "BASSPRO is taking a while, would you like to continue checking for STAGG autostart?")
+                if not reply:
+                    notify_info("Canceling stagg continuation")
+                    return
+                count = 0
+            
+            QTimer.singleShot(1000, lambda : self.pickup_after_basspro(count+1, basspro_output_folder))
+            return
+
         ## RUN STAGG ##
         self.status_message("Autopopulating STAGG")
         self.autopopulate_stagg_after_basspro(basspro_output_folder)
 
-        # TODO: auto start of STAGG
-        #self.status_message("Launching STAGG")
-        #self.launch_stagg()
+        # launch STAGG
+        self.status_message("Launching STAGG")
+        self.launch_stagg()
 
     def status_message(self, msg):
         self.hangar.append(msg)
@@ -2427,7 +2433,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # populate stagg_input_files with the file paths to those JSON files.
         self.output_check()
 
-    def stagg_run(self):
+    def launch_stagg(self):
         """
         Assign the file paths to the attributes, ensure that all required STAGG input has been selected and prompt the user to select whatever is missing, and launch STAGG.
 
@@ -2452,24 +2458,139 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.rthing_to_do()
             Copy STAGG input to timestamped STAGG output folder, determine which STAGG scripts to use based on the presence or absence of an .RData file, and determine if self.input_dir_r needs to be a str path to directory instead of list because the list has more than 200 files, and run self.rthing_to_do_cntd().
         """
-        # TODO: just get the data and save it to file
-        # Assign the file paths to the attributes
-        variable_config = stagg_settings_window.configs["variable_config"]["path"]
-        graph_config = stagg_settings_window.configs["graph_config"]["path"]
-        other_config = stagg_settings_window.configs["other_config"]["path"]
+        """
+        Ensure the STAGG script exists, prompt the user to indicate where the Rscript.exe file is, and run self.launch_worker().
 
-        # ensure that all required STAGG input has been selected
-        if any([self.stagg_settings_window.configs[key]['path'] == "" for key in self.stagg_settings_window.configs]):
-            if not self.stagg_input_files:
-                notify_error("No STAGG input files")
-            else:
-                # and prompt the user to select whatever is missing
-                QMessageBox.question(self, 'Missing STAGG settings', f"One or more STAGG settings files are missing.", QMessageBox.Ok, QMessageBox.Ok)
+        Parameters
+        --------
+        self.pipeline_des: str
+            self.pipeline_des: str
+            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_input_files has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_input_files consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
+        self.gui_config: dict
+            This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail. 
+        
+        Outputs
+        --------
+        self.rscript_des: str
+            This attribute refers to the file path to the Rscript.exe of the user's device or of R-Portable.
+        reply: QMessageBox
+            This MessageBox prompts the user to navigate to the Rscript executable file if the file path stored in self.gui_config cannot be found.
+        self.gui_config: dict
+            This dictionary is updated with the new file path of the Rscript.exe file when appropriate.
+        gui_config.json
+            The updated self.gui_config is dumped to the gui_config.json file in the GUI scripts folder.
+        
+        Outcomes
+        --------
+        self.launch_worker()
+            Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
+        """
+        if not self.check_stagg_reqs():
+            return
+
+        # Set pipeline destination
+        if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
+            pipeline_des = os.path.join(self.papr_dir, "Pipeline_env_multi.R")
         else:
-            # launch stagg
-            self.rthing_to_do()
+            pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
 
-    def require_workspace_dir(self, a=None, b=None, text=None):
+        if not Path(pipeline_des).is_file():
+            # If Main.pipeline_des (aka the first STAGG script file path) isn't a file,
+            #   then the STAGG scripts aren't where they're supposed to be.
+            notify_error(title='STAGG scripts not found',
+                         msg='BASSPRO-STAGG cannot find the scripts for STAGG. Check the BASSPRO-STAGG folder for missing files or directories.')
+            return
+
+        # If path stored in gui_config.json does not exist or is not an Rscript executable file:
+        while not os.path.basename(self.gui_config['Dictionaries']['Paths']['rscript']) == "Rscript.exe" or \
+            not os.path.exists(self.gui_config['Dictionaries']['Paths']['rscript']):
+            
+            # Ask user to choose new Rscript
+            if not ask_user_ok('Rscript not found',
+                               'Rscript.exe path not defined. Would you like to select the R executable?'):
+                return
+            else:
+                # Keep trying to select valid Rscrip
+                while True:
+                    pre_des, filter = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.workspace_dir), "Rscript.exe")
+                    # Catch cancel
+                    if not pre_des:
+                        break
+
+                    if os.path.basename(pre_des) == "Rscript.exe":
+                        # Got a good Rscript!
+                        self.gui_config['Dictionaries']['Paths']['rscript'] = pre_des
+                        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                            json.dump(self.gui_config, gconfig_file)
+                        break
+
+                    notify_error("Must pick a file named Rscript.exe")
+
+        # Set Rscript path
+        rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
+
+        # Get image format
+        if self.svg_radioButton.isChecked():
+            image_format = ".svg"
+        elif self.jpeg_radioButton.isChecked():
+            image_format = ".jpeg"
+        else:
+            # TODO: this should never happen
+            raise RuntimeError("No image format checked!")
+
+
+        ## WRITE FILES ##
+        # Create output folder
+        stagg_output_folder = self.create_output_folder(toolname='STAGG')
+
+        # Write variable config
+        variable_config = os.path.join(stagg_output_folder, f"variable_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv")
+        VariableSettings.save_file(self.variable_config_df, variable_config)
+        
+        # Write graph config
+        graph_config = os.path.join(stagg_output_folder, f"graph_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv")
+        GraphSettings.save_file(self.graph_config_df, graph_config)
+        
+        # Write other config
+        other_config = os.path.join(stagg_output_folder, f"other_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv")
+        OtherSettings.save_file(self.other_config_df, other_config)
+            
+
+        # Launch STAGG worker!
+        for job in MainGUIworker.get_jobs_r(rscript_des,
+                                            pipeline_des,
+                                            self.papr_dir,
+                                            self.workspace_dir,
+                                            self.input_dir_r,
+                                            variable_config,
+                                            graph_config,
+                                            other_config,
+                                            stagg_output_folder,
+                                            image_format
+                                            ):
+            worker_id = generate_unique_id(self.workers.keys())
+            # create a Worker
+            new_worker = MainGUIworker.Worker(
+                job,
+                worker_id,
+                self.q,
+                stagg_output_folder,
+                )
+
+            new_worker.progress.connect(self.B_run)
+            new_worker.finished.connect(self.B_Done)
+
+            # adjust thread limit for the qthreadpool
+            self.qthreadpool.setMaxThreadCount(1)
+
+            # Add the 'QRunnable' worker to the threadpool which will manage how
+            # many are started at a time
+            self.qthreadpool.start(new_worker)
+
+            # Keep the worker around in a list
+            self.workers[worker_id] = new_worker
+
+    def require_workspace_dir(self):
         """
         Ensure the user has selected an output directory and prompt them to do so if they have not.
 
@@ -2494,56 +2615,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is set as an empty string and then populated with the appropriate directory path (i.e. the path that will serve as either self.basspro_output_dir or self.r_output_folder). The corresponding directory is created if it doesn't already exist.
         """
 
-        ''' Folder Structure
-        - Input files
-            - input_<datetime>
-                -file1.csv
-                -file2.csv
-                -signal_files
-                    signal1.txt
-                    signal2.txt
-        - Output files
-            - my_run_<datetime>
-                - basspro_output
-                    - json
-                    - summary files
-                - stagg_output
-        '''
-
-        if a or b or text:
-            raise NotImplementedError(f"Need to implement dir checker for {text}")
-
-        '''
-        # If no output dir or invalid output dir
-        if self.workspace_dir == "" or not os.path.exists(self.workspace_dir):
-            # open a dialog that prompts the user to choose the directory:
-            self.select_output_dir()
-        '''
-
-        # If no output dir or invalid output dir
-        while not self.workspace_dir or not os.path.exists(self.workspace_dir):
-            # open a dialog that prompts the user to choose the directory:
-            if ask_user_ok('No Output Folder', 'Please select an output folder.'):
-                self.select_output_dir()
-                break
-            else:
-                notify_error("Need output folder")
+        # Keep looping until we get an output directory
+        while not self.workspace_dir:
+            if not ask_user_ok('No Output Folder', 'Please select an output folder.'):
                 return False
 
-        # TODO: what other folders do we need to check?
+            # open a dialog that prompts the user to choose the directory
+            self.select_workspace_dir()
 
-        # Checking to see if we have anything other than just configs in the directory
-        '''
-        if any(Path(self.output_folder).iterdir()) == True:
-            if all("config" in file for file in os.listdir(self.output_folder)):
-                print("just configs")
-            else:
-                reply = QMessageBox.question(self, f'Confirm {text} output directory', 'The current output directory has files in it that may be overwritten.\n\nWould you like to create a new output folder?\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                if reply == QMessageBox.Yes:
-                    output_folder_parent = os.path.dirname(output_folder)
-                    self.output_folder = os.path.join(output_folder_parent, f'{text}_output_'+datetime.datetime.now().strftime('%Y%m%d_%H%M%S'))
-                    os.makedirs(self.output_folder)
-        '''
         return True
     
     def launch_basspro(self):
@@ -2559,39 +2638,39 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
 
-        
-        # TODO: simplify/combine these copy operations
+        # TODO: simplify/combine these write operations
         #for file in [self.autosections, self.mansections, self.basicap]
 
         # Create new folder for run
         basspro_output_folder = self.create_output_folder(toolname='BASSPRO')
 
-        # Copying over metadata file
-        new_filename = os.path.join(basspro_output_folder, f"metadata_{os.path.basename(basspro_output_folder).lstrip('py_output')}.csv")
-        shutil.copyfile(self.metadata, new_filename)
+        # Write metadata file
+        metadata_file = os.path.join(basspro_output_folder, f"metadata_{os.path.basename(basspro_output_folder).lstrip('py_output')}.csv")
+        MetadataSettings.save_file(self.metadata_df, metadata_file)
 
-        # Copying over basspro config file
+        # Write basspro config file
         new_filename = os.path.join(basspro_output_folder, f"basspro_config_{os.path.basename(basspro_output_folder).lstrip('py_output')}.txt")
         shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', new_filename)
 
-        # Copy over autosections file
-        if self.autosections:
-            new_filename = os.path.join(basspro_output_folder, f"auto_sections_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.csv")
-            shutil.copyfile(self.autosections, new_filename)
+        # Write autosections file
+        autosections_file = ""
+        if self.autosections_df is not None:
+            autosections_file = os.path.join(basspro_output_folder, f"auto_sections_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.csv")
+            AutoSettings.save_file(self.autosections_df, autosections_file)
     
-        # Copy over mansections file
-        if self.mansections:
-            new_filename = os.path.join(basspro_output_folder, f"manual_sections_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.csv")
-            shutil.copyfile(self.mansections, new_filename)
+        # Write mansections file
+        mansections_file = ""
+        if self.mansections_df is not None:
+            mansections_file = os.path.join(basspro_output_folder, f"manual_sections_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.csv")
+            ManualSettings.save_file(self.mansections_df, mansections_file)
 
-        # Copy over basic settings file
-        if self.basicap:
-            new_filename = os.path.join(basspro_output_folder, f"basics_{os.path.basename(basspro_output_folder).lstrip('py_output')}.csv")
-            shutil.copyfile(self.basicap, new_filename)
+        # Write basic settings
+        basic_file = os.path.join(basspro_output_folder, f"basics_{os.path.basename(basspro_output_folder).lstrip('py_output')}.csv")
+        BasicSettings.save_file(self.basicap_df, basic_file)
 
         # Write json config to gui_config location
         with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-            json.dump(self.gui_config,gconfig_file)
+            json.dump(self.gui_config, gconfig_file)
 
         # Copy over config file
         new_filename = os.path.join(basspro_output_folder, f"gui_config_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.txt")
@@ -2600,77 +2679,51 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print('launch_basspro thread id',threading.get_ident())
         print("launch_basspro process id",os.getpid())
 
-        # Start the BASSPRO module
-        self.launch_worker("basspro", basspro_output_folder)
+        ## Threading Settings ##
+        # TODO: remove invalid inputs -- add label to combobox instead of putting description as option
+        # adjust thread limit for the qthreadpool
+        try:
+            # Try to convert combo box text to int
+            thread_limit_combo_selection = self.parallel_combo.currentText()
+            thread_limit = int(thread_limit_combo_selection)
+        except ValueError:
+            # ValueError thrown when no option selected
+            #   Set to default
+            thread_limit = 1
+            self.parallel_combo.setCurrentText("1")
 
-        # TODO: isn't this already happening in full_run() ??
-        # Check the BASSPRO output to see which signal files successfully produced JSON files
-        self.output_check()
+        self.qthreadpool.setMaxThreadCount(thread_limit)
+
+        ## Start Jobs ##
+        for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
+                                             module=self.basspro_path,
+                                             output=basspro_output_folder,
+                                             metadata=metadata_file,
+                                             manual=mansections_file,
+                                             auto=autosections_file,
+                                             basic=basic_file):
+
+            worker_id = generate_unique_id(self.workers.keys())
+
+            # create a Worker
+            new_worker = MainGUIworker.Worker(
+                job,
+                worker_id,
+                self.q,
+                )
+
+            new_worker.progress.connect(self.B_run)
+            new_worker.finished.connect(self.B_Done)
+
+            # Add the 'QRunnable' worker to the threadpool which will manage how
+            # many are started at a time
+            self.qthreadpool.start(new_worker)
+
+            # Keep the worker around in a dict
+            self.workers[worker_id] = new_worker
 
         return basspro_output_folder
     
-    def launch_worker(self, task, output_dir):
-        """
-        Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
-        """
-        print('launch_worker thread id',threading.get_ident())
-        print("launch_worker process id",os.getpid())
-        if task == "basspro":
-            for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
-                                                 module=self.basspro_path,
-                                                 output=output_dir,
-                                                 metadata=self.metadata,
-                                                 manual=self.mansections,
-                                                 auto=self.autosections,
-                                                 basic=self.basicap):
-                # create a Worker
-                self.workers[self.counter] = MainGUIworker.Worker(
-                    job,
-                    self.counter,
-                    self.q,
-                    self
-                    )
-
-                self.workers[self.counter].progress.connect(self.B_run)
-                self.workers[self.counter].finished.connect(self.B_Done)
-
-                # TODO: remove invalid inputs -- add label to combobox instead of putting description as option
-                # adjust thread limit for the qthreadpool
-                try:
-                    # Try to convert combo box text
-                    thread_limit_combo_selection = self.parallel_combo.currentText()
-                    thread_limit = int(thread_limit_combo_selection)
-                except ValueError:
-                    thread_limit = 1
-
-                self.qthreadpool.setMaxThreadCount(thread_limit)
-
-                # Add the 'QRunnable' worker to the threadpool which will manage how
-                # many are started at a time
-                self.qthreadpool.start(self.workers[self.counter])
-
-                # advance the counter - used to test launching multiple threads
-                self.counter+=1
-
-        elif task == "r":
-            for job in MainGUIworker.get_jobs_r(self):
-                # create a Worker
-                self.workers[self.counter] = MainGUIworker.Worker(
-                    job,
-                    self.counter,
-                    self.q,
-                    self
-                    )
-                self.workers[self.counter].progress.connect(self.B_run)
-                self.workers[self.counter].finished.connect(self.B_Done)
-                # adjust thread limit for the qthreadpool
-                self.qthreadpool.setMaxThreadCount(1)
-                # Add the 'QRunnable' worker to the threadpool which will manage how
-                # many are started at a time
-                self.qthreadpool.start(self.workers[self.counter])
-                # advance the counter - used to test launching multiple threads
-                self.counter+=1
-        
     def output_check(self):
         """
         Find the signal files that did not produce BASSPRO output.
@@ -2693,9 +2746,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.hangar: QTextEdit
             This TextEdit is appended with a list of othe signal files that did not pass BASSPRO and failed to produce JSON files.
         """
+        goodies = []
+        baddies = []
         if len(self.stagg_input_files) != len(self.signal_files):
-            goodies = []
-            baddies = []
             for s in self.signal_files:
                 name = os.path.basename(s).split('.')[0]
                 for g in self.stagg_input_files:
@@ -2707,10 +2760,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                             goodies.append(name)
                 if name not in goodies:
                     baddies.append(name)
+
         if len(baddies) > 0:
             self.hangar.append(f"\nThe following signals files did not pass BASSPRO:\n\n{', '.join([os.path.basename(thumb) for thumb in baddies])}\n")
 
-    def check_stagg_conditions(self):
+    def check_stagg_reqs(self, full_run=False):
         """
         Copy STAGG input to timestamped STAGG output folder, determine which STAGG scripts to use based on the presence or absence of an .RData file, and determine if self.input_dir_r needs to be a str path to directory instead of list because the list has more than 200 files, and run self.rthing_to_do_cntd().
 
@@ -2747,10 +2801,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.rthing_to_do_cntd()
             This method ensures the STAGG script exists, prompts the user to indicate where the Rscript.exe file is, and runs self.launch_worker().
         """
+        if self.variable_config_df is None or \
+            self.graph_config_df is None or \
+            self.other_config_df is None:
+            notify_error("Missing STAGG config")
+            return False
+
+        # if we cant expect output from basspro, then we need to make sure the files are already there
+        if not full_run and len(self.stagg_input_files) == 0:
+            notify_error("Missing STAGG input files")
+            return False
+
         # Ensure we have a workspace dir selected
         if not self.require_workspace_dir():
             return False
 
+        ##  Handle large input  ##
         # If more than 200 input files
         if len(self.stagg_input_files) > 200:
             # STAGG has troubles importing too many files when provided as a list of file paths,
@@ -2761,7 +2827,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # If more than 1 dir involved
             if len(unique_dirs) > 1:
                 # Need to have a different command line, so instead we'll regulate the user:
-                notify_info( 'The STAGG input provided consists of more than 200 files from multiple directories.\nPlease condense the files into one directory for STAGG to analyze.', title="That's a lot of JSON")
+                title = "That's a lot of JSON"
+                msg = 'The STAGG input provided consists of more than 200 files from multiple directories.'
+                msg += '\nPlease condense the files into one directory for STAGG to analyze.'
+                notify_info(msg, title)
                 return False
 
             # Use directory path instead
@@ -2775,102 +2844,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.input_dir_r = ','.join(item for item in self.stagg_input_files)
             return True
     
-    def rthing_to_do(self):
-        """
-        Ensure the STAGG script exists, prompt the user to indicate where the Rscript.exe file is, and run self.launch_worker().
-
-        Parameters
-        --------
-        self.pipeline_des: str
-            self.pipeline_des: str
-            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_input_files has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_input_files consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
-        self.gui_config: dict
-            This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail. 
-        
-        Outputs
-        --------
-        self.rscript_des: str
-            This attribute refers to the file path to the Rscript.exe of the user's device or of R-Portable.
-        reply: QMessageBox
-            This MessageBox prompts the user to navigate to the Rscript executable file if the file path stored in self.gui_config cannot be found.
-        self.gui_config: dict
-            This dictionary is updated with the new file path of the Rscript.exe file when appropriate.
-        gui_config.json
-            The updated self.gui_config is dumped to the gui_config.json file in the GUI scripts folder.
-        
-        Outcomes
-        --------
-        self.launch_worker()
-            Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
-        """
-
-        if not self.check_stagg_conditions():
-            return
-
-        # Create output folder
-        stagg_output_folder = self.create_output_folder(toolname='STAGG')
-
-        if self.svg_radioButton.isChecked() == True:
-            self.image_format = ".svg"
-        elif self.jpeg_radioButton.isChecked() == True:
-            self.image_format = ".jpeg"
-
-        # TODO: don't copy, just save the df
-        # Copy variable config over
-        shutil.copyfile(variable_config, os.path.join(stagg_output_folder, f"variable_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
-        
-        # Copy graph config over
-        shutil.copyfile(graph_config, os.path.join(stagg_output_folder, f"graph_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
-        
-        # Copy other config over  ?? TODO: rename other
-        shutil.copyfile(other_config, os.path.join(stagg_output_folder, f"other_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv"))
-
-        # Set pipeline destination
-        if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
-            self.pipeline_des = os.path.join(self.papr_dir, "Pipeline_env_multi.R")
-        else:
-            self.pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
-
-        if not Path(self.pipeline_des).is_file():
-            # If Main.pipeline_des (aka the first STAGG script file path) isn't a file,
-            #   then the STAGG scripts aren't where they're supposed to be.
-            notify_error(title='STAGG scripts not found',
-                         msg='BASSPRO-STAGG cannot find the scripts for STAGG. Check the BASSPRO-STAGG folder for missing files or directories.')
-            return
-            
-
-        # If path stored in gui_config.json does not exist or is not an Rscript executable file:
-        while not os.path.basename(self.gui_config['Dictionaries']['Paths']['rscript']) == "Rscript.exe" or \
-            not os.path.exists(self.gui_config['Dictionaries']['Paths']['rscript']):
-            
-            # Ask user to choose new Rscript
-            if not ask_user_yes('Rscript not found',
-                                'Rscript.exe path not defined. Would you like to select the R executable?'):
-                return
-            else:
-                # Keep trying to select valid Rscrip
-                while True:
-                    pre_des, filter = QFileDialog.getOpenFileName(self, 'Find Rscript.exe', str(self.workspace_dir), "Rscript.exe")
-                    # Catch cancel
-                    if not pre_des:
-                        break
-
-                    if os.path.basename(pre_des) == "Rscript.exe":
-                        # Got a good Rscript!
-                        self.gui_config['Dictionaries']['Paths']['rscript'] = pre_des
-                        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
-                            json.dump(self.gui_config, gconfig_file)
-                        break
-
-                    notify_error("Must pick a file named Rscript.exe")
-
-        # Set Rscript path
-        self.rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
-
-        # Launch STAGG worker!
-        print('rthing_to_do thread id',threading.get_ident())
-        print("rthing_to_do process id",os.getpid())
-        self.launch_worker("r")
 
 class STAGGInputSettings(Settings):
 

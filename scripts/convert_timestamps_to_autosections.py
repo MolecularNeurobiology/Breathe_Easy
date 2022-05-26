@@ -150,10 +150,3 @@ def convert_timestamps_to_autosections(list_of_files):
     # return the pandas dataframe
     return autosections_df
     
-
-    
-    
-    
-    
-    
-    

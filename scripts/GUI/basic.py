@@ -498,27 +498,21 @@ class Basic(QDialog, Ui_Basic):
 
 class BasicSettings(Settings):
 
-    valid_filetypes = ['.csv', '.xlsx', '.json']
+    valid_filetypes = ['.csv', '.xlsx']
+    naming_requirements = ['basic']
     file_chooser_message = 'Select breathcaller configuration file to edit basic parameters'
     default_filename = 'basicap.csv'
     editor_class = Basic
 
     @staticmethod
-    def _right_filename(filepath):
-        """
-        Overwrite in derived class if necessary
-        """
-        right_filename = "basic" in os.path.basename(filepath)
-        return right_filename
-
-    @staticmethod
     def attempt_load(file):
-        if Path(file).suffix == ".json":
-            with open(file) as config_file:
-                basic_json = json.load(config_file)
-            data = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
-            data.columns = ['Parameter','Setting']
-        elif Path(file).suffix == ".csv":
+        # TODO: do we want to keep the json format?
+        #if Path(file).suffix == ".json":
+        #    with open(file) as config_file:
+        #        basic_json = json.load(config_file)
+        #    data = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
+        #    data.columns = ['Parameter','Setting']
+        if Path(file).suffix == ".csv":
             data = pd.read_csv(file)
         elif Path(file).suffix == ".xlsx":
             data = pd.read_excel(file)

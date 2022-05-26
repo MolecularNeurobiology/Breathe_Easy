@@ -52,12 +52,6 @@ class Annot(QDialog, Ui_Annot):
         self.setWindowTitle("BASSPRO Variable Annotation")
         self.isActiveWindow()
 
-        # No metadata files in play
-        if data is None:
-            data = MetadataSettings.require_load(workspace_dir)
-            if data is None:
-                self.reject()
-
         self.data = data.copy()
         self.populate_list_columns()
 
@@ -722,14 +716,10 @@ class Annot(QDialog, Ui_Annot):
 class MetadataSettings(Settings):
 
     valid_filetypes = ['.csv', '.xlsx']
+    naming_requirements = ['metadata']
     file_chooser_message = 'Select metadata file'
     default_filename = 'metadata.csv'
     editor_class = Annot
-
-    @staticmethod
-    def _right_filename(filepath):
-        file_basename = os.path.basename(filepath) 
-        return 'metadata' in file_basename
 
     @staticmethod
     def attempt_load(metadata_file):

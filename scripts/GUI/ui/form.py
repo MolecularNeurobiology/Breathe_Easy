@@ -47,6 +47,7 @@ class Ui_Plethysmography(object):
         self.horizontalLayout_12.addItem(spacerItem1)
         self.output_path_display = QtWidgets.QLineEdit(self.centralwidget)
         self.output_path_display.setObjectName("output_path_display")
+        self.output_path_display.setReadOnly(True)
         self.horizontalLayout_12.addWidget(self.output_path_display)
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_12.addItem(spacerItem2)
@@ -251,6 +252,10 @@ class Ui_Plethysmography(object):
         self.parallel_combo.setObjectName("parallel_combo")
         self.parallel_combo.addItem("")
         self.verticalLayout_9.addWidget(self.parallel_combo)
+        self.full_run_checkbox = QtWidgets.QCheckBox(self.centralwidget)
+        self.full_run_checkbox.setObjectName("full_run_checkbox")
+        self.full_run_checkbox.setText("Full Run")
+        self.verticalLayout_9.addWidget(self.full_run_checkbox)
         self.horizontalLayout_2.addLayout(self.verticalLayout_9)
         spacerItem13 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem13)
@@ -320,15 +325,17 @@ class Ui_Plethysmography(object):
 
         self.retranslateUi(Plethysmography)
         
-        # TODO: move these to MainGUI?
-        # Callbacks
+        ## CALLBACKS ##
+        #   basspro
         self.signal_files_button.clicked.connect(Plethysmography.get_signal_files)
         self.metadata_button.clicked.connect(Plethysmography.load_metadata)
         self.delete_sections.clicked.connect(Plethysmography.delete_setting_file)
         self.basspro_settings_button.clicked.connect(Plethysmography.get_autosections)
-        self.output_dir_button.clicked.connect(Plethysmography.select_output_dir)
+        self.output_dir_button.clicked.connect(Plethysmography.select_workspace_dir)
         self.basspro_launch_button.clicked.connect(Plethysmography.full_run)
-        self.stagg_launch_button.clicked.connect(Plethysmography.stagg_run)
+
+        #   stagg
+        self.stagg_launch_button.clicked.connect(Plethysmography.launch_stagg)
         self.breath_files_button.clicked.connect(Plethysmography.select_stagg_input_files)
         self.stagg_settings_button.clicked.connect(Plethysmography.prepare_stagg_settings)
         self.auto_button.clicked.connect(Plethysmography.show_auto)

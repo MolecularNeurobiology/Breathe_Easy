@@ -324,14 +324,10 @@ class Manual(QDialog, Ui_Manual):
 class ManualSettings(Settings):
 
     valid_filetypes = ['.csv']
+    naming_requirements = ['man', 'sections']
     file_chooser_message = 'Select manual sections file to edit'
     default_filename = 'mansections.csv'
     editor_class = Manual
-
-    @staticmethod
-    def _right_filename(filepath):
-        file_basename = os.path.basename(filepath) 
-        return file_basename.startswith("manual_sections")
 
     @staticmethod
     def _save_file(filepath, data):

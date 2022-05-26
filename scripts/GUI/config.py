@@ -118,19 +118,12 @@ class Config(QDialog, Ui_Config):
         self.col_vals = col_vals
         self.custom_data = None
 
-        ''' TODO: do we need to require loading configs?
-        if data is None:
-            data = ConfigSettings.require_load(workspace_dir)
-            if data is None:
-                self.reject()   
-        '''
-
         variable_config_df = data['variable']
         self.populate_variable_table(variable_config_df)
 
         # Do this after populating variable table
-        self.graph_config_df = data['graph'].copy() if data['graph'] else None
-        self.other_config_df = data['other'].copy() if data['other'] else None
+        self.graph_config_df = data['graph'].copy() if data['graph'] is not None else None
+        self.other_config_df = data['other'].copy() if data['other'] is not None else None
 
         self.update_loop()
         self.cascade_variable_table_update()
@@ -287,7 +280,7 @@ class Config(QDialog, Ui_Config):
 
             response_var_combo = self.loop_table.cellWidget(row_num, 1)
             resp_var_default_value = None
-            valid_values = self.aliases
+            valid_values = np.array(self.aliases)
             # Update value based on valid values and any renamed variables
             update_combo_values(response_var_combo, valid_values, renamed=renamed, default_value=resp_var_default_value)
 
@@ -297,11 +290,14 @@ class Config(QDialog, Ui_Config):
             # Remove the response var selection from the options available to the rest
             valid_values = valid_values[valid_values != curr_resp_var]
 
+            # Get the covariate values
             covariate_combo = self.loop_table.cellWidget(row_num, 6)
             covariate_values = covariate_combo.currentData()
+            
+            # Get the rest of the valid values
             valid_values_no_covariate = valid_values[~np.isin(valid_values, covariate_values)]
 
-            # All of these are dependent on the previous and use the same indep/covar variables
+            # All of these are dependent on the previous
             combos_to_update = [self.loop_table.cellWidget(row_num, col_num) for col_num in range(2, 6)]
             default_value = ""
             self.update_hierarchical_combos(valid_values_no_covariate, combos_to_update, default_value, renamed=renamed, first_required=True)
@@ -489,7 +485,7 @@ class Config(QDialog, Ui_Config):
         self.variable_table.setRowCount(len(variable_table_df))
 
         self.variable_names = variable_table_df['Column'].tolist()
-        self.aliases = variable_table_df['Alias']
+        self.aliases = variable_table_df['Alias'].tolist()
 
         self.variable_table.blockSignals(True)
         
@@ -509,6 +505,8 @@ class Config(QDialog, Ui_Config):
             #button_group.idClicked.connect(self.cascade_variable_table_update)
             for i, label in enumerate(["Independent", "Dependent", "Covariate", "Ignore"]):
                 new_radio_button = QRadioButton(label)
+                if label != "Ignore":
+                    new_radio_button.setChecked(record[label])
                 new_radio_button.toggled.connect(self.cascade_variable_table_update)
                 button_group.addButton(new_radio_button, id=i)
                 self.variable_table.setCellWidget(row, 2 + i, new_radio_button)
@@ -949,14 +947,6 @@ class Config(QDialog, Ui_Config):
             else:
                 other_config_df.at[loop_table_rows-1, "Graph"] = self.feature_combo.currentText()
         
-        # TODO: notify user instead?
-        # Drop anywhere with empty Graph or Variable columns
-        if len(other_config_df):
-            other_config_df.drop(
-                other_config_df.loc[
-                    (other_config_df["Graph"]=="") |
-                    (other_config_df["Variable"]=="")].index, inplace=True)
-        
         # Correcting some issue with filling nas on Apnea/Sighs stuff
         other_config_df['Inclusion'] = other_config_df['Inclusion'].fillna(0).astype(int)
 
@@ -1116,7 +1106,7 @@ class Config(QDialog, Ui_Config):
 
         # Convert dataframe...
         self.variable_names = df['Column'].tolist()
-        self.aliases = df['Alias']
+        self.aliases = df['Alias'].tolist()
 
         self.populate_variable_table(df)
 
@@ -1168,14 +1158,13 @@ class Config(QDialog, Ui_Config):
     def order_items(self, combo_name):
         combo = self.graph_config_combos[combo_name]
         alias_name = combo.currentText()
-        alias_idx, = np.where(self.aliases == alias_name)[0]
-        print(np.where(self.aliases == alias_name))
-        print(alias_idx)
-        group_name = self.variable_names[alias_idx]
 
         # Skip anything set to default
-        if group_name == "Select variable:":
+        if alias_name == "Select variable:":
             return
+
+        alias_idx = self.aliases.index(alias_name)
+        group_name = self.variable_names[alias_idx]
 
         items = self.col_vals[group_name]
 
@@ -1306,6 +1295,10 @@ class Config(QDialog, Ui_Config):
                     new_text = str(odf.at[row_num, "Graph"])
                 elif header == "Response variable":
                     new_text = str(odf.at[row_num, "Variable"])
+                elif header == "Y axis minimum":
+                    new_text = str(odf.at[row_num, "ymin"])
+                elif header == "Y axis maximum":
+                    new_text = str(odf.at[row_num, "ymax"])
                 else:
                     new_text = str(odf.at[row_num, header])
 
@@ -1447,12 +1440,8 @@ class ConfigSettings(Settings):
 
 class VariableSettings(ConfigSettings):
 
+    naming_requirements = ['variable', 'config']
     default_filename = 'variable_config.csv'
-
-    @staticmethod
-    def _right_filename(filepath):
-        file_basename = os.path.basename(filepath) 
-        return "variable" in file_basename and "config" in file_basename
 
     def attempt_load(filepath):
         if filepath.endswith(".xlsx"):
@@ -1477,12 +1466,8 @@ class VariableSettings(ConfigSettings):
 
 class GraphSettings(ConfigSettings):
 
+    naming_requirements = ['graph', 'config']
     default_filename = 'graph_config.csv'
-
-    @staticmethod
-    def _right_filename(filepath):
-        file_basename = os.path.basename(filepath) 
-        return "graph" in file_basename and "config" in file_basename
 
     def attempt_load(filepath):
         gdf = pd.read_csv(filepath, index_col=False)
@@ -1491,12 +1476,8 @@ class GraphSettings(ConfigSettings):
 
 class OtherSettings(ConfigSettings):
 
+    naming_requirements = ['other', 'config']
     default_filename = 'other_config.csv'
-
-    @staticmethod
-    def _right_filename(filepath):
-        file_basename = os.path.basename(filepath) 
-        return "other" in file_basename and "config" in file_basename
 
     def attempt_load(filepath):
         odf = pd.read_csv(filepath, index_col=False, keep_default_na=False)

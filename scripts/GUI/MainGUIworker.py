@@ -21,7 +21,6 @@ class WorkerSignals(QObject):
     """
     finished = pyqtSignal(int)
     progress = pyqtSignal(int)
-    
 
 class Worker(QRunnable):
     """
@@ -34,7 +33,7 @@ class Worker(QRunnable):
     QRunnable: class
         The Worker class inherits the properties and methods from teh QRunnable class.
     """
-    def __init__(self, path_to_script: str, i: int, worker_queue: Queue, pleth: Class):
+    def __init__(self, path_to_script: str, worker_id: int, worker_queue: Queue):
         """
         Instantiate the Worker Class.
 
@@ -42,7 +41,7 @@ class Worker(QRunnable):
         ---------
         path_to_script: str
             The string yielded by get_jobs_py() or get_jobs_r() that is given to the command line to launch either BASSPRO or STAGG respectively.
-        i: int
+        worker_id: int
             The worker's number, determined by Plethysmography.counter.
         worker_queue: Queue
             A first-in, first-out queue constructor for safely exchanging information between threads.
@@ -51,9 +50,8 @@ class Worker(QRunnable):
         """
         super(Worker, self).__init__()
         self.path_to_script = path_to_script
-        self.i = i
+        self.worker_id = worker_id
         self.worker_queue = worker_queue
-        self.pleth = pleth
         self.signals = WorkerSignals()
         self.finished = self.signals.finished
         self.progress = self.signals.progress
@@ -79,8 +77,8 @@ class Worker(QRunnable):
                 running = 0
             elif line != '':
                 self.worker_queue.put(line.strip())
-                self.progress.emit(self.i)
-        self.finished.emit(self.i)
+                self.progress.emit(self.worker_id)
+        self.finished.emit(self.worker_id)
 
 
 #region get_jobs
@@ -137,7 +135,7 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
         yield breathcaller_cmd
 
 
-def get_jobs_r(Plethysmography: Class):
+def get_jobs_r(rscript_des, pipeline_des, papr_dir, workspace_dir, input_dir_r, variable_config, graph_config, other_config, output_dir, image_format):
     """
     Return the string fed to the command line to launch the STAGG module.
 
@@ -155,30 +153,30 @@ def get_jobs_r(Plethysmography: Class):
     print("get_jobs_r process id",os.getpid())
     papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}" -Sum "{summary}"'.format(
             # The path to the local R executable file:
-            rscript = Plethysmography.rscript_des,
+            rscript = rscript_des,
             # The path to the STAGG script:
-            pipeline = Plethysmography.pipeline_des,
+            pipeline = pipeline_des,
             # The path to the STAGG scripts directory:
-            summary = Plethysmography.papr_dir,
+            summary = papr_dir,
             # The path to the output directory chosen by the user:
-            d = Plethysmography.mothership,
+            d = workspace_dir,
             # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
-            j = Plethysmography.input_dir_r,
+            j = input_dir_r,
             # The path to the variable_config.csv file:
-            r = Plethysmography.variable_config,
+            r = variable_config,
             # The path to the graph_config.csv file:
-            g = Plethysmography.graph_config,
+            g = graph_config,
             # The path to the other_config.csv file:
-            f = Plethysmography.other_config,
+            f = other_config,
             # The path to the directory for STAGG output:
-            o = Plethysmography.output_dir_r,
+            o = output_dir,
             # The paths to the STAGG scripts:
-            t = os.path.join(Plethysmography.papr_dir, "Data_import_multi.R"),
-            s = os.path.join(Plethysmography.papr_dir, "Statistical_analysis.R"),
-            m = os.path.join(Plethysmography.papr_dir, "Graph_generator.R"),
-            b = os.path.join(Plethysmography.papr_dir, "Optional_graphs.R"),
+            t = os.path.join(papr_dir, "Data_import_multi.R"),
+            s = os.path.join(papr_dir, "Statistical_analysis.R"),
+            m = os.path.join(papr_dir, "Graph_generator.R"),
+            b = os.path.join(papr_dir, "Optional_graphs.R"),
             # A string, either ".jpeg" or ".svg", indicating the format of the image output from STAGG:
-            i = Plethysmography.image_format
+            i = image_format
     )
     yield papr_cmd
 

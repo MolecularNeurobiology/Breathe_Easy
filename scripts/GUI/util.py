@@ -109,13 +109,12 @@ def choose_save_location(default_filename, file_types="*.csv"):
     return path
 
 class Settings:
+    naming_requirements = []
 
-    @staticmethod
-    def _right_filename(filepath):
-        """
-        Overwrite in derived class if necessary
-        """
-        return True
+    @classmethod
+    def _right_filename(cls, filepath):
+        right_filename = all(name_str in os.path.basename(filepath) for name_str in cls.naming_requirements)
+        return right_filename
 
     @classmethod
     def validate(cls, filepath):
@@ -150,9 +149,7 @@ class Settings:
             if all([cls.validate(file) for file in files]):
                 return files
 
-            # If bad file display error and try again
-            filetypes_str = ", ".join([ft for ft in cls.valid_filetypes])
-            notify_error(f"The selected file is not in the correct format. Only {filetypes_str} files are accepted.")
+            cls._display_bad_file_error()
 
     @classmethod
     def open_file(cls, workspace_dir=""):
@@ -167,9 +164,17 @@ class Settings:
             if cls.validate(file):
                 return file
 
-            # If bad file display error and try again
-            filetypes_str = ", ".join([ft for ft in cls.valid_filetypes])
-            notify_error(f"The selected file is not in the correct format. Only {filetypes_str} files are accepted.")
+            cls._display_bad_file_error()
+            
+    @classmethod
+    def _display_bad_file_error(cls):
+        # If bad file display error and try again
+        filetypes_str = ", ".join(cls.valid_filetypes)
+        filenames_str = " and ".join(f"'{name}'" for name in cls.naming_requirements)
+        msg = "The selected file is not in the correct format."
+        msg += f"\nFilename must include: {filenames_str}"
+        msg += f"\nValid filetypes: {filetypes_str}"
+        notify_error(msg)
 
     @classmethod
     def edit(cls, *args, **kwargs):
@@ -187,15 +192,17 @@ class Settings:
         pass
 
     @classmethod
-    def require_load(cls, workspace_dir=""):
-        while True:
-            file = cls.open_file(workspace_dir=workspace_dir)
-            if file:
-                data = cls.attempt_load(file)
-                return data
+    def import_file(cls, workspace_dir=""):
+        """ Choose file and load """
+        file = cls.open_file(workspace_dir=workspace_dir)
+        if not file:
+            return None
+        
+        data = cls.attempt_load(file)
+        if not data:
+            return None
 
-            if not ask_user_ok("File is required", "You must choose a file to proceed"):
-                return None
+        return data
 
 
 def avert_name_collision(new_name, existing_names):
@@ -261,3 +268,10 @@ def populate_table(frame, table):
     table.setHorizontalHeaderLabels(frame.columns)
     table.resizeColumnsToContents()
     table.resizeRowsToContents()
+
+def generate_unique_id(existing_ids):
+    new_id = 0
+    # Keep incrementing id until we get an id that is not used
+    while new_id in existing_ids:
+        new_id += 1
+    return new_id
