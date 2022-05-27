@@ -143,6 +143,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 
                 # Add new one
                 self.sections_list.addItem(filepath)
+                print(self.autosections_df.to_dict())
 
     @property
     def mansections(self):
@@ -622,6 +623,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     else:
                         self.stamp['Dictionaries']['Data'][e] = {}
                         self.stamp['Dictionaries']['Data'][e][c] = {}
+
+            if combo_need == "Custom":
+                self.need = self.autosections_df.to_dict()
+            print(self.need)
 
             self.need = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
 
