@@ -36,7 +36,7 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.0.4'
+__version__ = '36.0.6'
 
 """
 # v36.0.0 README
@@ -115,88 +115,90 @@ Segments
 
 
 !!!
-List of Expected Output Columns
-
-<BREATHCALLER_OUTPUTS>
-    <p>Mouse_And_Session_ID</p>
-    <p>Breath_Inclusion_Filter</p>
-    <p>Auto_Condition</p>
-    <p>Man_Condition</p>
-    <p>Exp_Condition</p>
-    <p>Breath Number</p>
-    <p>Timestamp_Inspiration</p>
-    <p>Timestamp_Expiration</p>
-    <p>Inspiratory_Duration</p>
-    <p>Irreg_Score_Inspiratory_Duration</p>
-    <p>Expiratory_Duration</p>
-    <p>Irreg_Score_Expiratory_Duration</p>
-    <p>Tidal_Volume_uncorrected</p>
-    <p>Irreg_Score_Tidal_Volume_uncorrected</p>
-    <p>Tidal_Volume_exhale_uncorrected</p>
-    <p>Irreg_Score_Tidal_Volume_exhale_uncorrected</p>
-    <p>VT__Tidal_Volume_corrected</p>
-    <p>Irreg_Score_VT__Tidal_Volume_corrected</p>
-    <p>VTpg__Tidal_Volume_per_gram_corrected</p>
-    <p>Irreg_Score_VTpg__Tidal_Volume_per_gram_corrected</p>
-    <p>Peak_Inspiratory_Flow</p>
-    <p>Irreg_Score_Peak_Inspiratory_Flow</p>
-    <p>Peak_Inspiratory_Flow_corrected</p>
-    <p>Irreg_Score_Peak_Inspiratory_Flow_corrected</p>
-    <p>Peak_Expiratory_Flow</p>
-    <p>Irreg_Score_Peak_Expiratory_Flow</p>
-    <p>Peak_Expiratory_Flow_corrected</p>
-    <p>Irreg_Score_Peak_Expiratory_Flow_corrected</p>
-    <p>Breath_Cycle_Duration</p>
-    <p>Irreg_Score_Breath_Cycle_Duration</p>
-    <p>VE__Ventilation</p>
-    <p>Irreg_Score_VE__Ventilation</p>
-    <p>VEpg__Ventilation_per_gram</p>
-    <p>Irreg_Score_VEpg__Ventilation_per_gram</p>
-    <p>VO2</p>
-    <p>Irreg_Score_VO2</p>
-    <p>VO2pg</p>
-    <p>Irreg_Score_VO2pg</p>
-    <p>VCO2</p>
-    <p>Irreg_Score_VCO2</p>
-    <p>VCO2pg</p>
-    <p>Irreg_Score_VCO2pg</p>
-    <p>VEVO2</p>
-    <p>Irreg_Score_VEVO2</p>
-    <p>VF</p>
-    <p>Irreg_Score_VF</p>
-    <p>TT_per_TV</p>
-    <p>Irreg_Score_TT_per_TV</p>
-    <p>TT_per_TVpg</p>
-    <p>Irreg_Score_TT_per_TVpg</p>
-    <p>O2_per_Air__VO2_x_TT_per_TV_</p>
-    <p>Irreg_Score_O2_per_Air__VO2_x_TT_per_TV_</p>
-    <p>Apnea</p>
-    <p>Irreg_Score_Apnea</p>
-    <p>Sigh</p>
-    <p>Irreg_Score_Sigh</p>
-    <p>DVTV</p>
-    <p>Irreg_Score_DVTV</p>
-    <p>per500</p>
-    <p>Irreg_Score_per500</p>
-    <p>mav</p>
-    <p>Irreg_Score_mav</p>
-    <p>O2_concentration</p>
-    <p>Irreg_Score_O2_concentration</p>
-    <p>CO2_concentration</p>
-    <p>Irreg_Score_CO2_concentration</p>
-    <p>Chamber_Temperature</p>
-    <p>Irreg_Score_Chamber_Temperature</p>
-    <p>O2_uncalibrated</p>
-    <p>Irreg_Score_O2_uncalibrated</p>
-    <p>CO2_uncalibrated</p>
-    <p>Irreg_Score_CO2_uncalibrated</p>
-    <p>Chamber_Temp_uncalibrated</p>
-    <p>Irreg_Score_Chamber_Temp_uncalibrated</p>
-    <p>Body_Temperature_Linear</p>
-    <p>Irreg_Score_Body_Temperature_Linear</p>
-</BREATHCALLER_OUTPUTS>
-
+# TODO
+List of Expected Output Columns - bring the column dictionary up as a constant and generate the OUTPUT_COLUMNS for access by import
 """
+
+OUTPUT_COLUMNS = [
+    Mouse_And_Session_ID,
+    Breath_Inclusion_Filter,
+    Auto_Condition,
+    Man_Condition,
+    Exp_Condition,
+    Breath Number,
+    Timestamp_Inspiration,
+    Timestamp_Expiration,
+    Inspiratory_Duration,
+    Irreg_Score_Inspiratory_Duration,
+    Expiratory_Duration,
+    Irreg_Score_Expiratory_Duration,
+    Tidal_Volume_uncorrected,
+    Irreg_Score_Tidal_Volume_uncorrected,
+    Tidal_Volume_exhale_uncorrected,
+    Irreg_Score_Tidal_Volume_exhale_uncorrected,
+    VT__Tidal_Volume_corrected,
+    Irreg_Score_VT__Tidal_Volume_corrected,
+    VTpg__Tidal_Volume_per_gram_corrected,
+    Irreg_Score_VTpg__Tidal_Volume_per_gram_corrected,
+    Peak_Inspiratory_Flow,
+    Irreg_Score_Peak_Inspiratory_Flow,
+    Peak_Inspiratory_Flow_corrected,
+    Irreg_Score_Peak_Inspiratory_Flow_corrected,
+    Peak_Expiratory_Flow,
+    Irreg_Score_Peak_Expiratory_Flow,
+    Peak_Expiratory_Flow_corrected,
+    Irreg_Score_Peak_Expiratory_Flow_corrected,
+    Breath_Cycle_Duration,
+    Irreg_Score_Breath_Cycle_Duration,
+    VE__Ventilation,
+    Irreg_Score_VE__Ventilation,
+    VEpg__Ventilation_per_gram,
+    Irreg_Score_VEpg__Ventilation_per_gram,
+    VO2,
+    Irreg_Score_VO2,
+    VO2pg,
+    Irreg_Score_VO2pg,
+    VCO2,
+    Irreg_Score_VCO2,
+    VCO2pg,
+    Irreg_Score_VCO2pg,
+    VEVO2,
+    Irreg_Score_VEVO2,
+    VF,
+    Irreg_Score_VF,
+    TT_per_TV,
+    Irreg_Score_TT_per_TV,
+    TT_per_TVpg,
+    Irreg_Score_TT_per_TVpg,
+    O2_per_Air__VO2_x_TT_per_TV_,
+    Irreg_Score_O2_per_Air__VO2_x_TT_per_TV_,
+    Apnea,
+    Irreg_Score_Apnea,
+    Sigh,
+    Irreg_Score_Sigh,
+    DVTV,
+    Irreg_Score_DVTV,
+    per500,
+    Irreg_Score_per500,
+    mav,
+    Irreg_Score_mav,
+    O2_concentration,
+    Irreg_Score_O2_concentration,
+    CO2_concentration,
+    Irreg_Score_CO2_concentration,
+    Chamber_Temperature,
+    Irreg_Score_Chamber_Temperature,
+    O2_uncalibrated,
+    Irreg_Score_O2_uncalibrated,
+    CO2_uncalibrated,
+    Irreg_Score_CO2_uncalibrated,
+    Chamber_Temp_uncalibrated,
+    Irreg_Score_Chamber_Temp_uncalibrated,
+    Body_Temperature_Linear,
+    Irreg_Score_Body_Temperature_Linear,
+    ]
+
+
 
 # %% import libraries
 import logging
