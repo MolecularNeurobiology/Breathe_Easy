@@ -5,9 +5,7 @@ from PyQt5.QtCore import Qt
 from util import notify_info, Settings, populate_table
 from ui.auto_form import Ui_Auto
 
-import sys
-sys.path.append("scripts")
-from convert_timestamps_to_autosections import convert_timestamps_to_autosections
+from tools.convert_timestamps_to_autosections import convert_timestamps_to_autosections
 
 class Auto(QDialog, Ui_Auto):
     """

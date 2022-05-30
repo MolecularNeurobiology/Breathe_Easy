@@ -2,7 +2,7 @@
 from abc import abstractstaticmethod
 import os
 from pathlib import Path
-from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem, QComboBox, QCheckBox, QLineEdit
+from PyQt5.QtWidgets import QMessageBox, QFileDialog, QTableWidgetItem, QComboBox, QCheckBox, QLineEdit, QPushButton, QStyle
 from checkable_combo_box import CheckableComboBox
 
 # TODO: split into PyQt-specific utils
@@ -92,6 +92,29 @@ def notify_warning(msg, title="Warning"):
 
 def notify_info(msg, title="Info"):
     QMessageBox.information(None, title, msg)
+
+def nonblocking_msg(msg, msg_type='info', callbacks=None):
+    msgBox = QMessageBox()
+    msgBox.setText(msg)
+    msgBox.setModal(False)
+
+    if msg_type == 'yes':
+        msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+
+        buttons = msgBox.buttons()
+        for button, callback in zip(buttons, callbacks):
+            # Connect Yes button to callback
+            button.clicked.connect(callback)
+
+    elif msg_type == 'info':
+        msgBox.setStandardButtons(QMessageBox.Ok)
+
+    else:
+        raise RuntimeError(f"Bad message type: {msg_type}")
+
+    msgBox.show()
+    return msgBox
+    
 
 def ask_user_yes(title, msg):
     reply = QMessageBox.question(None, title, msg, QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)

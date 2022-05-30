@@ -59,10 +59,10 @@ class Worker(QRunnable):
     def run(self):
         """
         Use subprocess.Popen to run a seperate program in a new process.
-        stdout will be captured by the variable self.echo and extracted below.
+        stdout will be captured by the variable proc.stdout and extracted below.
         
         """
-        self.echo = subprocess.Popen(
+        proc = subprocess.Popen(
             self.path_to_script,
             stdout=subprocess.PIPE, 
             stderr=subprocess.STDOUT
@@ -70,15 +70,18 @@ class Worker(QRunnable):
 
         # Extract the stdout and feed it to the queue.
         # Emit signals whenever adding to the queue or finishing.
-        running = 1
-        while running == 1:
-            line = self.echo.stdout.readline().decode('utf8')
-            if self.echo.poll() is not None:
-                running = 0
+        running = True
+        while running:
+            line = proc.stdout.readline().decode('utf8')
+            if proc.poll() is not None:
+                running = False
+
             elif line != '':
-                self.worker_queue.put(line.strip())
-                self.progress.emit(self.worker_id)
-        self.finished.emit(self.worker_id)
+                self.worker_queue.put((self.worker_id, line.strip()))
+                #self.progress.emit(self.worker_id)
+
+        #self.finished.emit(self.worker_id)
+        self.worker_queue.put((self.worker_id, "DONE"))
 
 
 #region get_jobs
@@ -135,7 +138,7 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
         yield breathcaller_cmd
 
 
-def get_jobs_r(rscript_des, pipeline_des, papr_dir, workspace_dir, input_dir_r, variable_config, graph_config, other_config, output_dir, image_format):
+def get_jobs_r(rscript, pipeline, papr_dir, workspace_dir, input_dir_r, variable_config, graph_config, other_config, output_dir, image_format):
     """
     Return the string fed to the command line to launch the STAGG module.
 
@@ -151,33 +154,33 @@ def get_jobs_r(rscript_des, pipeline_des, papr_dir, workspace_dir, input_dir_r, 
     """
     print('get_jobs_r thread id',threading.get_ident())
     print("get_jobs_r process id",os.getpid())
-    papr_cmd='"{rscript}" "{pipeline}" -d "{d}" -J "{j}" -R "{r}" -G "{g}" -F "{f}" -O "{o}" -T "{t}" -S "{s}" -M "{m}" -B "{b}" -I "{i}" -Sum "{summary}"'.format(
-            # The path to the local R executable file:
-            rscript = rscript_des,
-            # The path to the STAGG script:
-            pipeline = pipeline_des,
-            # The path to the STAGG scripts directory:
-            summary = papr_dir,
-            # The path to the output directory chosen by the user:
-            d = workspace_dir,
-            # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
-            j = input_dir_r,
-            # The path to the variable_config.csv file:
-            r = variable_config,
-            # The path to the graph_config.csv file:
-            g = graph_config,
-            # The path to the other_config.csv file:
-            f = other_config,
-            # The path to the directory for STAGG output:
-            o = output_dir,
-            # The paths to the STAGG scripts:
-            t = os.path.join(papr_dir, "Data_import_multi.R"),
-            s = os.path.join(papr_dir, "Statistical_analysis.R"),
-            m = os.path.join(papr_dir, "Graph_generator.R"),
-            b = os.path.join(papr_dir, "Optional_graphs.R"),
-            # A string, either ".jpeg" or ".svg", indicating the format of the image output from STAGG:
-            i = image_format
-    )
+    papr_cmd=[
+        # The path to the local R executable file
+        rscript,
+        # The path to the STAGG script
+        pipeline,
+        # The path to the output directory chosen by the user
+        '-d', workspace_dir,
+        # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
+        '-J', input_dir_r,
+        # The path to the variable_config.csv file
+        '-R', variable_config,
+        # The path to the graph_config.csv file
+        '-G', graph_config,
+        # The path to the other_config.csv file
+        '-F', other_config,
+        # The path to the directory for STAGG output
+        '-O', output_dir,
+        # The paths to the STAGG scripts
+        '-T', os.path.join(papr_dir, "Data_import_multi.R"),
+        '-S', os.path.join(papr_dir, "Statistical_analysis.R"),
+        '-M', os.path.join(papr_dir, "Graph_generator.R"),
+        '-B', os.path.join(papr_dir, "Optional_graphs.R"),
+        # A string, either ".jpeg" or ".svg", indicating the format of the image output from STAGG
+        '-I', image_format,
+        # The path to the STAGG scripts directory
+        '-Sum', papr_dir
+    ]
     yield papr_cmd
 
 

@@ -1281,11 +1281,10 @@ class Config(QDialog, Ui_Config):
             self.add_loop()
             for table_idx, header in enumerate(self.loop_table_headers):
                 if header == "Covariates":
-                    # TODO: we care about having dependent variables?
-                    covariates_str = odf.at[row_num, 'Covariates']
-                    if covariates_str and len(self.dependent_vars):
+                    covariates = odf.at[row_num, 'Covariates']
+                    if covariates:
                         covariate_combo = self.loop_table.cellWidget(row_num, table_idx)
-                        covariate_combo.loadCustom(covariates_str.split('@'))
+                        covariate_combo.loadCustom(covariates)
                         covariate_combo.updateText()
                     continue
 
@@ -1481,6 +1480,7 @@ class OtherSettings(ConfigSettings):
 
     def attempt_load(filepath):
         odf = pd.read_csv(filepath, index_col=False, keep_default_na=False)
+        odf['Covariates'] = odf['Covariates'].str.split('@')
         return odf
 
     @staticmethod
@@ -1492,9 +1492,6 @@ class OtherSettings(ConfigSettings):
         df = df.fillna("")
 
         # Rename transform labels
-        for i, record in df.iterrows():
-            covariates = record['Covariates']
-            if covariates:
-                df.at[i, 'Covariates'] = '@'.join(covariates)
+        df['Covariates'] = df['Covariates'].str.join('@')
 
         df.to_csv(filepath, index=False)

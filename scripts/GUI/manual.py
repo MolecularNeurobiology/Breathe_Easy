@@ -3,11 +3,9 @@ import os
 from copy import deepcopy
 import pandas as pd
 from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox, QTableWidgetItem
-from PyQt5.QtCore import Qt
-from manual_form import Ui_Manual
-from thumbass_controller import Thumbass
 from thorbass_controller import Thorbass
 from util import notify_error, Settings, notify_info 
+from ui.manual_form import Ui_Manual
 
 # YOu need to make the columns reflect the headers of the dataframes
 class Manual(QDialog, Ui_Manual):
@@ -309,10 +307,10 @@ class Manual(QDialog, Ui_Manual):
         self.populate_table(self.manual_df, self.manual_view)
             This method populates self.manual_view (TableWidget) with the self.manual_df dataframe.
         """
-        file = ManualSettings.choose_file(self.workspace_dir)
+        file = ManualSettings.open_file(self.workspace_dir)
         if file:
 
-            data = pd.read_csv(file)
+            data = ManualSettings.attempt_load(file)
             self.datapad = data.loc[:, [x for x in self.vals]]
             self.preset = data.loc[:, [x for x in data.columns if x not in self.datapad.columns]].drop_duplicates()
             self.data = data
@@ -333,3 +331,7 @@ class ManualSettings(Settings):
     def _save_file(filepath, data):
         # Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
         data.to_csv(filepath, index=False)
+
+    def attempt_load(filepath):
+        data = pd.read_csv(filepath)
+        return data
