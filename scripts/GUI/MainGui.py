@@ -549,11 +549,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         self.stamp['Dictionaries']['Data'][e][c] = {}
 
             if combo_need == "Custom":
-                self.need = self.autosections_df.to_dict()
+                self.need = self.autosections_df.to_dict().fromkeys([x for x in self.autosections_df.to_dict() if x != "Variable"])
+                for y in self.need:
+                    self.need[y] = [y]
+            else:
+                self.need = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
             print(self.need)
-
-            self.need = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
-
+            
             self.hangar.append("Checking timestamps...")
             # TODO: put in separate thread/process
             self.grabTimeStamps()
