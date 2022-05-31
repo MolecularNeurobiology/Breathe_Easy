@@ -335,7 +335,7 @@ class Ui_Plethysmography(object):
         self.basspro_launch_button.clicked.connect(Plethysmography.full_run)
 
         #   stagg
-        self.stagg_launch_button.clicked.connect(Plethysmography.launch_stagg)
+        self.stagg_launch_button.clicked.connect(Plethysmography.stagg_run)
         self.breath_files_button.clicked.connect(Plethysmography.select_stagg_input_files)
         self.stagg_settings_button.clicked.connect(Plethysmography.prepare_stagg_settings)
         self.auto_button.clicked.connect(Plethysmography.show_auto)

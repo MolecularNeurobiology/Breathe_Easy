@@ -2311,6 +2311,19 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.monitors.pop(monitor_id)
             execute_after()
 
+    def stagg_run(self):
+        self.status_message("\n-- -- Launching STAGG -- --")
+        stagg_output_folder, shared_queue, workers = self.launch_stagg()
+
+        # Prevent any changes to stagg setup while waiting
+        self.enable_stagg_buttons(False)
+
+        # Wait to check output after basspro finishes
+        execute_after = lambda : self.enable_stagg_buttons(True)
+
+        # Monitor the basspro processes and execute a function after completion
+        self.add_monitor(workers, shared_queue, execute_after, proc_name="STAGG")
+
     def pickup_after_basspro(self, basspro_output_folder, clear_stagg_input):
 
         # check whether Basspro output is correct, re-enable basspro button
@@ -2323,17 +2336,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.auto_get_breath_files(basspro_output_folder, clear_files=clear_stagg_input)
 
         # launch STAGG
-        self.status_message("\n-- -- Launching STAGG -- --")
-        stagg_output_folder, shared_queue, workers = self.launch_stagg()
-
-        # Prevent any changes to stagg setup while waiting
-        self.enable_stagg_buttons(False)
-
-        # Wait to check output after basspro finishes
-        execute_after = lambda : self.enable_stagg_buttons(True)
-
-        # Monitor the basspro processes and execute a function after completion
-        self.add_monitor(workers, shared_queue, execute_after, proc_name="STAGG")
+        self.stagg_run()
 
     def enable_stagg_buttons(self, status:bool):
         # TODO: when stagg continuation is cancelled, basspro is still running

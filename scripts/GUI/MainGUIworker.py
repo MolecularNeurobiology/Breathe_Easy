@@ -159,7 +159,7 @@ def get_jobs_r(rscript, pipeline, papr_dir, workspace_dir, input_dir_r, variable
         # A string, either ".jpeg" or ".svg", indicating the format of the image output from STAGG
         '-I', image_format,
         # The path to the STAGG scripts directory
-        '-Sum', papr_dir
+        '--Sum', papr_dir
     ]
     yield papr_cmd
 
