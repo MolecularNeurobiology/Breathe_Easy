@@ -51,7 +51,9 @@ from tools.columns_and_values_tools import columns_and_values_from_settings
 # TODO: only for development!
 AUTOLOAD = 'shaun' in os.getcwd()
 
-CONFIG_DIR = os.path.join("scripts", "GUI", "config")
+print(os.getcwd())
+
+CONFIG_DIR = os.path.join("scripts","GUI","config")
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -164,6 +166,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.setWindowTitle("Plethysmography Analysis Pipeline")
         self.showMaximized()
 
+        # Analysis parameters
+        os.chdir(os.path.join(Path(__file__).parent.parent.parent))
+
         # Access configuration settings for GUI in gui_config.json:
         with open(os.path.join(CONFIG_DIR, 'gui_config.json'), 'r') as config_file:
             self.gui_config = json.load(config_file)
@@ -223,8 +228,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.necessary_timestamp_box.addItems(list(self.bc_config['Dictionaries']['Auto Settings']['default'].keys()))
         self.parallel_combo.addItems([str(num) for num in range(1, os.cpu_count()+1)])
 
-        # Analysis parameters
-        os.chdir(os.path.join(Path(__file__).parent.parent.parent))
+
 
         # Autoload configuration
         if AUTOLOAD:
@@ -2561,10 +2565,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Write basic settings
         basic_file = os.path.join(basspro_run_folder, f"basics_{curr_timestamp}.csv")
+        print(basic_file)
         BasicSettings.save_file(self.basicap_df, basic_file)
 
         # Write json config to gui_config location
-        with open(os.path.join(CONFIG_DIR, 'gui_config.json'),'w') as gconfig_file:
+        print(os.getcwd())
+        print(os.path.join(CONFIG_DIR, 'gui_config.json'))
+        with open(os.path.join(os.getcwd(),CONFIG_DIR, 'gui_config.json'),'w') as gconfig_file:
             json.dump(self.gui_config, gconfig_file)
 
         # Copy over config file
