@@ -51,7 +51,7 @@ from tools.columns_and_values_tools import columns_and_values_from_settings
 # TODO: only for development!
 AUTOLOAD = 'shaun' in os.getcwd()
 
-CONFIG_DIR = "scripts/GUI/config"
+CONFIG_DIR = os.path.join("scripts", "GUI", "config")
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -160,25 +160,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         super(Plethysmography, self).__init__()
 
-        # Access configuration settings for GUI in gui_config.json:
-        with open(f'{CONFIG_DIR}/gui_config.json') as config_file:
-            self.gui_config = json.load(config_file)
-
-        # Access timestamp settings for storing timestamper results in timestamps.json:
-        with open(f'{CONFIG_DIR}/timestamps.json') as stamp_file:
-            self.stamp = json.load(stamp_file)
-
-        # Access configuration settings for the basspro in breathcaller_config.json:
-        with open(f'{CONFIG_DIR}/breathcaller_config.json') as bconfig_file:
-            self.bc_config = json.load(bconfig_file)
-
-        # Access references for the basspro in breathcaller_config.json:
-        with open(f'{CONFIG_DIR}/reference_config.json') as rconfig_file:
-            self.rc_config = json.load(rconfig_file)
-
         self.setupUi(self)
         self.setWindowTitle("Plethysmography Analysis Pipeline")
         self.showMaximized()
+
+        # Access configuration settings for GUI in gui_config.json:
+        with open(os.path.join(CONFIG_DIR, 'gui_config.json'), 'r') as config_file:
+            self.gui_config = json.load(config_file)
+
+        # Access timestamp settings for storing timestamper results in timestamps.json:
+        with open(os.path.join(CONFIG_DIR, 'timestamps.json'), 'r') as stamp_file:
+            self.stamp = json.load(stamp_file)
+
+        # Access configuration settings for the basspro in breathcaller_config.json:
+        with open(os.path.join(CONFIG_DIR, 'breathcaller_config.json'), 'r') as bconfig_file:
+            self.bc_config = json.load(bconfig_file)
+
+        # Access references for the basspro in breathcaller_config.json:
+        with open(os.path.join(CONFIG_DIR, 'reference_config.json'), 'r') as rconfig_file:
+            self.rc_config = json.load(rconfig_file)
 
         # Threading attributes
         self.qthreadpool = QThreadPool()
@@ -2426,18 +2426,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         ## WRITE FILES ##
         # Create output folder
-        stagg_output_folder = self.create_output_folder(toolname='STAGG')
+        stagg_output_dir = os.path.join(self.workspace_dir, 'STAGG_output')
+
+        if not os.path.exists(stagg_output_dir):
+            os.mkdir(stagg_output_dir)
+
+        curr_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        stagg_run_folder = os.path.join(stagg_output_dir, f'STAGG_output_{curr_timestamp}')
+        os.mkdir(stagg_run_folder)
 
         # Write variable config
-        variable_config = os.path.join(stagg_output_folder, f"variable_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv")
+        variable_config = os.path.join(stagg_run_folder, f"variable_config_{curr_timestamp}.csv")
         VariableSettings.save_file(self.variable_config_df, variable_config)
         
         # Write graph config
-        graph_config = os.path.join(stagg_output_folder, f"graph_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv")
+        graph_config = os.path.join(stagg_run_folder, f"graph_config_{curr_timestamp}.csv")
         GraphSettings.save_file(self.graph_config_df, graph_config)
         
         # Write other config
-        other_config = os.path.join(stagg_output_folder, f"other_config_{os.path.basename(stagg_output_folder).lstrip('STAGG_output')}.csv")
+        other_config = os.path.join(stagg_run_folder, f"other_config_{curr_timestamp}.csv")
         OtherSettings.save_file(self.other_config_df, other_config)
             
         # adjust thread limit for the qthreadpool
@@ -2454,7 +2461,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                             variable_config,
                                             graph_config,
                                             other_config,
-                                            stagg_output_folder,
+                                            stagg_run_folder,
                                             image_format
                                             ):
             worker_id = generate_unique_id(workers.keys())
@@ -2472,7 +2479,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # Keep the worker around in a list
             workers[worker_id] = new_worker
 
-        return stagg_output_folder, shared_queue, workers
+        return stagg_run_folder, shared_queue, workers
 
     def require_workspace_dir(self):
         """
@@ -2522,43 +2529,47 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
 
-        # TODO: simplify/combine these write operations
-        #for file in [self.autosections, self.mansections, self.basicap]
-
         # Create new folder for run
-        basspro_output_folder = self.create_output_folder(toolname='BASSPRO')
+        basspro_output_dir = os.path.join(self.workspace_dir, 'BASSPRO_output')
+
+        if not os.path.exists(basspro_output_dir):
+            os.mkdir(basspro_output_dir)
+
+        curr_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        basspro_run_folder = os.path.join(basspro_output_dir, f'BASSPRO_output_{curr_timestamp}')
+        os.mkdir(basspro_run_folder)
 
         # Write metadata file
-        metadata_file = os.path.join(basspro_output_folder, f"metadata_{os.path.basename(basspro_output_folder).lstrip('py_output')}.csv")
+        metadata_file = os.path.join(basspro_run_folder, f"metadata_{curr_timestamp}.csv")
         MetadataSettings.save_file(self.metadata_df, metadata_file)
 
         # Write basspro config file
-        #new_filename = os.path.join(basspro_output_folder, f"basspro_config_{os.path.basename(basspro_output_folder).lstrip('py_output')}.txt")
+        #new_filename = os.path.join(basspro_run_folder, f"basspro_config_{os.path.basename(basspro_run_folder).lstrip('py_output')}.txt")
         #shutil.copyfile(f'{Path(__file__).parent}/breathcaller_config.json', new_filename)
 
         # Write autosections file
         autosections_file = ""
         if self.autosections_df is not None:
-            autosections_file = os.path.join(basspro_output_folder, f"auto_sections_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.csv")
+            autosections_file = os.path.join(basspro_run_folder, f"auto_sections_{curr_timestamp}.csv")
             AutoSettings.save_file(self.autosections_df, autosections_file)
     
         # Write mansections file
         mansections_file = ""
         if self.mansections_df is not None:
-            mansections_file = os.path.join(basspro_output_folder, f"manual_sections_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.csv")
+            mansections_file = os.path.join(basspro_run_folder, f"manual_sections_{curr_timestamp}.csv")
             ManualSettings.save_file(self.mansections_df, mansections_file)
 
         # Write basic settings
-        basic_file = os.path.join(basspro_output_folder, f"basics_{os.path.basename(basspro_output_folder).lstrip('py_output')}.csv")
+        basic_file = os.path.join(basspro_run_folder, f"basics_{curr_timestamp}.csv")
         BasicSettings.save_file(self.basicap_df, basic_file)
 
         # Write json config to gui_config location
-        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+        with open(os.path.join(CONFIG_DIR, 'gui_config.json'),'w') as gconfig_file:
             json.dump(self.gui_config, gconfig_file)
 
         # Copy over config file
-        new_filename = os.path.join(basspro_output_folder, f"gui_config_{os.path.basename(basspro_output_folder).lstrip('BASSPRO_output')}.txt")
-        shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', new_filename)
+        #new_filename = os.path.join(basspro_run_folder, f"gui_config_{curr_timestamp}.txt")
+        #shutil.copyfile(f'{Path(__file__).parent}/gui_config.json', new_filename)
         
         print('launch_basspro thread id',threading.get_ident())
         print("launch_basspro process id",os.getpid())
@@ -2584,7 +2595,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         ## Start Jobs ##
         for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
                                              module=self.basspro_path,
-                                             output=basspro_output_folder,
+                                             output=basspro_run_folder,
                                              metadata=metadata_file,
                                              manual=mansections_file,
                                              auto=autosections_file,
@@ -2606,7 +2617,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # Keep the worker around in a dict
             workers[worker_id] = new_worker
 
-        return basspro_output_folder, shared_queue, workers
+        return basspro_run_folder, shared_queue, workers
     
     def output_check(self):
         """
@@ -2720,7 +2731,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     if os.path.splitext(os.path.basename(rscript_path))[0] == "Rscript":
                         # Got a good Rscript!
                         self.gui_config['Dictionaries']['Paths']['rscript'] = rscript_path
-                        with open(f"{CONFIG_DIR}/gui_config.json", 'w') as gconfig_file:
+                        with open(os.path.join(CONFIG_DIR, "gui_config.json"), 'w') as gconfig_file:
                             json.dump(self.gui_config, gconfig_file)
                         break
 
