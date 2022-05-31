@@ -5,3 +5,4 @@ venv/
 data/
 *__pycache__*
 *.csv
+output/

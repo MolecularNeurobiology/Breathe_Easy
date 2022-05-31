@@ -1,26 +1,11 @@
 
 import sys
 import os
-from pyclbr import Class
 from queue import Queue
 import subprocess
 import threading
-from PyQt5.QtCore import QObject, QRunnable, pyqtSignal
+from PyQt5.QtCore import QRunnable
 
-
-class WorkerSignals(QObject):
-    """
-    Chris Ward got the threading to work!
-    
-    Create signals used by the worker.
-
-    Parameters
-    --------
-    QObject: class
-        The WorkerSignals class inherits properties and methods from the QObject class.
-    """
-    finished = pyqtSignal(int)
-    progress = pyqtSignal(int)
 
 class Worker(QRunnable):
     """
@@ -52,9 +37,6 @@ class Worker(QRunnable):
         self.path_to_script = path_to_script
         self.worker_id = worker_id
         self.worker_queue = worker_queue
-        self.signals = WorkerSignals()
-        self.finished = self.signals.finished
-        self.progress = self.signals.progress
     
     def run(self):
         """
@@ -78,9 +60,7 @@ class Worker(QRunnable):
 
             elif line != '':
                 self.worker_queue.put((self.worker_id, line.strip()))
-                #self.progress.emit(self.worker_id)
 
-        #self.finished.emit(self.worker_id)
         self.worker_queue.put((self.worker_id, "DONE"))
 
 

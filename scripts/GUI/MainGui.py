@@ -48,9 +48,10 @@ from ui.form import Ui_Plethysmography
 # Chris's scripts
 from tools.columns_and_values_tools import columns_and_values_from_settings
 
-
 # TODO: only for development!
 AUTOLOAD = 'shaun' in os.getcwd()
+
+CONFIG_DIR = "scripts/GUI/config"
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -89,13 +90,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
         self.rc_config: dict
             This attribute is a shallow dictionary loaded from reference_config.json. It contains definitions, descriptions, and recommended values for every basic, manual, and automated BASSPRO setting.
-        self.q: Queue
-            A first-in, first-out queue constructor for safely exchanging information between threads.
-        self.finished_count: int
-            The number of finished workers.
         self.qThreadpool: QThreadPool
-        self.workers: dict
-            Workers spawned.
         
         self.basspro_path: str
             The path to the BASSPRO module script. Required input for BASSPRO.
@@ -166,19 +161,19 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         super(Plethysmography, self).__init__()
 
         # Access configuration settings for GUI in gui_config.json:
-        with open('scripts/GUI/config/gui_config.json') as config_file:
+        with open(f'{CONFIG_DIR}/gui_config.json') as config_file:
             self.gui_config = json.load(config_file)
 
         # Access timestamp settings for storing timestamper results in timestamps.json:
-        with open('scripts/GUI/config/timestamps.json') as stamp_file:
+        with open(f'{CONFIG_DIR}/timestamps.json') as stamp_file:
             self.stamp = json.load(stamp_file)
 
         # Access configuration settings for the basspro in breathcaller_config.json:
-        with open('scripts/GUI/config/breathcaller_config.json') as bconfig_file:
+        with open(f'{CONFIG_DIR}/breathcaller_config.json') as bconfig_file:
             self.bc_config = json.load(bconfig_file)
 
         # Access references for the basspro in breathcaller_config.json:
-        with open('scripts/GUI/config/reference_config.json') as rconfig_file:
+        with open(f'{CONFIG_DIR}/reference_config.json') as rconfig_file:
             self.rc_config = json.load(rconfig_file)
 
         self.setupUi(self)
@@ -188,7 +183,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Threading attributes
         self.qthreadpool = QThreadPool()
         self.qthreadpool.setMaxThreadCount(1)
-        self.workers = {}
         self.monitors = {}  # store callback loops used to monitor processes
         
         # Use for importing cols/vals from basspro json files
@@ -240,13 +234,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
             self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
 
-            ## Pick either RData or json
-            #if False:
-            #    self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
-            #else:
-            #    json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/JSON files/*"
-            #    for json_path in glob(json_glob):
-            #        self.breath_list.addItem(json_path)
+            # Pick either RData or json
+            if False:
+                self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
+            else:
+                json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/JSON files/*"
+                for json_path in glob(json_glob):
+                    self.breath_list.addItem(json_path)
 
     ## Getters & Setters ##
     @property
@@ -458,33 +452,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.hangar.append(f"Deleted settings: {a.text()}")
             self.sections_list.takeItem(self.sections_list.row(a))
             del a
-
-
-    # method with slot decorator to receive signals from the worker running in
-    # a seperate thread...thread_progress_msg is triggered by the worker's 'progress' signal
-    @pyqtSlot(int)
-    def thread_progress_msg(self, worker_id):
-        while not self.q.empty():
-            new_msg = self.q.get_nowait()
-            self._last_msg_time = datetime.now()
-            self.hangar.append(f'{worker_id} : {new_msg}')
-            """
-            note that if multiple workers are emitting their signals it is not
-            clear which one will trigger the thread_progress_msg method, though there should 
-            be one trigger of the thread_progress_msg method for each emission. It appears as
-            though the emissions collect in a queue as well.
-            If we care about matching the worker-id to the emission/queue 
-            contents, I recommend loading the queue with tuples that include
-            the worker id and the text contents
-            """
-            
-    # method with slot decorator to receive signals from the worker running in
-    # a seperate thread...B_Done is triggered by the worker's 'finished' signal
-    @pyqtSlot(int)
-    def B_Done(self, worker_id):
-        self.hangar.append('Worker_{} finished'.format(worker_id))
-        self.workers.pop(worker_id)
-
 
     def timestamp_dict(self):
         """
@@ -1485,7 +1452,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Overwrite existing files?
         if self.signal_files_list.count() > 0:
-            reply = ask_user_yes(title='Clear signal files list?', msg='Would you like to keep the previously selected signal files?')
+            reply = ask_user_yes(title='Clear signal files list?', msg='Would you like to remove the previously selected signal files?')
             if reply:
                 self.signal_files_list.clear()
 
@@ -2207,17 +2174,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not self.check_bp_reqs():
             return
 
-        # If doing full run, check stagg reqs
+        # If doing full run
         clear_stagg_input = None
-        if is_full_run and not self.check_stagg_reqs(full_run=True):
+        if is_full_run:
+            # check stagg reqs
+            if not self.check_stagg_reqs(full_run=True):
+                return
+
+            # Check whether we have stagg input already
             if len(self.stagg_input_files):
                 clear_stagg_input = ask_user_yes('Clear STAGG input list?', 'Would you like to remove the previously selected STAGG input files?')
-            return
 
         # launch BASSPRO
-        self.status_message("Launching BASSPRO")
+        self.status_message("\n-- -- Launching BASSPRO -- --")
         basspro_output_folder, shared_queue, workers = self.launch_basspro()
+        self.basspro_launch_button.setEnabled(False)
 
+        # TODO: prevent full run if stagg already running
         # Kick off stagg later if doing a full-run!
         if is_full_run:
             # Prevent any changes to stagg setup while waiting
@@ -2228,10 +2201,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         else:
             # Wait to check output after basspro finishes
-            execute_after = lambda : self.output_check()
+            execute_after = self.complete_basspro
 
         # Monitor the basspro processes and execute a function after completion
         self.add_monitor(workers, shared_queue, execute_after, proc_name="BASSPRO")
+
+    def complete_basspro(self):
+        # TODO: automatically load in basspro output every time?
+        self.basspro_launch_button.setEnabled(True)
+        self.output_check()
 
     def cancel_monitor(self, monitor_id, exec_after_cancel=None):
         self.monitors[monitor_id]['status'] = 'cancelled'
@@ -2326,23 +2304,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
         # Run next function
         if execute_after:
-            self.status_message(f"removing monitor {monitor_id}")
             self.monitors.pop(monitor_id)
             execute_after()
 
     def pickup_after_basspro(self, basspro_output_folder, clear_stagg_input):
 
-        # check whether Basspro output is correct
-        self.output_check()
+        # check whether Basspro output is correct, re-enable basspro button
+        self.complete_basspro()
 
         ## RUN STAGG ##
-        self.status_message("Autopopulating STAGG")
+        self.status_message("\nAutopopulating STAGG")
 
         # detect the JSON files produced after BASSPRO has finished
         self.auto_get_breath_files(basspro_output_folder, clear_files=clear_stagg_input)
 
         # launch STAGG
-        self.status_message("Launching STAGG")
+        self.status_message("\n-- -- Launching STAGG -- --")
         stagg_output_folder, shared_queue, workers = self.launch_stagg()
 
         # Prevent any changes to stagg setup while waiting
@@ -2355,6 +2332,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.add_monitor(workers, shared_queue, execute_after, proc_name="STAGG")
 
     def enable_stagg_buttons(self, status:bool):
+        # TODO: when stagg continuation is cancelled, basspro is still running
+        #   - below will enable basspro button again, but need to make sure we stop basspro process
+        self.basspro_launch_button.setEnabled(status)
         self.stagg_settings_button.setEnabled(status)
         self.stagg_launch_button.setEnabled(status)
         self.breath_files_button.setEnabled(status)
@@ -2477,16 +2457,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                             stagg_output_folder,
                                             image_format
                                             ):
-            worker_id = generate_unique_id(self.workers.keys())
+            worker_id = generate_unique_id(workers.keys())
             # create a Worker
             new_worker = MainGUIworker.Worker(
                 job,
                 worker_id,
                 shared_queue
                 )
-
-            #new_worker.progress.connect(self.thread_progress_msg)
-            new_worker.finished.connect(self.B_Done)
 
             # Add the 'QRunnable' worker to the threadpool which will manage how
             # many are started at a time
@@ -2613,7 +2590,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                              auto=autosections_file,
                                              basic=basic_file):
 
-            worker_id = generate_unique_id(self.workers.keys())
+            worker_id = generate_unique_id(workers.keys())
 
             # create a Worker
             new_worker = MainGUIworker.Worker(
@@ -2621,9 +2598,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 worker_id,
                 shared_queue,
                 )
-
-            #new_worker.progress.connect(self.thread_progress_msg)
-            new_worker.finished.connect(self.B_Done)
 
             # Add the 'QRunnable' worker to the threadpool which will manage how
             # many are started at a time
@@ -2746,7 +2720,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     if os.path.splitext(os.path.basename(rscript_path))[0] == "Rscript":
                         # Got a good Rscript!
                         self.gui_config['Dictionaries']['Paths']['rscript'] = rscript_path
-                        with open(f'{Path(__file__).parent}/gui_config.json','w') as gconfig_file:
+                        with open(f"{CONFIG_DIR}/gui_config.json", 'w') as gconfig_file:
                             json.dump(self.gui_config, gconfig_file)
                         break
 
