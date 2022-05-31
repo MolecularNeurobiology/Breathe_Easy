@@ -2309,7 +2309,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             # TODO: implement BASSPRO cancel, not just STAGG continuation
             # If it's been longer than 1 minute since we've heard from the threads
-            if datetime.now() - last_heard > timedelta(minutes=1) and \
+            if datetime.now() - last_heard > timedelta(minutes=2) and \
                 not monitor['dialog_window']:
                 msg = f"{monitor['proc_name']} is taking a while, would you like to cancel checking for STAGG autostart?"
                 yes_func = lambda : self.cancel_monitor(monitor_id, exec_after_cancel=lambda : self.enable_stagg_buttons(True))
