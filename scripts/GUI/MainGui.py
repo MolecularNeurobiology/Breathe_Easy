@@ -291,7 +291,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 
                 # Add new one
                 self.sections_list.addItem(filepath)
-                print(self.autosections_df.to_dict())
+                self.necessary_timestamp_box.addItem("Custom")
 
     @property
     def mansections(self):
