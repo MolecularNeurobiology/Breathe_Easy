@@ -2,60 +2,31 @@
 # pipeline.r is the main wrapper of all the scripts for papr. Additionally, it 
 # provides the methods to parse the command line arguments.
 print("Setting pipeline")
-
-
-required_libs <- c("rjson", "tidyverse", "magrittr", "data.table",
-                   "ggpubr", "kableExtra", "rmarkdown", "argparser",
-                   "lme4", "lmerTest", "multcomp", "xtable", 
-                   "tidyselect", "ggthemes", "RColorBrewer", "openxlsx")
-
-for(libb in required_libs){
-  lib_test <- eval(parse(text = paste0("require(", libb, ")")))
-  if(!lib_test){
-    install.packages(libb, repos = "http://cran.r-project.org/", dependencies = TRUE)
-    lib_test_install <- eval(parse(text = paste0("require(", libb, ")")))
-    if(!lib_test_install & libb == "rjson"){
-      install.packages("http://cran.r-project.org/src/contrib/Archive/rjson/rjson_0.2.20.tar.gz",
-                       repos = NULL, type = "source")
-    }
-  }
-}
-
-
-
-# library(rjson)
-# library(tidyverse)
-# # library(dplyr)
-# library(magrittr)
-# library(data.table)
-# library(ggpubr)
-# # library(gridExtra)
-# library(kableExtra)
-# # library(stargazer)
-# # library(argparse)
-# # library(papeR)
-# # library(foreach)
-
+library(rjson)
+library(tidyverse)
+# library(dplyr)
+library(magrittr)
+library(data.table)
+library(ggpubr)
+# library(gridExtra)
+library(kableExtra)
+# library(stargazer)
+# library(argparse)
+# library(papeR)
+# library(foreach)
 library(rmarkdown)
-pandoc_info = find_pandoc(dir="../../pandoc-2.18/")
-pandoc_absolute = normalizePath(pandoc_info$dir)
-find_pandoc(cache = FALSE, dir=pandoc_absolute)
-
-# library(argparser)
-# library(lme4)
-# library(lmerTest)
-# # library(afex)
-# # library(tidyverse)
-# library(multcomp)
-# # library(emmeans)
-# library(xtable)
-# library(tidyselect)
-# library(ggthemes)
-# library(RColorBrewer)
-# library(openxlsx)
-
-
-
+library(argparser)
+library(lme4)
+library(lmerTest)
+# library(afex)
+# library(tidyverse)
+library(multcomp)
+# library(emmeans)
+library(xtable)
+library(tidyselect)
+library(ggthemes)
+library(RColorBrewer)
+library(openxlsx)
 
 # This script combines pipeline definition + data importing when running new models on data saved in an R environment.
 # This is used when running new models on data that has already been passed through and saved by BASSPRO-StAGG in a previous run.
@@ -87,8 +58,6 @@ p <- add_argument (p, "--Bodytemp", help="Filepath to R code for other graphs")
 
 p <- add_argument (p, "--I", help="Type of image to output")
 
-p <- add_argument (p, "--Sum", help="Filepath to directory with R markdown code for summary html", short = "-u")
-
 # Arguments are imported + stored as a list with the names defined as above.
 args2 <- parse_args(p)
 
@@ -98,16 +67,23 @@ print("Loading data")
 #########################
 #####JSON LOCATION#######
 #########################
+
 # Sets working directory to the Mothership so arguments in command line that indicate file locations are 
 # understood and found by R.
 setwd(args2$dir)
 
-# Load environment
-load(args2$JSON)
+# Load data from R environment.
+load_env <- grep("\\.RData", args2$JSON, value = TRUE)
+if(length(load_env) == 0) {
+  print("No R environment selected.")
+} else if (length(load_env) > 1) {
+  print("Multiple R environments selected; only the first will be used.")
+}
+load(load_env[1])
 
 # Remove conflicting arguments.
 args <- args2
-rm(args2)
+rm(load_ev, args2)
 
 #########################
 #####APPEND JSONS########
@@ -176,17 +152,13 @@ simple_appender <- import_data <- function(fp, breath_df = NULL){
 } 
 
 # Find JSONs in filepaths from command line arguments.
-if(!is.null(args$JSON) && !is.na(args$JSON) && is.character(args$JSON)){
-  full_dirs <- unlist(strsplit(args$JSON, ","))
-  filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE),
-                 grep("\\.json", full_dirs, value = TRUE))
-  
-  if(length(filepaths) > 0) {
-    tbl0 <- simple_appender(filepaths, tbl0)
-  }
-  
-} else {
-  print("No additional JSONs to be added.")
+full_dirs <- unlist(strsplit(args$JSON, ","))
+filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE),
+               grep("\\.json", full_dirs, value = TRUE))
+
+# 
+if(length(filepaths) > 0) {
+  tbl0 <- simple_appender(filepaths, tbl0)
 }
 
 
@@ -205,7 +177,7 @@ if((!is.null(args$R_config)) && (!is.na(args$R_config)) && (args$R_config != "No
   var_names$Alias <- sapply(var_names$With_units, wu_convert)
   
   #Sets columns names to designated alias names. These aliases are set by the user in the GUI. 
-  # setnames(tbl0, old = c(var_names$Column), new = c(var_names$Alias), skip_absent = TRUE)
+  setnames(tbl0, old = c(var_names$Column), new = c(var_names$Alias), skip_absent = TRUE)
   
   #Sets statistical values for dependent, independent, and covariate varibales based on R_config file.
   response_vars <- var_names$Alias[which(var_names$Dependent != 0)]

@@ -11,7 +11,7 @@ required_libs <- c("rjson", "tidyverse", "magrittr", "data.table",
 for(libb in required_libs){
   lib_test <- eval(parse(text = paste0("require(", libb, ")")))
   if(!lib_test){
-    install.packages(libb, dependencies = TRUE)
+    install.packages(libb, repos = "http://cran.r-project.org/", dependencies = TRUE)
     lib_test_install <- eval(parse(text = paste0("require(", libb, ")")))
     if(!lib_test_install & libb == "rjson"){
       install.packages("http://cran.r-project.org/src/contrib/Archive/rjson/rjson_0.2.20.tar.gz",
@@ -26,7 +26,12 @@ for(libb in required_libs){
 # library(data.table)
 # library(ggpubr)
 # library(kableExtra)
-# library(rmarkdown)
+
+library(rmarkdown)
+pandoc_info = find_pandoc(dir="../../pandoc-2.18/")
+pandoc_absolute = normalizePath(pandoc_info$dir)
+find_pandoc(cache = FALSE, dir=pandoc_absolute)
+
 # library(argparser)
 # library(lme4)
 # library(lmerTest)
@@ -64,7 +69,7 @@ p <- add_argument (p, "--Bodytemp", help="Filepath to R code for other graphs")
 
 p <- add_argument (p, "--I", help="Type of image to output")
 
-p <- add_argument (p, "--Sum", help="Filepath to directory with R markdown code for summary html")
+p <- add_argument (p, "--Sum", help="Filepath to directory with R markdown code for summary html", short = "-u")
 
 
 # Arguments are imported + stored as a list with the names defined as above.

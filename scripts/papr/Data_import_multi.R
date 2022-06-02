@@ -7,19 +7,14 @@ print("Importing data")
 #########################
 #####JSON LOCATION#######
 #########################
-#Sets working directory to the Mothership so arguments in command line that indicate file locations are 
-#understood and found by R.
-# setwd("~/") 
+# Sets working directory to the Mothership so arguments in command line that indicate file locations are 
+# understood and found by R.
 setwd(args$dir)
 
-#Finds all JSON files in file locations indicated in args$JSON.
+# Imports all JSON files in file location indicated in args$JSON.
 full_dirs <- unlist(strsplit(args$JSON, ","))
 filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE), 
                grep("\\.json", full_dirs, value = TRUE))
-
-if(length(filepaths) == 0) {
-  stop("No JSON files found.")
-}
 
 #########################
 #####IMPORT JSONS########
@@ -110,9 +105,11 @@ import_data <- function(fp){
 # Calls the above function and loads in all JSON files as one data frame.
 tbl0 <- import_data(filepaths)
 
+
 #########################
 #### R CONFIGURATION ####
 #########################
+
 
 # Converts column names to names without units, to be used internally to avoid eval/parse issues.
 ## Assumes that units are denoted inside of parentheses at end of desired column name.
@@ -222,7 +219,9 @@ for(gg in c(xvar, pointdodge, facet1, facet2)){
 
 print("Loading optional graph settings")
 
+# Load optional graph settings.
 other_config <- read.csv(args$Foxtrot, stringsAsFactors = FALSE, na.strings = c("", " ", "NA"))
+## Default to svg image files.
 if(is.null(args$I)){
   args$I <- ".svg"
 }
