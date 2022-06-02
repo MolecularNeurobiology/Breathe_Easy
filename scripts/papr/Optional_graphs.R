@@ -606,7 +606,11 @@ if(sighs || apneas){
     graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
     # Stat modeling, calculated ONLY using graphing variables as independent variables.
-    other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
+    if(length(unique(eventtab_join$MUID)) == nrow(eventtab_join)){
+      other_mod_res <- stat_run_other(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
+    } else {
+      other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
+    }
     
     # Make graph + save
     graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join, 
