@@ -40,7 +40,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   interact_string <- paste0("run_data$interact <- with(run_data, interaction(", paste(inter_vars, collapse = ", "), "))")
   eval(parse(text = interact_string))
   # Create covariates
-  covar_formula_string <- paste(c(1, cov_vars), collapse = "+")
+  covar_formula_string <- paste(c(0, cov_vars), collapse = "+")
   # Create full formula string for modeling.
   form <- as.formula(paste0(resp_var, " ~ interact + ", covar_formula_string))
   
@@ -49,10 +49,10 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   
   # Create all relevant comparisons for pairwise comparison testing.
   ## Find all interaction groups in model.
-  all_names <- names(coef(temp_mod)) %>% str_replace_all("interact", "")
+  all_names <- grep("interact", names(coef(temp_mod)), value = TRUE) %>% str_replace_all("interact", "")
   ## Create all possible pairwise comparisons.
   comb_list <- c()
-  for(rr in 2:(length(all_names) - 1)){
+  for(rr in 1:(length(all_names) - 1)){
     for(ss in (rr+1):length(all_names)){
       comb_list <- c(comb_list, paste0(all_names[rr], " - ", all_names[ss]))
     }
@@ -237,7 +237,8 @@ if(nrow(other_config) > 0){
         other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
       }
       
-      graph_file <- paste0("BodyWeight_", other_config_row$Graph, args$I)
+      name_part <- str_replace_all(other_config_row$Graph, "[[:punct:]]", "")
+      graph_file <- paste0("BodyWeight_", name_part, args$I) %>% str_replace_all(" ", "")
       
       # Assumes weight is a mouse-level measurement.
       if(length(unique(other_df$MUID)) == nrow(other_df)){
@@ -344,7 +345,8 @@ if(nrow(other_config) > 0){
       setnames(melt_bt_graph_df, old = c("value", "variable"), new = c("Temp", "State"), skip_absent = TRUE)
       temp_vars <- c("State", temp_vars)
       
-      graph_file <- paste0("BodyTemp_", other_config_row$Graph, args$I)
+      name_part <- str_replace_all(other_config_row$Graph, "[[:punct:]]", "")
+      graph_file <- paste0("BodyTemp_", name_part, args$I) %>% str_replace_all(" ", "")
       
       # Assumes temperature is a mouse-level measurement.
       other_mod_res <- stat_run("Temp", other_inter_vars, other_covars, melt_bt_df, FALSE)
@@ -435,7 +437,8 @@ if(nrow(other_config) > 0){
           other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
         }
         
-        graph_file <- paste0(other_config_row$Variable, "_", other_config_row$Graph, args$I)
+        name_part <- str_replace_all(c(other_config_row$Variable, other_config_row$Graph), "[[:punct:]]", "")
+        graph_file <- paste0(name_part[1], "_", name_part[2], args$I) %>% str_replace_all(" ", "")
         
         # Runs stat modeling
         # Assumes that each individual observation is relevant (and not mouse-level statistic.)
@@ -515,7 +518,7 @@ if(sighs || apneas){
   
   # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
-    graph_file <- paste0(r_vars[ii],args$I)
+    graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
     # Stat modeling, calculated ONLY using graphing variables as independent variables.
     other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
@@ -623,7 +626,8 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
         labs(x = "T", y = "T+1", color = pointdodge_wu) +
         theme_few() 
       
-      graph_file <- str_replace_all(paste0("Poincare_", resp_var, "_", ll, args$I), " ", "")
+      name_part <- str_replace_all(c(resp_var, ll), "[[:punct:]]", "")
+      graph_file <- str_replace_all(paste0("Poincare_", name_part[1], "_", name_part[2], args$I), " ", "") %>% str_replace_all(" ", "")
       ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm")
     }
     
@@ -637,7 +641,8 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
       labs(x = "T", y = "T+1", color = pointdodge_wu) +
       theme_few() 
     
-    graph_file <- paste0("Poincare_", resp_var, args$I)
+    name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
+    graph_file <- str_replace_all(paste0("Poincare_", name_part, args$I), " ", "") %>% str_replace_all(" ", "")
     ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm")
   }
   return()
@@ -693,7 +698,8 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
       labs(x = "Hz", y = "Magnitude") +
       theme_bw()
     
-    graph_file <- paste0("Spectral_", resp_var, "_", pointdodge, args$I)
+    name_part <- str_replace_all(c(resp_var, pointdodge), "[[:punct:]]", "")
+    graph_file <- paste0("Spectral_", name_part[1], "_", name_part[2], args$I)
     ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2 * length(unique(graph_data[[pointdodge]])), units = "in")
     
   } else {
@@ -708,7 +714,8 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
       labs(x = "Hz", y = "Magnitude") +
       theme_bw()
     
-    graph_file <- paste0("Spectral_", resp_var, args$I)
+    name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
+    graph_file <- paste0("Spectral_", name_part, args$I) %>% str_replace_all(" ", "")
     ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2, units = "in")
   }
   return()

@@ -2,22 +2,40 @@
 # pipeline.r is the main wrapper of all the scripts for papr. 
 # Additionally, it provides the methods to parse the command line arguments and loads all required libraries.
 print("Setting pipeline")
-library(rjson)
-library(tidyverse)
-library(magrittr)
-library(data.table)
-library(ggpubr)
-library(kableExtra)
-library(rmarkdown)
-library(argparser)
-library(lme4)
-library(lmerTest)
-library(multcomp)
-library(xtable)
-library(tidyselect)
-library(ggthemes)
-library(RColorBrewer)
-library(openxlsx)
+
+required_libs <- c("rjson", "tidyverse", "magrittr", "data.table",
+                   "ggpubr", "kableExtra", "rmarkdown", "argparser",
+                   "lme4", "lmerTest", "multcomp", "xtable", 
+                   "tidyselect", "ggthemes", "RColorBrewer", "openxlsx")
+
+for(libb in required_libs){
+  lib_test <- eval(parse(text = paste0("require(", libb, ")")))
+  if(!lib_test){
+    install.packages(libb, dependencies = TRUE)
+    lib_test_install <- eval(parse(text = paste0("require(", libb, ")")))
+    if(!lib_test_install & libb == "rjson"){
+      install.packages("http://cran.r-project.org/src/contrib/Archive/rjson/rjson_0.2.20.tar.gz",
+                       repos = NULL, type = "source")
+    }
+  }
+}
+
+# library(rjson)
+# library(tidyverse)
+# library(magrittr)
+# library(data.table)
+# library(ggpubr)
+# library(kableExtra)
+# library(rmarkdown)
+# library(argparser)
+# library(lme4)
+# library(lmerTest)
+# library(multcomp)
+# library(xtable)
+# library(tidyselect)
+# library(ggthemes)
+# library(RColorBrewer)
+# library(openxlsx)
 
 ################### Adds arguments that are inserted to the terminal for file locations ####################
 # Arguments to be defined in the command line call; these are read via the add_argument function.

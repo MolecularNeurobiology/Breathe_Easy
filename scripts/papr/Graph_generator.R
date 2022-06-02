@@ -448,7 +448,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   if(!(is.na(yax_min)) && !(is.na(yax_max)) && !(is.null(yax_min)) && !(is.null(yax_max))) {
     p <- p + scale_y_continuous(limits = c(yax_min, yax_max), expand = expansion(mult = c(0, 0)))
   } else {
-    p <- p + scale_y_continuous(limits = c(min(c(box_graph_df$ymin, box_graph_df$mid - box_graph_df$sds)), 
+    p <- p + scale_y_continuous(limits = c(min(c(box_graph_df$ymin.y, box_graph_df$mid - box_graph_df$sds)), 
                                            max(c(box_graph_df$asty2, box_graph_df$mid + box_graph_df$sds))), 
                                 expand = expansion(mult = c(0.035, 0.07)))
   }
