@@ -2408,7 +2408,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Set pipeline destination
         if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
-            pipeline_des = os.path.join(self.papr_dir, "Pipeline_env_multi.R")
+            pipeline_des = os.path.join(self.papr_dir, "Pipeline_env.R")
         else:
             pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
 
