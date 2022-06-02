@@ -471,6 +471,7 @@ class AutoSettings(Settings):
         #        if item.text() == "nan":
         #            header.append("")
         #        else:
+        
         #            header.append(item.text())
 
         #    for column in range(summary_table.columnCount()):

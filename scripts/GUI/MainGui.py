@@ -291,6 +291,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 
                 # Add new one
                 self.sections_list.addItem(filepath)
+                print("autosections set")
                 self.necessary_timestamp_box.addItem("Custom")
 
     @property
@@ -1577,7 +1578,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.mp_parsed={'MUIDLIST':[],'PLYUIDLIST':[],'MUID_PLYUID_tuple':[]}
         self.mp_parserrors=[]
         muid_plyuid_re=re.compile('M(?P<muid>.+?(?=_|\.txt))(_Ply)?(?P<plyuid>.*).txt')
-        for file in self.signals:
+        for file in self.signal_files:
             try:
                 parsed_filename=re.search(muid_plyuid_re,os.path.basename(file))
                 if parsed_filename['muid']!='' and parsed_filename['plyuid']!='':
