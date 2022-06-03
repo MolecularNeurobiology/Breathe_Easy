@@ -1227,7 +1227,7 @@ class Ui_Basic(object):
         Basic.setWindowTitle(_translate("Basic", "Form"))
         self.label.setText(_translate("Basic", "BASSPRO Basic Settings"))
         self.load_basic_button.setText(_translate("Basic", "Open"))
-        self.save_as_button.setText(_translate("Basic", "Save As"))
+        self.save_as_button.setText(_translate("Basic", "Export"))
         self.rig_convert_label_2.setText(_translate("Basic", "Breath Identification"))
         self.help_minTI.setText(_translate("Basic", "?"))
         self.help_minPIF.setText(_translate("Basic", "?"))
