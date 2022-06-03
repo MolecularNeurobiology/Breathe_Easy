@@ -28,7 +28,7 @@ for(libb in required_libs){
 # library(kableExtra)
 
 library(rmarkdown)
-pandoc_info = find_pandoc(dir="../../pandoc-2.18/")
+pandoc_info = find_pandoc(dir="../pandoc-2.18/")
 pandoc_absolute = normalizePath(pandoc_info$dir)
 find_pandoc(cache = FALSE, dir=pandoc_absolute)
 
