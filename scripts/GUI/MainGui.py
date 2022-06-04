@@ -9,7 +9,6 @@ version 5 trillion
 
 
 import os
-import sys
 import traceback
 
 # general
