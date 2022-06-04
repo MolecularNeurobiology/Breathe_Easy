@@ -839,7 +839,8 @@ if(length(rmd_file) == 0){
 
 
 # Render RMD file.
-html_try <- try(rmarkdown::render(rmd_file, output_dir = args$Output))
+html_try <- try(rmarkdown::render(rmd_file, output_dir = args$Output, 
+                                  output_format = "html_document"))
 
 # If there is an error, 
 if(class(html_try) == "try-error"){
