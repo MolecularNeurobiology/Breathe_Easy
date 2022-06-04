@@ -40,7 +40,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   interact_string <- paste0("run_data$interact <- with(run_data, interaction(", paste(inter_vars, collapse = ", "), "))")
   eval(parse(text = interact_string))
   # Create covariates
-  covar_formula_string <- paste(c(1, cov_vars), collapse = "+")
+  covar_formula_string <- paste(c(0, cov_vars), collapse = "+")
   # Create full formula string for modeling.
   form <- as.formula(paste0(resp_var, " ~ interact + ", covar_formula_string))
   
@@ -49,10 +49,10 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   
   # Create all relevant comparisons for pairwise comparison testing.
   ## Find all interaction groups in model.
-  all_names <- names(coef(temp_mod)) %>% str_replace_all("interact", "")
+  all_names <- grep("interact", names(coef(temp_mod)), value = TRUE) %>% str_replace_all("interact", "")
   ## Create all possible pairwise comparisons.
   comb_list <- c()
-  for(rr in 2:(length(all_names) - 1)){
+  for(rr in 1:(length(all_names) - 1)){
     for(ss in (rr+1):length(all_names)){
       comb_list <- c(comb_list, paste0(all_names[rr], " - ", all_names[ss]))
     }
@@ -87,9 +87,26 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   vttukey <- as.data.frame(xtable(mytest))
   colnames(vttukey) <- c("Estimate", "StdError", "zvalue", "pvalue")
   
+  # Make residual plots
+  ## Raw residual plot
+  g1 <- ggplot() +
+    geom_point(aes(x = fitted(temp_mod), y = resid(temp_mod))) +
+    labs(x = "Fitted", y = "Residual") + 
+    geom_abline(slope = 0, intercept = 0) +
+    theme_few() 
+  
+  ## Q-Q plot
+  g2 <- ggplot() +
+    geom_qq(aes(sample = resid(temp_mod))) +
+    labs(x = "Empirical Quantile", y = "Theoretical Quantile") + 
+    geom_qq_line(aes(sample = resid(temp_mod))) +
+    theme_few() 
+  
   # Create return values
   return_values$rel_comp <- vttukey
   return_values$lm <- summary(temp_mod)$coef
+  return_values$residplot <- g1
+  return_values$qqplot <- g2
   
   return(return_values)
 }
@@ -101,6 +118,18 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
 # Iterate through each of the rows in the config file.
 ## Create the desired plot for each row
 if(nrow(other_config) > 0){
+  
+  ## Saving modeling results for each dependent variable
+  other_mod_res_list <- list()
+  ## Saves Tukey test results
+  other_tukey_res_list <- list()
+  
+  other_stat_dir  <- paste0(args$Output, "/OptionalStatResults/")
+  if(!dir.exists(other_stat_dir)){
+    dirtest <- try(dir.create(other_stat_dir))
+  } 
+  
+  # Run optional graphs
   print("Making optional graphs")
   for(ii in 1:nrow(other_config)){
     print((paste0("Making optional plot ", ii, "/", nrow(other_config))))
@@ -237,7 +266,14 @@ if(nrow(other_config) > 0){
         other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
       }
       
-      graph_file <- paste0("BodyWeight_", other_config_row$Graph, args$I)
+      # Set order of categories in variables as specified by the user, if specified.
+      regraph_vars <- box_vars[which(box_vars %in% graph_v)] 
+      if(length(regraph_vars) != 0){
+        other_graph_df <- graph_reorder(other_graph_df, regraph_vars, graph_vars, tbl0)
+      }
+      
+      name_part <- str_replace_all(other_config_row$Graph, "[[:punct:]]", "")
+      graph_file <- paste0("BodyWeight_", name_part, args$I) %>% str_replace_all(" ", "")
       
       # Assumes weight is a mouse-level measurement.
       if(length(unique(other_df$MUID)) == nrow(other_df)){
@@ -253,16 +289,29 @@ if(nrow(other_config) > 0){
                  "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                  ymins, ymaxes)
       
+      # Save stat results
+      other_mod_res_list[[other_config_row$Graph]] <- other_mod_res$lmer
+      other_tukey_res_list[[other_config_row$Graph]] <- other_mod_res$rel_comp
+      
+      if(exists("dirtest") && (class(dirtest) == "try-error")){
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+      }
+      
     #######################################################
     # Body Temp  
     } else if(ocr2["Resp"] == "Temperature") {
       
       #CURRENTLY IGNORES ANY XVAR INPUT
       #Gathers alias names of data columns that contain the body temperature values the user wishes to graph.
-      bt_vars <- c((var_names$Alias[which(var_names$Start.Body.Temp == 1)]), 
-                   (var_names$Alias[which(var_names$Mid.Body.Temp == 1)]), 
-                   (var_names$Alias[which(var_names$End.Body.Temp == 1)]), 
-                   (var_names$Alias[which(var_names$Post.Body.Temp == 1)]))
+      bt_vars_name <- c("Start_body_temperature", "Mid_body_temperature", 
+                   "End_body_temperature", "post30_body_temperature")
+      bt_vars <- bt_vars_name[which(bt_vars_name %in% names(tbl0))]
       
       if(length(bt_vars) == 0) {
         print("No temperature variables to plot.")
@@ -325,14 +374,8 @@ if(nrow(other_config) > 0){
       melt_bt_graph_df <- reshape2::melt(bodytemp_graph_df, id=c(temp_vars, "MUID"))
       
       # Set ordering of body temp variables.
-      levels(melt_bt_graph_df$variable) <- c((var_names$Alias[which(var_names$Start.Body.Temp == 1)]), 
-                                             (var_names$Alias[which(var_names$Mid.Body.Temp == 1)]), 
-                                             (var_names$Alias[which(var_names$End.Body.Temp == 1)]), 
-                                             (var_names$Alias[which(var_names$Post.Body.Temp == 1)]))
-      levels(melt_bt_df$variable) <- c((var_names$Alias[which(var_names$Start.Body.Temp == 1)]), 
-                                             (var_names$Alias[which(var_names$Mid.Body.Temp == 1)]), 
-                                             (var_names$Alias[which(var_names$End.Body.Temp == 1)]), 
-                                             (var_names$Alias[which(var_names$Post.Body.Temp == 1)]))
+      levels(melt_bt_graph_df$variable) <- bt_vars
+      levels(melt_bt_df$variable) <- bt_vars
       
       # Check that variables are factors; set in order of appearance in data.
       for(jj in temp_vars){
@@ -344,7 +387,14 @@ if(nrow(other_config) > 0){
       setnames(melt_bt_graph_df, old = c("value", "variable"), new = c("Temp", "State"), skip_absent = TRUE)
       temp_vars <- c("State", temp_vars)
       
-      graph_file <- paste0("BodyTemp_", other_config_row$Graph, args$I)
+      # Set order of categories in variables as specified by the user, if specified.
+      regraph_vars <- temp_vars[which(temp_vars %in% graph_v)] 
+      if(length(regraph_vars) != 0){
+        melt_bt_graph_df <- graph_reorder(melt_bt_graph_df, regraph_vars, graph_vars, tbl0)
+      }
+      
+      name_part <- str_replace_all(other_config_row$Graph, "[[:punct:]]", "")
+      graph_file <- paste0("BodyTemp_", name_part, args$I) %>% str_replace_all(" ", "")
       
       # Assumes temperature is a mouse-level measurement.
       other_mod_res <- stat_run("Temp", other_inter_vars, other_covars, melt_bt_df, FALSE)
@@ -355,6 +405,21 @@ if(nrow(other_config) > 0){
                  other_mod_res$rel_comp, temp_vars, graph_file, other = TRUE,
                  "Temperature", "Time", as.character(ocr2_wu["Pointdodge"]),
                  ymins, ymaxes)
+      
+      
+      # Save stat results
+      other_mod_res_list[[other_config_row$Graph]] <- other_mod_res$lmer
+      other_tukey_res_list[[other_config_row$Graph]] <- other_mod_res$rel_comp
+      
+      if(exists("dirtest") && (class(dirtest) == "try-error")){
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+      }
       
     #######################################################
     # Custom  
@@ -435,7 +500,14 @@ if(nrow(other_config) > 0){
           other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
         }
         
-        graph_file <- paste0(other_config_row$Variable, "_", other_config_row$Graph, args$I)
+        # Set order of categories in variables as specified by the user, if specified.
+        regraph_vars <- box_vars[which(box_vars %in% graph_v)] 
+        if(length(regraph_vars) != 0){
+          other_graph_df <- graph_reorder(other_graph_df, regraph_vars, graph_vars, tbl0)
+        }
+        
+        name_part <- str_replace_all(c(other_config_row$Variable, other_config_row$Graph), "[[:punct:]]", "")
+        graph_file <- paste0(name_part[1], "_", name_part[2], args$I) %>% str_replace_all(" ", "")
         
         # Runs stat modeling
         # Assumes that each individual observation is relevant (and not mouse-level statistic.)
@@ -452,6 +524,20 @@ if(nrow(other_config) > 0){
                    as.character(ocr2_wu["Resp"]), as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                    ymins, ymaxes)
         
+        # Save stat results
+        other_mod_res_list[[other_config_row$Graph]] <- other_mod_res$lmer
+        other_tukey_res_list[[other_config_row$Graph]] <- other_mod_res$rel_comp
+        
+        if(exists("dirtest") && (class(dirtest) == "try-error")){
+          ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
+          ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+        } else {
+          ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
+                 path = paste0(args$Output, "/OptionalStatResults/"))
+          ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
+                 path = paste0(args$Output, "/OptionalStatResults/"))
+        }
+        
       } else {
         ## If the response variable doesn't exist, skip.
         print(paste0("Unable to make graph ", other_config_row$Graph, "; unexpected response variable."))
@@ -459,6 +545,23 @@ if(nrow(other_config) > 0){
       }
     }
     
+  }
+ 
+  # Save stat results tables in Excel
+  mod_res_list_save <- other_mod_res_list
+  names(mod_res_list_save) <- str_trunc(names(mod_res_list_save), 31, side = "center", ellipsis = "___")
+  tukey_res_list_save <- other_tukey_res_list
+  names(tukey_res_list_save) <- str_trunc(names(tukey_res_list_save), 31, side = "center", ellipsis = "___")
+  
+  # Save statistics results to Excel.
+  if(length(mod_res_list_save) > 0){
+    if(exists("dirtest") && (class(dirtest) == "try-error")){
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/other_stat_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/other_tukey_res.xlsx"), row.names=TRUE))
+    } else {
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/tukey_res.xlsx"), row.names=TRUE))
+    }
   }
   
 }
@@ -472,6 +575,8 @@ if(nrow(other_config) > 0){
 # Functionality to make graphs for sigh and apnea rates.
 if(sighs || apneas){
   print("Making apnea and sigh graphs")
+  
+  # Break up non-sequential observations
   tbl0$measure_breaks <- as.logical(c(FALSE, tbl0$Mouse_And_Session_ID[1:(nrow(tbl0) - 1)] != 
                                         tbl0$Mouse_And_Session_ID[2:(nrow(tbl0))]))
   
@@ -497,7 +602,8 @@ if(sighs || apneas){
   
   # By default, set categories in order of appearance in data.
   for(ii in box_vars){
-    eventtab_join[[ii]] <- factor(eventtab_join[[ii]], levels = unique(tbl0[-c(measure_breaks), ][[ii]]))
+    eventtab_join[[ii]] <- factor(eventtab_join[[ii]], 
+                                  levels = unique((tbl0 %>% dplyr::filter(!measure_breaks))[[ii]]))
   }
   
   # Set label + internal variable names.
@@ -515,10 +621,17 @@ if(sighs || apneas){
   
   # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
-    graph_file <- paste0(r_vars[ii],args$I)
+    graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
     # Stat modeling, calculated ONLY using graphing variables as independent variables.
-    other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
+    if(length(unique(eventtab_join$MUID)) == nrow(eventtab_join)){
+      other_mod_res <- stat_run_other(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
+    } else {
+      other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
+    }
+    
+    # Set order of categories in variables as specified by the user, if specified.
+    eventtab_join <- graph_reorder(eventtab_join, graph_v, graph_vars, tbl0)
     
     # Make graph + save
     graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join, 
@@ -614,6 +727,10 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     for(ll in unique(poincare_df[["xvar"]])) {
       poincare_df_sub <- poincare_df[which(poincare_df[["xvar"]] == ll),]
       
+      # Set order of categories in variables as specified by the user, if specified.
+      poincare_df_sub <- graph_reorder(poincare_df_sub, c(xvar, pointdodge, facet1, facet2), 
+                                       graph_vars, tbl0)
+      
       # Make graph + save
       p <- ggplot() +
         geom_point(aes_string(x = "lag", y = "lead", color = pointdodge_g), data = poincare_df_sub) +
@@ -623,11 +740,17 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
         labs(x = "T", y = "T+1", color = pointdodge_wu) +
         theme_few() 
       
-      graph_file <- str_replace_all(paste0("Poincare_", resp_var, "_", ll, args$I), " ", "")
+      name_part <- str_replace_all(c(resp_var, ll), "[[:punct:]]", "")
+      graph_file <- str_replace_all(paste0("Poincare_", name_part[1], "_", name_part[2], args$I), " ", "") %>% str_replace_all(" ", "")
       ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm")
     }
     
   } else {
+    
+    # Set order of categories in variables as specified by the user, if specified.
+    poincare_df <- graph_reorder(poincare_df, c(xvar, pointdodge, facet1, facet2), 
+                                     graph_vars, tbl0)
+    
     # Make graph + save
     p <- ggplot() +
       geom_point(aes_string(x = "lag", y = "lead", color = pointdodge_g), data = poincare_df) +
@@ -637,7 +760,8 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
       labs(x = "T", y = "T+1", color = pointdodge_wu) +
       theme_few() 
     
-    graph_file <- paste0("Poincare_", resp_var, args$I)
+    name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
+    graph_file <- str_replace_all(paste0("Poincare_", name_part, args$I), " ", "") %>% str_replace_all(" ", "")
     ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm")
   }
   return()
@@ -693,7 +817,8 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
       labs(x = "Hz", y = "Magnitude") +
       theme_bw()
     
-    graph_file <- paste0("Spectral_", resp_var, "_", pointdodge, args$I)
+    name_part <- str_replace_all(c(resp_var, pointdodge), "[[:punct:]]", "")
+    graph_file <- paste0("Spectral_", name_part[1], "_", name_part[2], args$I)
     ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2 * length(unique(graph_data[[pointdodge]])), units = "in")
     
   } else {
@@ -708,7 +833,8 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
       labs(x = "Hz", y = "Magnitude") +
       theme_bw()
     
-    graph_file <- paste0("Spectral_", resp_var, args$I)
+    name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
+    graph_file <- paste0("Spectral_", name_part, args$I) %>% str_replace_all(" ", "")
     ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2, units = "in")
   }
   return()
@@ -741,9 +867,10 @@ if(length(rmd_file) == 0){
 }
 
 # Render RMD file.
-html_try <- try(rmarkdown::render(rmd_file, output_dir = args$Output))
+html_try <- try(rmarkdown::render(rmd_file, output_dir = args$Output, 
+                                  output_format = "html_document"))
 
 # If there is an error, 
 if(class(html_try) == "try-error"){
-  print("No Summary Rmd file found in specified location.")
+  print("No Summary Rmd file or pandocs found.")
 }

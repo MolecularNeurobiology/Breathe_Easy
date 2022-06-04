@@ -1,8 +1,6 @@
 ---
 title: "Plethysmography Data Analysis Summary"
 output: html_document
-header-includes:
-   - \usepackage{svg}
 ---
 
 This R Markdown document includes all figures generated from this run of the Respiratory Analysis Pipeline in the form of a webpage (.html). 

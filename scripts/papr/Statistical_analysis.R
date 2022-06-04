@@ -55,7 +55,7 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE)
   interact_string <- paste0("run_data$interact <- with(run_data, interaction(", paste(inter_vars, collapse = ", "), "))")
   eval(parse(text = interact_string))
   # Create covariates variable string
-  covar_formula_string <- paste(c(1, cov_vars), collapse = "+")
+  covar_formula_string <- paste(c(0, cov_vars), collapse = "+")
   # Create full formula string for modeling.
   form <- as.formula(paste0(resp_var, " ~ (1|MUID) + interact + ", covar_formula_string))
   
@@ -67,7 +67,7 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE)
   all_names <- grep("interact", names(fixef(temp_mod)), value = TRUE) %>% str_replace_all("interact", "")
   ## Create all possible pairwise comparisons.
   comb_list <- c()
-  for(rr in 2:(length(all_names) - 1)){
+  for(rr in 1:(length(all_names) - 1)){
     for(ss in (rr+1):length(all_names)){
       comb_list <- c(comb_list, paste0(all_names[rr], " - ", all_names[ss]))
     }

@@ -988,7 +988,7 @@ class Config(QDialog, Ui_Config):
             path = os.path.join(save_dir, f"{config_name}.csv")
             settings_class.save_file(config_df, path, self.workspace_dir)
 
-        notify_info("All settings files have been saved")
+        notify_info("All settings files have been saved.")
 
     @property
     def configs(self):

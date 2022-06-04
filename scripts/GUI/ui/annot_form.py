@@ -243,5 +243,5 @@ class Ui_Annot(object):
         self.variable_tree.headerItem().setText(0, _translate("Annot", "Recoded variable list"))
         self.add_configuration.setText(_translate("Annot", "Add column"))
         self.ok_button.setText(_translate("Annot", "Ok"))
-        self.save_as_button.setText(_translate("Annot", "Save As"))
+        self.save_as_button.setText(_translate("Annot", "Export"))
         self.cancel_button.setText(_translate("Annot", "Cancel"))

@@ -203,7 +203,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.basspro_path = os.path.abspath('scripts/python_module.py')
         self.papr_dir = os.path.abspath('scripts/papr')
 
-
         # STAGG Settings
         self.variable_config_df = None
         self.graph_config_df = None
@@ -312,6 +311,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     
                     # Add new one
                     self.sections_list.addItem(filepath)
+                    self.necessary_timestamp_box.addItem("Custom")
         else:
             data = filepath_or_data
             self.autosections_df = data
@@ -1661,7 +1661,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.mp_parsed={'MUIDLIST':[],'PLYUIDLIST':[],'MUID_PLYUID_tuple':[]}
         self.mp_parserrors=[]
         muid_plyuid_re=re.compile('M(?P<muid>.+?(?=_|\.txt))(_Ply)?(?P<plyuid>.*).txt')
-        for file in self.signals:
+        for file in self.signal_files:
             try:
                 parsed_filename=re.search(muid_plyuid_re,os.path.basename(file))
                 if parsed_filename['muid']!='' and parsed_filename['plyuid']!='':
@@ -2529,7 +2529,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Set pipeline destination
         if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
-            pipeline_des = os.path.join(self.papr_dir, "Pipeline_env_multi.R")
+            pipeline_des = os.path.join(self.papr_dir, "Pipeline_env.R")
         else:
             pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
 
@@ -2542,7 +2542,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
 
         # Set Rscript path
-        rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
+        rscript_des = os.path.abspath(os.path.join(Path(__file__).parent.parent.parent.parent,"R-Portable/bin/Rscript.exe"))
 
         # Get image format
         if self.svg_radioButton.isChecked():

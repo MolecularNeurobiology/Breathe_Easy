@@ -152,7 +152,7 @@ def get_jobs_r(rscript, pipeline, papr_dir, workspace_dir, input_dir_r, variable
         # The path to the directory for STAGG output
         '-O', output_dir,
         # The paths to the STAGG scripts
-        '-T', os.path.join(papr_dir, "Data_import_multi.R"),
+        '-T', os.path.join(papr_dir, "Data_import.R"),
         '-S', os.path.join(papr_dir, "Statistical_analysis.R"),
         '-M', os.path.join(papr_dir, "Graph_generator.R"),
         '-B', os.path.join(papr_dir, "Optional_graphs.R"),
@@ -161,6 +161,8 @@ def get_jobs_r(rscript, pipeline, papr_dir, workspace_dir, input_dir_r, variable
         # The path to the STAGG scripts directory
         '--Sum', papr_dir
     ]
+    print(' '.join([f'"{i}"' if i[0]!='-' else i for i in papr_cmd]))
+    
     yield papr_cmd
 
 
