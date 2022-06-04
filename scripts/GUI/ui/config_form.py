@@ -745,5 +745,5 @@ class Ui_Config(object):
         self.loop_table.setSortingEnabled(__sortingEnabled)
         self.minus_loop_button.setText(_translate("Config", "-"))
         self.ok_button.setText(_translate("Config", "Ok"))
-        self.saveas_config_button.setText(_translate("Config", "Save As"))
+        self.saveas_config_button.setText(_translate("Config", "Export"))
         self.cancel_config_button.setText(_translate("Config", "Cancel"))

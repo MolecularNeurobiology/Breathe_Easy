@@ -200,7 +200,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.basspro_path = os.path.abspath('scripts/python_module.py')
         self.papr_dir = os.path.abspath('scripts/papr')
 
-
         # STAGG Settings
         self.variable_config_df = None
         self.graph_config_df = None
@@ -2422,7 +2421,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
 
         # Set Rscript path
-        rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
+        rscript_des = os.path.abspath(os.path.join(Path(__file__).parent.parent.parent.parent,"R-Portable/bin/Rscript.exe"))
 
         # Get image format
         if self.svg_radioButton.isChecked():

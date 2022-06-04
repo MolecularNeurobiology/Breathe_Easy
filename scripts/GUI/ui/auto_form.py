@@ -1075,7 +1075,7 @@ class Ui_Auto(object):
         Auto.setWindowTitle(_translate("Auto", "Form"))
         self.label.setText(_translate("Auto", "BASSPRO Automated Settings"))
         self.load_auto_button.setText(_translate("Auto", "Open"))
-        self.save_as_button.setText(_translate("Auto", "Save As"))
+        self.save_as_button.setText(_translate("Auto", "Export"))
         self.auto_setting_combo.setItemText(0, _translate("Auto", "Choose default criteria settings:"))
         self.rig_convert_label_2.setText(_translate("Auto", "Section Identification and Settings"))
         self.help_key.setText(_translate("Auto", "?"))
