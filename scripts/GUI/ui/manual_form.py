@@ -203,7 +203,7 @@ class Ui_Manual(object):
         Manual.setWindowTitle(_translate("Manual", "Form"))
         self.label.setText(_translate("Manual", "BASSPRO Manual Settings"))
         self.load_manual_button.setText(_translate("Manual", "Load previous settings"))
-        self.export_button.setText(_translate("Manual", "Save As"))
+        self.export_button.setText(_translate("Manual", "Export"))
         self.datapad_load.setText(_translate("Manual", "Load LabChart selections"))
         self.preset_menu.setItemText(0, _translate("Manual", "Select default settings:"))
         self.merge_button.setText(_translate("Manual", "Merge"))
