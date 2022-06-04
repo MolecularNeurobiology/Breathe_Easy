@@ -3,6 +3,44 @@
 print("Preparing graphs")
 # library(tidyverse)
 
+# Set order of categories in variables as specified by the user, if specified.
+## If not, order by first appearance.
+## Inputs 
+### graph_data_frame: data frame, data for graphing
+### plot_vars: character vector, names of graphing variables.
+### graph_config: data frame, the imported graph config table.
+### full_data: full data set.
+## Outputs:
+### data_frame: data frame, graphing data but with factors reordered.
+graph_reorder <- function(graph_data_frame, plot_vars, graph_config, full_data){
+  for(mm in 1:length(plot_vars)){
+    v_ind <- which(graph_config$Alias == plot_vars[mm])
+    if(!(is.null(graph_config$Alias[v_ind])) && !(is.na(graph_config$Alias[v_ind])) && (graph_config$Alias[v_ind] != "")){
+      if((!(is.null(graph_config$Order[v_ind]))) && (!(is.na(graph_config$Order[v_ind]))) && (graph_config$Order[v_ind] != "")) {
+        ### Assumes categories order is a string, with each category separated by '@'.
+        f_levels <- unlist(strsplit(graph_config$Order[v_ind], "@"))
+        ### Keep truncation.
+        f_levels <- str_trunc(f_levels, 25, side = "center", ellipsis = "___")
+        ### Check if factors are correctly specified.
+        if(all(f_levels %in% graph_data_frame[[graph_config$Alias[v_ind]]])) {
+          # Set factor levels
+          graph_data_frame[[graph_config$Alias[v_ind]]] <- factor(graph_data_frame[[graph_config$Alias[v_ind]]], levels = f_levels)
+        } else {
+          # If error, set categories in order of appearance in data.
+          graph_data_frame[[graph_config$Alias[v_ind]]] <- factor(graph_data_frame[[graph_config$Alias[v_ind]]], 
+                                                        levels = unique(full_data[[graph_config$Alias[v_ind]]]))
+        }
+      } else {
+        # By default, set categories in order of appearance in data.
+        graph_data_frame[[graph_config$Alias[v_ind]]] <- factor(graph_data_frame[[graph_config$Alias[v_ind]]], 
+                                                      levels = unique(full_data[[graph_config$Alias[v_ind]]]))
+      }
+    } else {
+      next
+    }
+  }
+  return(graph_data_frame)
+}
 
 # Graphing function'
 ## Inputs:
@@ -492,38 +530,13 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
       
       # Set order of categories in variables as specified by the user, if specified.
       ## If not, order by first appearance.
-      for(mm in 1:length(graph_v)){
-        v_ind <- which(graph_vars$Alias == graph_v[mm])
-        if(!(is.null(graph_vars$Alias[v_ind])) && !(is.na(graph_vars$Alias[v_ind])) && (graph_vars$Alias[v_ind] != "")){
-          if((!(is.null(graph_vars$Order[v_ind]))) && (!(is.na(graph_vars$Order[v_ind]))) && (graph_vars$Order[v_ind] != "")) {
-            ### Assumes categories order is a string, with each category separated by '@'.
-            f_levels <- unlist(strsplit(graph_vars$Order[v_ind], "@"))
-            ### Keep truncation.
-            f_levels <- str_trunc(f_levels, 25, side = "center", ellipsis = "___")
-            ### Check if factors are correctly specified.
-            if(all(f_levels %in% graph_df[[graph_vars$Alias[v_ind]]])) {
-              # Set factor levels
-              graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], levels = f_levels)
-            } else {
-              # If error, set categories in order of appearance in data.
-              graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], 
-                                                            levels = unique(tbl0[[graph_vars$Alias[v_ind]]]))
-            }
-          } else {
-            # By default, set categories in order of appearance in data.
-            graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], 
-                                                          levels = unique(tbl0[[graph_vars$Alias[v_ind]]]))
-          }
-        } else {
-          next
-        }
-      }
+      graph_df <- graph_reorder(graph_df, graph_v, graph_vars, tbl0)
       
       # Run graph maker.
       graph_file  <- paste0(response_vars[ii], args$I)
-      graph_make(response_vars[ii], xvar, pointdodge, facet1, 
-                 facet2, graph_df, tukey_res_list[[response_vars[ii]]], 
-                 interaction_vars, graph_file, other = FALSE, 
+      graph_make(response_vars[ii], xvar, pointdodge, facet1,
+                 facet2, graph_df, tukey_res_list[[response_vars[ii]]],
+                 interaction_vars, graph_file, other = FALSE,
                  response_var_names[ii], xvar_wu, pointdodge_wu,
                  yax_min = ymins[ii], yax_max = ymaxes[ii])
     }
@@ -549,38 +562,13 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           
           # Set order of categories in variables as specified by the user, if specified.
           ## If not, keep current order.
-          for(mm in 1:length(graph_v)){
-            v_ind <- which(graph_vars$Alias == graph_v[mm])
-            if(!(is.null(graph_vars$Alias[v_ind])) && !(is.na(graph_vars$Alias[v_ind])) && (graph_vars$Alias[v_ind] != "")){
-              if((!(is.null(graph_vars$Order[v_ind]))) && (!(is.na(graph_vars$Order[v_ind]))) && (graph_vars$Order[v_ind] != "")) {
-                ### Assumes categories order is a string, with each category separated by '@'.
-                f_levels <- unlist(strsplit(graph_vars$Order[v_ind], "@"))
-                ### Keep truncation.
-                f_levels <- str_trunc(f_levels, 25, side = "center", ellipsis = "___")
-                ### Check if factors are correctly specified.
-                if(all(f_levels %in% graph_df[[graph_vars$Alias[v_ind]]])) {
-                  # Set factor levels
-                  graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], levels = f_levels)
-                } else {
-                  # If error, set categories in order of appearance in data.
-                  graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], 
-                                                                levels = unique(tbl0[[graph_vars$Alias[v_ind]]]))
-                }
-              } else {
-                # By default, set categories in order of appearance in data.
-                graph_df[[graph_vars$Alias[v_ind]]] <- factor(graph_df[[graph_vars$Alias[v_ind]]], 
-                                                              levels = unique(tbl0[[graph_vars$Alias[v_ind]]]))
-              }
-            } else {
-              next
-            }
-          }
+          graph_df <- graph_reorder(graph_df, graph_v, graph_vars, tbl0)
           
           # Run graph maker.
           graph_file  <- paste0(new_colname, args$I)
-          graph_make(new_colname, xvar, pointdodge, facet1, 
-                     facet2, graph_df, tukey_res_list[[new_colname]], 
-                     interaction_vars, graph_file, other = FALSE, 
+          graph_make(new_colname, xvar, pointdodge, facet1,
+                     facet2, graph_df, tukey_res_list[[new_colname]],
+                     interaction_vars, graph_file, other = FALSE,
                      response_var_names[ii], xvar_wu, pointdodge_wu)
         }
         

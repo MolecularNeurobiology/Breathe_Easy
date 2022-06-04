@@ -266,6 +266,12 @@ if(nrow(other_config) > 0){
         other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
       }
       
+      # Set order of categories in variables as specified by the user, if specified.
+      regraph_vars <- box_vars[which(box_vars %in% graph_v)] 
+      if(length(regraph_vars) != 0){
+        other_graph_df <- graph_reorder(other_graph_df, regraph_vars, graph_vars, tbl0)
+      }
+      
       name_part <- str_replace_all(other_config_row$Graph, "[[:punct:]]", "")
       graph_file <- paste0("BodyWeight_", name_part, args$I) %>% str_replace_all(" ", "")
       
@@ -381,6 +387,12 @@ if(nrow(other_config) > 0){
       setnames(melt_bt_graph_df, old = c("value", "variable"), new = c("Temp", "State"), skip_absent = TRUE)
       temp_vars <- c("State", temp_vars)
       
+      # Set order of categories in variables as specified by the user, if specified.
+      regraph_vars <- temp_vars[which(temp_vars %in% graph_v)] 
+      if(length(regraph_vars) != 0){
+        melt_bt_graph_df <- graph_reorder(melt_bt_graph_df, regraph_vars, graph_vars, tbl0)
+      }
+      
       name_part <- str_replace_all(other_config_row$Graph, "[[:punct:]]", "")
       graph_file <- paste0("BodyTemp_", name_part, args$I) %>% str_replace_all(" ", "")
       
@@ -486,6 +498,12 @@ if(nrow(other_config) > 0){
         # Check that variables are factors; set in order of appearance in data.
         for(jj in box_vars){
           other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
+        }
+        
+        # Set order of categories in variables as specified by the user, if specified.
+        regraph_vars <- box_vars[which(box_vars %in% graph_v)] 
+        if(length(regraph_vars) != 0){
+          other_graph_df <- graph_reorder(other_graph_df, regraph_vars, graph_vars, tbl0)
         }
         
         name_part <- str_replace_all(c(other_config_row$Variable, other_config_row$Graph), "[[:punct:]]", "")
@@ -612,6 +630,9 @@ if(sighs || apneas){
       other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
     }
     
+    # Set order of categories in variables as specified by the user, if specified.
+    eventtab_join <- graph_reorder(eventtab_join, graph_v, graph_vars, tbl0)
+    
     # Make graph + save
     graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join, 
                other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
@@ -706,6 +727,10 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     for(ll in unique(poincare_df[["xvar"]])) {
       poincare_df_sub <- poincare_df[which(poincare_df[["xvar"]] == ll),]
       
+      # Set order of categories in variables as specified by the user, if specified.
+      poincare_df_sub <- graph_reorder(poincare_df_sub, c(xvar, pointdodge, facet1, facet2), 
+                                       graph_vars, tbl0)
+      
       # Make graph + save
       p <- ggplot() +
         geom_point(aes_string(x = "lag", y = "lead", color = pointdodge_g), data = poincare_df_sub) +
@@ -721,6 +746,11 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     }
     
   } else {
+    
+    # Set order of categories in variables as specified by the user, if specified.
+    poincare_df <- graph_reorder(poincare_df, c(xvar, pointdodge, facet1, facet2), 
+                                     graph_vars, tbl0)
+    
     # Make graph + save
     p <- ggplot() +
       geom_point(aes_string(x = "lag", y = "lead", color = pointdodge_g), data = poincare_df) +
@@ -836,13 +866,11 @@ if(length(rmd_file) == 0){
   rmd_file <- args$Sum
 }
 
-
-
 # Render RMD file.
 html_try <- try(rmarkdown::render(rmd_file, output_dir = args$Output, 
                                   output_format = "html_document"))
 
 # If there is an error, 
 if(class(html_try) == "try-error"){
-  print("No Summary Rmd file found in specified location.")
+  print("No Summary Rmd file or pandocs found.")
 }
