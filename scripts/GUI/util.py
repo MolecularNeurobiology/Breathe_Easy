@@ -93,21 +93,30 @@ def notify_warning(msg, title="Warning"):
 def notify_info(msg, title="Info"):
     QMessageBox.information(None, title, msg)
 
-def nonblocking_msg(msg, msg_type='info', callbacks=None):
+def nonblocking_msg(msg, callbacks, title="", msg_type='info'):
     msgBox = QMessageBox()
     msgBox.setText(msg)
+    if title:
+        msgBox.setWindowTitle(title)
     msgBox.setModal(False)
 
     if msg_type == 'yes':
+        assert len(callbacks) == 2, "Must have 2 callbacks for yes/no message"
         msgBox.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
 
+        # Attach callbacks to Yes and No buttons
         buttons = msgBox.buttons()
         for button, callback in zip(buttons, callbacks):
             # Connect Yes button to callback
             button.clicked.connect(callback)
 
     elif msg_type == 'info':
+        assert len(callbacks) == 1, "Must have 1 callback for info message"
         msgBox.setStandardButtons(QMessageBox.Ok)
+        
+        # Attach callback to Ok button
+        buttons = msgBox.buttons()
+        buttons[0].clicked.connect(callbacks[0])
 
     else:
         raise RuntimeError(f"Bad message type: {msg_type}")

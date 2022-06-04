@@ -65,6 +65,14 @@ class Ui_Manual(object):
         self.load_manual_button.setFont(font)
         self.load_manual_button.setObjectName("load_manual_button")
         self.verticalLayout_7.addWidget(self.load_manual_button)
+
+        self.export_button = QtWidgets.QPushButton(Manual)
+        font = QtGui.QFont()
+        font.setPointSize(12)
+        self.export_button.setFont(font)
+        self.export_button.setObjectName("export_button")
+        self.verticalLayout_7.addWidget(self.export_button)
+
         spacerItem6 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_7.addItem(spacerItem6)
         self.horizontalLayout_5.addLayout(self.verticalLayout_7)
@@ -187,6 +195,7 @@ class Ui_Manual(object):
         self.merge_button.clicked.connect(Manual.manual_merge)
         self.preset_menu.currentIndexChanged['QString'].connect(Manual.get_preset)
         self.load_manual_button.clicked.connect(Manual.load_manual_file)
+        self.export_button.clicked.connect(Manual.export)
         QtCore.QMetaObject.connectSlotsByName(Manual)
 
     def retranslateUi(self, Manual):
@@ -194,6 +203,7 @@ class Ui_Manual(object):
         Manual.setWindowTitle(_translate("Manual", "Form"))
         self.label.setText(_translate("Manual", "BASSPRO Manual Settings"))
         self.load_manual_button.setText(_translate("Manual", "Load previous settings"))
+        self.export_button.setText(_translate("Manual", "Save As"))
         self.datapad_load.setText(_translate("Manual", "Load LabChart selections"))
         self.preset_menu.setItemText(0, _translate("Manual", "Select default settings:"))
         self.merge_button.setText(_translate("Manual", "Merge"))

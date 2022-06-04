@@ -531,9 +531,6 @@ class Config(QDialog, Ui_Config):
                 self.custom_data[new_name] = val
                 break
 
-    def get_all_dep_variables(self):
-        return self.variable_table_df.loc[(self.variable_table_df["Dependent"] == 1)]["Alias"]
-
     def get_variable_table_df(self):
         """
         - Populate several list attributes and self.variable_table_df dataframe with text
@@ -593,7 +590,9 @@ class Config(QDialog, Ui_Config):
         variable_table_df["Covariate"] = covariate
 
         if self.Poincare_combo.currentText() == "All":
-            variable_table_df["Poincare"] = 1
+            # Assign only dependent variables
+            deps = variable_table_df.loc[(variable_table_df["Dependent"] == 1)]["Alias"].values
+            variable_table_df.loc[variable_table_df['Alias'].isin(deps), 'Poincare'] = 1
         elif self.Poincare_combo.currentText() == "None":
             variable_table_df["Poincare"] = 0
         elif self.Poincare_combo.currentText() == "Custom" and self.custom_data:
@@ -601,7 +600,9 @@ class Config(QDialog, Ui_Config):
             variable_table_df.loc[variable_table_df.Alias.isin(self.custom_data.keys()), ["Poincare"]] = custom_data_list
 
         if self.Spectral_combo.currentText() == "All":
-            variable_table_df["Spectral"] = 1
+            # Assign only dependent variables
+            deps = variable_table_df.loc[(variable_table_df["Dependent"] == 1)]["Alias"].values
+            variable_table_df.loc[variable_table_df['Alias'].isin(deps), 'Spectral'] = 1
         elif self.Spectral_combo.currentText() == "None":
             variable_table_df["Spectral"] = 0
         elif self.Spectral_combo.currentText() == "Custom" and self.custom_data:
@@ -611,8 +612,9 @@ class Config(QDialog, Ui_Config):
         # Fill anything else missing with 0s
         variable_table_df[["Poincare", "Spectral"]] = variable_table_df[["Poincare","Spectral"]].fillna(0)
         
-        variable_table_df["ymin"] = variable_table_df["ymin"].fillna(0)
-        variable_table_df["ymax"] = variable_table_df["ymax"].fillna(0)
+        # na for ymin/ymax should be filled with blank, since 0 is a valid response
+        variable_table_df["ymin"] = variable_table_df["ymin"].fillna("")
+        variable_table_df["ymax"] = variable_table_df["ymax"].fillna("")
 
         transform_data = self.transform_combo.currentData()
         # If we have custom selections, fill it in
@@ -651,8 +653,7 @@ class Config(QDialog, Ui_Config):
             # Populate widgets
             self.load_variable_config(df=new_data)
 
-    @property
-    def dependent_vars(self):
+    def get_all_dep_variables(self):
         var_table_df = self.get_variable_table_df()
         dependent_vars = var_table_df.loc[(var_table_df["Dependent"] == 1)]["Alias"]
         return dependent_vars
@@ -699,8 +700,10 @@ class Config(QDialog, Ui_Config):
                     self.custom_dict.pop(c, None)
         '''
 
+        deps = self.get_all_dep_variables()
+
         # Require at least 1 dependent variable assignment
-        if self.dependent_vars.empty:
+        if deps.empty:
             notify_info(title='Choose variables', msg='Please select response variables to be modeled.')
             return
 
@@ -708,7 +711,7 @@ class Config(QDialog, Ui_Config):
         variable_df = self.get_variable_table_df()
 
         # Open Custom window
-        custom_window = Custom(variable_df, self.dependent_vars)
+        custom_window = Custom(variable_df, deps)
         reply = custom_window.exec()
 
         if reply:

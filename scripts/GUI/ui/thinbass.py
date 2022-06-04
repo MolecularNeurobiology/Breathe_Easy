@@ -15,7 +15,7 @@ class Ui_Thinbass(object):
     def setupUi(self, Thinbass):
         Thinbass.setObjectName("Thinbass")
         Thinbass.setWindowModality(QtCore.Qt.ApplicationModal)
-        Thinbass.resize(412, 240)
+        Thinbass.resize(412, 180)
         self.gridLayout = QtWidgets.QGridLayout(Thinbass)
         self.gridLayout.setObjectName("gridLayout")
         self.verticalLayout_2 = QtWidgets.QVBoxLayout()
@@ -26,6 +26,7 @@ class Ui_Thinbass(object):
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
         self.label_2 = QtWidgets.QLabel(Thinbass)
         self.label_2.setObjectName("label_2")
+        self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.horizontalLayout_3.addWidget(self.label_2)
         self.verticalLayout_2.addLayout(self.horizontalLayout_3)
         spacerItem1 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
@@ -34,17 +35,14 @@ class Ui_Thinbass(object):
         self.horizontalLayout_4.setObjectName("horizontalLayout_4")
         spacerItem2 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem2)
-        self.settings_button = QtWidgets.QPushButton(Thinbass)
-        self.settings_button.setObjectName("settings_button")
-        self.horizontalLayout_4.addWidget(self.settings_button)
-        self.output_button = QtWidgets.QPushButton(Thinbass)
-        self.output_button.setObjectName("output_button")
-        self.horizontalLayout_4.addWidget(self.output_button)
-        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
+
+        spacerItem3 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem3)
+
         self.cancel_button = QtWidgets.QPushButton(Thinbass)
         self.cancel_button.setObjectName("cancel_button")
         self.horizontalLayout_4.addWidget(self.cancel_button)
+
         spacerItem4 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_4.addItem(spacerItem4)
         self.horizontalLayout_4.setStretch(0, 2)
@@ -60,18 +58,11 @@ class Ui_Thinbass(object):
         self.gridLayout.addLayout(self.verticalLayout_2, 0, 0, 1, 1)
 
         self.retranslateUi(Thinbass)
-        self.cancel_button.clicked.connect(Thinbass.close)
-        self.output_button.clicked.connect(Thinbass.close)
-        self.settings_button.clicked.connect(Thinbass.close)
-        self.output_button.clicked.connect(Thinbass.output)
-        self.settings_button.clicked.connect(Thinbass.settings)
+        self.cancel_button.clicked.connect(Thinbass.reject)
         QtCore.QMetaObject.connectSlotsByName(Thinbass)
 
     def retranslateUi(self, Thinbass):
         _translate = QtCore.QCoreApplication.translate
         Thinbass.setWindowTitle(_translate("Thinbass", "Dialog"))
-        self.label_2.setText(_translate("Thinbass", "Multiple sources for constructing the list of variables have been detected. \n"
-"Please choose one of the following sources:"))
-        self.settings_button.setText(_translate("Thinbass", "Settings files"))
-        self.output_button.setText(_translate("Thinbass", "BASSPRO output"))
+        self.label_2.setText(_translate("Thinbass", "Please choose one of the following sources:"))
         self.cancel_button.setText(_translate("Thinbass", "Cancel"))

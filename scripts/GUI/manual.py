@@ -245,7 +245,7 @@ class Manual(QDialog, Ui_Manual):
                 view.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
         view.setHorizontalHeaderLabels(frame.columns)
 
-    def save_as(self):
+    def export(self):
         """
         Call self.save_check(), assign the file path determined in self.save_checker() to self.pleth.mansections (str), save self.manual_df dataframe as a .csv file to the file path location, populate self.pleth.sections_list (ListWidget) with the file path (self.pleth.mansections), and update self.breath_df (list).
 

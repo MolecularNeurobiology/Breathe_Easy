@@ -9,6 +9,7 @@ version 5 trillion
 
 
 import os
+import sys
 import traceback
 
 # general
@@ -185,6 +186,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         with open(os.path.join(CONFIG_DIR, 'reference_config.json'), 'r') as rconfig_file:
             self.rc_config = json.load(rconfig_file)
 
+        # General GUI attributes
+        self.dialogs = {}
+
         # Threading attributes
         self.qthreadpool = QThreadPool()
         self.qthreadpool.setMaxThreadCount(1)
@@ -206,12 +210,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.graph_config_df = None
         self.other_config_df = None
         self.breath_df = []
-        self.input_dir_r=""
+        self.input_dir_r = ""
 
         self.mp_parsed = {}
         self.mp_parserrors = []
-        self.p_mouse_dict={}
-        self.m_mouse_dict={}
+        self.p_mouse_dict = {}
+        self.m_mouse_dict = {}
         self.metadata_warnings = {}
         self.metadata_pm_warnings = []
         self.missing_plyuids = []
@@ -228,7 +232,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.necessary_timestamp_box.addItems(list(self.bc_config['Dictionaries']['Auto Settings']['default'].keys()))
         self.parallel_combo.addItems([str(num) for num in range(1, os.cpu_count()+1)])
 
-
+        self.meta_layout.delete_button.clicked.connect(self.delete_meta)
+        self.auto_layout.delete_button.clicked.connect(self.delete_auto)
+        self.manual_layout.delete_button.clicked.connect(self.delete_manual)
+        self.basic_layout.delete_button.clicked.connect(self.delete_basic)
+        self.stagg_settings_layout.delete_button.clicked.connect(self.delete_stagg_settings)
 
         # Autoload configuration
         if AUTOLOAD:
@@ -263,13 +271,24 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             return None
 
     @metadata.setter
-    def metadata(self, filepath):
-        # TODO: handle None or "" input
-        if MetadataSettings.validate(filepath):
-            self.metadata_df = MetadataSettings.attempt_load(filepath)
-            if self.metadata_df is not None:
-                self.metadata_list.clear()
-                self.metadata_list.addItem(filepath)
+    def metadata(self, filepath_or_data):
+        if type(filepath_or_data) is str:
+            filepath = filepath_or_data
+
+            if MetadataSettings.validate(filepath):
+                self.metadata_df = MetadataSettings.attempt_load(filepath)
+                if self.metadata_df is not None:
+                    self.metadata_list.clear()
+                    self.metadata_list.addItem(filepath)
+        else:
+            data = filepath_or_data
+            self.metadata_df = data
+
+        if self.metadata_df is None:
+            self.meta_layout.delete_button.hide()
+            self.metadata_list.clear()
+        else:
+            self.meta_layout.delete_button.show()
 
     @property
     def signal_files(self):
@@ -280,35 +299,61 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return self.get_settings_file_from_list("auto")
 
     @autosections.setter
-    def autosections(self, filepath):
-        # TODO: handle None or "" input
-        if AutoSettings.validate(filepath):
-            self.autosections_df = AutoSettings.attempt_load(filepath)
-            if self.autosections_df is not None:
-                # Remove old autosections
-                for item in self.sections_list.findItems("auto", Qt.MatchContains):
-                    self.sections_list.takeItem(self.sections_list.row(item))
-                
-                # Add new one
-                self.sections_list.addItem(filepath)
-                print(self.autosections_df.to_dict())
+    def autosections(self, filepath_or_data):
+        if type(filepath_or_data) is str:
+            filepath = filepath_or_data
+
+            if AutoSettings.validate(filepath):
+                self.autosections_df = AutoSettings.attempt_load(filepath)
+
+                if self.autosections_df is not None:
+                    # Remove old autosections
+                    for item in self.sections_list.findItems("auto", Qt.MatchContains):
+                        self.sections_list.takeItem(self.sections_list.row(item))
+                    
+                    # Add new one
+                    self.sections_list.addItem(filepath)
+        else:
+            data = filepath_or_data
+            self.autosections_df = data
+
+        if self.autosections_df is None:
+            self.auto_layout.delete_button.hide()
+            # Remove old autosections
+            for item in self.sections_list.findItems("auto", Qt.MatchContains):
+                self.sections_list.takeItem(self.sections_list.row(item))
+        else:
+            self.auto_layout.delete_button.show()
 
     @property
     def mansections(self):
         return self.get_settings_file_from_list("manual")
 
     @mansections.setter
-    def mansections(self, filepath):
-        # TODO: handle None or "" input
-        if ManualSettings.validate(filepath):
-            self.mansections_df = ManualSettings.attempt_load(filepath)
-            if self.mansections_df is not None:
-                # Remove old mansections
-                for item in self.sections_list.findItems("manual", Qt.MatchContains):
-                    self.sections_list.takeItem(self.sections_list.row(item))
+    def mansections(self, filepath_or_data):
+        if type(filepath_or_data) is str:
+            filepath = filepath_or_data
 
-                # Add new one
-                self.sections_list.addItem(filepath)
+            if ManualSettings.validate(filepath):
+                self.mansections_df = ManualSettings.attempt_load(filepath)
+                if self.mansections_df is not None:
+                    # Remove old mansections
+                    for item in self.sections_list.findItems("manual", Qt.MatchContains):
+                        self.sections_list.takeItem(self.sections_list.row(item))
+
+                    # Add new one
+                    self.sections_list.addItem(filepath)
+        else:
+            data = filepath_or_data
+            self.mansections_df = data
+
+        if self.mansections_df is None:
+            self.manual_layout.delete_button.hide()
+            # Remove old mansections
+            for item in self.sections_list.findItems("manual", Qt.MatchContains):
+                self.sections_list.takeItem(self.sections_list.row(item))
+        else:
+            self.manual_layout.delete_button.show()
 
     @property
     def config_data(self):
@@ -330,10 +375,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.variable_config_df = None
             self.graph_config_df = None
             self.other_config_df = None
+            self.variable_list.clear()
+            self.stagg_settings_layout.delete_button.hide()
         else:
             self.variable_config_df = new_data['variable'].copy()
             self.graph_config_df = new_data['graph'].copy()
             self.other_config_df = new_data['other'].copy()
+            self.stagg_settings_layout.delete_button.show()
 
     @property
     def variable_config(self):
@@ -409,16 +457,29 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return self.get_settings_file_from_list("basic")
 
     @basicap.setter
-    def basicap(self, filepath):
-        if BasicSettings.validate(filepath):
-            self.basicap_df = BasicSettings.attempt_load(filepath)
-            if self.basicap_df is not None:
-                # Remove old basic settings
-                for item in self.sections_list.findItems("basics",Qt.MatchContains):
-                    self.sections_list.takeItem(self.sections_list.row(item))
-                
-                # Add new one
-                self.sections_list.addItem(filepath)
+    def basicap(self, filepath_or_data):
+        if type(filepath_or_data) is str:
+            filepath = filepath_or_data
+            if BasicSettings.validate(filepath):
+                self.basicap_df = BasicSettings.attempt_load(filepath)
+                if self.basicap_df is not None:
+                    # Remove old basic settings
+                    for item in self.sections_list.findItems("basics",Qt.MatchContains):
+                        self.sections_list.takeItem(self.sections_list.row(item))
+                    
+                    # Add new one
+                    self.sections_list.addItem(filepath)
+        else:
+            data = filepath_or_data
+            self.basicap_df = data
+
+        if self.basicap_df is None:
+            self.basic_layout.delete_button.hide()
+            # Remove old autosections
+            for item in self.sections_list.findItems("basics", Qt.MatchContains):
+                self.sections_list.takeItem(self.sections_list.row(item))
+        else:
+            self.basic_layout.delete_button.show()
 
     @property
     def stagg_input_files(self):
@@ -449,13 +510,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 if checker(file):
                     return True
         return False
-
-    def delete_setting_file(self):
-        a = self.sections_list.currentItem()
-        if a:
-            self.hangar.append(f"Deleted settings: {a.text()}")
-            self.sections_list.takeItem(self.sections_list.row(a))
-            del a
 
     def timestamp_dict(self):
         """
@@ -723,6 +777,24 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.check = {'good_files':goodfiles,'files_missing_a_ts':filesmissingts,
             'files_with_dup_ts':filesextrats,'new_ts':new_ts} 
 
+    def prepare_meta(self):
+        if self.metadata_df is None:
+            valid_options = ["Select file", "Load from Database"]
+            thinb = Thinbass(valid_options=valid_options)
+            if not thinb.exec():
+                return
+
+            selected_option = thinb.get_value()
+
+            if selected_option == "Select file":
+                self.load_metadata()
+            elif selected_option == "Load from Database":
+                self.connect_database()
+
+        if self.metadata_df is not None:
+            self.show_annot()
+
+
     def show_annot(self):
         """
         Show the metadata settings subGUI defined in the Annot class and call Annot.show_metadata_file().
@@ -743,7 +815,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         new_metadata = MetadataSettings.edit(self.metadata_df,
                                              self.workspace_dir)
         if new_metadata is not None:
-            self.metadata_df = new_metadata
+            self.metadata = new_metadata
 
             #if self.breath_df != []:
             #    self.update_breath_df("metadata")
@@ -762,10 +834,31 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                            self.mansections_df,
                                            self.workspace_dir)
         if new_settings is not None:
-            self.mansections_df = new_settings
+            self.mansections = new_settings
 
             #if self.breath_df != []:
             #    self.update_breath_df("manual settings")
+
+    def delete_meta(self):
+        self.metadata = None
+        notify_info("Metadata removed")
+
+    def delete_auto(self):
+        self.autosections = None
+        notify_info("Auto settings removed")
+
+    def delete_manual(self):
+        self.mansections = None
+        notify_info("Manual settings removed")
+
+    def delete_basic(self):
+        self.basicap = None
+        notify_info("Basic settings removed")
+
+    def delete_stagg_settings(self):
+        self.config_data = None
+        notify_info("STAGG settings removed")
+
 
     def show_auto(self):
         """
@@ -784,7 +877,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                          workspace_dir=self.workspace_dir)
 
         if new_settings is not None:
-            self.autosections_df = new_settings
+            self.autosections = new_settings
 
             # TODO: why?
             #if self.breath_df != []:
@@ -806,7 +899,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                           self.basicap_df,
                                           self.workspace_dir)
         if new_settings is not None:
-            self.basicap_df = new_settings
+            self.basicap = new_settings
         
         
     def prepare_stagg_settings(self):
@@ -829,38 +922,47 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # If we already have data for all the configs, use this
         if self.config_data is not None:
             input_data = self.config_data
-            self.show_stagg_settings(input_data, self.col_vals)
+            col_vals = self.col_vals
         
         # Check for import options
         else:
 
             # Gather input options
-            import_options = []
+            import_options = ["Select files"]
             if self.stagg_input_files:
-                import_options.append('basspro_output')
+                import_options.append("BASSPRO output")
             if self.metadata_df is not None and (self.autosections_df is not None or self.mansections is not None):
-                import_options.append('settings')
+                import_options.append("Settings files")
 
-            # We have no options!
-            if len(import_options) == 0:
-                error_msg = "Missing settings data!"
-                error_msg += "\nPlease add sections files or basspro input"
-                notify_info(error_msg)
-                return
-
-            # If we only have one option, choose it
+            # If we only have one option, choose it (load files)
             if len(import_options) == 1:
                 selected_option = import_options[0]
 
             # If more than 1 option, ask user what they want to do
             else:
-                thinb = Thinbass(self)
-                if thinb.exec():
-                    selected_option = thinb.get_value()
-                else:
+                thinb = Thinbass(valid_options=import_options)
+                if not thinb.exec():
                     return
 
-            if selected_option == 'basspro_output':
+                selected_option = thinb.get_value()
+
+            if selected_option == "Select files":
+                files = ConfigSettings.open_file(workspace_dir=self.workspace_dir)
+                if not files:
+                    return
+
+                input_data = ConfigSettings.attempt_load(files)
+                if input_data is None:
+                    notify_error("Could not import files")
+                    return
+
+                # Add files to widget to indicate they were loaded
+                self.variable_list.clear()
+                [self.variable_list.addItem(file) for file in files.values()]
+
+                col_vals = None
+                
+            elif selected_option == "BASSPRO output":
                 # Import currently running
                 if self.import_thread:
                     if ask_user_yes("Import in progress",
@@ -879,22 +981,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         'variable': var_config_df,
                         'graph': None,
                         'other': None}
-                    self.show_stagg_settings(input_data, self.col_vals)
+
+                    col_vals = self.col_vals
 
                 # Run a new import!
                 else:
 
-                    # If we have an RData file, get jsons from same directory
-                    if len(self.stagg_input_files) == 1 and self.stagg_input_files[0].lower().endswith('.rdata'):
-                        rdata_dir = os.path.dirname(self.stagg_input_files[0])
-                        json_files = glob(os.path.join(rdata_dir, '*.json'))
-                        
-                        # If no jsons, notify and quit
-                        if len(json_files) == 0:
-                            notify_error(f"Cannot find json files in RData directory:\n{rdata_dir}")
-                            return
-                    else:
-                        json_files = self.stagg_input_files
+                    # Filter out anything thats not json (RData files)
+                    json_files = [f for f in self.stagg_input_files if f.endswith('.json')]
 
                     # load basspro output files
                     self.import_thread = ColValImportThread(json_files)
@@ -911,8 +1005,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.breath_files_button.setEnabled(False)
                     self.import_thread.start()
                     notify_info("Starting import, try again when import is done")
+                    return
 
-            elif selected_option == 'settings':
+            elif selected_option == "Settings files":
                 self.col_vals = columns_and_values_from_settings(self.metadata_df, self.autosections_df, self.mansections_df)
 
                 # Create default df with imported variables
@@ -924,7 +1019,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'variable': var_config_df,
                     'graph': None,
                     'other': None}
-                self.show_stagg_settings(input_data, self.col_vals)
+
+                col_vals = self.col_vals
+
+        # Open settings window
+        self.show_stagg_settings(input_data, col_vals)
 
     @staticmethod
     def get_default_variable_df(self, variable_names):
@@ -947,8 +1046,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def finish_import(self, kill_thread=False):
         """
         Called at the conclusion of reading columns and values from Basspro json output
-             OR
-               at the cancellation of existing import process
+          OR at the cancellation of existing import process
         """
 
         # TODO: Make sure there is no overlap of new thread and an old thread waiting to die
@@ -1358,7 +1456,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         else:
             print("Manual sections parameters file not detected.")
 
-    def auto_get_breath_files(self, basspro_output_dir, clear_files=None):
+    def auto_get_breath_files(self, basspro_run_folder, clear_files):
         """
         Populate self.stagg_input_files with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
 
@@ -1380,19 +1478,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stagg_input_files: list
             This attribute is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it is SUPPOSED TO append the file paths from the most recent BASSPRO to its existing items but it looks like it just replaces the list of existing items with a new list of the file paths from self.output_dir_py regardless of the user's choice.
         """
-        # TODO: message below
         # This method needs fixing. If they say yes, I want to keep them, then what happens? It looks like self.stagg_input_files populates with the new files regardless of the user's choice.
-        if len(self.stagg_input_files):
-            if clear_files is None:
-                reply = ask_user_yes('Clear STAGG input list?', 'Would you like to remove the previously selected STAGG input files?')
-            else:
-                reply = clear_files
+        if len(self.stagg_input_files) and clear_files:
+            self.breath_list.clear()
 
-            if reply:
-                self.breath_list.clear()
-
-        #stagg_input_files = [os.path.join(basspro_output_dir, file) for file in os.listdir(basspro_output_dir) if file.endswith(".json")==True]
-        stagg_input_files = glob(os.path.join(basspro_output_dir, "*.json"))
+        # Get all json files in basspro_run_folder
+        stagg_input_files = glob(os.path.join(basspro_run_folder, "*.json"))
         for file in stagg_input_files:
             self.breath_list.addItem(file)
 
@@ -1400,14 +1491,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         Open the double-clicked ListWidgetItem in the default program for the user's device.
         """
-        print("open_click()")
-        try:
-            if Path(item.text()).exists():
-                os.startfile(item.text())
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-            pass
+        if Path(item.text()).exists():
+            os.startfile(item.text())
 
     def get_signal_files(self):
         """
@@ -1677,8 +1762,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
-            reply = QMessageBox.information(self, 'Unable to connect to database', 'You were unable to connect to the database.\nWould you like to select another metadata file?', QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
-            if reply == QMessageBox.Ok:
+            msg = "You were unable to connect to the database."
+            msg += "\nWould you like to select another metadata file?"
+            reply = ask_user_yes('Unable to connect to database', msg)
+            if reply:
                 self.load_metadata()
 
     def get_study(self, fixformat=True):
@@ -1986,7 +2073,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This MessageBox tells the user if they have a file open in another program that shares the same file path as self.metadata.
         """
         print("save_filemaker()")
-        self.metadata_list.addItem("Creating csv file...")
+        self.status_message("Creating csv file...")
         self.metadata = os.path.join(self.workspace_dir,"metadata.csv")
         try:
             self.assemble_df.to_csv(self.metadata, index = False)
@@ -2036,32 +2123,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not filenames:
             return
 
-        added_files = []
+        skipped_files = []
         for file in filenames:
             if AutoSettings.validate(file):
                 self.autosections = file
-                added_files.append(file)
 
             elif ManualSettings.validate(file):
                 self.mansections = file
-                added_files.append(file)
 
             elif BasicSettings.validate(file):
                 self.basicap = file
-                added_files.append(file)
 
-            # If we added files
-            if len(added_files):
-                #if len(self.breath_df)>0:
-                #    self.update_breath_df("settings")
-                pass
+            else:
+                skipped_files.append(file)
 
-        if len(added_files):
-            msg = "Added files: "
-            msg += ", ".join(added_files)
+        # Notify user if invalid files were picked
+        if len(skipped_files):
+            msg = "Could not load files: "
+            msg += ", ".join(skipped_files)
             notify_info(msg)
-        else:
-            notify_info("No files added")
 
     def select_stagg_input_files(self):
         """
@@ -2158,7 +2238,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return True
 
 
-    def full_run(self):
+    def basspro_run(self):
         """
         Ensure the user has selected an output directory and prompt them to do so if they haven't, check that the required input for BASSPRO has been selected, launch BASSPRO, detect the JSON files produced after BASSPRO has finished and populate self.stagg_input_files with the file paths to those JSON files.
 
@@ -2180,20 +2260,20 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not self.check_bp_reqs():
             return
 
-        # If doing full run
-        clear_stagg_input = None
-        if is_full_run:
-            # check stagg reqs
-            if not self.check_stagg_reqs(full_run=True):
-                return
+        # If doing full run, check stagg reqs
+        if is_full_run and not self.check_stagg_reqs(full_run=True):
+            return
 
-            # Check whether we have stagg input already
-            if len(self.stagg_input_files):
-                clear_stagg_input = ask_user_yes('Clear STAGG input list?', 'Would you like to remove the previously selected STAGG input files?')
+        # Check whether we have stagg input already
+        #   new output will automatically populate
+        clear_stagg_input = False
+        if len(self.stagg_input_files):
+            clear_stagg_input = ask_user_yes('Clear STAGG input list?',
+                                             'Would you like to remove the previously selected STAGG input files?')
 
         # launch BASSPRO
         self.status_message("\n-- -- Launching BASSPRO -- --")
-        basspro_output_folder, shared_queue, workers = self.launch_basspro()
+        basspro_run_folder, shared_queue, workers = self.launch_basspro()
         self.basspro_launch_button.setEnabled(False)
 
         # TODO: prevent full run if stagg already running
@@ -2203,27 +2283,68 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.enable_stagg_buttons(False)
 
             # Set next function to run and monitor the workers
-            execute_after = lambda : self.pickup_after_basspro(basspro_output_folder, clear_stagg_input)
+            execute_after = lambda : self.pickup_after_basspro(basspro_run_folder, clear_stagg_input)
+            
+            # Set function in case cancel is selected
+            cancel_func = lambda : self.basspro_launch_button.setEnabled(True) or self.enable_stagg_buttons(True)
 
         else:
+
             # Wait to check output after basspro finishes
-            execute_after = self.complete_basspro
+            execute_after = lambda : self.complete_basspro(basspro_run_folder, clear_stagg_input)
+
+            # Set function in case cancel is selected
+            cancel_func = lambda : self.basspro_launch_button.setEnabled(True)
 
         # Monitor the basspro processes and execute a function after completion
-        self.add_monitor(workers, shared_queue, execute_after, proc_name="BASSPRO")
+        self.add_monitor(workers,
+                         shared_queue,
+                         execute_after=execute_after,
+                         exec_after_cancel=cancel_func,
+                         proc_name="BASSPRO")
 
-    def complete_basspro(self):
-        # TODO: automatically load in basspro output every time?
+    def complete_basspro(self, basspro_run_folder, clear_stagg_input):
+        # Re-enable basspro button
         self.basspro_launch_button.setEnabled(True)
+
+        # autoload output JSON files
+        self.status_message("\nAutopopulating STAGG")
+        self.auto_get_breath_files(basspro_run_folder, clear_files=clear_stagg_input)
+        
+        # Check the output and give message to user
         self.output_check()
+
+        # Indicate completion to the user
+        title = "BASSPRO finished"
+        msg = f"Output can be found at: {basspro_run_folder}."
+        self.nonblocking_msg(msg, title)
+
+    def complete_stagg(self, stagg_output_folder):
+        self.stagg_launch_button.setEnabled(True)
+
+        # Indicate completion to the user
+        title = "STAGG finished"
+        msg = f"Output can be found at: {stagg_output_folder}."
+        self.nonblocking_msg(msg, title)
+
+    def nonblocking_msg(self, msg, title=""):
+        """
+        Create new nonblocking dialog message
+        Store in self identified with unique key
+        Provide callback to remove on "Ok"
+        """
+        dialog_id = generate_unique_id(self.dialogs.keys())
+        self.dialogs[dialog_id] = nonblocking_msg(msg, [lambda : self.dialogs.pop(dialog_id)], title=title, msg_type='info')
 
     def cancel_monitor(self, monitor_id, exec_after_cancel=None):
         self.monitors[monitor_id]['status'] = 'cancelled'
         if exec_after_cancel:
             exec_after_cancel()
 
-    def add_monitor(self, workers, msg_queue, execute_after=None, proc_name=None):
+    def add_monitor(self, workers, msg_queue, execute_after=None, exec_after_cancel=None, proc_name=None):
         new_id = generate_unique_id(self.monitors.keys())
+        cancel_func = lambda : self.cancel_monitor(new_id, exec_after_cancel=exec_after_cancel)
+        no_cancel_func = lambda : self._reset_last_msg_time(new_id)
         self.monitors[new_id] = {
             'status': 'running',
             'execute_after': execute_after,
@@ -2231,7 +2352,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             'msg_queue': msg_queue,
             'dialog_window': None,
             'last_heard': datetime.now(),
-            'proc_name': proc_name if proc_name else f"Process {new_id}"
+            'proc_name': proc_name if proc_name else f"Process {new_id}",
+            'cancel_func': cancel_func,
+            'no_cancel_func': no_cancel_func,
         }
 
         # monitor worker to execute next function
@@ -2293,12 +2416,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             # TODO: implement BASSPRO cancel, not just STAGG continuation
             # If it's been longer than 1 minute since we've heard from the threads
-            if datetime.now() - last_heard > timedelta(minutes=2) and \
+            if datetime.now() - last_heard > timedelta(seconds=2) and \
                 not monitor['dialog_window']:
                 msg = f"{monitor['proc_name']} is taking a while, would you like to cancel checking for STAGG autostart?"
-                yes_func = lambda : self.cancel_monitor(monitor_id, exec_after_cancel=lambda : self.enable_stagg_buttons(True))
-                no_func = lambda : self._reset_last_msg_time(monitor_id)
-                msg_box = nonblocking_msg(msg, 'yes', (yes_func, no_func))
+                yes_func = monitor['cancel_func']
+                no_func = monitor['no_cancel_func']
+                msg_box = nonblocking_msg(msg, (yes_func, no_func), title="Longrunning Process", msg_type='yes')
                 self.monitors[monitor_id]['dialog_window'] = msg_box
             
             # Check again in a second
@@ -2317,36 +2440,35 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.status_message("\n-- -- Launching STAGG -- --")
         stagg_output_folder, shared_queue, workers = self.launch_stagg()
 
-        # Prevent any changes to stagg setup while waiting
-        self.enable_stagg_buttons(False)
+        # Prevent another run while running STAGG
+        self.stagg_launch_button.setEnabled(False)
 
         # Wait to check output after basspro finishes
-        execute_after = lambda : self.enable_stagg_buttons(True)
+        execute_after = lambda : self.complete_stagg(stagg_output_folder)
+        cancel_func = lambda : self.stagg_launch_button.setEnabled(True)
 
         # Monitor the basspro processes and execute a function after completion
-        self.add_monitor(workers, shared_queue, execute_after, proc_name="STAGG")
+        self.add_monitor(workers, shared_queue, execute_after=execute_after, exec_after_cancel=cancel_func, proc_name="STAGG")
 
-    def pickup_after_basspro(self, basspro_output_folder, clear_stagg_input):
+
+    def pickup_after_basspro(self, basspro_run_folder, clear_stagg_input):
 
         # check whether Basspro output is correct, re-enable basspro button
-        self.complete_basspro()
+        self.complete_basspro(basspro_run_folder, clear_stagg_input)
+
+        self.enable_stagg_buttons(True)
 
         ## RUN STAGG ##
-        self.status_message("\nAutopopulating STAGG")
-
-        # detect the JSON files produced after BASSPRO has finished
-        self.auto_get_breath_files(basspro_output_folder, clear_files=clear_stagg_input)
-
         # launch STAGG
         self.stagg_run()
 
     def enable_stagg_buttons(self, status:bool):
         # TODO: when stagg continuation is cancelled, basspro is still running
         #   - below will enable basspro button again, but need to make sure we stop basspro process
-        self.basspro_launch_button.setEnabled(status)
         self.stagg_settings_button.setEnabled(status)
-        self.stagg_launch_button.setEnabled(status)
+        self.stagg_settings_layout.delete_button.setEnabled(status)
         self.breath_files_button.setEnabled(status)
+        self.stagg_launch_button.setEnabled(status)
 
     def status_message(self, msg):
         self.hangar.append(msg)
@@ -2653,23 +2775,19 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.hangar: QTextEdit
             This TextEdit is appended with a list of othe signal files that did not pass BASSPRO and failed to produce JSON files.
         """
-        goodies = []
+        signal_basenames = [os.path.basename(f).split('.')[0] for f in self.signal_files]
+        json_basenames = [os.path.basename(f).split('.')[0] for f in self.stagg_input_files]
         baddies = []
-        if len(self.stagg_input_files) != len(self.signal_files):
-            for s in self.signal_files:
-                name = os.path.basename(s).split('.')[0]
-                for g in self.stagg_input_files:
-                    if '_' in name:
-                        if os.path.basename(g).split('.')[0] == name:
-                            goodies.append(name)
-                    else:
-                        if os.path.basename(g).split('_')[0] == name:
-                            goodies.append(name)
-                if name not in goodies:
-                    baddies.append(name)
+        if len(json_basenames) != len(signal_basenames):
+            for sig_name in signal_basenames:
+                if sig_name not in json_basenames:
+                    baddies.append(sig_name)
 
         if len(baddies) > 0:
-            self.status_message(f"\nThe following signals files did not pass BASSPRO:\n\n{', '.join([os.path.basename(thumb) for thumb in baddies])}\n")
+            baddies_list_str = ', '.join([os.path.basename(thumb) for thumb in baddies])
+            msg = "\nThe following signals files did not pass BASSPRO:"
+            msg += f"\n{baddies_list_str}"
+            self.status_message(msg)
 
     def check_stagg_reqs(self, full_run=False):
         """
