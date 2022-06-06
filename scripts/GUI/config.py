@@ -118,8 +118,7 @@ class Config(QDialog, Ui_Config):
         self.col_vals = col_vals
         self.custom_data = None
 
-        variable_config_df = data['variable']
-        self.populate_variable_table(variable_config_df)
+        self.load_variable_config(df=data['variable'])
 
         # Do this after populating variable table
         self.graph_config_df = data['graph'].copy() if data['graph'] is not None else None
@@ -727,10 +726,13 @@ class Config(QDialog, Ui_Config):
             if "Custom" in all_options:
                 combo_box.removeItem(all_options.index("Custom"))
 
-            if all([data_row[var_key] == 1 for data_row in self.custom_data.values()]):
+            custom_data = self.custom_data.values()
+
+            # check size (`all` returns True on empty list)
+            if len(custom_data) and all([data_row[var_key] == 1 for data_row in custom_data]):
                 combo_box.setCurrentText("All")
 
-            elif any([data_row[var_key] == 1 for data_row in self.custom_data.values()]):
+            elif any([data_row[var_key] == 1 for data_row in custom_data]):
                 combo_box.addItem("Custom")
                 combo_box.setCurrentText("Custom")
 
@@ -741,17 +743,14 @@ class Config(QDialog, Ui_Config):
         all_selections = [tuple(data_row['Transformation']) for data_row in self.custom_data.values()]
         unique_selections = set(all_selections)
         
+        # None are selected
+        if len(all_selections) == 0:
+            self.transform_combo.loadCustom(["None"])
+
         # If the set has only one value, the selections are all the same
-        if len(unique_selections) == 1:
+        elif len(unique_selections) == 1:
             selected_options = list(unique_selections)[0]
-
-            # None are selected
-            if len(selected_options) == 0:
-                self.transform_combo.loadCustom(["None"])
-
-            # or some set is selected
-            else:
-                self.transform_combo.loadCustom(selected_options)
+            self.transform_combo.loadCustom(selected_options)
 
         # Otherwise we have a custom setup!
         else:
@@ -1107,42 +1106,18 @@ class Config(QDialog, Ui_Config):
         else:
             df = df.copy()
 
-        # Convert dataframe...
-        self.variable_names = df['Column'].tolist()
-        self.aliases = df['Alias'].tolist()
-
+        # Load into table
         self.populate_variable_table(df)
-
-        #for a in self.variable_config_dict:
-        # TODO: bad! use df iteration!
-        for row_num, record in enumerate(df.to_dict('records')):
-            var_name = record['Column']  # TODO: remove - unused
-            alias_name = record['Alias']
-            self.variable_table.item(row_num, 1).setText(alias_name)
-            for i, k in enumerate(["Independent","Dependent","Covariate"]):
-                if record[k] == 1:
-                    widget = self.variable_table.cellWidget(row_num, i + 2)
-                    widget.blockSignals(True)
-                    widget.setChecked(True)
-                    widget.blockSignals(False)
-                    # we can break as there should be only one checked!
-                    break
 
         # Load custom data
         all_custom = df[df["Dependent"] == 1].fillna("")
         self.custom_data = {}
         for record in all_custom.to_dict('records'):
-            # Clean transform values and create list
-            # Replace all 'non' with 'raw'
-            transform = [t.replace("non","raw") for t in record['Transformation'].split('@')]
-            # Replace all 'log' with 'ln', unless the text is 'log10'
-            transform = [t.replace("log","ln") if t != "log10" else t for t in transform ]
-
             new_custom = {
                 'Variable': record['Alias'],
                 'Y axis minimum': record['ymin'],
                 'Y axis maximum': record['ymax'],
-                'Transformation': transform,
+                'Transformation': record['Transformation'],
                 'Poincare plot': record['Poincare'],
                 'Spectral graph': record['Spectral']}
             self.custom_data[record['Alias']] = new_custom
@@ -1177,42 +1152,6 @@ class Config(QDialog, Ui_Config):
             # set new items
             self.col_vals[group_name] = order_window.get_items()
 
-    def load_custom_config(self):
-        """
-        Populate Custom.custom_table based on the dependent variables
-          selected by the user according to the dataframe derived from
-          the variable config .csv file the user selected. 
-        """
-        for combo in self.additional_dict.values():
-            combo.setCurrentText("None")
-
-        self.custom_data = {}
-        #for k, val in self.variable_config_dict.items():
-        for k, val in self.get_variable_table_df().iterrows():
-            new_custom_data = {
-                'Poincare': 0,
-                'Spectral': 0,
-                'ymin': "",
-                'ymax': "",
-                'Transformation': []
-            }
-
-            if val['Poincare'] == "1":
-                new_custom_data['Poincare'] = 1
-
-            if val['Spectral'] == "1":
-                new_custom_data['Spectral'] = 1
-
-            for y in ['ymin','ymax']:
-                if val[y] != "":
-                    new_custom_data[y] = val[y]
-
-            if val['Transformation'] != "":
-                transform = [s.replace("non","raw") and s.replace("log","ln") for s in val['Transformation'].split('@')]
-                transform = [z.replace("ln10","log10") for z in transform]
-                self.transform_combo.loadCustom(transform)
-                self.transform_combo.updateText()
-
     def load_graph_config(self, graph_config_file=None, df=None):
         """
         Populate the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes
@@ -1233,6 +1172,7 @@ class Config(QDialog, Ui_Config):
         indep_covariate_vars = self.get_independent_covariate_vars()
         
         for idx, combo in enumerate(self.graph_config_combos.values()):
+            combo.blockSignals(True)
             combo.clear()
             combo.addItem("Select variable:")
             if len(indep_covariate_vars):
@@ -1243,6 +1183,7 @@ class Config(QDialog, Ui_Config):
                 curr_selection = gdf.loc[(gdf['Role'] == combo_role) & pd.notna(gdf['Alias'])]
                 if len(curr_selection):
                     combo.setCurrentText(curr_selection["Alias"].values[0])
+            combo.blockSignals(False)
 
     def load_other_config(self, other_config_file=None, df=None):
         """
@@ -1340,7 +1281,8 @@ class Config(QDialog, Ui_Config):
             first_row = selected_rows.topRow()
             last_row = selected_rows.bottomRow()
             for row in range(first_row, last_row+1):
-                self.variable_table.cellWidget(row, checked_idx).setChecked(True)
+                cell_widget = self.variable_table.cellWidget(row, checked_idx)
+                cell_widget.setChecked(True)
 
 
 # TODO: this is kinda gross -- split these out!
@@ -1451,6 +1393,20 @@ class VariableSettings(ConfigSettings):
 
         elif filepath.endswith(".csv"):
             df = pd.read_csv(filepath)
+
+        new_transforms = []
+        # Clean transform values and create list
+        for i, record in df.iterrows():
+            if np.isnan(record['Transformation']):
+                new_transforms.append([])
+            else:
+                # Replace all 'non' with 'raw'
+                transform = [t.replace("non","raw") for t in record['Transformation'].split('@')]
+                # Replace all 'log' with 'ln', unless the text is 'log10'
+                transform = [t.replace("log","ln") if t != "log10" else t for t in transform ]
+                new_transforms.append(transform)
+
+        df['Transformation'] = new_transforms
 
         return df
 

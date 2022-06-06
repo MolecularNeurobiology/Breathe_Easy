@@ -200,8 +200,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
 
         # Load variables with paths for BASSPro and StaGG stored in gui_config dictionary:
-        self.basspro_path = os.path.abspath('scripts/python_module.py')
-        self.papr_dir = os.path.abspath('scripts/papr')
+        self.basspro_path = "scripts/python_module.py"
+        self.papr_dir = "scripts/papr"
 
         # STAGG Settings
         self.variable_config_df = None
