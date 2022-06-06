@@ -1063,6 +1063,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.col_vals = self.import_thread.output
                 self.imported_files = self.stagg_input_files
 
+                # Automatically set result as current data
+                variable_names = self.col_vals.keys()
+                var_config_df = ConfigSettings.get_default_variable_df(variable_names)
+
+                self.config_data = {
+                    'variable': var_config_df,
+                    'graph': None,
+                    'other': None}
+
             self.breath_files_button.setEnabled(True)
             self.import_thread = None
 
@@ -2436,8 +2445,24 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             execute_after()
 
     def stagg_run(self):
+        if not self.check_stagg_reqs():
+            return
+
+        # Set pipeline destination
+        if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
+            pipeline_des = os.path.join(self.papr_dir, "Pipeline_env.R")
+        else:
+            pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
+
+        if not Path(pipeline_des).is_file():
+            # If Main.pipeline_des (aka the first STAGG script file path) isn't a file,
+            #   then the STAGG scripts aren't where they're supposed to be.
+            notify_error(title='STAGG scripts not found',
+                         msg='BASSPRO-STAGG cannot find the scripts for STAGG. Check the BASSPRO-STAGG folder for missing files or directories.')
+            return
+
         self.status_message("\n-- -- Launching STAGG -- --")
-        stagg_output_folder, shared_queue, workers = self.launch_stagg()
+        stagg_output_folder, shared_queue, workers = self.launch_stagg(pipeline_des)
 
         # Prevent another run while running STAGG
         self.stagg_launch_button.setEnabled(False)
@@ -2472,7 +2497,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def status_message(self, msg):
         self.hangar.append(msg)
 
-    def launch_stagg(self):
+    def launch_stagg(self, pipeline_des):
         """
         Assign the file paths to the attributes, ensure that all required STAGG input has been selected and prompt the user to select whatever is missing, and launch STAGG.
 
@@ -2524,22 +2549,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.launch_worker()
             Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
-        if not self.check_stagg_reqs():
-            return
-
-        # Set pipeline destination
-        if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
-            pipeline_des = os.path.join(self.papr_dir, "Pipeline_env.R")
-        else:
-            pipeline_des = os.path.join(self.papr_dir, "Pipeline.R")
-
-        if not Path(pipeline_des).is_file():
-            # If Main.pipeline_des (aka the first STAGG script file path) isn't a file,
-            #   then the STAGG scripts aren't where they're supposed to be.
-            notify_error(title='STAGG scripts not found',
-                         msg='BASSPRO-STAGG cannot find the scripts for STAGG. Check the BASSPRO-STAGG folder for missing files or directories.')
-            return
-
 
         # Set Rscript path
         rscript_des = os.path.abspath(os.path.join(Path(__file__).parent.parent.parent.parent,"R-Portable/bin/Rscript.exe"))
@@ -2708,18 +2717,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         print("launch_basspro process id",os.getpid())
 
         ## Threading Settings ##
-        # TODO: remove invalid inputs -- add label to combobox instead of putting description as option
-        # adjust thread limit for the qthreadpool
-        try:
-            # Try to convert combo box text to int
-            thread_limit_combo_selection = self.parallel_combo.currentText()
-            thread_limit = int(thread_limit_combo_selection)
-        except ValueError:
-            # ValueError thrown when no option selected
-            #   Set to default
-            thread_limit = 1
-            self.parallel_combo.setCurrentText("1")
-
+        # Adjust thread limit for the qthreadpool
+        thread_limit = int(self.parallel_combo.currentText())
         self.qthreadpool.setMaxThreadCount(thread_limit)
 
         shared_queue = queue.Queue()

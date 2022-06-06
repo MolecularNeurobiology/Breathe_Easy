@@ -276,7 +276,7 @@ class Ui_Plethysmography(object):
         spacerleft = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         hlayout.addItem(spacerleft)
 
-        label = QtWidgets.QLabel("Num Cores:")
+        label = QtWidgets.QLabel("# Cores:")
         hlayout.addWidget(label)
 
         self.parallel_combo = QtWidgets.QComboBox(self.centralwidget)
