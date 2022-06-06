@@ -180,7 +180,7 @@ class Ui_Plethysmography(object):
         spacerItem7 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_8.addItem(spacerItem7)
         # self.verticalLayout_8.setStretch(0, 2)
-        # self.verticalLayout_8.setStretch(2, 3)
+        self.verticalLayout_8.setStretch(2, 1)
         self.horizontalLayout_4.addLayout(self.verticalLayout_8)
         self.verticalLayout_11 = QtWidgets.QVBoxLayout()
         self.verticalLayout_11.setObjectName("verticalLayout_11")
