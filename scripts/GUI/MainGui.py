@@ -377,9 +377,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.variable_list.clear()
             self.stagg_settings_layout.delete_button.hide()
         else:
-            self.variable_config_df = new_data['variable'].copy()
-            self.graph_config_df = new_data['graph'].copy()
-            self.other_config_df = new_data['other'].copy()
+            var_df = new_data['variable']
+            graph_df = new_data['graph']
+            other_df = new_data['other']
+            self.variable_config_df = var_df if var_df is None else var_df.copy()
+            self.graph_config_df = graph_df if graph_df is None else graph_df.copy()
+            self.other_config_df = other_df if other_df is None else other_df.copy()
             self.stagg_settings_layout.delete_button.show()
 
     @property
