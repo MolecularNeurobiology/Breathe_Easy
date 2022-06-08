@@ -192,10 +192,6 @@ class Config(QDialog, Ui_Config):
 
         curr_col = self.variable_table.currentColumn()
 
-        # TODO: prevent editing any other column
-        if curr_col != 1:
-            raise RuntimeError("Can only edit Alias column! TODO: Add functionality to prevent col 0 changes")
-
         ## PREVENT DUPLICATES ##
         curr_row = self.variable_table.currentRow()
         curr_item = self.variable_table.currentItem()
@@ -495,12 +491,14 @@ class Config(QDialog, Ui_Config):
 
             # The first two columns are the text of the variable name. Alias should be text editable.
             orig_widget = QTableWidgetItem(var_name)
+            orig_widget.setFlags(orig_widget.flags() & ~Qt.ItemIsEditable)  # read-only!
             self.variable_table.setItem(row, 0, orig_widget)
             
             alias_widget = QTableWidgetItem(alias_name)
             self.variable_table.setItem(row, 1, alias_widget)
 
             button_group = QButtonGroup(self)
+            # NOTE: cannot set callback on buttongroup clicked because doing a group set operation wont trigger callback
             #button_group.idClicked.connect(self.cascade_variable_table_update)
             for i, label in enumerate(["Independent", "Dependent", "Covariate", "Ignore"]):
                 new_radio_button = QRadioButton(label)
