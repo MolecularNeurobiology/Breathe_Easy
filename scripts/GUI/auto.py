@@ -2,7 +2,9 @@
 import pandas as pd
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import Qt
-from util import notify_info, Settings, populate_table
+from util import Settings
+from util.ui.dialogs import notify_info
+from util.ui.tools import populate_table
 from ui.auto_form import Ui_Auto
 
 from tools.convert_timestamps_to_autosections import convert_timestamps_to_autosections
@@ -437,6 +439,7 @@ class AutoSettings(Settings):
         
         # The original df columns are now the index,
         #   but we want them actually included as a new column in the transposed df
+        # Copy index as 'Variable' column
         df.insert(0, 'Variable', df.index)
 
         return df
@@ -458,35 +461,5 @@ class AutoSettings(Settings):
         df = df.transpose()
         df = df.reset_index()
 
-        ## TODO: make this actual data, not widget
-        #summary_table = data
-
-        ## Saving the dataframes holding the configuration preferences to csvs and assigning them their paths:
-        #with open(filepath, 'w', newline = '') as stream:
-        #    writer = csv.writer(stream)
-        #    header = []
-
-        #    for row in range(summary_table.rowCount()):
-        #        item = summary_table.item(row,0)
-        #        if item.text() == "nan":
-        #            header.append("")
-        #        else:
-        
-        #            header.append(item.text())
-
-        #    for column in range(summary_table.columnCount()):
-        #        coldata = []
-
-        #        for row in range(summary_table.rowCount()):
-        #            item = summary_table.item(row, column)
-        #            if item.text() == "nan":
-        #                coldata.append("")
-        #            else:
-        #                coldata.append(item.text())
-        #        writer.writerow(coldata)
-
-        ## This is ridiculous.
-        #auto = pd.read_csv(filepath)
-        #auto['Key'] = auto['Alias']
         df.to_csv(filepath, index=False)
         

@@ -7,7 +7,9 @@ from PyQt5.QtCore import QObject, Qt
 from checkable_combo_box import CheckableComboBox
 from align_delegate import AlignDelegate
 from custom import Custom
-from util import Settings, avert_name_collision, notify_error, notify_info, write_widget, update_combo_values, update_checkable_combo_values
+from util.tools import Settings, avert_name_collision
+from util.ui.dialogs import notify_error, notify_info
+from util.ui.tools import write_widget, update_combo_values, update_checkable_combo_values
 from ui.config_form import Ui_Config
 from ordering import OrderingWindow
 
@@ -118,7 +120,7 @@ class Config(QDialog, Ui_Config):
         self.col_vals = col_vals
         self.custom_data = None
 
-        self.load_variable_config(df=data['variable'])
+        self.load_variable_config(data['variable'])
 
         # Do this after populating variable table
         self.graph_config_df = data['graph'].copy() if data['graph'] is not None else None
@@ -188,10 +190,6 @@ class Config(QDialog, Ui_Config):
             This TableWidget displays the text and widgets needed to allow the user to indicate the type of a selected variable.
         """
         
-        # TODO: why is this called endlessly on close??
-
-        curr_col = self.variable_table.currentColumn()
-
         ## PREVENT DUPLICATES ##
         curr_row = self.variable_table.currentRow()
         curr_item = self.variable_table.currentItem()
@@ -207,21 +205,20 @@ class Config(QDialog, Ui_Config):
         # Get unique name
         new_name = avert_name_collision(new_name, existing_vars)
         if not new_name:
-            # TODO: need to keep around the last text this was changed to
-            #  rather than going back to default
             new_name = old_name
         
         # Set text
         curr_item.setText(new_name)
         self.aliases[curr_row] = new_name
 
-        # Cascade changes to
+        # Cascade changes to:
+        #   -Custom data
         self.update_custom_data(old_name, new_name)
 
-        #   Graph config
+        #   -Graph config
         self.update_graph_config(renamed=(old_name, new_name))
 
-        #   Loop table
+        #   -Loop table
         self.update_loop(renamed=(old_name, new_name))
     
     def update_loop(self, __checked=None, renamed=None):
@@ -306,21 +303,6 @@ class Config(QDialog, Ui_Config):
             covariate_combo.setEnabled(xvar_selected)
             valid_values_no_combo_set = [val for val in self.aliases if val not in combo_set_vals]
             update_checkable_combo_values(covariate_combo, sorted(valid_values_no_combo_set, key=str.lower), renamed, default_value="")
-
-            '''
-                new_text = read_widget(self.loop_table.cellWidget(row_num, header_idx))
-                # TODO: catching weird condition skipping the "Covariates" slot
-                header_idx = header_idx+1 if header_idx >= 6 else header_idx
-                write_widget(self.loop_table.cellWidget(row_num, header_idx), new_text)
-                '''
-
-            '''
-            # If Covariates is filled
-            covariates = self.loop_widgets[row_num]["Covariates"].currentData()
-            if covariates != "":
-                self.loop_widgets[row_num]['Covariates'].loadCustom(covariates)
-                self.loop_widgets[row_num]['Covariates'].updateText()
-            '''
 
     def setup_transform_combo(self):
         """
@@ -641,15 +623,6 @@ class Config(QDialog, Ui_Config):
 
         return variable_table_df
 
-    def set_variable_table_df(self, new_data):
-        if new_data is None:
-            # TODO: this does weird things with widget placement...
-            #self.reset_config()
-            pass
-        else:
-            # Populate widgets
-            self.load_variable_config(df=new_data)
-
     def get_all_dep_variables(self):
         var_table_df = self.get_variable_table_df()
         dependent_vars = var_table_df.loc[(var_table_df["Dependent"] == 1)]["Alias"]
@@ -866,7 +839,7 @@ class Config(QDialog, Ui_Config):
             pass
         else:
             # Populate widgets
-            self.load_graph_config(df=new_data)
+            self.load_graph_config(new_data)
 
     def get_loop_widget_rows(self):
         headers = self.loop_table_headers
@@ -938,7 +911,7 @@ class Config(QDialog, Ui_Config):
                                                 "Inclusion"])
 
 
-        # TODO: what is this trying to do?
+        # Add plots for Apneas and/or Sighs
         if self.feature_combo.currentText() != "None":
             loop_table_rows = self.loop_table.rowCount()
             if self.feature_combo.currentText() == "All":
@@ -960,7 +933,7 @@ class Config(QDialog, Ui_Config):
             pass
         else:
             # Populate widgets
-            self.load_other_config(df=new_data)
+            self.load_other_config(new_data)
 
     def save_as(self):
         """
@@ -1040,6 +1013,7 @@ class Config(QDialog, Ui_Config):
            the updated (rebuilt) dictionaries self.loop_widgets
            and self.buttonDict_variable respectively.
         """
+        # Use default var_df to populate table
         variable_table_df = ConfigSettings.get_default_variable_df(self.variable_names)
         self.populate_variable_table(variable_table_df)
 
@@ -1088,21 +1062,23 @@ class Config(QDialog, Ui_Config):
             if not files:
                 return
 
-            self.load_variable_config(files['variable'])
-            self.load_graph_config(files['graph'])
-            self.load_other_config(files['other'])
+            data = ConfigSettings.attempt_load(files)
+            if data is None:
+                return
 
-    def load_variable_config(self, var_config_path=None, df=None):
+            self.load_variable_config(data['variable'])
+            self.load_graph_config(data['graph'])
+            self.load_other_config(data['other'])
+
+    def load_variable_config(self, df):
         """
         Load the variable_config file as a dataframe
         Populate self.variable_names with the list values in the "Column" column of the dataframe
         Populate self.variable_table (TableWidget) with a row for each variable in the variable_config dataframe
         Load the custom settings.
         """
-        if df is None:
-            df = VariableSettings.attempt_load(var_config_path)
-        else:
-            df = df.copy()
+
+        df = df.copy()
 
         # Load into table
         self.populate_variable_table(df)
@@ -1150,7 +1126,7 @@ class Config(QDialog, Ui_Config):
             # set new items
             self.col_vals[group_name] = order_window.get_items()
 
-    def load_graph_config(self, graph_config_file=None, df=None):
+    def load_graph_config(self, df):
         """
         Populate the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes
           with the variables selected as independent or covariate
@@ -1160,10 +1136,8 @@ class Config(QDialog, Ui_Config):
           with the variables in the dataframe read from the graph_config
           file and set the comboBoxes current text.
         """
-        if df is None:
-            gdf = GraphSettings.attempt_load(graph_config_file)
-        else:
-            gdf = df.copy()
+
+        gdf = df.copy()
 
         # Get only Independent/Covariate aliases
         # Try getting from variable_table first
@@ -1183,17 +1157,14 @@ class Config(QDialog, Ui_Config):
                     combo.setCurrentText(curr_selection["Alias"].values[0])
             combo.blockSignals(False)
 
-    def load_other_config(self, other_config_file=None, df=None):
+    def load_other_config(self, df):
         """
         Set the current text of the feature plots comboBox according to the other_config .csv file loaded
         Populate self.loop_table with the contents of the dataframe derived from the other_config .csv file.
         """
 
-        if df is None:
-            odf = OtherSettings.attempt_load(other_config_file)
-        else:
-            odf = df.copy()
-            odf = odf.fillna("")
+        odf = df.copy()
+        odf = odf.fillna("")
 
         # Reset feature comboBox
         self.feature_combo.setCurrentText("None")

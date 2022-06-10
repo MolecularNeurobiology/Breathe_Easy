@@ -4,7 +4,8 @@ from copy import deepcopy
 import pandas as pd
 from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox, QTableWidgetItem
 from thorbass_controller import Thorbass
-from util import notify_error, Settings, notify_info 
+from util import Settings 
+from util.ui.dialogs import notify_error, notify_info
 from ui.manual_form import Ui_Manual
 
 # YOu need to make the columns reflect the headers of the dataframes

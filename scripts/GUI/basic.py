@@ -1,14 +1,14 @@
 
-import os
 from copy import deepcopy
-import json
 from pathlib import Path
 import pandas as pd
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem
 from PyQt5.QtCore import QObject
 from ui.basic_form import Ui_Basic
 from PyQt5.QtCore import Qt
-from util import notify_info, Settings, populate_table
+from util import Settings
+from util.ui.dialogs import notify_info
+from util.ui.tools import populate_table
 
 class Basic(QDialog, Ui_Basic):
     """

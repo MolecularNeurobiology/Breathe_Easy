@@ -7,7 +7,8 @@ import pandas as pd
 from PyQt5.QtWidgets import QDialog, QMessageBox, QTreeWidgetItem
 from PyQt5 import QtCore
 from ui.annot_form import Ui_Annot
-from util import Settings, ask_user_ok, avert_name_collision, notify_error, notify_info
+from util import Settings, avert_name_collision
+from util.ui.dialogs import ask_user_ok, notify_error, notify_info
 
 class Annot(QDialog, Ui_Annot):
     """

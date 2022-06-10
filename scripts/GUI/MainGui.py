@@ -16,7 +16,6 @@ from glob import glob
 from pathlib import Path
 import re
 import pyodbc
-import shutil
 from datetime import datetime, timedelta
 
 # data parsing
@@ -31,11 +30,12 @@ import threading
 
 # pyqt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog
-from PyQt5.QtCore import QThreadPool, pyqtSlot, Qt, QTimer
+from PyQt5.QtCore import QThreadPool, Qt, QTimer
 
 # Local imports
 from thinbass_controller import Thinbass
-from util import Settings, ask_user_ok, ask_user_yes, generate_unique_id, nonblocking_msg, notify_error, notify_info
+from util import Settings, generate_unique_id
+from util.ui.dialogs import ask_user_ok, ask_user_yes, nonblocking_msg, notify_error, notify_info
 from auto import AutoSettings
 from basic import BasicSettings
 from manual import ManualSettings
@@ -568,18 +568,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.get_signal_files()
         elif combo_need == "Select dataset...":
             reply = QMessageBox.information(self, 'Missing dataset', 'Please select one of the options from the dropdown menu above.', QMessageBox.Ok)
-        # TODO: This elif below may not be necessary because further upstream, when the user is actually selecting signal files, there's a functionality that rejects any files that don't end in .txt and tells the user what was rejected.
-        elif not all(x.endswith(".txt") for x in self.signal_files):
-            reply = QMessageBox.information(
-                self,
-                'Incorrect file format',
-                'The selected signal files are not text formatted.\nWould you like to select a different signal file directory?',
-                QMessageBox.Ok | QMessageBox.Cancel, QMessageBox.Ok)
-            if reply == QMessageBox.Ok:
-                self.get_signal_files()
         else:
             # wut?
-            # I'm leaving this weird epoch, condition stuff in here because I don't want to break anything but I don't remember why I did this. Maybe I thought comparisons for multiple signal file selections would be saved to the same dictionary? T
+            # I'm leaving this weird epoch, condition stuff in here because I don't want to break anything but I don't remember why I did this.
+            #   Maybe I thought comparisons for multiple signal file selections would be saved to the same dictionary? T
             epoch = [os.path.basename(Path(self.signal_files[0]).parent.parent)]
             condition = [os.path.basename(Path(self.signal_files[0]).parent)]
             
@@ -1540,6 +1532,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         # TODO: Move this logic to Settings sub-class
         # TODO: add setter
+        # Only allowed to select .txt files
         filenames, filter = QFileDialog.getOpenFileNames(self, 'Select signal files', self.workspace_dir, '*.txt')
 
         # Catch cancel
@@ -2345,7 +2338,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Provide callback to remove on "Ok"
         """
         dialog_id = generate_unique_id(self.dialogs.keys())
-        self.dialogs[dialog_id] = nonblocking_msg(msg, [lambda : self.dialogs.pop(dialog_id)], title=title, msg_type='info')
+        ok_callback = lambda : self.dialogs.pop(dialog_id)  # remove dialog
+        self.dialogs[dialog_id] = nonblocking_msg(msg, [ok_callback], title=title, msg_type='info')
 
     def cancel_monitor(self, monitor_id, exec_after_cancel=None):
         self.monitors[monitor_id]['status'] = 'cancelled'
@@ -2411,7 +2405,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
         monitor = self.monitors[monitor_id]
 
-        # TODO: make sure we handle any still running processes
+        # TODO: make sure we kill/wait any still running processes
         # Check if this monitor has been cancelled
         if monitor['status'] == 'cancelled':
             self.monitors.pop(monitor_id)
@@ -2490,8 +2484,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stagg_run()
 
     def enable_stagg_buttons(self, status:bool):
-        # TODO: when stagg continuation is cancelled, basspro is still running
-        #   - below will enable basspro button again, but need to make sure we stop basspro process
         self.stagg_settings_button.setEnabled(status)
         self.stagg_settings_layout.delete_button.setEnabled(status)
         self.breath_files_button.setEnabled(status)
@@ -2561,9 +2553,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             image_format = ".svg"
         elif self.jpeg_radioButton.isChecked():
             image_format = ".jpeg"
-        else:
-            # TODO: this should never happen
-            raise RuntimeError("No image format checked!")
 
 
         ## WRITE FILES ##

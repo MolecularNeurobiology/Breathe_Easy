@@ -2,7 +2,7 @@
 from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QCheckBox
 from PyQt5.QtCore import Qt
 from checkable_combo_box import CheckableComboBox
-from util import read_widget
+from util.ui.tools import read_widget
 from ui.custom_config import Ui_Custom
 
 class Custom(QDialog, Ui_Custom):
