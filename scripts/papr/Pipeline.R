@@ -77,8 +77,9 @@ args <- parse_args(p)
 
 
 ################### Designates location and names of the following R source codes to run ####################
-
+starting_wd = getwd()
 source(args$Tibblemaker)
+setwd(starting_wd)
 source(args$Stat)
 source(args$Makegraph)
 source(args$Bodytemp)
