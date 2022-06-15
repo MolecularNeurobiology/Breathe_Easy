@@ -2,6 +2,8 @@
 # pipeline.r is the main wrapper of all the scripts for papr. Additionally, it 
 # provides the methods to parse the command line arguments.
 print("Setting pipeline")
+print("current directory")
+print(getwd())
 
 
 required_libs <- c("rjson", "tidyverse", "magrittr", "data.table",
@@ -100,6 +102,7 @@ print("Loading data")
 #########################
 # Sets working directory to the Mothership so arguments in command line that indicate file locations are 
 # understood and found by R.
+starting_wd = getwd()
 setwd(args2$dir)
 
 # Load environment
@@ -318,6 +321,8 @@ if(class(save_atp) == "try-error") {save.image(file=paste0("./myEnv_", format(Sy
 
 ################### Designates location and names of the following R source codes to run ####################
 
+
+setwd(starting_wd)
 #source(args$Tibblemaker)
 source(args$Stat)
 source(args$Makegraph)
