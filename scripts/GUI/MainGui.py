@@ -2569,8 +2569,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
 
         # Set Rscript path
-        # rscript_des = os.path.abspath(os.path.join(Path(__file__).parent.parent.parent.parent,"R-Portable/bin/Rscript.exe"))
-        rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
+        rscript_des = os.path.abspath(os.path.join(Path(__file__).parent.parent.parent.parent,"R-Portable/bin/Rscript.exe"))
 
         # Get image format
         if self.svg_radioButton.isChecked():
