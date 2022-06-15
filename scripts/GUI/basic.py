@@ -506,12 +506,6 @@ class BasicSettings(Settings):
 
     @staticmethod
     def attempt_load(file):
-        # TODO: do we want to keep the json format?
-        #if Path(file).suffix == ".json":
-        #    with open(file) as config_file:
-        #        basic_json = json.load(config_file)
-        #    data = pd.DataFrame.from_dict(basic_json['Dictionaries']['AP']['current'],orient='index').reset_index()
-        #    data.columns = ['Parameter','Setting']
         if Path(file).suffix == ".csv":
             data = pd.read_csv(file)
         elif Path(file).suffix == ".xlsx":

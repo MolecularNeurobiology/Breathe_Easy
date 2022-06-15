@@ -1,7 +1,9 @@
 
+import numpy as np
 import pandas as pd
 from PyQt5.QtWidgets import QDialog
 from PyQt5.QtCore import Qt
+from util.tools import avert_name_collision
 from util import Settings
 from util.ui.dialogs import notify_info
 from util.ui.tools import populate_table
@@ -221,7 +223,7 @@ class Auto(QDialog, Ui_Auto):
 
         # Get edited cell
         cell = table.item(row, col)
-        
+
         # Get new data
         new_data = cell.text()
         
@@ -230,6 +232,18 @@ class Auto(QDialog, Ui_Auto):
         
         # If data changed, perform update
         if prev_data != new_data:
+
+            # Check for duplicates in Variable column
+            if col == 0:
+                # Get all the current names, excluding the edited item
+                curr_names = self.data['Variable'].values
+                curr_names = np.delete(curr_names, row)
+
+                new_data = avert_name_collision(new_data, curr_names)
+                # If user cancelled, set to previous name
+                if not new_data:
+                    new_data = prev_data
+
             # Set new data
             self.data.iloc[row, col] = new_data
 

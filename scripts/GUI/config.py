@@ -1111,6 +1111,7 @@ class Config(QDialog, Ui_Config):
         combo = self.graph_config_combos[combo_name]
         alias_name = combo.currentText()
 
+        # TODO: find a way to do this more systematically?
         # Skip anything set to default
         if alias_name == "Select variable:":
             return
@@ -1119,6 +1120,11 @@ class Config(QDialog, Ui_Config):
         group_name = self.variable_names[alias_idx]
 
         items = self.col_vals[group_name]
+
+        # Check if value list is empty
+        if len(items) == 0:
+            notify_info("There are no values for this variable")
+            return
 
         order_window = OrderingWindow(combo_name, group_name, items)
         reply = order_window.exec()

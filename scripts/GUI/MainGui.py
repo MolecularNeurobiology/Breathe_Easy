@@ -42,6 +42,7 @@ from manual import ManualSettings
 from AnnotGUI import MetadataSettings
 from config import GraphSettings, OtherSettings, VariableSettings, ConfigSettings
 from tools.import_cols_vals_thread import ColValImportThread
+from tools.constants import BASSPRO_OUTPUT
 import MainGUIworker
 from ui.form import Ui_Plethysmography
 
@@ -66,6 +67,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     Ui_Plethysmography: class
         The Plethysmography class inherits widgets and layouts defined in the Ui_Plethysmography class.
     """
+
+    DEFAULT_GRAPH_CONFIG_DF = pd.DataFrame(data=[(1, ""), (2, ""), (3, ""), (4, "")], columns=['Role', 'Alias'])
+    DEFAULT_OTHER_CONFIG_DF = pd.DataFrame(columns=["Graph", "Variable", "Xvar", "Pointdodge", "Facet1", "Facet2", "Covariates", "ymin", "ymax", "Inclusion"])
 
     def __init__(self):
         """
@@ -205,8 +209,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # STAGG Settings
         self.variable_config_df = None
-        self.graph_config_df = None
-        self.other_config_df = None
+        self.graph_config_df = self.DEFAULT_GRAPH_CONFIG_DF.copy()
+        self.other_config_df = self.DEFAULT_OTHER_CONFIG_DF.copy()
         self.breath_df = []
         self.input_dir_r = ""
 
@@ -360,6 +364,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         var_df = self.variable_config_df
         graph_df = self.graph_config_df
         other_df = self.other_config_df
+
         # If all configs are None, return None
         if all([config is None for config in [var_df, graph_df, other_df]]):
             return None
@@ -372,8 +377,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Set all config data collectively
         if new_data is None:
             self.variable_config_df = None
-            self.graph_config_df = None
-            self.other_config_df = None
+            self.graph_config_df = self.DEFAULT_GRAPH_CONFIG_DF.copy()
+            self.other_config_df = self.DEFAULT_OTHER_CONFIG_DF.copy()
             self.variable_list.clear()
             self.stagg_settings_layout.delete_button.hide()
         else:
@@ -381,78 +386,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             graph_df = new_data['graph']
             other_df = new_data['other']
             self.variable_config_df = var_df if var_df is None else var_df.copy()
-            self.graph_config_df = graph_df if graph_df is None else graph_df.copy()
-            self.other_config_df = other_df if other_df is None else other_df.copy()
+            self.graph_config_df = self.DEFAULT_GRAPH_CONFIG_DF.copy() if graph_df is None else graph_df.copy()
+            self.other_config_df = self.DEFAULT_OTHER_CONFIG_DF.copy() if other_df is None else other_df.copy()
             self.stagg_settings_layout.delete_button.show()
-
-    @property
-    def variable_config(self):
-        return self.get_config_file_from_list("variable")
-
-    @variable_config.setter
-    def variable_config(self, filepath):
-        # Setting to None or ""
-        if not filepath:
-            self.variable_config_df = None
-            # Remove old config
-            for item in self.variable_list.findItems("variable", Qt.MatchContains):
-                self.variable_list.takeItem(self.variable_list.row(item))
-
-        elif VariableSettings.validate(filepath):
-            self.variable_config_df = VariableSettings.attempt_load(filepath)
-            if self.variable_config_df is not None:
-                # Remove old config
-                for item in self.variable_list.findItems("variable", Qt.MatchContains):
-                    self.variable_list.takeItem(self.variable_list.row(item))
-
-                # Add new one
-                self.variable_list.addItem(filepath)
-
-    @property
-    def graph_config(self):
-        return self.get_config_file_from_list("graph")
-
-    @graph_config.setter
-    def graph_config(self, filepath):
-        # Setting to None or ""
-        if not filepath:
-            self.graph_config_df = None
-            # Remove old config
-            for item in self.variable_list.findItems("graph", Qt.MatchContains):
-                self.variable_list.takeItem(self.variable_list.row(item))
-
-        elif GraphSettings.validate(filepath):
-            self.graph_config_df = GraphSettings.attempt_load(filepath)
-            if self.graph_config_df is not None:
-                # Remove old config
-                for item in self.variable_list.findItems("graph", Qt.MatchContains):
-                    self.variable_list.takeItem(self.variable_list.row(item))
-
-                # Add new one
-                self.variable_list.addItem(filepath)
-
-    @property
-    def other_config(self):
-        return self.get_config_file_from_list("other")
-
-    @other_config.setter
-    def other_config(self, filepath):
-        # Setting to None or ""
-        if not filepath:
-            self.other_config_df = None
-            # Remove old config
-            for item in self.variable_list.findItems("other", Qt.MatchContains):
-                self.variable_list.takeItem(self.variable_list.row(item))
-
-        elif OtherSettings.validate(filepath):
-            self.other_config_df = OtherSettings.attempt_load(filepath)
-            if self.other_config_df is not None:
-                # Remove old config
-                for item in self.variable_list.findItems("other", Qt.MatchContains):
-                    self.variable_list.takeItem(self.variable_list.row(item))
-
-                # Add new one
-                self.variable_list.addItem(filepath)
 
     @property
     def basicap(self):
@@ -914,7 +850,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stagg_settings_button.setStyleSheet("background-color: #eee")
 
         # If we already have data for all the configs, use this
-        if self.config_data is not None:
+        if self.variable_config_df is not None:
             input_data = self.config_data
             col_vals = self.col_vals
         
@@ -973,8 +909,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     # graph_df/other_df are None
                     input_data = {
                         'variable': var_config_df,
-                        'graph': None,
-                        'other': None}
+                        'graph': self.graph_config_df,
+                        'other': self.other_config_df}
 
                     col_vals = self.col_vals
 
@@ -1002,19 +938,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     return
 
             elif selected_option == "Settings files":
-                self.col_vals = columns_and_values_from_settings(self.metadata_df, self.autosections_df, self.mansections_df)
-
-                # Create default df with imported variables
-                variable_names = self.col_vals.keys()
-                var_config_df = ConfigSettings.get_default_variable_df(variable_names)
-
-                # graph_df/other_df are None
-                input_data = {
-                    'variable': var_config_df,
-                    'graph': None,
-                    'other': None}
-
-                col_vals = self.col_vals
+                col_vals, input_data = self.get_cols_vals_from_settings()
 
         # Open settings window
         self.show_stagg_settings(input_data, col_vals)
@@ -1047,13 +971,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         #   -do proper cleanup!
         if self.import_thread:
             if kill_thread:
-                self.hangar.append("Killing thread...")
+                self.status_message("Killing thread...")
                 # TODO: ensure the thread cleans up properly!
                 # Remove finished callback
                 self.import_thread.quit()
 
             else:
-                self.hangar.append("Done!")
+                self.status_message("Done!")
                 self.stagg_settings_button.setStyleSheet("background-color: #0f0")
                 self.col_vals = self.import_thread.output
                 self.imported_files = self.stagg_input_files
@@ -1064,8 +988,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                 self.config_data = {
                     'variable': var_config_df,
-                    'graph': None,
-                    'other': None}
+                    'graph': self.graph_config_df,
+                    'other': self.other_config_df}
 
             self.breath_files_button.setEnabled(True)
             self.import_thread = None
@@ -1459,6 +1383,70 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         else:
             print("Manual sections parameters file not detected.")
 
+    # def auto_get_stagg_settings(self, basspro_run_folder):
+    #     # Load in settings files from basspro run folder
+    #     files = glob(os.path.join(basspro_run_folder, "metadata_*.csv"))
+    #     if len(files) == 0:
+    #         notify_error(f"Cannot find metadata file in folder: {basspro_run_folder}")
+    #         return False
+    #     elif len(files) > 1:
+    #         notify_error(f"Too many metadata files in folder: {basspro_run_folder}")
+    #         return False
+
+    #     metadata_file = files[0]
+    #     metadata_df = MetadataSettings.attempt_load(metadata_file)
+    #     if metadata_df is None:
+    #         notify_error(f"Cannot load metadata file: {metadata_file}")
+    #         return False
+
+    #     files = glob(os.path.join(basspro_run_folder, "auto_sections_*.csv"))
+    #     if len(files) > 1:
+    #         notify_error(f"Too many autosections files in folder: {basspro_run_folder}")
+    #         return False
+
+    #     if len(files) == 0:
+    #         autosections_df = None
+    #     else:
+    #         autosections_file = files[0]
+    #         autosections_df = AutoSettings.attempt_load(autosections_file)
+    #         if autosections_df is None:
+    #             notify_error(f"Cannot load autosections file: {autosections_file}")
+    #             return False
+
+    #     files = glob(os.path.join(basspro_run_folder, "*manual_sections_*.csv"))
+    #     if len(files) > 1:
+    #         notify_error(f"Too many mansections files in folder: {basspro_run_folder}")
+    #         return False
+
+    #     if len(files) == 0:
+    #         mansections_df = None
+    #     else:
+    #         mansections_file = files[0]
+    #         mansections_df = ManualSettings.attempt_load(mansections_file)
+    #         if mansections_df is None:
+    #             notify_error(f"Cannot load mansections file: {mansections_file}")
+    #             return False
+
+    #     # Need at least one sections file present
+    #     if autosections_df is None and mansections_df is None:
+    #         notify_error(f"Cannot find sections file in folder: {basspro_run_folder}")
+    #         return
+
+    #     # Import columns and values from settings files
+    #     self.col_vals = columns_and_values_from_settings(metadata_df, autosections_df, mansections_df)
+
+    #     # Create default df with imported variables
+    #     variable_names = self.col_vals.keys()
+    #     var_config_df = ConfigSettings.get_default_variable_df(variable_names)
+
+    #     # graph_df/other_df are None
+    #     self.config_data = {
+    #         'variable': var_config_df,
+    #         'graph': self.graph_config_df,
+    #         'other': self.other_config_df}
+
+    #     return True
+
     def auto_get_breath_files(self, basspro_run_folder, clear_files):
         """
         Populate self.stagg_input_files with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
@@ -1634,9 +1622,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if not meta_file:
                 return
 
+            data = MetadataSettings.attempt_load(meta_file)
+            if data is None:
+                notify_error("Could not load metadata")
+                return
+
             # TODO: this should be done in `attempt_load()` ?? Need to push validation back -- is this function really just require_load()?
             # If there are not valid files, try again
-            if self.test_signal_metadata_match(self.signal_files, MetadataSettings.attempt_load(meta_file)):
+            if self.test_signal_metadata_match(self.signal_files, data):
                 self.metadata = meta_file
                 break
 
@@ -2241,6 +2234,28 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
         return True
 
+    def get_cols_vals_from_settings(self):
+
+        # Import columns and values from settings files
+        col_vals = columns_and_values_from_settings(self.metadata_df, self.autosections_df, self.mansections_df)
+
+        # For any column guaranteed to output from BASSPRO
+        #   -if its not included yet, add the column name with an empty list
+        for col in BASSPRO_OUTPUT:
+            if col not in col_vals:
+                col_vals[col] = []
+
+        # Create default df with imported variables
+        variable_names = col_vals.keys()
+        var_config_df = ConfigSettings.get_default_variable_df(variable_names)
+
+        config_data = {
+            'variable': var_config_df.copy(),
+            'graph': self.graph_config_df.copy(),
+            'other': self.other_config_df.copy()}
+
+        return col_vals, config_data
+
 
     def basspro_run(self):
         """
@@ -2266,7 +2281,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # If doing full run, check stagg reqs
         if is_full_run and not self.check_stagg_reqs(full_run=True):
-            return
+                return
+
+        ## Prep stagg settings ahead of time using current BP settings ##
+        # -delay actually setting them in case BP fails
+        col_vals, config_data = self.get_cols_vals_from_settings()
 
         # Check whether we have stagg input already
         #   new output will automatically populate
@@ -2287,7 +2306,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.enable_stagg_buttons(False)
 
             # Set next function to run and monitor the workers
-            execute_after = lambda : self.pickup_after_basspro(basspro_run_folder, clear_stagg_input)
+            execute_after = lambda : self.pickup_after_basspro(basspro_run_folder, clear_stagg_input, config_data, col_vals)
             
             # Set function in case cancel is selected
             cancel_func = lambda : self.basspro_launch_button.setEnabled(True) or self.enable_stagg_buttons(True)
@@ -2295,7 +2314,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         else:
 
             # Wait to check output after basspro finishes
-            execute_after = lambda : self.complete_basspro(basspro_run_folder, clear_stagg_input)
+            execute_after = lambda : self.complete_basspro(basspro_run_folder, clear_stagg_input, config_data, col_vals)
 
             # Set function in case cancel is selected
             cancel_func = lambda : self.basspro_launch_button.setEnabled(True)
@@ -2307,13 +2326,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                          exec_after_cancel=cancel_func,
                          proc_name="BASSPRO")
 
-    def complete_basspro(self, basspro_run_folder, clear_stagg_input):
+    def complete_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
         # Re-enable basspro button
         self.basspro_launch_button.setEnabled(True)
 
         # autoload output JSON files
         self.status_message("\nAutopopulating STAGG")
         self.auto_get_breath_files(basspro_run_folder, clear_files=clear_stagg_input)
+        
+        # Set STAGG Settings
+        self.config_data = config_data
+        self.col_vals = col_vals
         
         # Check the output and give message to user
         self.output_check()
@@ -2472,12 +2495,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.add_monitor(workers, shared_queue, execute_after=execute_after, exec_after_cancel=cancel_func, proc_name="STAGG")
 
 
-    def pickup_after_basspro(self, basspro_run_folder, clear_stagg_input):
-
-        # check whether Basspro output is correct, re-enable basspro button
-        self.complete_basspro(basspro_run_folder, clear_stagg_input)
+    def pickup_after_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
 
         self.enable_stagg_buttons(True)
+
+        # check whether Basspro output is correct, re-enable basspro button
+        self.complete_basspro(basspro_run_folder, clear_stagg_input, config_data, col_vals)
 
         ## RUN STAGG ##
         # launch STAGG
@@ -2546,7 +2569,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """
 
         # Set Rscript path
-        rscript_des = os.path.abspath(os.path.join(Path(__file__).parent.parent.parent.parent,"R-Portable/bin/Rscript.exe"))
+        # rscript_des = os.path.abspath(os.path.join(Path(__file__).parent.parent.parent.parent,"R-Portable/bin/Rscript.exe"))
+        rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
 
         # Get image format
         if self.svg_radioButton.isChecked():
@@ -2816,9 +2840,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.rthing_to_do_cntd()
             This method ensures the STAGG script exists, prompts the user to indicate where the Rscript.exe file is, and runs self.launch_worker().
         """
-        if self.variable_config_df is None or \
+        if not full_run and (
+            self.variable_config_df is None or \
             self.graph_config_df is None or \
-            self.other_config_df is None:
+            self.other_config_df is None):
             notify_error("Missing STAGG config")
             return False
 
