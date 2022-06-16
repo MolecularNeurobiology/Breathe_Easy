@@ -55,10 +55,20 @@ class Manual(QDialog, Ui_Manual):
 
         self.preset_menu.addItems(list(self.defaults.keys()))
 
-        self.datapad = None
-        self.preset = None
-        self.manual_df = None
         self.vals = ['animal id','PLYUID','start','stop','duration','mFrequency_Hz','mPeriod_s','mHeight_V','mO2_V','mCO2_V','mTchamber_V','segment']
+        
+        if data is None:
+            self.datapad = None
+            self.preset = None
+            self.manual_df = None
+        else:
+            self.datapad = data.loc[:, [x for x in self.vals]]
+            self.preset = data.loc[:, [x for x in data.columns if x not in self.datapad.columns]].drop_duplicates()
+            self.manual_df = data
+            self.populate_table(self.manual_df, self.manual_view)
+            self.populate_table(self.datapad, self.datapad_view)
+            self.populate_table(self.preset, self.settings_view)
+            
 
     def get_datapad(self):
         """
