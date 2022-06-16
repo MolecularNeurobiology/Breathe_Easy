@@ -669,30 +669,33 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
                             lead = graph_data[[resp_var]][-1],
                             Breath_Inclusion_Filter = graph_data$Breath_Inclusion_Filter[-nrow(graph_data)])
   
+  poincare_v <- c(xvar, pointdodge, facet1, facet2)
+  poincare_v <- poincare_v[poincare_v != ""]
+  
   # Settings for graphing variables
   ## Point color
   if(pointdodge != ""){
-    poincare_df$pc <- factor(graph_data[[pointdodge]][-nrow(graph_data)], 
+    poincare_df[[pointdodge]] <- factor(graph_data[[pointdodge]][-nrow(graph_data)], 
                              levels = unique(graph_data[[pointdodge]]))
-    pointdodge_g <- "pc"
+    pointdodge_g <- pointdodge
   } else {
     pointdodge_g <- NULL
   }
   
-  ## Rowpanels.
+  ## Row panels.
   if(facet1 != ""){
-    poincare_df$facet1 <- factor(graph_data[[facet1]][-nrow(graph_data)], 
+    poincare_df[[facet1]] <- factor(graph_data[[facet1]][-nrow(graph_data)], 
                                  levels = unique(graph_data[[facet1]]))
-    facet1_g <- "facet1"
+    facet1_g <- facet1
   } else {
     facet1_g <- "."
   }
   
   ## Column panels.
   if(facet2 != ""){
-    poincare_df$facet2 <- factor(graph_data[[facet2]][-nrow(graph_data)], 
+    poincare_df[[facet2]] <- factor(graph_data[[facet2]][-nrow(graph_data)], 
                                  levels = unique(graph_data[[facet2]]))
-    facet2_g <- "facet2"
+    facet2_g <- facet2
   } else {
     facet2_g <- "."
   }
@@ -704,7 +707,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
       next
     }
     
-    poincare_df$xvar <- factor(graph_data[[xvar]][-nrow(graph_data)], 
+    poincare_df[[xvar]] <- factor(graph_data[[xvar]][-nrow(graph_data)], 
                                levels = unique(graph_data[[xvar]]))
   }
   
@@ -724,13 +727,12 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
   
   # Currently no functionality for custom axis ranges.
   if(xvar != ""){
-    for(ll in unique(poincare_df[["xvar"]])) {
-      poincare_df_sub <- poincare_df[which(poincare_df[["xvar"]] == ll),]
-      
+    for(ll in unique(poincare_df[[xvar]])) {
+      poincare_df_sub <- poincare_df[which(poincare_df[[xvar]] == ll),]
+
       # Set order of categories in variables as specified by the user, if specified.
-      poincare_df_sub <- graph_reorder(poincare_df_sub, c(xvar, pointdodge, facet1, facet2), 
-                                       graph_vars, tbl0)
-      
+      poincare_df_sub <- graph_reorder(poincare_df_sub, poincare_v, 
+                                       graph_vars, poincare_df_sub)
       # Make graph + save
       p <- ggplot() +
         geom_point(aes_string(x = "lag", y = "lead", color = pointdodge_g), data = poincare_df_sub) +
@@ -748,8 +750,8 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
   } else {
     
     # Set order of categories in variables as specified by the user, if specified.
-    poincare_df <- graph_reorder(poincare_df, c(xvar, pointdodge, facet1, facet2), 
-                                     graph_vars, tbl0)
+    poincare_df <- graph_reorder(poincare_df, poincare_v, 
+                                     graph_vars, poincare_df)
     
     # Make graph + save
     p <- ggplot() +
