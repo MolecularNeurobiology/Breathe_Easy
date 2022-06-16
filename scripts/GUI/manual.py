@@ -198,6 +198,7 @@ class Manual(QDialog, Ui_Manual):
         try:
             self.manual_df = self.datapad.merge(self.preset,'outer',left_on=self.datapad['segment'],right_on=self.preset['Alias'])
             self.manual_df = self.manual_df.iloc[:,1:]
+            self.data = self.manual_df
             self.populate_table(self.manual_df,self.manual_view)
         except Exception as e:
             if self.datapad is None and self.preset is not None:
