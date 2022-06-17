@@ -214,13 +214,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.breath_df = []
         self.input_dir_r = ""
 
-        self.mp_parsed = {}
-        self.mp_parserrors = []
-        self.p_mouse_dict = {}
-        self.m_mouse_dict = {}
-        self.metadata_warnings = {}
-        self.metadata_pm_warnings = []
-        self.missing_plyuids = []
         self.metadata_passlist = []
         self.tsbyfile = {}
 
@@ -540,7 +533,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.need = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
             print(self.need)
             
-            self.hangar.append("Checking timestamps...")
+            self.status_message("Checking timestamps...")
             # TODO: put in separate thread/process
             self.grabTimeStamps()
             self.checkFileTimeStamps()
@@ -561,17 +554,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 notify_error(title=f"{type(e).__name__}: {e}", msg=f"The timestamp file could not be written.")
 
             # Print summary of timestamps review to the hangar.
-            self.hangar.append("Timestamp output saved.")
-            self.hangar.append("---Timestamp Summary---")
-            self.hangar.append(f"Files with missing timestamps: {', '.join(set([w for m in self.check['files_missing_a_ts'] for w in self.check['files_missing_a_ts'][m]]))}")
-            self.hangar.append(f"Files with duplicate timestamps: {', '.join(set([y for d in self.check['files_with_dup_ts'] for y in self.check['files_with_dup_ts'][d]]))}")
+            self.status_message("Timestamp output saved.")
+            self.status_message("---Timestamp Summary---")
+            self.status_message(f"Files with missing timestamps: {', '.join(set([w for m in self.check['files_missing_a_ts'] for w in self.check['files_missing_a_ts'][m]]))}")
+            self.status_message(f"Files with duplicate timestamps: {', '.join(set([y for d in self.check['files_with_dup_ts'] for y in self.check['files_with_dup_ts'][d]]))}")
 
             if len(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]])) == len(self.signal_files):
-                self.hangar.append(f"Files with novel timestamps: all signal files")
+                self.status_message(f"Files with novel timestamps: all signal files")
             else:
-                self.hangar.append(f"Files with novel timestamps: {', '.join(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]]))}")
+                self.status_message(f"Files with novel timestamps: {', '.join(set([z for n in self.check['new_ts'] for z in self.check['new_ts'][n]]))}")
 
-            self.hangar.append(f"Full review of timestamps: {Path(tpath)}")
+            self.status_message(f"Full review of timestamps: {Path(tpath)}")
 
 
     def grabTimeStamps(self):
@@ -924,12 +917,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.import_thread = ColValImportThread(json_files)
                     
                     # Print out any progress messages emitted by thread
-                    self.import_thread.progress.connect(self.hangar.append)
+                    self.import_thread.progress.connect(self.status_message)
                     
                     # Call finish method on emitting finished signal
                     self.import_thread.finished.connect(self.finish_import)
 
-                    self.hangar.append("Importing columns and values from json...")
+                    self.status_message("Importing columns and values from json...")
 
                     # Disable any change in stagg input files
                     self.breath_files_button.setEnabled(False)
@@ -1650,38 +1643,43 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
         Outputs
         --------
-        self.mp_parsed: dict
+        mp_parsed: dict
             This attribute is populated with the mouse IDs, plethysmography IDs, and the tuple constructed from both scraped from the file name of each signal file currently selected.
-        self.mp_parserrors: list
-            This attribute is set as an empty list and is populated with the file path of any files that fail to be scraped.
         """
         print("mp_parser()")
-        self.mp_parsed={'MUIDLIST':[],'PLYUIDLIST':[],'MUID_PLYUID_tuple':[]}
-        self.mp_parserrors=[]
+
+        mp_parsed = {
+            'MUIDLIST': [],
+            'PLYUIDLIST': [],
+            'MUID_PLYUID_tuple': []
+        }
+
         muid_plyuid_re=re.compile('M(?P<muid>.+?(?=_|\.txt))(_Ply)?(?P<plyuid>.*).txt')
         for file in self.signal_files:
             try:
                 parsed_filename=re.search(muid_plyuid_re,os.path.basename(file))
                 if parsed_filename['muid']!='' and parsed_filename['plyuid']!='':
-                    self.mp_parsed['MUIDLIST'].append(int(parsed_filename['muid']))
-                    self.mp_parsed['PLYUIDLIST'].append(int(parsed_filename['plyuid']))
-                    self.mp_parsed['MUID_PLYUID_tuple'].append(
+                    mp_parsed['MUIDLIST'].append(int(parsed_filename['muid']))
+                    mp_parsed['PLYUIDLIST'].append(int(parsed_filename['plyuid']))
+                    mp_parsed['MUID_PLYUID_tuple'].append(
                         (int(parsed_filename['muid']),int(parsed_filename['plyuid']))
                         )
                 elif parsed_filename['muid']!='':
-                    self.mp_parsed['MUIDLIST'].append(int(parsed_filename['muid']))
-                    self.mp_parsed['MUID_PLYUID_tuple'].append(
+                    mp_parsed['MUIDLIST'].append(int(parsed_filename['muid']))
+                    mp_parsed['MUID_PLYUID_tuple'].append(
                         (int(parsed_filename['muid']),'')
                         )
                 elif parsed_filename['plyuid']!='':
-                    self.mp_parsed['PLYUIDLIST'].append(int(parsed_filename['plyuid']))
-                    self.mp_parsed['MUID_PLYUID_tuple'].append(
+                    mp_parsed['PLYUIDLIST'].append(int(parsed_filename['plyuid']))
+                    mp_parsed['MUID_PLYUID_tuple'].append(
                             ('',int(parsed_filename['plyuid']))
                             )
-            except Exception as e:
-                print(f'{type(e).__name__}: {e}')
-                print(traceback.format_exc())
-                self.mp_parserrors.append(file)
+
+            # TODO: catch a specific error
+            except Exception:
+                pass
+
+        return mp_parsed
 
     def connect_database(self):
         """
@@ -1702,16 +1700,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         reply: QMessageBox
             This MessageBox informs the user that if not signal files have been selected and prompts the user to correct this.
-        self.metadata_warnings: dict
+        metadata_warnings: dict
             This attribute is set as an empty dictionary.
-        self.metadata_pm_warnings: list
+        metadata_pm_warnings: list
             This attribute is set as an empty list.
-        self.missing_plyuids: list
-            This attribute is set as an empty list.
-        self.metadata_list: QListWidget
-            This ListWidget is populated with the file path of the metadata file created from the information accessed in the database.
-        self.mousedb: ?
-            This attribute refers to the connection to the database accessible via the information provided in the variable dsn.
 
         Outcomes
         --------
@@ -1742,20 +1734,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if self.signal_files_list.count() == 0:
             return
 
-        self.metadata_warnings={}
-        self.metadata_pm_warnings=[]
-        self.missing_plyuids=[]
-        self.hangar.append("Gauging Filemaker connection...")
+        self.status_message("Gauging Filemaker connection...")
         try:
-            dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
-            self.mousedb = pyodbc.connect(dsn)
-            self.mousedb.timeout=1
-            self.mp_parser()
-            self.get_study()
+
+            mp_parsed = self.mp_parser()
             if not self.require_workspace_dir():
                 return
-            self.metadata_list.clear()
-            self.save_filemaker()
+
+            dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
+            mousedb = pyodbc.connect(dsn)
+            mousedb.timeout = 1
+
+            # Retrieve metadata from database
+            self.metadata = self.get_study(mousedb, mp_parsed)
+
+            mousedb.close()
+
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
@@ -1765,7 +1759,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if reply:
                 self.load_metadata()
 
-    def get_study(self, fixformat=True):
+    def get_study(self, mousedb, mp_parsed, fixformat=True):
         """
         This method was adapted from a function written by Chris Ward.
 
@@ -1773,182 +1767,186 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.mp_parsed: dict
+        mp_parsed: dict
             This attribute is populated with the mouse IDs, plethysmography IDs, and the tuple constructed from both scraped from the file name of each signal file currently selected.
-        self.mp_parserrors: list
-            This attribute is set as an empty list and is populated with the file path of any files that fail to be scraped.
-        self.mousedb: ?
+        mousedb: ?
             This attribute refers to the connection to the database accessible via the information provided in the variable dsn.
-        self.hangar: QTextEdit
-            This attribute is a QTextEdit inherited from the Ui_Plethysmography class that displays feedback to the user.
-        self.metadata_warnings: dict
-            This attribute is set as an empty dictionary.
-        self.metadata_pm_warnings: list
-            This attribute is set as an empty list.
-        self.missing_plyuids: list
-            This attribute is set as an empty list.
 
         Outputs
         --------
-        self.m_mouse_dict: dict
+        m_mouse_dict: dict
             This attribute is populated with the fields and values scraped from the Mouse_List view of the Ray Lab's database.
-        self.p_mouse_dict: dict
+        p_mouse_dict: dict
             This attribute is populated with the fields and values scarped from the Plethysmography view of the Ray Lab's database.
-        self.mousedb: ?
-            The connection is closed.
         self.hangar: QTextEdit
             This attribute is a QTextEdit inherited from the Ui_Plethysmography class that prints a summary of any errors in the process of grabbing metadata from the database.
         self.assemble_df: Dataframe
-            This attribute is the dataframe constructed from the concatenated dataframes derived from self.m_mouse_dict and self.p_mouse_dict.
+            This attribute is the dataframe constructed from the concatenated dataframes derived from m_mouse_dict and p_mouse_dict.
         
         Outcomes
         --------
         self.metadata_checker_filemaker()
             This method scans the information grabbed from the database to note any discrepancies.
         """
-        print("get_study()")
-        self.metadata_list.addItem("Building query...")
+        self.status_message("Building query...")
         try:
-            FieldDict={"MUID":['Mouse_List','Plethysmography'],
-                "PlyUID":['Plethysmography'],
-                "Misc. Variable 1 Value":['Plethysmography'],
-                "Sex":['Mouse_List'],
-                "Genotype":['Mouse_List'],
-                "Group":['Plethysmography'],
-                "Weight":['Plethysmography'],
-                "Comments":['Mouse_List'],
-                "Date of Birth":['Mouse_List'],
-                "Experiment_Name":['Plethysmography'],
-                "Researcher":['Plethysmography'],
-                "Experimental_Date":['Plethysmography'],
-                "time started":['Plethysmography'],
-                "Rig":['Plethysmography'],
-                "Tag Number":['Mouse_List'],
-                "Start_body_temperature":['Plethysmography'],
-                "Mid_body_temperature":['Plethysmography'],
-                "End_body_temperature":['Plethysmography'],
-                "post30_body_temperature":['Plethysmography'],
-                "Room_Temp":['Plethysmography'],
-                "Bar_Pres":['Plethysmography'],
-                "Rotometer_Flowrate":['Plethysmography'],
-                "Pump Flowrate":['Plethysmography'],
-                "Calibration_Volume":['Plethysmography'],
-                "Experimental_Date":['Plethysmography'],
-                "Calibration_Condition":['Plethysmography'],
-                "Experimental_Condition":['Plethysmography'],
-                "Experimental_Treatment":['Plethysmography'],
-                "Gas 1":['Plethysmography'],
-                "Gas 2":['Plethysmography'],
-                "Gas 3":['Plethysmography'],
-                "Tank 1":['Plethysmography'],
-                "Tank 2":['Plethysmography'],
-                "Tank 3":['Plethysmography'],
-                "Dose":['Plethysmography'],
-                "Habituation":['Plethysmography'],
-                "Plethysmography":['Plethysmography'],
-                "PlyUID":['Plethysmography'],
-                "Notes":['Plethysmography'],
-                "Project Number":['Plethysmography'],
-                }
+            FieldDict = {
+                'Plethysmography': [
+                    'MUID',
+                    'PlyUID',
+                    'Misc. Variable 1 Value',
+                    'Group',
+                    'Weight',
+                    'Experiment_Name',
+                    'Researcher',
+                    'Experimental_Date',
+                    'time started',
+                    'Rig',
+                    'Start_body_temperature',
+                    'Mid_body_temperature',
+                    'End_body_temperature',
+                    'post30_body_temperature',
+                    'Room_Temp',
+                    'Bar_Pres',
+                    'Rotometer_Flowrate',
+                    'Pump Flowrate',
+                    'Calibration_Volume',
+                    'Experimental_Date',
+                    'Calibration_Condition',
+                    'Experimental_Condition',
+                    'Experimental_Treatment',
+                    'Gas 1',
+                    'Gas 2',
+                    'Gas 3',
+                    'Tank 1',
+                    'Tank 2',
+                    'Tank 3',
+                    'Dose',
+                    'Habituation',
+                    'Plethysmography',
+                    'PlyUID',
+                    'Notes',
+                    'Project Number',
+                ],
+                'Mouse_List': [
+                    'MUID',
+                    'Sex',
+                    'Genotype',
+                    'Comments',
+                    'Date of Birth',
+                    'Tag Number',
+                ]
+            }
             
             #assemble fields for SQL query
-            m_FieldText='"'+'","'.join(
-                [i for i in list(
-                    FieldDict.keys()
-                    ) if 'Mouse_List' in FieldDict[i]]
-                )+'"'
-            p_FieldText='"'+'","'.join(
-                [i for i in list(
-                    FieldDict.keys()
-                    ) if 'Plethysmography' in FieldDict[i]]
-                )+'"'
+            m_FieldText='"' + '","'.join(FieldDict['Mouse_List']) + '"'
+            p_FieldText='"' + '","'.join(FieldDict['Plethysmography']) + '"'
             
             # filter sql query based on muid and plyuid info if provided
-            if self.mp_parsed['MUIDLIST']!=[] and self.mp_parsed['PLYUIDLIST']!=[]:
-                m_cursor = self.mousedb.execute(
-                    """select """+m_FieldText+
-                    """ from "Mouse_List" where "MUID" in ("""+
-                    ','.join([str(i) for i in self.mp_parsed['MUIDLIST']])+
+            if mp_parsed['MUIDLIST'] and mp_parsed['PLYUIDLIST']:
+                m_cursor = mousedb.execute(
+                    """select """ + m_FieldText +
+                    """ from "Mouse_List" where "MUID" in (""" +
+                    ','.join([str(i) for i in mp_parsed['MUIDLIST']]) +
                     """) """)    
-                p_cursor = self.mousedb.execute(
-                    """select """+p_FieldText+
-                    """ from "Plethysmography" where "PLYUID" in ("""+
-                    ','.join([str(i) for i in self.mp_parsed['PLYUIDLIST']])+
-                    """) and "MUID" in ("""+
-                    ','.join(["'M{}'".format(int(i)) for i in self.mp_parsed['MUIDLIST']])+
+
+                p_cursor = mousedb.execute(
+                    """select """ + p_FieldText +
+                    """ from "Plethysmography" where "PLYUID" in (""" +
+                    ','.join([str(i) for i in mp_parsed['PLYUIDLIST']]) +
+                    """) and "MUID" in (""" +
+                    ','.join(["'M{}'".format(int(i)) for i in mp_parsed['MUIDLIST']]) +
                     """) """)
-            elif self.mp_parsed['PLYUIDLIST']!=[]:
-                m_cursor = self.mousedb.execute(
-                    """select """+m_FieldText+
+
+            elif mp_parsed['PLYUIDLIST']:
+                m_cursor = mousedb.execute(
+                    """select """ + m_FieldText +
                     """ from "Mouse_List" """)    
-                p_cursor = self.mousedb.execute(
-                    """select """+p_FieldText+
-                    """ from "Plethysmography" where "PLYUID" in ("""+
-                    ','.join([str(i) for i in self.mp_parsed['PLYUIDLIST']])+
+
+                p_cursor = mousedb.execute(
+                    """select """ + p_FieldText +
+                    """ from "Plethysmography" where "PLYUID" in (""" +
+                    ','.join([str(i) for i in mp_parsed['PLYUIDLIST']]) +
                     """) """)
-            elif self.mp_parsed['MUIDLIST']!=[]:
-                m_cursor = self.mousedb.execute(
-                    """select """+m_FieldText+
-                    """ from "Mouse_List" where "MUID" in ("""+
-                    ','.join([str(i) for i in self.mp_parsed['MUIDLIST']])+
+
+            elif mp_parsed['MUIDLIST']:
+                m_cursor = mousedb.execute(
+                    """select """ + m_FieldText +
+                    """ from "Mouse_List" where "MUID" in (""" +
+                    ','.join([str(i) for i in mp_parsed['MUIDLIST']]) +
                     """) """)    
-                p_cursor = self.mousedb.execute(
-                    """select """+p_FieldText+
-                    """ from "Plethysmography" where "MUID" in ("""+
-                    ','.join(["'M{}'".format(int(i)) for i in self.mp_parsed['MUIDLIST']])+
+
+                p_cursor = mousedb.execute(
+                    """select """ + p_FieldText +
+                    """ from "Plethysmography" where "MUID" in (""" +
+                    ','.join(["'M{}'".format(int(i)) for i in mp_parsed['MUIDLIST']]) +
+
                     """) """)
             else:
-                m_cursor = self.mousedb.execute(
-                    """select """+m_FieldText+
+                m_cursor = mousedb.execute(
+                    """select """ + m_FieldText +
                     """ from "Mouse_List" """)    
-                p_cursor = self.mousedb.execute(
-                    """select """+p_FieldText+
+
+                p_cursor = mousedb.execute(
+                    """select """ + p_FieldText +
                     """ from "Plethysmography" """)
                 
-            self.metadata_list.addItem("Fetching metadata...")
+            self.status_message("Fetching metadata...")
             m_mouse_list = m_cursor.fetchall()
             p_mouse_list = p_cursor.fetchall()
             m_head_list = [i[0] for i in m_cursor.description]
             p_head_list = [i[0] for i in p_cursor.description]
-            self.mousedb.close()
+
+            p_mouse_dict = {}
             for i in p_mouse_list:
-                self.p_mouse_dict['Ply{}'.format(int(i[p_head_list.index('PlyUID')]))]=dict(zip(p_head_list,i))
+                p_mouse_dict['Ply{}'.format(int(i[p_head_list.index('PlyUID')]))] = dict(zip(p_head_list,i))
+
+            m_mouse_dict = {}
             for i in m_mouse_list:
-                self.m_mouse_dict['M{}'.format(int(i[p_head_list.index('MUID')]))]=dict(zip(m_head_list,i))
-            for z in self.p_mouse_dict:
-                if self.p_mouse_dict[z]['Mid_body_temperature'] == 0.0:
-                    self.p_mouse_dict[z]['Mid_body_temperature'] = None
-            self.metadata_checker_filemaker()
-            plys={}
-            for k in self.metadata_warnings:
-                for v in self.metadata_warnings[k]:
-                    if v in self.metadata_warnings[k]:
-                        if v in plys.keys():
-                            plys[v].append(k)
-                        else:
-                            plys[v] = [k]
-            for w,x in plys.items():
-                self.hangar.append(f"{w}: {', '.join(x for x in plys[w])}")
-            for u in set(self.metadata_pm_warnings):
-                self.hangar.append(u)
-            p_df=pd.DataFrame(self.p_mouse_dict).transpose()
-            m_df=pd.DataFrame(self.m_mouse_dict).transpose()
-            if fixformat==True:
+                m_mouse_dict['M{}'.format(int(i[p_head_list.index('MUID')]))] = dict(zip(m_head_list,i))
+
+            for z in p_mouse_dict:
+                if p_mouse_dict[z]['Mid_body_temperature'] == 0.0:
+                    p_mouse_dict[z]['Mid_body_temperature'] = None
+
+            metadata_warnings, metadata_pm_warnings = self.metadata_checker_filemaker(mp_parsed, p_mouse_dict, m_mouse_dict)
+
+            # TODO: build the dict like this from the beginning
+            plys = {}
+            for ply_id, warnings in metadata_warnings:
+                for warning in warnings:
+                    if warning in plys:
+                        plys[warning].append(ply_id)
+                    else:
+                        plys[warning] = [ply_id]
+
+            for warning, ply_ids in plys.items():
+                self.status_message(f"{warning}: {', '.join(ply_ids)}")
+            for u in set(metadata_pm_warnings):
+                self.status_message(u)
+
+            p_df = pd.DataFrame(p_mouse_dict).transpose()
+            m_df = pd.DataFrame(m_mouse_dict).transpose()
+
+            if fixformat:
                 p_df['PlyUID']='Ply'+p_df['PlyUID'].astype(int).astype(str)
                 p_df['Experimental_Date']=pd.to_datetime(p_df['Experimental_Date'], errors='coerce')
                 m_df['MUID']='M'+m_df['MUID'].astype(int).astype(str)
                 m_df['Date of Birth']=pd.to_datetime(m_df['Date of Birth'], errors='coerce')
-            self.assemble_df=pd.merge(p_df,m_df, how='left', 
-                            left_on='MUID', right_on='MUID')
-            self.assemble_df['Age']=(self.assemble_df['Experimental_Date']-self.assemble_df['Date of Birth']).dt.days
+
+            assemble_df = pd.merge(p_df, m_df, how='left', left_on='MUID', right_on='MUID')
+            assemble_df['Age'] = (assemble_df['Experimental_Date'] - assemble_df['Date of Birth']).dt.days
+
+            return assemble_df
+
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
             new_error='unable to assemble metadata'
 
-    def metadata_checker_filemaker(self):
+    def metadata_checker_filemaker(self, mp_parsed, p_mouse_dict, m_mouse_dict):
         """
-        Populate self.metadata_pm_warnings (list), self.missing_plyuids (list), and self.metadata_warnings (dict) with information on discrepancies found in the metadata accessed from the database.
+        Populate metadata_pm_warnings (list), and metadata_warnings (dict) with information on discrepancies found in the metadata accessed from the database.
 
         Parameters
         --------
@@ -1956,18 +1954,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
            This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail.
         self.metadata_list: QListWidget
             This ListWidget inherited from Ui_Plethysmography class displays the file path of the current metadata file on the main GUI.
-        self.mp_parsed: dict
+        mp_parsed: dict
             This attribute is populated with the mouse IDs, plethysmography IDs, and the tuple constructed from both scraped from the file name of each signal file currently selected.
-        self.m_mouse_dict: dict
+        m_mouse_dict: dict
             This attribute is populated with the fields and values scraped from the Mouse_List view of the Ray Lab's database.
-        self.p_mouse_dict: dict
+        p_mouse_dict: dict
             This attribute is populated with the fields and values scarped from the Plethysmography view of the Ray Lab's database.
-        self.metadata_warnings: dict
-            This attribute is as an empty dictionary.
-        self.metadata_pm_warnings: list
-            This attribute is as an empty list.
-        self.missing_plyuids: list
-            This attribute is as an empty list.
         self.metadata_passlist: list
             This attribute is an empty list.
 
@@ -1977,110 +1969,82 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute is a nested dictionary from self.gui_config (dict) containing the names of the fields in the Ray Lab Filemaker database that should be accessed to create a metadata file.
         self.metadata_list: QListWidget
             This ListWidget is populated with an update.
-        self.metadata_pm_warnings: list
+        metadata_pm_warnings: list
             This attribute is populated with strings summarizing the instance of discrepancy if any are found.
-        self.missing_plyuids: list
-            This attribute is populated with the mouse IDs that are in the database but whose PlyUID (plethysmography run ID as indicated by the file name of the signal file) is not in the database.
-        self.metadata_warnings: dict
+        metadata_warnings: dict
             This attribute is a populated with PlyUID keys and strings as their values warning of a particular field of metadata missing from the metadata for that plethysmography run.
         self.metadata_passlist: list
             This attribute is populated with the IDs of the signals files that had no discrepancies in the collection of their metadata from the database.
         """
         print("metadata_checker_filemaker()")
         self.essential_fields = self.gui_config['Dictionaries']['metadata']['essential_fields']
-        self.metadata_list.addItem("Checking metadata...")
+        self.status_message("Checking metadata...")
+
+        metadata_warnings = {}
+        metadata_pm_warnings = {}
+
         # For the MUID and PlyUID pair taken from the signal files provided by the user:
-        for m,p in self.mp_parsed["MUID_PLYUID_tuple"]:
+        for m,p in mp_parsed["MUID_PLYUID_tuple"]:
+
             # Check if the PlyUID is in the metadata:
-            if f"Ply{p}" not in self.p_mouse_dict:
+            if f"Ply{p}" not in p_mouse_dict:
+
                 # If the PlyUID isn't in the metadata, check if its associated MUID is:
                 # (We check for the MUID in the m_mouse_dict because its populated regardless of the status of 
                 # a MUID's associated PlyUID)
-                if f"M{m}" not in self.m_mouse_dict:
-                    self.metadata_pm_warnings.append(f"Neither Ply{p} nor M{m} were found in metadata.")
+                if f"M{m}" not in m_mouse_dict:
+                    metadata_pm_warnings.append(f"Neither Ply{p} nor M{m} were found in metadata.")
                 # If the PlyUID isn't in the metadata, but its associated MUID is:
                 else:
                     if p != "":
-                        self.metadata_pm_warnings.append(f"Ply{p} of M{m} not found in metadata.")
-                    else:
-                        self.missing_plyuids.append(f"M{m}")
-                    mice = [self.p_mouse_dict[d]['MUID'] for d in self.p_mouse_dict]
+                        metadata_pm_warnings.append(f"Ply{p} of M{m} not found in metadata.")
+
+                    mice = [p_mouse_dict[d]['MUID'] for d in p_mouse_dict]
                     for c in mice:
                         if mice.count(c)>1:
-                            self.metadata_pm_warnings.append(f"More than one PlyUID was found for the following metadata: {', '.join(c for c in set(mice) if mice.count(c)>1)}")
+                            metadata_pm_warnings.append(f"More than one PlyUID was found for the following metadata: {', '.join(c for c in set(mice) if mice.count(c)>1)}")
             else:
                 # Check if the MUID of the signal file matches that found in the metadata:
-                if self.p_mouse_dict[f"Ply{p}"]["MUID"] != f"M{m}":
+                if p_mouse_dict[f"Ply{p}"]["MUID"] != f"M{m}":
                     # If there is no MUID associated with the PlyUID in the metadata:
-                    if self.p_mouse_dict[f"Ply{p}"]["MUID"] == "":
+                    if p_mouse_dict[f"Ply{p}"]["MUID"] == "":
                         # Check if the provided MUID is even in the metadata:
-                        if f"M{m}" not in self.m_mouse_dict:
-                            self.metadata_warnings[f"Ply{p}"] = [f"M{m} of Ply{p} not found in metadata."]
+                        if f"M{m}" not in m_mouse_dict:
+                            metadata_warnings[f"Ply{p}"] = [f"M{m} of Ply{p} not found in metadata."]
                         else:
-                            self.metadata_warnings[f"Ply{p}"] = [f"M{m} of Ply{p} found in Mouse_List, but no MUID was found in Plethysmography."]
+                            metadata_warnings[f"Ply{p}"] = [f"M{m} of Ply{p} found in Mouse_List, but no MUID was found in Plethysmography."]
                     else:
-                        db_meta = self.p_mouse_dict[f"Ply{p}"]["MUID"]     
-                        self.metadata_warnings[f"Ply{p}"] = [f"Unexpected MUID: M{m} provided by file, {db_meta} found in metadata."]
+                        db_meta = p_mouse_dict[f"Ply{p}"]["MUID"]     
+                        metadata_warnings[f"Ply{p}"] = [f"Unexpected MUID: M{m} provided by file, {db_meta} found in metadata."]
+
                 else:
                     for fm in self.essential_fields["mouse"]:
-                        if fm not in self.m_mouse_dict[f"M{m}"].keys():
-                            if f"Ply{p}" in self.metadata_warnings.keys():
-                                self.metadata_warnings[f"Ply{p}"].append(f"Missing metadata for {fm}")
+                        if fm not in m_mouse_dict[f"M{m}"]:
+                            if f"Ply{p}" in metadata_warnings:
+                                metadata_warnings[f"Ply{p}"].append(f"Missing metadata for {fm}")
                             else:
-                                self.metadata_warnings[f"Ply{p}"] = [f"Missing metadata for {fm}"]
-                        elif self.m_mouse_dict[f"M{m}"][fm] == None:
-                            if f"Ply{p}" in self.metadata_warnings.keys():
-                                self.metadata_warnings[f"Ply{p}"].append(f"Empty metadata for {fm}")
+                                metadata_warnings[f"Ply{p}"] = [f"Missing metadata for {fm}"]
+                        elif m_mouse_dict[f"M{m}"][fm] == None:
+                            if f"Ply{p}" in metadata_warnings:
+                                metadata_warnings[f"Ply{p}"].append(f"Empty metadata for {fm}")
                             else:
-                                self.metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fm}"]
-                    for fp in self.essential_fields["pleth"]:
-                        if fp not in self.p_mouse_dict[f"Ply{p}"].keys():
-                            if f"Ply{p}" in self.metadata_warnings.keys():
-                                self.metadata_warnings[f"Ply{p}"].append(f"Missing metadata for {fp}")
-                            else:
-                                self.metadata_warnings[f"Ply{p}"] = [f"Missing metadata for {fp}"]
-                        elif self.p_mouse_dict[f"Ply{p}"][fp] == None:
-                            if f"Ply{p}" in self.metadata_warnings.keys():
-                                self.metadata_warnings[f"Ply{p}"].append(f"Empty metadata for {fp}")
-                            else:
-                                self.metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fp}"]
-            if f"Ply{p}" not in self.metadata_warnings.keys(): 
-                self.metadata_passlist.append(f"M{m}_Ply{p}")
-     
-    def save_filemaker(self):
-        """
-        Save the dataframe derived from the database to a csv file and assign the file path to self.metadata attribute.
+                                metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fm}"]
 
-        Parameters
-        --------
-        self.workspace_dir: str
-            This attribute refers to the path of the user-selected output directory.
-        self.metadata_list: QListWidget
-            This ListWidget inherited from Ui_Pletysmography class displays the file path of the current metadata file on the main GUI.
-        self.assemble_df: Dataframe
-            This attribute is the dataframe constructed from the concatenated dataframes derived from self.m_mouse_dict and self.p_mouse_dict.
-        
-        Outputs
-        --------
-        self.metadata_list: QListWidget
-            This ListWidget is populated with the file path of the metadata file created from the information grabbed from the database for display on the main GUI.
-        self.metadata: str
-            This attribute is set as the file path of the metadata.csv file that was made from the self.assemble_df dataframe saved in self.workspace_dir.
-        reply: QMessageBox
-            This MessageBox tells the user if they have a file open in another program that shares the same file path as self.metadata.
-        """
-        print("save_filemaker()")
-        self.status_message("Creating csv file...")
-        self.metadata = os.path.join(self.workspace_dir,"metadata.csv")
-        try:
-            self.assemble_df.to_csv(self.metadata, index = False)
-            self.metadata_list.clear()
-            self.metadata_list.addItem(self.metadata)
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-            if type(e) == PermissionError:
-                reply = QMessageBox.information(self, 'File in use', 'One or more of the files you are trying to save is open in another program.', QMessageBox.Ok)
+                    for fp in self.essential_fields["pleth"]:
+                        if fp not in p_mouse_dict[f"Ply{p}"]:
+                            if f"Ply{p}" in metadata_warnings:
+                                metadata_warnings[f"Ply{p}"].append(f"Missing metadata for {fp}")
+                            else:
+                                metadata_warnings[f"Ply{p}"] = [f"Missing metadata for {fp}"]
+                        elif p_mouse_dict[f"Ply{p}"][fp] == None:
+                            if f"Ply{p}" in metadata_warnings:
+                                metadata_warnings[f"Ply{p}"].append(f"Empty metadata for {fp}")
+                            else:
+                                metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fp}"]
+            if f"Ply{p}" not in metadata_warnings: 
+                self.metadata_passlist.append(f"M{m}_Ply{p}")
+
+            return metadata_warnings, metadata_pm_warnings
       
     def get_autosections(self):
         """
@@ -2405,10 +2369,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if new_msg == 'DONE':
                 # Remove worker from monitor
                 self.monitors[monitor_id]['workers'].pop(worker_id)
-                self.hangar.append(f'{worker_id} : {new_msg}')
+                self.status_message(f'{worker_id} : {new_msg}')
             else:
                 self._reset_last_msg_time(monitor_id)
-                self.hangar.append(f'{worker_id} : {new_msg}')
+                self.status_message(f'{worker_id} : {new_msg}')
 
         QTimer.singleShot(interval, lambda : self.print_queue_status(monitor_id, interval=interval))
 
