@@ -1369,17 +1369,19 @@ class VariableSettings(ConfigSettings):
         elif filepath.endswith(".csv"):
             df = pd.read_csv(filepath)
 
+        df['Transformation'] = df['Transformation'].fillna("")
+
         new_transforms = []
         # Clean transform values and create list
         for i, record in df.iterrows():
-            if np.isnan(record['Transformation']):
-                new_transforms.append([])
-            else:
+            if record['Transformation']:
                 # Replace all 'non' with 'raw'
                 transform = [t.replace("non","raw") for t in record['Transformation'].split('@')]
                 # Replace all 'log' with 'ln', unless the text is 'log10'
                 transform = [t.replace("log","ln") if t != "log10" else t for t in transform ]
                 new_transforms.append(transform)
+            else:
+                new_transforms.append([])
 
         df['Transformation'] = new_transforms
 
