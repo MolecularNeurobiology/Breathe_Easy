@@ -1913,7 +1913,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             # TODO: build the dict like this from the beginning
             plys = {}
-            for ply_id, warnings in metadata_warnings:
+            for ply_id, warnings in metadata_warnings.items():
                 for warning in warnings:
                     if warning in plys:
                         plys[warning].append(ply_id)
