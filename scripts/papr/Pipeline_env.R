@@ -123,7 +123,7 @@ rm(args2)
 ### breath_df: data frame/tibble, old currently existing data frame
 ## Outputs:
 ### breath_df: data frame/tibble, new data for analysis.
-simple_appender <- import_data <- function(fp, breath_df = NULL){
+simple_appender <- function(fp, breath_df = NULL){
   #Function to convert NULL and "" values in the raw json to NA (necessitated by R handling of NULL values)
   blank_to_na <- function(xx){
     new_xx <- unlist(lapply(xx, function(x) ifelse(((x == "")|(is.na(x))|(x == "NA")), NA, x)))

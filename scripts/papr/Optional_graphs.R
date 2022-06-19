@@ -91,14 +91,14 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   ## Raw residual plot
   g1 <- ggplot() +
     geom_point(aes(x = fitted(temp_mod), y = resid(temp_mod))) +
-    labs(x = "Fitted", y = "Residual") + 
+    labs(x = "Fitted", y = "Residual", title = paste0("Residuals: ", resp_var, " ~ ", paste(inter_vars, collapse = "+ "))) + 
     geom_abline(slope = 0, intercept = 0) +
     theme_few() 
   
   ## Q-Q plot
   g2 <- ggplot() +
     geom_qq(aes(sample = resid(temp_mod))) +
-    labs(x = "Empirical Quantile", y = "Theoretical Quantile") + 
+    labs(x = "Empirical Quantile", y = "Theoretical Quantile", title = paste0("Q-Q: ", resp_var, " ~ ", paste(inter_vars, collapse = "+ "))) + 
     geom_qq_line(aes(sample = resid(temp_mod))) +
     theme_few() 
   
@@ -739,7 +739,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
         geom_abline(slope = 1, intercept = 0) +
         facet_grid(form_string) + 
         scale_color_manual(values = cPalette) +
-        labs(x = "T", y = "T+1", color = pointdodge_wu) +
+        labs(x = "T", y = "T+1", color = pointdodge_wu, title = paste0("Poincare: ", resp_var, " ~ ", ll)) +
         theme_few() 
       
       name_part <- str_replace_all(c(resp_var, ll), "[[:punct:]]", "")
@@ -759,7 +759,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
       geom_abline(slope = 1, intercept = 0) +
       facet_grid(form_string) + 
       scale_color_manual(values = cPalette) +
-      labs(x = "T", y = "T+1", color = pointdodge_wu) +
+      labs(x = "T", y = "T+1", color = pointdodge_wu, title = paste0("Poincare: ", resp_var)) +
       theme_few() 
     
     name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
@@ -816,7 +816,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     psd_p <- ggplot(data = psd_df) +
       geom_path(aes(x = tt, y = value)) +
       facet_grid(rows = vars(variable), scales = "free_y") +
-      labs(x = "Hz", y = "Magnitude") +
+      labs(x = "Hz", y = "Magnitude", title = paste0("Spectral: ", resp_var)) +
       theme_bw()
     
     name_part <- str_replace_all(c(resp_var, pointdodge), "[[:punct:]]", "")
@@ -832,7 +832,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     # Make graph + save
     psd_p <- ggplot() +
       geom_path(aes(x = 2:max_hz, y = psd[2:max_hz])) +
-      labs(x = "Hz", y = "Magnitude") +
+      labs(x = "Hz", y = "Magnitude", title = paste0("Spectral: ", resp_var)) +
       theme_bw()
     
     name_part <- str_replace_all(resp_var, "[[:punct:]]", "")

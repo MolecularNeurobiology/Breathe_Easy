@@ -106,14 +106,14 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE)
   ## Raw residual plot
   g1 <- ggplot() +
     geom_point(aes(x = fitted(temp_mod), y = resid(temp_mod))) +
-    labs(x = "Fitted", y = "Residual") + 
+    labs(x = "Fitted", y = "Residual", title = paste0("Residuals: ", resp_var, " ~ ", paste(inter_vars, collapse = "+ "))) + 
     geom_abline(slope = 0, intercept = 0) +
     theme_few() 
   
   ## Q-Q plot
   g2 <- ggplot() +
     geom_qq(aes(sample = resid(temp_mod))) +
-    labs(x = "Empirical Quantile", y = "Theoretical Quantile") + 
+    labs(x = "Empirical Quantile", y = "Theoretical Quantile", title = paste0("Q-Q: ", resp_var, " ~ ", paste(inter_vars, collapse = "+ "))) + 
     geom_qq_line(aes(sample = resid(temp_mod))) +
     theme_few() 
   
