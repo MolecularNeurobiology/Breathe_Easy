@@ -68,7 +68,7 @@ class Settings:
         # If bad file display error and try again
         filetypes_str = ", ".join(cls.valid_filetypes)
         filenames_str = " and ".join(f"'{name}'" for name in cls.naming_requirements)
-        msg = "The selected file is not in the correct format."
+        msg  =  "The selected file is not in the correct format."
         msg += f"\nFilename must include: {filenames_str}"
         msg += f"\nValid filetypes: {filetypes_str}"
         notify_error(msg)
@@ -116,9 +116,6 @@ def avert_name_collision(new_name, existing_names):
     while name_taken:
         # Generate new name with count appended
         modified_name = f"{new_name}_{count+1}"
-
-        # Assume new name
-        name_taken = False
         
         # Check if any are named the same
         name_taken = modified_name in existing_names

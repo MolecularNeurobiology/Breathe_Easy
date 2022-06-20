@@ -2752,17 +2752,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.hangar: QTextEdit
             This TextEdit is appended with a list of othe signal files that did not pass BASSPRO and failed to produce JSON files.
         """
-        signal_basenames = [os.path.basename(f).split('.')[0] for f in self.signal_files]
-        json_basenames = [os.path.basename(f).split('.')[0] for f in self.stagg_input_files]
-        baddies = []
-        if len(json_basenames) != len(signal_basenames):
-            for sig_name in signal_basenames:
-                if sig_name not in json_basenames:
-                    baddies.append(sig_name)
+        signal_basenames = set([os.path.basename(f).split('.')[0] for f in self.signal_files])
+        # JSONs can be MXXX.json or MXXX_PlyYYY.json
+        json_basenames = set([os.path.basename(f).split('.')[0].split('_')[0] for f in self.stagg_input_files])
+        baddies = signal_basenames.difference(json_basenames)
 
         if len(baddies) > 0:
-            baddies_list_str = ', '.join([os.path.basename(thumb) for thumb in baddies])
-            msg = "\nThe following signals files did not pass BASSPRO:"
+            baddies_list_str = ', '.join(baddies)
+            msg  = "\nThe following signals files did not pass BASSPRO:"
             msg += f"\n{baddies_list_str}"
             self.status_message(msg)
 
