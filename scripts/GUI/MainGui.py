@@ -320,6 +320,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.sections_list.takeItem(self.sections_list.row(item))
         else:
             self.auto_layout.delete_button.show()
+            self.necessary_timestamp_box.addItem("Custom")
 
     @property
     def mansections(self):
