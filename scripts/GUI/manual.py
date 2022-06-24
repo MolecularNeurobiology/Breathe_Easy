@@ -8,7 +8,6 @@ from util import Settings
 from util.ui.dialogs import notify_error, notify_info
 from ui.manual_form import Ui_Manual
 
-# YOu need to make the columns reflect the headers of the dataframes
 class Manual(QDialog, Ui_Manual):
     """
     The Manual class defines the properties, attributes, and methods used by the manual BASSPRO settings subGUI.
@@ -48,7 +47,8 @@ class Manual(QDialog, Ui_Manual):
         super(Manual, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("Manual sections file creation")
-        self.isMaximized()
+        self.showFullScreen()
+
         self.defaults = defaults
         self.data = deepcopy(data)
         self.workspace_dir = workspace_dir
