@@ -67,7 +67,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         The Plethysmography class inherits widgets and layouts defined in the Ui_Plethysmography class.
     """
 
-    DEFAULT_GRAPH_CONFIG_DF = pd.DataFrame(data=[(1, ""), (2, ""), (3, ""), (4, "")], columns=['Role', 'Alias'])
+    DEFAULT_GRAPH_CONFIG_DF = pd.DataFrame(data=[(1, "", ""), (2, "", ""), (3, "", ""), (4, "", "")], columns=['Role', 'Alias', 'Order'])
     DEFAULT_OTHER_CONFIG_DF = pd.DataFrame(columns=["Graph", "Variable", "Xvar", "Pointdodge", "Facet1", "Facet2", "Covariates", "ymin", "ymax", "Inclusion"])
 
     def __init__(self):
@@ -850,24 +850,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Open settings window
         self.show_stagg_settings(input_data, col_vals)
 
-    @staticmethod
-    def get_default_variable_df(self, variable_names):
-        default_values = [0, 0, 0, 0, 0, 0, 0, []]
-        default_data = [[var_name, var_name] + default_values for var_name in variable_names]
-        variable_table_df = pd.DataFrame(
-            default_data,
-            columns=["Column",
-                     "Alias",
-                     "Independent",
-                     "Dependent",
-                     "Covariate",
-                     "ymin",
-                     "ymax",
-                     "Poincare",
-                     "Spectral",
-                     "Transformation"])
-        return variable_table_df
-
     def finish_import(self, kill_thread=False):
         """
         Called at the conclusion of reading columns and values from Basspro json output
@@ -903,56 +885,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def show_stagg_settings(self, input_data, col_vals):
         """
-        Ensure that there is a source of variables to populate Config.variable_table with and run check_stagg_settings_inputs() to ensure that those sources are viable, run self.setup_table_config() to populate Config.variable_table (TableWidget), and either show the STAGG settings subGUI or show a Thorbass dialog to guide the user through providing the required input if there is no input.
+        Show stagg settings window to edit variable, graph, and other configuration
 
         Parameters
         --------
-        self.buttonDict_variable: dict
-            This attribute is a nested dictionary used to populate and save the text and RadioButton states of Config.variable_table (TableWidget) in the Config subGUI.
-        Config.configs: dict
-            This attribute is populated with a nested dictionary in which each item contains a dictionary unique to each settings file - variable_config.csv, graph_config.csv, and other_config.csv. Each dictionary has the following key, value items: "variable", the Plethysmography class attribute that refers to the file path to the settings file; "path", the string file path to the settings file; "frame", the Config class attribute that refers to the dataframe; "df", the dataframe.
-        self.stagg_input_files: list
-            This attribute is a list of user-selected signal file paths.
-        self.metadata: str
-            This attribute refers to the file path of the metadata file.
-        self.autosections: str
-            This attribute refers to the file path of the automated BASSPRO settings file.
-        self.mansections: str
-            This attribute refers to the file path of the manual BASSPRO settings file.
-        self.basicap: str
-            This attribute refers to the file path of the basic BASSPRO settings file.
-        Config.variable_table: QTableWidget
-            This TableWidget is defined in the Config class, displayed in the STAGG settings subGUI, and populated with rows based on the list of variables (self.breath_df).
-        Thinbass: class
-            This class is used when the user has metadata and BASSPRO settings files as well as JSON files - either can be a source for building the variable list that populates the STAGG Settings subGUI. This dialog prompts them to decide which source they'd like to use.
-        Thorbass: class
-            This class defines a specialized dialog that prompts the user to provide the necessary input for the function they are trying to use.
-        
-        Outputs
-        --------
-        Config.variable_table: QTableWidget
-            cellChanged signals are assigned to the TableWidgets cells for two slots: Config.no_duplicates() and Config.update_loop().]
+        input_data (Dict, DataFrame):
+            data for variable-, graph-, and other- configs
+        col_vals (Dict, list):
+            column names and their values
 
         Outcomes
         --------
-        self.check_stagg_settings_inputs()
-            This method ensures that the file paths that populate the attributes required to show the STAGG settings subGUI exist and their contents are accessible, and provides feedback to the user on what is missing if anything.
-        Config.check_load_variable_config()
-            This method checks the user-selected STAGG settings files to ensure they exist and they are the correct file format and they begin with either "variable_config", "graph_config", or "other_config", triggering a MessageBox or dialog to inform the user if any do not and loading the file as a dataframe if they do.
-        self.setup_table_config()
-            This method populates self.buttonDict_variable with widgets and text and populates Config.variable_table with the contents of self.buttonDict_variable.
-        Config.no_duplicates()
-            This method automatically renames the variable in the "Alias" column of Config.variable_table (TableWidget) to avoid duplicate variable names.
-        Config.update_loop()
-            This method updates the contents of Config.clades_other_dict with the contents of self.loop_menu and then update the contents of Config.loop_table with the newly updated contents of Config.clades_other_dict.
-        Config.show()
-            This method displays the STAGG settings subGUI.
-        Thinbass.show()
-            This method displays the specialized Thinbass dialog.
-        Thorbass.show()
-            This method displays the specialized Thorbass dialog.
-        self.new_variable_config()
-            Run self.get_bp_reqs() and self.check_stagg_settings_inputs() to ensure that BASSPRO has the required input, run self.setup_table_config() to populate Config.variable_table (TableWidget), and show the STAGG settings subGUI.
+        On window "Ok", apply changes to current config data
         """
         # Open Config editor GUI
         # TODO: align variable_config name with variable_table name in Config class
@@ -1197,7 +1141,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.basspro_output_dir: str
             This attribute is set as a file path to the BASSPRO_output directory in the user-selected directory output_dir and the directory itself is spawned if it does not exist.
         self.output_dir_py: str
-            This attribute is set as a file path to the timestamped BASSPRO_output_{time} folder within the BASSPRO_output directory within the user-selected directory output_dir. It is not spawned until self.require_workspace_dir() is called when BASSPRO is launched.
+            This attribute is set as a file path to the timestamped BASSPRO_output_{time} folder within the BASSPRO_output directory within the user-selected directory output_dir. It is not spawned until self.require_output_dir() is called when BASSPRO is launched.
 
         Returns
         --------
@@ -1384,7 +1328,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Parameters
         --------
         self.output_dir_py: str
-            This attribute is set as a file path to the timestamped BASSPRO_output_{time} folder within the BASSPRO_output directory within the user-selected directory self.output_dir. It is not spawned until self.require_workspace_dir() is called when BASSPRO is launched.
+            This attribute is set as a file path to the timestamped BASSPRO_output_{time} folder within the BASSPRO_output directory within the user-selected directory self.output_dir. It is not spawned until self.require_output_dir() is called when BASSPRO is launched.
         self.breath_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file paths of the STAGG input.
         self.stagg_input_files: list
@@ -1650,7 +1594,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This method grabs MUIDs and PlyUIDs from signal file names. They are expected to be named with the ID of the mouse beginning with the letter "M", followed by an underscore, followed by the ID of the plethysmography run beginning with the letters "Ply".
         self.get_study()
             This method scrapes the values from the relevant fields of the database for the metadata based on the IDs gotten via self.mp_parser().
-        self.require_workspace_dir()
+        self.require_output_dir()
             This method ensures that the user has selected an output directory and prompt them to do so if they have not.
         self.save_filemaker()
             This method saves the information grabbed from the database as a .csv file, sets self.metadata as the new file path, and populates self.metadata_list (ListWidget) with the new file path on the main GUI.
@@ -1675,7 +1619,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         try:
 
             mp_parsed = self.mp_parser()
-            if not self.require_workspace_dir():
+            if not self.require_output_dir():
                 return
 
             dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
@@ -2124,7 +2068,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             return False
 
         # Make sure we have an output dir
-        if not self.require_workspace_dir():
+        if not self.require_output_dir():
             return False
         
         return True
@@ -2158,7 +2102,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Outcomes
         --------
-        self.require_workspace_dir()
+        self.require_output_dir()
             This method ensures that the user has selected an output directory and prompts them to do so if they have not.
         self.get_bp_reqs()
             This method ensures that the user has provided metadata, basic BASSPRO settings, and either automated or manual BASSPRO settings before launching BASSPRO.
@@ -2530,7 +2474,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         return stagg_run_folder, shared_queue, workers
 
-    def require_workspace_dir(self):
+    def require_output_dir(self):
         """
         Ensure the user has selected an output directory and prompt them to do so if they have not.
 
@@ -2721,7 +2665,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Outputs
         --------
         self.output_dir_r: str
-            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.output_dir. It is not spawned until self.require_workspace_dir() is called when STAGG is launched.
+            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.output_dir. It is not spawned until self.require_output_dir() is called when STAGG is launched.
         self.image_format: str
             This attribute is set as either ".svg" or ".jpeg" depending on which RadioButton is checked on the main GUI.
         self.pipeline_des: str
@@ -2749,7 +2693,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             return False
 
         # Ensure we have a workspace dir selected
-        if not self.require_workspace_dir():
+        if not self.require_output_dir():
             return False
 
         rscript_path = self.gui_config['Dictionaries']['Paths']['rscript']

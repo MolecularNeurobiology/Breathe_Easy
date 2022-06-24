@@ -22,7 +22,7 @@ class Auto(QDialog, Ui_Auto):
     Ui_Auto: class
         The Auto class inherits widgets and layouts defined in the Ui_Auto class.
     """
-    def __init__(self, defaults, auto_labels, ref_definitions, signal_files, data=None, workspace_dir=""):
+    def __init__(self, defaults, auto_labels, ref_definitions, signal_files, data=None, output_dir=""):
         """
         Instantiate the Auto class.
 
@@ -121,7 +121,7 @@ class Auto(QDialog, Ui_Auto):
         self.auto_labels = auto_labels
         self.ref_definitions = ref_definitions
         self.signal_files = signal_files
-        self.workspace_dir = workspace_dir
+        self.output_dir = output_dir
 
         # Populate default template keys
         self.auto_setting_combo.addItems(self.defaults)
@@ -360,7 +360,7 @@ class Auto(QDialog, Ui_Auto):
             This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the metadata.
         """
         try:
-            if AutoSettings.save_file(data=self.data, workspace_dir=self.workspace_dir):
+            if AutoSettings.save_file(data=self.data, output_dir=self.output_dir):
                 notify_info("Automated settings saved")
 
         except PermissionError:
@@ -370,7 +370,7 @@ class Auto(QDialog, Ui_Auto):
     def load_file(self):
         # TODO: streamline this like the other settings
         # Opens open file dialog
-        filepath = AutoSettings.open_file(self.workspace_dir)
+        filepath = AutoSettings.open_file(self.output_dir)
         # Catch cancel
         if not filepath:
             return

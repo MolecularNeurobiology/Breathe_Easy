@@ -21,7 +21,7 @@ class Basic(QDialog, Ui_Basic):
     Ui_Basic: class
         The Basic class inherits widgets and layouts defined in the Ui_Basic class.
     """
-    def __init__(self, defaults, ref_definitions, data=None, workspace_dir=""):
+    def __init__(self, defaults, ref_definitions, data=None, output_dir=""):
         """
         Instantiate the Basic class.
 
@@ -50,7 +50,7 @@ class Basic(QDialog, Ui_Basic):
         self.defaults = defaults
         self.ref_definitions = ref_definitions
         self.data = deepcopy(data)
-        self.workspace_dir = workspace_dir
+        self.output_dir = output_dir
         self.isMaximized()
         
         # Create self attributes for widget access
@@ -441,7 +441,7 @@ class Basic(QDialog, Ui_Basic):
         # Update dataframe from curr widget inputs
         self.data = self.get_dataframe()
 
-        if BasicSettings.save_file(self.data, workspace_dir=self.workspace_dir):
+        if BasicSettings.save_file(self.data, output_dir=self.output_dir):
             notify_info("Basic settings saved")
 
     def load_file(self):
@@ -454,7 +454,7 @@ class Basic(QDialog, Ui_Basic):
             This variable stores the path of the file the user selected via the FileDialog.
         yes: int
             This variable is used to indicate whether or not self.data was successfully populated with a dataframe from the user-selected file.
-        Plethysmography.workspace_dir: str
+        Plethysmography.output_dir: str
             The path to the user-selected directory for all output.
         self.data: Dataframe
             This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
@@ -479,7 +479,7 @@ class Basic(QDialog, Ui_Basic):
         """
         while True:
             # Opens open file dialog
-            filepath = BasicSettings.open_file(self.workspace_dir)
+            filepath = BasicSettings.open_file(self.output_dir)
 
             # Catch cancel
             if not filepath:

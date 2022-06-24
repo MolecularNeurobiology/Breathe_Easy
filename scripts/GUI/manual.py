@@ -19,7 +19,7 @@ class Manual(QDialog, Ui_Manual):
     Ui_Manual: class
         The Manual class inherits widgets and layouts defined in the Ui_Manual class.
     """
-    def __init__(self, defaults, data=None, workspace_dir=""):
+    def __init__(self, defaults, data=None, output_dir=""):
         """
         Instantiates the Manual class.
         
@@ -51,7 +51,7 @@ class Manual(QDialog, Ui_Manual):
 
         self.defaults = defaults
         self.data = deepcopy(data)
-        self.workspace_dir = workspace_dir
+        self.output_dir = output_dir
 
         self.preset_menu.addItems(list(self.defaults.keys()))
 
@@ -289,7 +289,7 @@ class Manual(QDialog, Ui_Manual):
         self.update_breath_df()
             This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the manual BASSPRO settings.
         """
-        if ManualSettings.save_file(self.data, workspace_dir=self.workspace_dir):
+        if ManualSettings.save_file(self.data, output_dir=self.output_dir):
             notify_info("Manual sections file saved")
     
     def load_manual_file(self):
@@ -319,7 +319,7 @@ class Manual(QDialog, Ui_Manual):
         self.populate_table(self.manual_df, self.manual_view)
             This method populates self.manual_view (TableWidget) with the self.manual_df dataframe.
         """
-        file = ManualSettings.open_file(self.workspace_dir)
+        file = ManualSettings.open_file(self.output_dir)
         if file:
 
             data = ManualSettings.attempt_load(file)

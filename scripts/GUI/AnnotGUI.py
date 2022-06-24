@@ -21,7 +21,7 @@ class Annot(QDialog, Ui_Annot):
     Ui_Annot: Class
         The Annot class inherits its widgets and layouts of the Ui_Annot class.
     """
-    def __init__(self, data=None, workspace_dir=""):
+    def __init__(self, data=None, output_dir=""):
         """
         Instantiate the Annot class.
         
@@ -57,7 +57,7 @@ class Annot(QDialog, Ui_Annot):
         self.populate_list_columns()
 
         # Initialize attributes
-        self.workspace_dir = workspace_dir
+        self.output_dir = output_dir
 
         self.groups = []
         self.changes = []
@@ -707,7 +707,7 @@ class Annot(QDialog, Ui_Annot):
             This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the metadata.
         """
         try:
-            if MetadataSettings.save_file(data=self.data, workspace_dir=self.workspace_dir):
+            if MetadataSettings.save_file(data=self.data, output_dir=self.output_dir):
                 # Tell the user it's a success
                 notify_info("Metadata file saved")
 

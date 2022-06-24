@@ -25,7 +25,7 @@ class Settings:
         pass
 
     @classmethod
-    def save_file(cls, data, save_filepath=None, workspace_dir=""):
+    def save_file(cls, data, save_filepath=None, output_dir=""):
         if not save_filepath:
             save_filepath, filter = QFileDialog.getSaveFileName(None, 'Save File', cls.default_filename, "*.csv")
             if not save_filepath:
@@ -34,9 +34,9 @@ class Settings:
         return True
 
     @classmethod
-    def open_files(cls, workspace_dir=""):
+    def open_files(cls, output_dir=""):
         while True:
-            files, filter = QFileDialog.getOpenFileNames(None, cls.file_chooser_message, workspace_dir)
+            files, filter = QFileDialog.getOpenFileNames(None, cls.file_chooser_message, output_dir)
 
             # Break if cancelled
             if not files:
@@ -49,9 +49,9 @@ class Settings:
             cls._display_bad_file_error()
 
     @classmethod
-    def open_file(cls, workspace_dir=""):
+    def open_file(cls, output_dir=""):
         while True:
-            file, filter = QFileDialog.getOpenFileName(None, cls.file_chooser_message, workspace_dir)
+            file, filter = QFileDialog.getOpenFileName(None, cls.file_chooser_message, output_dir)
 
             # Break if cancelled
             if not file:
@@ -89,9 +89,9 @@ class Settings:
         pass
 
     @classmethod
-    def import_file(cls, workspace_dir=""):
+    def import_file(cls, output_dir=""):
         """ Choose file and load """
-        file = cls.open_file(workspace_dir=workspace_dir)
+        file = cls.open_file(output_dir=output_dir)
         if not file:
             return None
         

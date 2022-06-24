@@ -82,7 +82,7 @@ class Config(QDialog, Ui_Config):
     Ui_Config: class
         The Config class inherits widgets and layouts defined in the Ui_Config class.
     """
-    def __init__(self, ref_definitions, data, col_vals, workspace_dir=""):
+    def __init__(self, ref_definitions, data, col_vals, output_dir=""):
         """
         Instantiate the Config class.
 
@@ -115,7 +115,7 @@ class Config(QDialog, Ui_Config):
         ##   ##   ##   ##   ##
 
         # GET INPUTS #
-        self.workspace_dir = workspace_dir
+        self.output_dir = output_dir
         self.ref_definitions = ref_definitions
         self.col_vals = col_vals
         self.custom_data = None
@@ -818,17 +818,22 @@ class Config(QDialog, Ui_Config):
         self.graph_config_df: Dataframe
             This attribute is a dataframe of two columns populated with the current text of the self.{role}_combo ComboBoxes.
         """
-        clades_role_dict = {}
-        for idx, (header_name, combo_box) in enumerate(self.graph_config_combos.items()):
-            col_index = idx + 1  # (Role)?
-            combo_text = combo_box.currentText()
-            if combo_text == "Select variable:":
-                combo_text = ""
+        data = []
+        for idx, combo_box in enumerate(self.graph_config_combos.values()):
+            role = idx + 1  # (Role)?
+            alias = combo_box.currentText()
+            if alias == "Select variable:":
+                alias = ""
+                ordered_vals_str = ""
+            else:
+                var_df = self.get_variable_table_df()
+                selected_var = var_df[var_df['Alias'] == alias].iloc[0]['Column']
+                selected_values = self.col_vals[selected_var]
+                ordered_vals_str = '@'.join(selected_values)
+            data.append((role, alias, ordered_vals_str))
 
-            clades_role_dict.update({col_index: combo_text})
-
-        graph_config_df = pd.DataFrame.from_dict(clades_role_dict,orient='index').reset_index()
-        graph_config_df.columns = ['Role','Alias']
+        graph_config_df = pd.DataFrame(data=data,
+                                       columns=['Role', 'Alias', 'Order'])
         return graph_config_df
 
     @graph_config_df.setter
@@ -943,10 +948,10 @@ class Config(QDialog, Ui_Config):
           - self.other_config_df
           as .csv files to the
            - default STAGG_config folder held in the user-selected
-             output folder (self.workspace_dir)
+             output folder (self.output_dir)
         """
         # Ask user to pick a dir
-        save_dir = QFileDialog.getExistingDirectory(self, 'Choose directory for STAGG configuration files', self.workspace_dir)
+        save_dir = QFileDialog.getExistingDirectory(self, 'Choose directory for STAGG configuration files', self.output_dir)
 
         # Catch cancel
         if not save_dir:
@@ -956,7 +961,7 @@ class Config(QDialog, Ui_Config):
         for config_name, (config_df, settings_class) in self.configs.items():
 
             path = os.path.join(save_dir, f"{config_name}.csv")
-            settings_class.save_file(config_df, path, self.workspace_dir)
+            settings_class.save_file(config_df, path, self.output_dir)
 
         notify_info("All settings files have been saved.")
 
@@ -1304,9 +1309,9 @@ class ConfigSettings(Settings):
 
     # Overwriting parent method for list of files
     @classmethod
-    def open_file(cls, workspace_dir=""):
+    def open_file(cls, output_dir=""):
         while True:
-            files, filter = QFileDialog.getOpenFileNames(None, cls.file_chooser_message, workspace_dir)
+            files, filter = QFileDialog.getOpenFileNames(None, cls.file_chooser_message, output_dir)
 
             # Break if cancelled
             if not files:
