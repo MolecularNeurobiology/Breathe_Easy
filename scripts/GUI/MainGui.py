@@ -474,8 +474,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             for y in timestamps_needed:
                 timestamps_needed[y] = [y]
         else:
-            timestamps_needed = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
-        
+            bc = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
+            timestamps_needed = bc.fromkeys(bc.keys())
+            for b in timestamps_needed:
+                timestamps_needed[b] = [b]
+
         self.status_message("Checking timestamps...")
 
         # TODO: put in separate thread/process
