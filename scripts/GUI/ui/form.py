@@ -380,7 +380,7 @@ class Ui_Plethysmography(object):
         self.signal_files_button.clicked.connect(Plethysmography.get_signal_files)
         self.metadata_button.clicked.connect(Plethysmography.prepare_meta)
         self.basspro_settings_button.clicked.connect(Plethysmography.get_autosections)
-        self.output_dir_button.clicked.connect(Plethysmography.select_workspace_dir)
+        self.output_dir_button.clicked.connect(Plethysmography.select_output_dir)
         self.basspro_launch_button.clicked.connect(Plethysmography.basspro_run)
 
         #   stagg

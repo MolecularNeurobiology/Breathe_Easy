@@ -71,8 +71,14 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
 
     Parameters
     --------
-    Plethysmography: Class
-        The Plethysmography Class.
+        module (str): path to basspro script
+        output (str): path to folder created for basspro run output
+        signal_files (list): collection of input breath files
+        metadata (DataFrame): path to BASSPRO input metadata
+        manual (str, optional): path to manual BASSPRO settings
+        auto (str, optional): path to automated BASSPRO settings
+        basic (DataFrame): path to basic BASSPRO settings
+        NOTE: either mansections or autosections must be provided
     
     Returns
     --------
@@ -95,38 +101,27 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
             '-c', auto if auto else "",
             '-p', basic,
         ]
-        '''
-        breathcaller_cmd = 'python -u "{module}" -i "{id}" -f "{signal}" -o "{output}" -a "{metadata}" -m "{manual}" -c "{auto}" -p "{basic}"'.format(
-            # The path to the BASSPRO script:
-            module=module,
-            # The path of the signal file's directory:
-            id=os.path.dirname(file_py),
-            # The path of the BASSPRO output directory as chosen by the user previously:
-            output=output,
-            # The basename of the signal file:
-            signal=os.path.basename(file_py),
-            # The path of the metadata file:
-            metadata=metadata,
-            # The path of the manual settings file - if not selected, it's an empty string "":
-            manual=manual if manual else "",
-            # The path of the automated settings file - if not selected, it's an empty string "":
-            auto=auto if auto else "",
-            # The path of the basic settings file:
-            basic=basic
-        )
-        '''
         yield breathcaller_cmd
 
 
-def get_jobs_r(rscript, pipeline, papr_dir, workspace_dir, input_dir_r, variable_config, graph_config, other_config, output_dir, image_format):
+def get_jobs_r(rscript, pipeline, papr_dir, output_dir, stagg_input_dir_or_files, variable_config, graph_config, other_config, output_dir_r, image_format):
     """
     Return the string fed to the command line to launch the STAGG module.
 
     Parameters
     --------
-    Plethysmography: Class
-        The Plethysmography Class.
-    
+        rscript (str): path to the Rscript.exe file
+        pipeline (str): path to the appropriate .R script
+        papr_dir (str): path to STAGG scripts directory
+        output_dir (str): output directory selected by user
+        stagg_input_dir_or_files (str): path to the STAGG input files, or single directory
+        variable_config (str): path to variable config 
+        graph_config (str): path to graph config 
+        other_config (str): path to other config 
+        output_dir_r (str): path to the STAGG output directory
+        image_format (str): file format of STAGG output figures
+            Either ".svg" or ".jpeg"
+
     Returns
     --------
     output: papr_cmd
@@ -134,15 +129,15 @@ def get_jobs_r(rscript, pipeline, papr_dir, workspace_dir, input_dir_r, variable
     """
     print('get_jobs_r thread id',threading.get_ident())
     print("get_jobs_r process id",os.getpid())
-    papr_cmd=[
+    papr_cmd = [
         # The path to the local R executable file
         rscript,
         # The path to the STAGG script
         pipeline,
         # The path to the output directory chosen by the user
-        '-d', workspace_dir,
+        '-d', output_dir,
         # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
-        '-J', input_dir_r,
+        '-J', stagg_input_dir_or_files,
         # The path to the variable_config.csv file
         '-R', variable_config,
         # The path to the graph_config.csv file
