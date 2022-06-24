@@ -1066,7 +1066,7 @@ class Ui_Auto(object):
         self.timestamps_from_signals_button.clicked.connect(Auto.timestamps_from_signals)
         self.load_auto_button.clicked.connect(Auto.load_file)
         self.save_as_button.clicked.connect(Auto.save_as)
-        self.ok_button.clicked.connect(Auto.accept)
+        self.ok_button.clicked.connect(Auto.confirm)
         self.cancel_button.clicked.connect(Auto.reject)
         QtCore.QMetaObject.connectSlotsByName(Auto)
 

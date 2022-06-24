@@ -122,24 +122,17 @@ class Auto(QDialog, Ui_Auto):
         self.ref_definitions = ref_definitions
         self.signal_files = signal_files
         self.output_dir = output_dir
+        self.loaded_data = None
 
         # Populate default template keys
         self.auto_setting_combo.addItems(self.defaults)
 
-        # If we've already got data, use this
+        # If we've got data to load
         if data is not None:
-            self.loaded_data = data.copy()
+            self.load_data(data.copy())
 
-            # Add custom option
-            self.auto_setting_combo.addItem('Custom')
-
-            # Set to current
-            self.auto_setting_combo.setCurrentIndex(self.auto_setting_combo.count()-1)
-
-        # Otherwise, set to defaults
+        # set to defaults
         else:
-            self.loaded_data = None
-
             # First item is instruction text, set to index 1
             self.auto_setting_combo.setCurrentIndex(1)
 
@@ -149,6 +142,39 @@ class Auto(QDialog, Ui_Auto):
         # Set callback for any table item edits
         for table in self.all_tables():
             table.cellChanged.connect(lambda row, col, t=table : self.edit_cell(t, row, col))
+
+    @staticmethod
+    def untransform_data(df):
+        """
+        Re-transpose data back to original format for
+        writing to file
+        """
+        df = df.drop(columns='Variable')
+        df = df.transpose()
+        df = df.reset_index()
+        return df
+
+    @staticmethod
+    def transform_loaded_data(df):
+        """Transform data into format for loading widgets"""
+        
+        # Remove Key column (we will use Aliases)
+        df = df.drop(columns='Key')
+
+        df = df.fillna("")
+
+        # Set df index (these will become the columns)
+        df = df.set_index('Alias')
+
+        # Swap rows and columns
+        df = df.T
+        
+        # The original df columns are now the index,
+        #   but we want them actually included as a new column in the transposed df
+        # Copy index as 'Variable' column
+        df.insert(0, 'Variable', df.index)
+
+        return df
 
     def all_tables(self):
         return [self.sections_char_table,
@@ -165,7 +191,6 @@ class Auto(QDialog, Ui_Auto):
             return
 
         df = convert_timestamps_to_autosections(self.signal_files)
-        df = AutoSettings.transform_loaded_data(df)
         self.load_data(df)
 
     def update_template_selection(self):
@@ -190,27 +215,27 @@ class Auto(QDialog, Ui_Auto):
         --------
         """
 
-        ''' TODO: display loading dialog
-        loading_window = QDialog(self) #flags=Qt.FramelessWindowHint)
-        loading_window.setModal(True)
-        layout = QVBoxLayout()
-        label = QLabel("Loading...")
-        layout.addWidget(label)
-        loading_window.setLayout(layout)
-        loading_window.show()
-        '''
-
-
         # Get the appropriate template based on user's choice of experimental condition
         curr_selection = self.auto_setting_combo.currentText()
         if curr_selection == 'Custom':
             # set curr data to loaded data
             self.data = self.loaded_data
+            self.keys = self.loaded_keys
         else:
             auto_dict = self.defaults[curr_selection]
             df = pd.DataFrame(auto_dict)
+
+            # Set columns as keys
+            self.keys = df.columns
+
+            # Set aliases as columns
+            df.columns = df.loc['Alias']
+            # Remove alias row
             df = df.drop(index='Alias')
+
+            # Set the index as a new Variable column
             df.insert(0, 'Variable', df.index)
+
             self.data = df
 
         self.update_tabs()
@@ -325,6 +350,7 @@ class Auto(QDialog, Ui_Auto):
         Populate the appropriate reference TextBrowser with the definition, description, and default values of the appropriate setting as indicated by the suffix of the ToolButton's objectName(), e.g. "help_{setting}" from Plethysmography.rc_config (reference_config.json).
         """
         for ref_box, ref_button_dict in self.ref_buttons.items():
+            # If this is my ref_box, set the help text
             if str(buttoned) in ref_button_dict:
                 ref_box.setPlainText(self.ref_definitions[buttoned.replace("help_","")])
 
@@ -418,21 +444,29 @@ class Auto(QDialog, Ui_Auto):
             # Add custom option
             self.auto_setting_combo.addItem('Custom')
 
-        self.loaded_data = df
+        self.loaded_keys = df['Key'].values
+        self.loaded_data = self.transform_loaded_data(df)
 
         # If 'Custom' is already selected, we need to manually call the update function
         if self.auto_setting_combo.currentText() == 'Custom':
-            for table in self.all_tables():
-                table.blockSignals(True)
+            # for table in self.all_tables():
+            #     table.blockSignals(True)
             self.update_template_selection()
-            for table in self.all_tables():
-                table.blockSignals(False)
+            # for table in self.all_tables():
+            #     table.blockSignals(False)
 
         # Otherwise, set to custom and let it automatically update
         else:
             # Set to Custom
             self.auto_setting_combo.setCurrentIndex(self.auto_setting_combo.count()-1)
             # ^this should eventually trigger update_tabs()
+
+    def confirm(self):
+        self.data = self.untransform_data(self.data)
+
+        # Add the keys back in
+        self.data['Key'] = self.keys
+        self.accept()
 
 class AutoSettings(Settings):
 
@@ -442,38 +476,12 @@ class AutoSettings(Settings):
     default_filename = 'autosections.csv'
     editor_class = Auto
 
-    def transform_loaded_data(df):
-        df = df.fillna("")
-
-        # Set df index (these will become the columns)
-        df = df.set_index('Alias')
-
-        # Swap rows and columns
-        df = df.T
-        
-        # The original df columns are now the index,
-        #   but we want them actually included as a new column in the transposed df
-        # Copy index as 'Variable' column
-        df.insert(0, 'Variable', df.index)
-
-        return df
-
     @classmethod
     def attempt_load(cls, filepath):
-        #df = pd.read_csv(filepath, index_col='Alias').transpose().reset_index().fillna("")
-        #df = pd.read_csv(filepath).set_index('Alias', drop=False).transpose().fillna("")
-
-        # This can get confusing, so lets take it step-by-step
         df = pd.read_csv(filepath)
-        df = cls.transform_loaded_data(df)
         return df
 
     @staticmethod
     def _save_file(filepath, df):
-        # Re-transpose data back to file format
-        df = df.drop(columns='Variable')
-        df = df.transpose()
-        df = df.reset_index()
-
         df.to_csv(filepath, index=False)
         
