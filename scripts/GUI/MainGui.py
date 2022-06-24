@@ -579,7 +579,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             are sourced from the keys of the "default" dictionary nested in the
             "Auto Settings" dictionary loaded from the breathcaller_config.json file.
         
-        Returns:
+        Outputs
+        --------
             dict: goodfiles, filesmissingts, filesextrats, and new_ts.
         """
         new_ts = defaultdict(list)
@@ -2682,10 +2683,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.hangar: QTextEdit
             This TextEdit is appended with a list of othe signal files that did not pass BASSPRO and failed to produce JSON files.
         """
-        # TODO: fix these!!!
 
+        # Compare just the MUID numbers
         # TXT can be MXXX.txt or MXXX_PlyYYY.txt
-        signal_basenames = set([os.path.basename(f).split('.')[0] for f in self.signal_files])
+        signal_basenames = set([os.path.basename(f).split('.')[0].split('_')[0] for f in self.signal_files])
         # JSONs can be MXXX_PlyYYY.json
         json_basenames = set([os.path.basename(f).split('.')[0].split('_')[0] for f in self.stagg_input_files])
 
