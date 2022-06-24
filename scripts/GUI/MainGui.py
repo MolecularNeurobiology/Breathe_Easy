@@ -320,6 +320,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.sections_list.takeItem(self.sections_list.row(item))
         else:
             self.auto_layout.delete_button.show()
+            try:
+                self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
+            except:
+                pass
             self.necessary_timestamp_box.addItem("Custom")
 
     @property
@@ -530,9 +534,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.need = self.autosections_df.to_dict().fromkeys([x for x in self.autosections_df.to_dict() if x != "Variable"])
                 for y in self.need:
                     self.need[y] = [y]
+                print(f"custom:{self.need}")
             else:
                 self.need = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
-            print(self.need)
+                print(f"default:{self.need}")
             
             self.status_message("Checking timestamps...")
             # TODO: put in separate thread/process
@@ -769,6 +774,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def delete_auto(self):
         self.autosections = None
+        self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
+        self.necessary_timestamp_box.setCurrentIndex(0)
         notify_info("Auto settings removed")
 
     def delete_manual(self):
