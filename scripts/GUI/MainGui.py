@@ -93,7 +93,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.showMaximized()
 
         # Set working directory to 3 folders up ( . --^ GUI --^ scripts --^ BASSPRO-STAGG )
-        os.chdir(os.path.join(Path(__file__).parent.parent.parent))
+        os.chdir(Path(__file__).parent.parent.parent)
 
         # Access configuration settings for GUI in gui_config.json
         # - Paths to the BASSPRO and STAGG modules and the local
@@ -142,6 +142,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.col_vals = None
 
 
+        # TODO: these are just bypassing the gui_config defaults?
         # path to the BASSPRO module script and STAGG scripts directory
         self.basspro_path = "scripts/python_module.py"
         self.papr_dir = "scripts/papr"
@@ -2390,7 +2391,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Parameters
         --------
         self.pipeline_des: str
-            self.pipeline_des: str
             This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_input_files has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_input_files consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
         self.gui_config: dict
             This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail. 
@@ -2411,9 +2411,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.launch_worker()
             Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
         """
-
-        # Set Rscript path
-        rscript_des = os.path.abspath(os.path.join(Path(__file__).parent.parent.parent.parent,"R-Portable/bin/Rscript.exe"))
 
         # Get image format
         if self.svg_radioButton.isChecked():
@@ -2449,6 +2446,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.qthreadpool.setMaxThreadCount(1)
         shared_queue = queue.Queue()
         workers = {}
+
+        rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
 
         # Launch STAGG worker!
         for job in MainGUIworker.get_jobs_r(rscript_des,
@@ -2559,13 +2558,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Write basic settings
         basic_file = os.path.join(basspro_run_folder, f"basics_{curr_timestamp}.csv")
-        print(basic_file)
         BasicSettings.save_file(self.basicap_df, basic_file)
 
         # Write json config to gui_config location
-        print(os.getcwd())
-        print(os.path.join(CONFIG_DIR, 'gui_config.json'))
-        with open(os.path.join(os.getcwd(),CONFIG_DIR, 'gui_config.json'),'w') as gconfig_file:
+        with open(os.path.join(CONFIG_DIR, 'gui_config.json'), 'w') as gconfig_file:
             json.dump(self.gui_config, gconfig_file)
 
         # Copy over config file
@@ -2701,7 +2697,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not self.require_output_dir():
             return False
 
-        rscript_path = self.gui_config['Dictionaries']['Paths']['rscript']
+
+        # Set Rscript path
+        rscript_path = os.path.abspath(self.gui_config['Dictionaries']['Paths']['rscript'])
         # If path stored in gui_config.json does not exist or is not an Rscript executable file:
         while not os.path.splitext(os.path.basename(rscript_path))[0] == "Rscript" or \
             not os.path.exists(rscript_path):
@@ -2710,22 +2708,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if not ask_user_ok('Rscript not found',
                                'Rscript path not defined. Would you like to select the R executable?'):
                 return False
-            else:
-                # Keep trying to select valid Rscrip
-                while True:
-                    rscript_path, filter = QFileDialog.getOpenFileName(self, 'Find Rscript Executable', str(self.output_dir), "Rscript*")
-                    # Catch cancel
-                    if not rscript_path:
-                        return False
 
-                    if os.path.splitext(os.path.basename(rscript_path))[0] == "Rscript":
-                        # Got a good Rscript!
-                        self.gui_config['Dictionaries']['Paths']['rscript'] = rscript_path
-                        with open(os.path.join(CONFIG_DIR, "gui_config.json"), 'w') as gconfig_file:
-                            json.dump(self.gui_config, gconfig_file)
-                        break
+            # Keep trying to select valid Rscrip
+            while True:
+                rscript_path, filter = QFileDialog.getOpenFileName(self, 'Find Rscript Executable', str(self.output_dir), "Rscript*")
+                # Catch cancel
+                if not rscript_path:
+                    return False
 
-                    notify_error("Must pick a file named Rscript")
+                if os.path.splitext(os.path.basename(rscript_path))[0] == "Rscript":
+                    # Got a good Rscript!
+                    self.gui_config['Dictionaries']['Paths']['rscript'] = rscript_path
+                    # TODO: this should not overwrite defaults
+                    with open(os.path.join(CONFIG_DIR, "gui_config.json"), 'w') as gconfig_file:
+                        json.dump(self.gui_config, gconfig_file)
+                    break
+
+                notify_error("Must pick a file named Rscript")
 
         ##  Handle large input  ##
         # If more than 200 input files

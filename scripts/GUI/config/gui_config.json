@@ -1,1 +1,119 @@
-{"Dictionaries": {"Paths": {"breathcaller": "C:\\Users\\atwit\\Desktop\\PAPR\\shaun_refactor\\BASSPRO-STAGG\\scripts\\python_module.py", "papr": "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/scripts/papr", "rscript": "/bin/Rscript", "basspro": "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/scripts/python_module.py"}, "metadata": {"essential_fields": {"mouse": ["MUID"], "pleth": ["MUID", "PlyUID", "Weight", "Start_body_temperature", "Mid_body_temperature", "End_body_temperature", "Room_Temp", "Bar_Pres", "Rotometer_Flowrate", "Calibration_Volume"]}}, "Settings Names": {"Auto Settings": {"Section Characterization": {"Section Identification and Settings": {"Breathcaller Alias": "Alias", "User-given Name": "Key", "Calibration Section": "Cal Seg", "Include in Output?": "AUTO_IND_INCLUDE"}, "Interruptions": {"Injection Status": "AUTO_IND_INJECTION", "Start Temperature": "Startpoint", "Midpoint Temperature": "Midpoint", "Endpoint Temperature": "Endpoint"}}, "Section Calibration": {"Volume and Gas Calibrations": {"Volume Calibration": "AUTO_IND_CAL", "Gas Calibration": "AUTO_IND_GAS_CAL", "CO2 Calibration Parameters": "CAL_CO2", "O2 Calibration Parameters": "CAL_O2"}}, "Threshold Settings": {"Gas Thresholds": {"Minimum CO2": "min_CO2", "Maximum CO2": "max_CO2", "Minimum O2": "min_O2", "Maximum O2": "max_O2", "Maximum tidal volume": "max_calibrated_TV", "Maximum VEVO2": "max_VEVO2"}, "Time Thresholds": {"Within start": "within_start", "Within end": "within_end", "After start": "after_start", "Before end": "before_end"}}, "Inclusion Criteria": {"Breath Quality Standards": {"minTT": "min_TT", "maxTT": "max_TT", "max_DVTV": "max_DVTV", "X": "X", "max_pX": "max_pX", "vol_mov_avg_drift": "vol_mov_avg_drift", "minTV": "min_TV", "minbout": "min_bout", "include_apnea": "include_apnea", "include_sigh": "include_sigh", "include_high_chamber_temp": "include_high_chamber_temp"}}}, "Basic Parameters": {"Breath Calling": {"Breath Identification": {"Minimum inspiratory time": "min_TI", "Minimum peak inspiratory flow": "min_PIF", "Minimum peak expiratory flow": "min_PEF"}, "Feature Detection": {"Apnea window size": "TTwin", "Sigh window size": "SIGHwin", "Coprophagy": "Copro"}}, "Rig Specifications": {"Conversions": {"Temperature": "ConvertTemp", "O2 gas": "ConvertO2", "CO2 gas": "ConvertCO2"}, "Specs": {"Flowrate": "Flowrate", "Roto_x": "Roto_x", "Roto_y": "Roto_y"}}, "Breath Inclusion": {"Filter": {"per500win": "per500win", "maxPer500": "maxPer500", "maxDVTV": "maxDVTV"}}}}}}
+{
+    "Dictionaries": {
+        "Paths": {
+            "breathcaller": "scripts\\python_module.py",
+            "papr": "scripts\\papr",
+            "rscript": "..\\R-Portable\\bin\\Rscript.exe",
+            "basspro": "scripts\\python_module.py"
+        },
+        "metadata": {
+            "essential_fields": {
+                "mouse": [
+                    "MUID"
+                ],
+                "pleth": [
+                    "MUID",
+                    "PlyUID",
+                    "Weight",
+                    "Start_body_temperature",
+                    "Mid_body_temperature",
+                    "End_body_temperature",
+                    "Room_Temp",
+                    "Bar_Pres",
+                    "Rotometer_Flowrate",
+                    "Calibration_Volume"
+                ]
+            }
+        },
+        "Settings Names": {
+            "Auto Settings": {
+                "Section Characterization": {
+                    "Section Identification and Settings": {
+                        "Breathcaller Alias": "Alias",
+                        "User-given Name": "Key",
+                        "Calibration Section": "Cal Seg",
+                        "Include in Output?": "AUTO_IND_INCLUDE"
+                    },
+                    "Interruptions": {
+                        "Injection Status": "AUTO_IND_INJECTION",
+                        "Start Temperature": "Startpoint",
+                        "Midpoint Temperature": "Midpoint",
+                        "Endpoint Temperature": "Endpoint"
+                    }
+                },
+                "Section Calibration": {
+                    "Volume and Gas Calibrations": {
+                        "Volume Calibration": "AUTO_IND_CAL",
+                        "Gas Calibration": "AUTO_IND_GAS_CAL",
+                        "CO2 Calibration Parameters": "CAL_CO2",
+                        "O2 Calibration Parameters": "CAL_O2"
+                    }
+                },
+                "Threshold Settings": {
+                    "Gas Thresholds": {
+                        "Minimum CO2": "min_CO2",
+                        "Maximum CO2": "max_CO2",
+                        "Minimum O2": "min_O2",
+                        "Maximum O2": "max_O2",
+                        "Maximum tidal volume": "max_calibrated_TV",
+                        "Maximum VEVO2": "max_VEVO2"
+                    },
+                    "Time Thresholds": {
+                        "Within start": "within_start",
+                        "Within end": "within_end",
+                        "After start": "after_start",
+                        "Before end": "before_end"
+                    }
+                },
+                "Inclusion Criteria": {
+                    "Breath Quality Standards": {
+                        "minTT": "min_TT",
+                        "maxTT": "max_TT",
+                        "max_DVTV": "max_DVTV",
+                        "X": "X",
+                        "max_pX": "max_pX",
+                        "vol_mov_avg_drift": "vol_mov_avg_drift",
+                        "minTV": "min_TV",
+                        "minbout": "min_bout",
+                        "include_apnea": "include_apnea",
+                        "include_sigh": "include_sigh",
+                        "include_high_chamber_temp": "include_high_chamber_temp"
+                    }
+                }
+            },
+            "Basic Parameters": {
+                "Breath Calling": {
+                    "Breath Identification": {
+                        "Minimum inspiratory time": "min_TI",
+                        "Minimum peak inspiratory flow": "min_PIF",
+                        "Minimum peak expiratory flow": "min_PEF"
+                    },
+                    "Feature Detection": {
+                        "Apnea window size": "TTwin",
+                        "Sigh window size": "SIGHwin",
+                        "Coprophagy": "Copro"
+                    }
+                },
+                "Rig Specifications": {
+                    "Conversions": {
+                        "Temperature": "ConvertTemp",
+                        "O2 gas": "ConvertO2",
+                        "CO2 gas": "ConvertCO2"
+                    },
+                    "Specs": {
+                        "Flowrate": "Flowrate",
+                        "Roto_x": "Roto_x",
+                        "Roto_y": "Roto_y"
+                    }
+                },
+                "Breath Inclusion": {
+                    "Filter": {
+                        "per500win": "per500win",
+                        "maxPer500": "maxPer500",
+                        "maxDVTV": "maxDVTV"
+                    }
+                }
+            }
+        }
+    }
+}
