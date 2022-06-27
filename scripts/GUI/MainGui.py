@@ -470,8 +470,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.stamp['Dictionaries']['Data'][epoch][condition] = {}
 
         if combo_need == "Custom":
-            auto_df_dict = self.autosections_df.to_dict()
-            timestamps_needed = auto_df_dict.fromkeys([x for x in auto_df_dict if x != "Variable"])
+            timestamps_needed = dict(zip(self.autosections_df['Alias'],[[x] for x in self.autosections_df['Alias']]))
             for y in timestamps_needed:
                 timestamps_needed[y] = [y]
         else:
