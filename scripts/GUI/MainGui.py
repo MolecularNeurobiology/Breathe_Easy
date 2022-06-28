@@ -917,23 +917,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def delete_meta(self):
         self.metadata = None
-        notify_info("Metadata removed")
+        notify_info("Metadata removed.")
 
     def delete_auto(self):
         self.autosections = None
-        notify_info("Auto settings removed")
+        notify_info("Auto settings removed.")
 
     def delete_manual(self):
         self.mansections = None
-        notify_info("Manual settings removed")
+        notify_info("Manual settings removed.")
 
     def delete_basic(self):
         self.basicap = None
-        notify_info("Basic settings removed")
+        notify_info("Basic settings removed.")
 
     def delete_stagg_settings(self):
         self.config_data = None
-        notify_info("STAGG settings removed")
+        notify_info("STAGG settings removed.")
 
 
 
