@@ -230,7 +230,7 @@ class Ui_Annot(object):
     def retranslateUi(self, Annot):
         _translate = QtCore.QCoreApplication.translate
         Annot.setWindowTitle(_translate("Annot", "Variable_config"))
-        self.label.setText(_translate("Annot", "Variable Annotation"))
+        self.label.setText(_translate("Annot", "Metadata Settings"))
         self.load_metadata_button.setText(_translate("Annot", "Open File"))
         self.label_2.setText(_translate("Annot", "Metadata columns"))
         self.label_3.setText(_translate("Annot", "Values"))
