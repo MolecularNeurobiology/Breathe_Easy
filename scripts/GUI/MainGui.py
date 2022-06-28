@@ -2454,7 +2454,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         for job in MainGUIworker.get_jobs_r(rscript_des,
                                             pipeline_des,
                                             self.papr_dir,
-                                            self.output_dir,
+                                            stagg_run_folder,
                                             self.stagg_input_dir_or_files,
                                             variable_config,
                                             graph_config,
