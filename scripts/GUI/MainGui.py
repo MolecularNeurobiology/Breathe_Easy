@@ -262,6 +262,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         if self.autosections_df is None:
             self.auto_layout.delete_button.hide()
+            if self.necessary_timestamp_box.findText("Custom") != -1:
+                self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
+                self.necessary_timestamp_box.setCurrentIndex(0)
             # Remove old autosections
             for item in self.sections_list.findItems("auto", Qt.MatchContains):
                 self.sections_list.takeItem(self.sections_list.row(item))
@@ -918,8 +921,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def delete_auto(self):
         self.autosections = None
-        self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
-        self.necessary_timestamp_box.setCurrentIndex(0)
         notify_info("Auto settings removed")
 
     def delete_manual(self):
