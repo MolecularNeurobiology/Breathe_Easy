@@ -91,6 +91,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         self.setupUi(self)
         self.setWindowTitle("Plethysmography Analysis Pipeline")
+        self.showMaximized()
 
         # Set working directory to 3 folders up ( . --^ GUI --^ scripts --^ code )
         os.chdir(Path(__file__).parent.parent.parent)
