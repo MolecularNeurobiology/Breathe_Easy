@@ -2314,16 +2314,16 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         rscript_des = os.path.abspath(self.gui_config['Dictionaries']['Paths']['rscript'])
 
         # Launch STAGG worker!
-        for job in MainGUIworker.get_jobs_r(rscript_des,
-                                            pipeline_des,
-                                            self.papr_dir,
-                                            self.output_dir,
-                                            self.stagg_input_dir_or_files,
-                                            variable_config,
-                                            graph_config,
-                                            other_config,
-                                            stagg_run_folder,
-                                            image_format
+        for job in MainGUIworker.get_jobs_r(rscript=rscript_des,
+                                            pipeline=pipeline_des,
+                                            papr_dir=self.papr_dir,
+                                            output_dir=self.output_dir,
+                                            stagg_input_dir_or_files=self.stagg_input_dir_or_files,
+                                            variable_config=variable_config,
+                                            graph_config=graph_config,
+                                            other_config=other_config,
+                                            output_dir_r=stagg_run_folder,
+                                            image_format=image_format
                                             ):
             worker_id = generate_unique_id(workers.keys())
             # create a Worker

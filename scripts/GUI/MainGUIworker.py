@@ -145,7 +145,7 @@ def get_jobs_r(rscript, pipeline, papr_dir, output_dir, stagg_input_dir_or_files
         # The path to the other_config.csv file
         '-F', other_config,
         # The path to the directory for STAGG output
-        '-O', output_dir,
+        '-O', output_dir_r,
         # The paths to the STAGG scripts
         '-T', os.path.join(papr_dir, "Data_import.R"),
         '-S', os.path.join(papr_dir, "Statistical_analysis.R"),

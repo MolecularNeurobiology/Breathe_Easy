@@ -1,7 +1,7 @@
 
 import numpy as np
 import pandas as pd
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QInputDialog
 from PyQt5.QtCore import Qt
 from util.tools import avert_name_collision
 from util import Settings
@@ -143,6 +143,20 @@ class Auto(QDialog, Ui_Auto):
         for table in self.all_tables():
             table.cellChanged.connect(lambda row, col, t=table : self.edit_cell(t, row, col))
 
+        self.summary_table.horizontalHeader().sectionDoubleClicked.connect(self.set_new_header)
+
+
+    def set_new_header(self, col_idx):
+        new_name, ok = QInputDialog.getText(self, "", "New Header")
+        if ok and new_name != "":
+            col_count = self.summary_table.columnCount()
+            headers = [self.summary_table.horizontalHeaderItem(i).text() for i in range(col_count)]
+            headers[col_idx] = new_name
+            self.summary_table.setHorizontalHeaderLabels(headers)
+            print(self.data.columns)
+            self.data.columns = pd.Index(headers, name='Alias')
+            print(self.data.columns)
+
     @staticmethod
     def untransform_data(df):
         """
@@ -159,7 +173,7 @@ class Auto(QDialog, Ui_Auto):
         """Transform data into format for loading widgets"""
         
         # Remove Key column (we will use Aliases)
-        df = df.drop(columns='Key')
+        # df = df.drop(columns='Key')
 
         df = df.fillna("")
 
@@ -220,13 +234,13 @@ class Auto(QDialog, Ui_Auto):
         if curr_selection == 'Custom':
             # set curr data to loaded data
             self.data = self.loaded_data
-            self.keys = self.loaded_keys
+            # self.keys = self.loaded_keys
         else:
             auto_dict = self.defaults[curr_selection]
             df = pd.DataFrame(auto_dict)
 
             # Set columns as keys
-            self.keys = df.columns
+            # self.keys = df.columns
 
             # Set aliases as columns
             df.columns = df.loc['Alias']
@@ -309,27 +323,33 @@ class Auto(QDialog, Ui_Auto):
         # Populate table of tabs with appropriately sliced dataframes derived from selected settings template
         
         # Populate Section Characterization table
-        sec_char_df = self.data.loc[(self.data.index.isin(self.auto_labels['Section Characterization']['Section Identification and Settings'].values())),:]
+        all_sec_char_items = self.auto_labels['Section Characterization']['Section Identification and Settings'].values()
+        sec_char_df = self.data.loc[(self.data.index.isin(all_sec_char_items)),:]
         populate_table(sec_char_df, self.sections_char_table)
 
         # Populate Section Spec table
-        sec_spec_df = self.data.loc[(self.data.index.isin(self.auto_labels['Section Characterization']['Interruptions'].values())),:]
+        all_sec_spec_items = self.auto_labels['Section Characterization']['Interruptions'].values()
+        sec_spec_df = self.data.loc[(self.data.index.isin(all_sec_spec_items)),:]
         populate_table(sec_spec_df, self.sections_spec_table)
         
         # Populate Section Calibration table
-        cal_df = self.data.loc[(self.data.index.isin(self.auto_labels['Section Calibration']['Volume and Gas Calibrations'].values())),:]
+        all_cal_items = self.auto_labels['Section Calibration']['Volume and Gas Calibrations'].values()
+        cal_df = self.data.loc[(self.data.index.isin(all_cal_items)),:]
         populate_table(cal_df,self.cal_table)
 
         # Populate Gass Threshold Settings table
-        gas_thresh_df = self.data.loc[(self.data.index.isin(self.auto_labels['Threshold Settings']['Gas Thresholds'].values())),:]
+        all_gas_thresh_items = self.auto_labels['Threshold Settings']['Gas Thresholds'].values()
+        gas_thresh_df = self.data.loc[(self.data.index.isin(all_gas_thresh_items)),:]
         populate_table(gas_thresh_df,self.gas_thresh_table)
 
         # Populate Time Threshold Settings table
-        time_thresh_df = self.data.loc[(self.data.index.isin(self.auto_labels['Threshold Settings']['Time Thresholds'].values())),:]
+        all_time_thresh_items = self.auto_labels['Threshold Settings']['Time Thresholds'].values()
+        time_thresh_df = self.data.loc[(self.data.index.isin(all_time_thresh_items)),:]
         populate_table(time_thresh_df,self.time_thresh_table)
 
         # Populate Inclusion DF table
-        inc_df = self.data.loc[(self.data.index.isin(self.auto_labels['Inclusion Criteria']['Breath Quality Standards'].values())),:]
+        all_inc_items = self.auto_labels['Inclusion Criteria']['Breath Quality Standards'].values()
+        inc_df = self.data.loc[(self.data.index.isin(all_inc_items)),:]
         populate_table(inc_df,self.inc_table)
 
         # Populate summary table with all data
@@ -444,7 +464,7 @@ class Auto(QDialog, Ui_Auto):
             # Add custom option
             self.auto_setting_combo.addItem('Custom')
 
-        self.loaded_keys = df['Key'].values
+        # self.loaded_keys = df['Key'].values
         self.loaded_data = self.transform_loaded_data(df)
 
         # If 'Custom' is already selected, we need to manually call the update function
@@ -465,7 +485,7 @@ class Auto(QDialog, Ui_Auto):
         self.data = self.untransform_data(self.data)
 
         # Add the keys back in
-        self.data['Key'] = self.keys
+        # self.data['Key'] = self.keys
         self.accept()
 
 class AutoSettings(Settings):
