@@ -143,27 +143,28 @@ class Auto(QDialog, Ui_Auto):
         for table in self.all_tables():
             table.cellChanged.connect(lambda row, col, t=table : self.edit_cell(t, row, col))
 
-        self.summary_table.horizontalHeader().sectionDoubleClicked.connect(self.set_new_header)
+        for table in self.all_tables():
+            table.horizontalHeader().sectionDoubleClicked.connect(self.set_new_header)
 
 
     def set_new_header(self, col_idx):
-        new_name, ok = QInputDialog.getText(self, "", "New Header")
+        headers = self.data.columns.values
+        old_header = headers[col_idx]
+        new_name, ok = QInputDialog.getText(self, "Rename Column", f'Change "{old_header}" to:')
         if ok and new_name != "":
-            col_count = self.summary_table.columnCount()
-            headers = [self.summary_table.horizontalHeaderItem(i).text() for i in range(col_count)]
             headers[col_idx] = new_name
-            self.summary_table.setHorizontalHeaderLabels(headers)
-            print(self.data.columns)
             self.data.columns = pd.Index(headers, name='Alias')
-            print(self.data.columns)
+            self.update_tabs()
 
-    @staticmethod
-    def untransform_data(df):
+    def untransform_data(self, df):
         """
         Re-transpose data back to original format for
         writing to file
         """
-        df = df.drop(columns='Variable')
+        col_count = self.summary_table.columnCount()
+        headers = [self.summary_table.horizontalHeaderItem(i).text() for i in range(col_count)]
+        variable_column_name = headers[0]
+        df = df.drop(columns=variable_column_name)
         df = df.transpose()
         df = df.reset_index()
         return df
