@@ -30,7 +30,8 @@ class Settings:
             save_filepath, filter = QFileDialog.getSaveFileName(None, 'Save File', cls.default_filename, "*.csv")
             if not save_filepath:
                 return False
-        cls._save_file(save_filepath, data)
+        # Send a copy of the data in case there are transformations before saving
+        cls._save_file(save_filepath, data.copy())
         return True
 
     @classmethod
