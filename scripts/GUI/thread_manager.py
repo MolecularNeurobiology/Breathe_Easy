@@ -1,6 +1,8 @@
 
-from datetime import datetime
+from PyQt5.QtCore import QTimer
+from datetime import datetime, timedelta
 from util.tools import generate_unique_id
+from util.ui.dialogs import nonblocking_msg
 
 
 class ThreadManager:
@@ -12,7 +14,7 @@ class ThreadManager:
         if exec_after_cancel:
             exec_after_cancel()
 
-    def add_monitor(self, workers, msg_queue, execute_after=None, exec_after_cancel=None, proc_name=None):
+    def add_monitor(self, workers, msg_queue, execute_after=None, exec_after_cancel=None, proc_name=None, print_funcs=[]):
         new_id = generate_unique_id(self.monitors.keys())
         cancel_func = lambda : self.cancel_monitor(new_id, exec_after_cancel=exec_after_cancel)
         no_cancel_func = lambda : self._reset_last_msg_time(new_id)
@@ -32,9 +34,9 @@ class ThreadManager:
         self.monitor_workers(new_id)
         
         # monitor status messages (faster interval)
-        self.print_queue_status(new_id)
+        self.print_queue_status(new_id, print_funcs)
 
-    def print_queue_status(self, monitor_id, interval=200):
+    def print_queue_status(self, monitor_id, print_funcs=[], interval=200):
         # Check if proc is completed or cancelled
         if monitor_id not in self.monitors or self.monitors[monitor_id]['status'] == 'cancelled':
             return
@@ -48,12 +50,14 @@ class ThreadManager:
             if new_msg == 'DONE':
                 # Remove worker from monitor
                 self.monitors[monitor_id]['workers'].pop(worker_id)
-                self.status_message(f'{worker_id} : {new_msg}')
             else:
                 self._reset_last_msg_time(monitor_id)
-                self.status_message(f'{worker_id} : {new_msg}')
 
-        QTimer.singleShot(interval, lambda : self.print_queue_status(monitor_id, interval=interval))
+            # Print message to all message funcs
+            for print_func in print_funcs:
+                print_func(f'{worker_id} : {new_msg}')
+
+        QTimer.singleShot(interval, lambda : self.print_queue_status(monitor_id, interval=interval, print_funcs=print_funcs))
 
     def _reset_last_msg_time(self, monitor_id):
         """

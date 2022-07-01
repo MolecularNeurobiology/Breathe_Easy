@@ -17,7 +17,7 @@ from glob import glob
 from pathlib import Path
 import re
 import pyodbc
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # data parsing
 import json
@@ -2171,7 +2171,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                         shared_queue,
                                         execute_after=execute_after,
                                         exec_after_cancel=cancel_func,
+                                        print_funcs=[self.status_message],
                                         proc_name="BASSPRO")
+
 
     def complete_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
         # Re-enable basspro button
@@ -2243,8 +2245,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                         shared_queue,
                                         execute_after=execute_after,
                                         exec_after_cancel=cancel_func,
+                                        print_funcs=[self.status_message],
                                         proc_name="STAGG")
-
+        
 
     def pickup_after_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
 
