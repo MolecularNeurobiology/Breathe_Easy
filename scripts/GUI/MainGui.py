@@ -44,6 +44,7 @@ from AnnotGUI import MetadataSettings
 from config import GraphSettings, OtherSettings, VariableSettings, ConfigSettings
 from tools.import_cols_vals_thread import ColValImportThread
 from tools.constants import BASSPRO_OUTPUT
+from thread_manager import ThreadManager
 import MainGUIworker
 from ui.form import Ui_Plethysmography
 
@@ -90,9 +91,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         self.setupUi(self)
         self.setWindowTitle("Plethysmography Analysis Pipeline")
-        self.showMaximized()
 
-        # Set working directory to 3 folders up ( . --^ GUI --^ scripts --^ BASSPRO-STAGG )
+        # Set working directory to 3 folders up ( . --^ GUI --^ scripts --^ code )
         os.chdir(Path(__file__).parent.parent.parent)
 
         # Access configuration settings for GUI in gui_config.json
@@ -134,7 +134,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Threading attributes
         self.qthreadpool = QThreadPool()
         self.qthreadpool.setMaxThreadCount(1)
-        self.monitors = {}  # store callback loops used to monitor processes
+        self.thread_manager = ThreadManager()
         
         # Use for importing cols/vals from basspro json files
         self.import_thread = None
@@ -175,17 +175,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Autoload configuration (dev only)
         if AUTOLOAD:
-            self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/Text files/M39622.txt")
-            self.metadata = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/metadata.csv"
-            self.output_dir = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/output"
-            self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
-            self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
+            self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/Text files/M39622.txt")
+            self.metadata = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/metadata.csv"
+            self.output_dir = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/output"
+            self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
+            self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
 
             # Pick either RData or json
             if False:
-                self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
+                self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
             else:
-                json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/BASSPRO-STAGG/data/Test Dataset/JSON files/*"
+                json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/JSON files/*"
                 for json_path in glob(json_glob):
                     self.breath_list.addItem(json_path)
 
@@ -802,7 +802,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.variable_list.clear()
                 [self.variable_list.addItem(file) for file in files.values()]
 
-                col_vals = None
+                graph_config_df = input_data['graph']
+                col_vals = {}
+                for record in graph_config_df.to_dict('records'):
+                    # TODO: remaining backwards compatible for files without the Order column
+                    order_str = record.get('Order', None)
+                    if order_str:
+                        col_vals[record['Alias']] = order_str.split('@')
                 
             elif selected_option == "BASSPRO output":
                 # Import currently running
@@ -904,13 +910,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         On window "Ok", apply changes to current config data
         """
         # Open Config editor GUI
-        # TODO: align variable_config name with variable_table name in Config class
         new_config_data = ConfigSettings.edit(self.rc_config['References']['Definitions'],
                                               input_data,
                                               col_vals,
                                               self.output_dir)
         if new_config_data is not None:
             self.config_data = new_config_data
+            self.col_vals = col_vals
 
 
     def delete_meta(self):
@@ -2105,18 +2111,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def basspro_run(self):
         """
-        Ensure the user has selected an output directory and prompt them to do so if they haven't, check that the required input for BASSPRO has been selected, launch BASSPRO, detect the JSON files produced after BASSPRO has finished and populate self.stagg_input_files with the file paths to those JSON files.
+        Check BASSPRO requirements, then launch BASSPRO and track asynchronously
 
-        Outcomes
-        --------
-        self.require_output_dir()
-            This method ensures that the user has selected an output directory and prompts them to do so if they have not.
-        self.get_bp_reqs()
-            This method ensures that the user has provided metadata, basic BASSPRO settings, and either automated or manual BASSPRO settings before launching BASSPRO.
-        self.launch_basspro()
-            This method copies the required BASSPRO input other than the signal files and the breathcaller_config.json file to the timestamped BASSPRO output folder (self.output_dir_py) and runs self.launch_worker().
-        self.auto_get_breath_files()
-            Populate self.stagg_input_files with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
+        If the "full_run" box is selected, will automatically attempt to run STAGG
+        after BASSPRO completion
         """
 
         is_full_run = self.full_run_checkbox.isChecked()
@@ -2129,8 +2127,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if is_full_run and not self.check_stagg_reqs(full_run=True):
                 return
 
-        ## Prep stagg settings ahead of time using current BP settings ##
-        # -delay actually setting them in case BP fails
+        # Prep stagg settings ahead of time using current BP settings
+        #   -delay actually setting them in case BP fails
         col_vals, config_data = self.get_cols_vals_from_settings()
 
         # Check whether we have stagg input already
@@ -2166,11 +2164,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             cancel_func = lambda : self.basspro_launch_button.setEnabled(True)
 
         # Monitor the basspro processes and execute a function after completion
-        self.add_monitor(workers,
-                         shared_queue,
-                         execute_after=execute_after,
-                         exec_after_cancel=cancel_func,
-                         proc_name="BASSPRO")
+        self.thread_manager.add_monitor(workers,
+                                        shared_queue,
+                                        execute_after=execute_after,
+                                        exec_after_cancel=cancel_func,
+                                        proc_name="BASSPRO")
 
     def complete_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
         # Re-enable basspro button
@@ -2210,106 +2208,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         ok_callback = lambda : self.dialogs.pop(dialog_id)  # remove dialog
         self.dialogs[dialog_id] = nonblocking_msg(msg, [ok_callback], title=title, msg_type='info')
 
-    def cancel_monitor(self, monitor_id, exec_after_cancel=None):
-        self.monitors[monitor_id]['status'] = 'cancelled'
-        if exec_after_cancel:
-            exec_after_cancel()
-
-    def add_monitor(self, workers, msg_queue, execute_after=None, exec_after_cancel=None, proc_name=None):
-        new_id = generate_unique_id(self.monitors.keys())
-        cancel_func = lambda : self.cancel_monitor(new_id, exec_after_cancel=exec_after_cancel)
-        no_cancel_func = lambda : self._reset_last_msg_time(new_id)
-        self.monitors[new_id] = {
-            'status': 'running',
-            'execute_after': execute_after,
-            'workers': workers,
-            'msg_queue': msg_queue,
-            'dialog_window': None,
-            'last_heard': datetime.now(),
-            'proc_name': proc_name if proc_name else f"Process {new_id}",
-            'cancel_func': cancel_func,
-            'no_cancel_func': no_cancel_func,
-        }
-
-        # monitor worker to execute next function
-        self.monitor_workers(new_id)
-        
-        # monitor status messages (faster interval)
-        self.print_queue_status(new_id)
-
-    def print_queue_status(self, monitor_id, interval=200):
-        # Check if proc is completed or cancelled
-        if monitor_id not in self.monitors or self.monitors[monitor_id]['status'] == 'cancelled':
-            return
-
-        monitor = self.monitors[monitor_id]
-
-        # TODO: search - "pyqt multiprocessing signals vs queue messages"
-        queue = monitor['msg_queue']
-        while not queue.empty():
-            worker_id, new_msg = queue.get_nowait()
-            if new_msg == 'DONE':
-                # Remove worker from monitor
-                self.monitors[monitor_id]['workers'].pop(worker_id)
-                self.status_message(f'{worker_id} : {new_msg}')
-            else:
-                self._reset_last_msg_time(monitor_id)
-                self.status_message(f'{worker_id} : {new_msg}')
-
-        QTimer.singleShot(interval, lambda : self.print_queue_status(monitor_id, interval=interval))
-
-    def _reset_last_msg_time(self, monitor_id):
-        """
-        Reset the time we last heard from a monitored process
-        Also, unset the dialog window for cancelling since we're getting a heartbeat
-        """
-        self.monitors[monitor_id]['last_heard'] = datetime.now()
-        self.monitors[monitor_id]['dialog_window'] = None
-
-    def monitor_workers(self, monitor_id, interval=1000):
-        """
-        Use this function to monitor a longrunning process and pick up afterwards
-          with some arbitrary function
-        Data about each monitoring instance is stored in `self.monitors`
-        """
-        monitor = self.monitors[monitor_id]
-
-        # TODO: make sure we kill/wait any still running processes
-        # Check if this monitor has been cancelled
-        if monitor['status'] == 'cancelled':
-            self.monitors.pop(monitor_id)
-            return
-
-        # If any of our workers are still working
-        if len(monitor['workers']) > 0:
-            last_heard = monitor['last_heard']
-
-            # Unset dialog window if it was hidden (user made a selection)
-            if monitor['dialog_window'] and monitor['dialog_window'].isHidden():
-                self.monitors[monitor_id]['dialog_window'] = None
-
-            # TODO: implement BASSPRO cancel, not just STAGG continuation
-            # If it's been longer than 1 minute since we've heard from the threads
-            if datetime.now() - last_heard > timedelta(minutes=2) and \
-                not monitor['dialog_window']:
-                msg = f"{monitor['proc_name']} is taking a while, would you like to cancel checking for STAGG autostart?"
-                yes_func = monitor['cancel_func']
-                no_func = monitor['no_cancel_func']
-                msg_box = nonblocking_msg(msg, (yes_func, no_func), title="Longrunning Process", msg_type='yes')
-                self.monitors[monitor_id]['dialog_window'] = msg_box
-            
-            # Check again in a second
-            # TODO: make this a timer on interval, not singleshot
-            QTimer.singleShot(interval, lambda : self.monitor_workers(monitor_id, interval=interval))
-            return
-        
-        execute_after = monitor['execute_after']
-        
-        # Run next function
-        if execute_after:
-            self.monitors.pop(monitor_id)
-            execute_after()
-
     def stagg_run(self):
         if not self.check_stagg_reqs():
             return
@@ -2338,7 +2236,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         cancel_func = lambda : self.stagg_launch_button.setEnabled(True)
 
         # Monitor the basspro processes and execute a function after completion
-        self.add_monitor(workers, shared_queue, execute_after=execute_after, exec_after_cancel=cancel_func, proc_name="STAGG")
+        self.thread_manager.add_monitor(workers,
+                                        shared_queue,
+                                        execute_after=execute_after,
+                                        exec_after_cancel=cancel_func,
+                                        proc_name="STAGG")
 
 
     def pickup_after_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
@@ -2363,54 +2265,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def launch_stagg(self, pipeline_des):
         """
-        Assign the file paths to the attributes, ensure that all required STAGG input has been selected and prompt the user to select whatever is missing, and launch STAGG.
+        Launch STAGG as asynchronous processes
 
         Parameters
         --------
-        Config.configs: dict
-            This attribute is populated with a nested dictionary in which each item contains a dictionary unique to each settings file - variable_config.csv, graph_config.csv, and other_config.csv. Each dictionary has the following key, value items: "variable", the Plethysmography class attribute that refers to the file path to the settings file; "path", the string file path to the settings file; "frame", the Config class attribute that refers to the dataframe; "df", the dataframe.
-        self.stagg_input_files: list
-            This attribute is a list of user-selected signal file paths.
-        
-        Outputs
-        --------
-        self.variable_config: str
-            This attribute is populated with the variable_config path stored in Config.configs (dict).
-        self.graph_config: str
-            This attribute is populated with the graph_config path stored in Config.configs (dict).
-        self.other_config: str
-            This attribute is populated with the other_config path stored in Config.configs (dict).
-        
-        Outcomes
-        --------
-        self.rthing_to_do()
-            Copy STAGG input to timestamped STAGG output folder, determine which STAGG scripts to use based on the presence or absence of an .RData file, and determine if self.stagg_input_dir_or_files needs to be a str path to directory instead of list because the list has more than 200 files, and run self.rthing_to_do_cntd().
-        """
-        """
-        Ensure the STAGG script exists, prompt the user to indicate where the Rscript.exe file is, and run self.launch_worker().
-
-        Parameters
-        --------
-        self.pipeline_des: str
-            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_input_files has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_input_files consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
-        self.gui_config: dict
-            This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail. 
-        
-        Outputs
-        --------
-        self.rscript_des: str
-            This attribute refers to the file path to the Rscript.exe of the user's device or of R-Portable.
-        reply: QMessageBox
-            This MessageBox prompts the user to navigate to the Rscript executable file if the file path stored in self.gui_config cannot be found.
-        self.gui_config: dict
-            This dictionary is updated with the new file path of the Rscript.exe file when appropriate.
-        gui_config.json
-            The updated self.gui_config is dumped to the gui_config.json file in the GUI scripts folder.
-        
-        Outcomes
-        --------
-        self.launch_worker()
-            Run parallel processes capped at the number of CPU's selected by the user to devote to BASSPRO or STAGG.
+        pipeline_des: str
+            filepath to one of two scripts that launch STAGG
+              - Pipeline_env_multi.R
+              - Pipeline.R
         """
 
         # Get image format
@@ -2448,7 +2310,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         shared_queue = queue.Queue()
         workers = {}
 
-        rscript_des = self.gui_config['Dictionaries']['Paths']['rscript']
+        rscript_des = os.path.abspath(self.gui_config['Dictionaries']['Paths']['rscript'])
 
         # Launch STAGG worker!
         for job in MainGUIworker.get_jobs_r(rscript_des,
@@ -2651,36 +2513,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         --------
-        self.output_folder: str
-            This attribute is set as an empty string and then populated with the appropriate directory path (i.e. the path that will serve as either self.output_dir_py or self.output_dir_r). The corresponding directory is created if it doesn't already exist.
-        self.variable_config: str
-            This attribute refers to the file path of the variable_config.csv file.
-        self.graph_config: str
-            This attribute refers to the file path of the graph_config.csv file.
-        self.other_config: str
-            This attribute refers to the file path of the other_config.csv file.
-        self.papr_dir: str
-            This attribute refers to the directory path of the STAGG scripts folder.
-        self.stagg_input_files: list
-            This attribute is a list of one of the following: JSON files produced by the most recent run of BASSPRO in the same session; JSON files produced by BASSPRO selected by user with a FileDialog; an .RData file produced by a previous run of STAGG; an .RData file produced by a previous run of STAGG and JSON files produced by BASSPRO.
-        
-        Outputs
-        --------
-        self.output_dir_r: str
-            This attribute is set as a file path to the timestamped STAGG_output_{time} folder within the STAGG_output directory within the user-selected directory self.output_dir. It is not spawned until self.require_output_dir() is called when STAGG is launched.
-        self.image_format: str
-            This attribute is set as either ".svg" or ".jpeg" depending on which RadioButton is checked on the main GUI.
-        self.pipeline_des: str
-            This attribute is set as the file path to one of two scripts that launch STAGG. If self.stagg_input_files has a .RData file in it, then self.pipeline_des refers to the file path for Pipeline_env_multi.R. If self.stagg_input_files consists entirely of JSON files, then self.pipeline_des refers to the file path for Pipeline.R.
-        self.stagg_input_dir_or_files: str
-            This attribute is set as the directory path of the first file in self.stagg_input_files if self.stagg_input_files contains the file paths of more than 200 files from the same directory.
-        reply: QMessageBox
-            This MessageBox informs the user that they have more than 200 file paths in self.stagg_input_files from more than one directory and asks the user to put the file in one directory.
-
-        Outcomes
-        --------
-        self.rthing_to_do_cntd()
-            This method ensures the STAGG script exists, prompts the user to indicate where the Rscript.exe file is, and runs self.launch_worker().
+        full_run: bool
         """
         if not full_run and (
             self.variable_config_df is None or \

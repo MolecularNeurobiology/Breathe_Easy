@@ -133,62 +133,19 @@ class Config(QDialog, Ui_Config):
         self.variable_table.cellChanged.connect(self.change_alias)
 
     def minus_loop(self):
-        """
-        Remove the selected row from self.loop_table and its corresponding data from self.loop_widgets (dict).
-
-        Parameters
-        --------
-        self.loop_table: QTableWidget
-            This TableWidget displays the settings for additional models either via widgets or loading previously made other_config.csv with previous STAGG run's settings for additional models.
-        self.loop_widgets: dict
-            The nested dictionary used to populate and save the text, CheckBox, ComboBox, and CheckableComboBox states of Config.loop_table (TableWidget) in the Config subGUI.
-        
-        Outputs
-        --------
-        self.loop_table: QTableWidget
-            The user-selected row is removed from this TableWidget.
-        self.loop_widgets: dict
-            The item in this nested dictionary that corresponds to the removed row is popped from the dictionary.
-
-        """
+        """Remove the selected row from self.loop_table"""
         curr_row = self.loop_table.currentRow()
         self.loop_table.removeRow(curr_row)
-        
+
     def reference_event(self):
-        """
-        Respond to the signal emitted by the self.help_{setting} ToolButton clicked by the user by calling self.populate_reference(self.sender.objectName()) to populate the self.config_reference TextBrowser with the definition, description, and default value of corresponding setting.
-        """
+        """Callback to show help text associated with event sender"""
         sbutton = self.sender()
-        self.populate_reference(sbutton.objectName())
-
-    def populate_reference(self, buttoned: QObject.objectName):
-        """
-        Populate self.config_reference (TextBrowser) with the definition, description, and default values of the appropriate setting as indicated by the suffix of the ToolButton's objectName(), e.g. "help_{setting}" from Plethysmography.rc_config (reference_config.json).
-
-        Parameters
-        --------
-        buttoned: QObject.objectName
-            This variable is the objectName of the ToolButton that emitted the signal self.reference_event that called this method. Its suffix is used to identify the appropriate cell in self.view_tab (TableWidget).
-        Plethysmography.rc_config: dict
-            This attribute is a shallow dictionary loaded from reference_config.json. It contains definitions, descriptions, and recommended values for every basic, manual, and automated BASSPRO setting.
-
-        Outputs
-        --------
-        self.config_reference: QTableWidget
-            This TableWidget displays the definition, description, and default value of the user-selected setting.
-        """
+        buttoned = sbutton.objectName()
         reference_text = self.ref_definitions[buttoned.replace("help_","")]
         self.config_reference.setPlainText(reference_text)
 
     def change_alias(self):
-        """
-        Automatically rename the variable in the "Alias" column of self.variable_table (TableWidget) to avoid duplicate variable names.
-
-        Parameters
-        --------
-        self.variable_table: QTableWidget
-            This TableWidget displays the text and widgets needed to allow the user to indicate the type of a selected variable.
-        """
+        """Rename current Alias in self.variable_table"""
         
         ## PREVENT DUPLICATES ##
         curr_row = self.variable_table.currentRow()
@@ -248,24 +205,6 @@ class Config(QDialog, Ui_Config):
         Outcomes
         --------
         """
-        '''
-        # Update dict
-        for row_num in range(self.loop_table.rowCount()):
-            loop_row = {
-                "Graph": self.loop_widgets[self.loop_table][row_num]["Graph"].text(),
-                "Variable": self.loop_widgets[self.loop_table][row_num]["Variable"].currentText(),
-                "Xvar": self.loop_widgets[self.loop_table][row_num]["Xvar"].currentText(),
-                "Pointdodge": self.loop_widgets[self.loop_table][row_num]["Pointdodge"].currentText(),
-                "Facet1": self.loop_widgets[self.loop_table][row_num]["Facet1"].currentText(),
-                "Facet2": self.loop_widgets[self.loop_table][row_num]["Facet2"].currentText(),
-                "Covariates": '@'.join(self.loop_widgets[self.loop_table][row_num]["Covariates"].currentData()),
-                "Inclusion": self.loop_widgets[self.loop_table][row_num]["Inclusion"].currentText(),
-                "Y axis minimum": self.loop_widgets[self.loop_table][row_num]["Y axis minimum"].text(),
-                "Y axis maximum": self.loop_widgets[self.loop_table][row_num]["Y axis maximum"].text()
-            }
-
-            self.clades_other_dict[row_num] = loop_row
-        '''
 
         # Update widgets
         for row_num in range(self.loop_table.rowCount()):
@@ -824,13 +763,12 @@ class Config(QDialog, Ui_Config):
             alias = combo_box.currentText()
             if alias == "Select variable:":
                 alias = ""
-                ordered_vals_str = ""
+                selected_values = []
             else:
                 var_df = self.get_variable_table_df()
                 selected_var = var_df[var_df['Alias'] == alias].iloc[0]['Column']
-                selected_values = self.col_vals[selected_var]
-                ordered_vals_str = '@'.join(selected_values)
-            data.append((role, alias, ordered_vals_str))
+                selected_values = self.col_vals.get(selected_var, [])
+            data.append((role, alias, selected_values))
 
         graph_config_df = pd.DataFrame(data=data,
                                        columns=['Role', 'Alias', 'Order'])
@@ -1123,6 +1061,15 @@ class Config(QDialog, Ui_Config):
 
         alias_idx = self.aliases.index(alias_name)
         group_name = self.variable_names[alias_idx]
+
+        # Notify user if values are not available
+        if group_name not in self.col_vals:
+            msg  = "No values available to order."
+            msg += "\n\nTry loading STAGG Settings from:"
+            msg += "\n  -Previous BASSPRO Settings"
+            msg += "\n  -Previous BASSPRO Output"
+            notify_info(msg)
+            return
 
         items = self.col_vals[group_name]
 
@@ -1427,8 +1374,6 @@ class OtherSettings(ConfigSettings):
     @staticmethod
     def _save_file(filepath, df):
         # If there are covariates, join them into a string with sep='@'
-        #func = lambda x : '@'.join(x) if x else x
-        #df['Covariates'] = df['Covariates'].apply(func)
 
         df = df.fillna("")
 

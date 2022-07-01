@@ -133,7 +133,7 @@ class Custom(QDialog, Ui_Custom):
                 vals = default_vals
 
 
-            # The first three columns are the name of the dependent variables selected and empty strings for ymin and ymax:
+            # The first three columns are the name of the dependent variables selected, and empty strings for ymin and ymax:
             # alias
             alias_item = QTableWidgetItem(var_name)
             alias_item.setFlags(alias_item.flags() ^ Qt.ItemIsEditable)
