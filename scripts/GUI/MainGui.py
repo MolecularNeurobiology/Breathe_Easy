@@ -263,11 +263,16 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         if self.autosections_df is None:
             self.auto_layout.delete_button.hide()
+            if self.necessary_timestamp_box.findText("Custom") != -1:
+                self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
+                self.necessary_timestamp_box.setCurrentIndex(0)
             # Remove old autosections
             for item in self.sections_list.findItems("auto", Qt.MatchContains):
                 self.sections_list.takeItem(self.sections_list.row(item))
         else:
             self.auto_layout.delete_button.show()
+            if self.necessary_timestamp_box.findText("Custom") != -1:
+                self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
             self.necessary_timestamp_box.addItem("Custom")
 
     @property
@@ -471,8 +476,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     self.stamp['Dictionaries']['Data'][epoch][condition] = {}
 
         if combo_need == "Custom":
-            auto_df_dict = self.autosections_df.to_dict()
-            timestamps_needed = auto_df_dict.fromkeys([x for x in auto_df_dict if x != "Variable"])
+            timestamps_needed = dict(zip(self.autosections_df['Alias'],[[x] for x in self.autosections_df['Alias']]))
             for y in timestamps_needed:
                 timestamps_needed[y] = [y]
         else:
@@ -922,25 +926,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def delete_meta(self):
         self.metadata = None
-        notify_info("Metadata removed")
+        notify_info("Metadata removed.")
 
     def delete_auto(self):
         self.autosections = None
-        self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
-        self.necessary_timestamp_box.setCurrentIndex(0)
-        notify_info("Auto settings removed")
+        notify_info("Auto settings removed.")
 
     def delete_manual(self):
         self.mansections = None
-        notify_info("Manual settings removed")
+        notify_info("Manual settings removed.")
 
     def delete_basic(self):
         self.basicap = None
-        notify_info("Basic settings removed")
+        notify_info("Basic settings removed.")
 
     def delete_stagg_settings(self):
         self.config_data = None
-        notify_info("STAGG settings removed")
+        notify_info("STAGG settings removed.")
 
 
 

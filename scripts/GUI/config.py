@@ -1343,11 +1343,14 @@ class VariableSettings(ConfigSettings):
     def _save_file(filepath, df):
         # Rename transform labels
         populated_trans = df[df["Transformation"] != ""]
+        print(populated_trans)
         for i, record in populated_trans.iterrows():
             trans = record['Transformation']
+            print(trans)
             trans = [t.replace("raw", "non") for t in trans]
             trans = [t.replace("ln", "log") for t in trans]
-            df.at[i, 'Transformation'] = '@'.join(trans)
+            if '@' not in trans:
+                df.at[i, 'Transformation'] = '@'.join(trans)
 
         df.to_csv(filepath, index=False)
 
