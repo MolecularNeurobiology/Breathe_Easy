@@ -312,14 +312,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """Get all STAGG settings data -- variable, graph, other"""
         # Get all config data collectively
         var_df = self.variable_config_df
-        graph_df = self.graph_config_df
-        other_df = self.other_config_df
 
-        # If all configs are None, return None
-        if all([config is None for config in [var_df, graph_df, other_df]]):
+        # If var configs is None, return None (others always have at least default values)
+        if var_df is None:
             return None
         # Otherwise return dict of data
         else:
+            graph_df = self.graph_config_df
+            other_df = self.other_config_df
             return {'variable': var_df, 'graph': graph_df, 'other': other_df}
     
     @config_data.setter
@@ -2132,7 +2132,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Prep stagg settings ahead of time using current BP settings
         #   -delay actually setting them in case BP fails
-        col_vals, config_data = self.get_cols_vals_from_settings()
+        if self.config_data is None:
+            col_vals, config_data = self.get_cols_vals_from_settings()
+        else:
+            col_vals, config_data = self.col_vals, self.config_data
 
         # Check whether we have stagg input already
         #   new output will automatically populate
