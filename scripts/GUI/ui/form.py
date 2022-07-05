@@ -403,7 +403,7 @@ class Ui_Plethysmography(object):
         _translate = QtCore.QCoreApplication.translate
         Plethysmography.setWindowTitle(_translate("Plethysmography", "Plethysmography"))
         Plethysmography.setAccessibleDescription(_translate("Plethysmography", "bob"))
-        self.label.setText(_translate("Plethysmography", "Plethysmography Analysis Platform"))
+        self.label.setText(_translate("Plethysmography", "BreatheEasy"))
         self.output_dir_button.setText(_translate("Plethysmography", "Select output directory"))
         self.signal_files_button.setText(_translate("Plethysmography", "Select signal files"))
         self.check_timestamps.setText(_translate("Plethysmography", "Check timestamps"))

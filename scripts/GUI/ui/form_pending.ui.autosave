@@ -1,0 +1,1058 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Plethysmography</class>
+ <widget class="QMainWindow" name="Plethysmography">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>3840</width>
+    <height>2160</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1750</width>
+    <height>1300</height>
+   </size>
+  </property>
+  <property name="cursor">
+   <cursorShape>SizeAllCursor</cursorShape>
+  </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
+  <property name="windowTitle">
+   <string>Plethysmography</string>
+  </property>
+  <property name="accessibleDescription">
+   <string>bob</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="3,2,5,1,3,2">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="font">
+         <font>
+          <pointsize>20</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Plethysmography Analysis Platform</string>
+        </property>
+        <property name="margin">
+         <number>5</number>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QPushButton" name="output_dir_button">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>14</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Select output directory</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_9">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="output_path_display"/>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer_10">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+    <item row="1" column="0">
+     <layout class="QVBoxLayout" name="verticalLayout_13">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QPushButton" name="signal_files_button">
+              <property name="font">
+               <font>
+                <pointsize>10</pointsize>
+               </font>
+              </property>
+              <property name="text">
+               <string>Select signal files</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout">
+              <item>
+               <widget class="QPushButton" name="check_timestamps">
+                <property name="text">
+                 <string>Check timestamps</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="necessary_timestamp_box">
+                <item>
+                 <property name="text">
+                  <string>Select dataset...</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QListWidget" name="signal_files_list">
+            <property name="acceptDrops">
+             <bool>true</bool>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::MultiSelection</enum>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_8" stretch="2,0,3">
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0,1">
+              <item>
+               <spacer name="verticalSpacer_10">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="metadata_button">
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Select metadata file</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_8">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_11">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,0,0,0,0,0,0">
+              <item>
+               <widget class="QPushButton" name="basspro_settings_button">
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Select BASSPRO
+ settings files</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_2">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QLabel" name="label_2">
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Advanced Settings</string>
+                </property>
+                <property name="alignment">
+                 <set>Qt::AlignCenter</set>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="Line" name="line">
+                <property name="orientation">
+                 <enum>Qt::Horizontal</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="auto_button">
+                <property name="text">
+                 <string>Automatic Selection</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="manual_button">
+                <property name="text">
+                 <string>Manual Selection</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="breath_parameters">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Basic Settings</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QFrame" name="frame">
+                <property name="frameShape">
+                 <enum>QFrame::StyledPanel</enum>
+                </property>
+                <property name="frameShadow">
+                 <enum>QFrame::Raised</enum>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_12">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_11" stretch="1,3">
+            <item>
+             <widget class="QListWidget" name="metadata_list">
+              <property name="acceptDrops">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="sections_list">
+              <property name="acceptDrops">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_5" stretch="6,1">
+          <property name="sizeConstraint">
+           <enum>QLayout::SetDefaultConstraint</enum>
+          </property>
+          <item>
+           <layout class="QVBoxLayout" name="verticalLayout_5" stretch="2,3">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetDefaultConstraint</enum>
+            </property>
+            <item>
+             <widget class="QListWidget" name="variable_list">
+              <property name="viewMode">
+               <enum>QListView::ListMode</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QListWidget" name="breath_list">
+              <property name="acceptDrops">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <property name="sizeConstraint">
+             <enum>QLayout::SetDefaultConstraint</enum>
+            </property>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_2" stretch="2,0,4,0,4">
+              <property name="sizeConstraint">
+               <enum>QLayout::SetDefaultConstraint</enum>
+              </property>
+              <item>
+               <spacer name="verticalSpacer_7">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="stagg_settings_button">
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Select STAGG settings</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_28">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+              <item>
+               <widget class="QPushButton" name="breath_files_button">
+                <property name="font">
+                 <font>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Select STAGG
+ input files</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <spacer name="verticalSpacer_9">
+                <property name="orientation">
+                 <enum>Qt::Vertical</enum>
+                </property>
+                <property name="sizeHint" stdset="0">
+                 <size>
+                  <width>20</width>
+                  <height>40</height>
+                 </size>
+                </property>
+               </spacer>
+              </item>
+             </layout>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_7" stretch="1,5,1">
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_10">
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_9">
+              <item>
+               <widget class="QPushButton" name="basspro_launch_button">
+                <property name="font">
+                 <font>
+                  <pointsize>12</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Launch BASSPRO</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="parallel_combo">
+                <item>
+                 <property name="text">
+                  <string>Parallel processing settings...</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <widget class="QTextEdit" name="hangar">
+          <property name="font">
+           <font>
+            <pointsize>10</pointsize>
+           </font>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_12">
+          <item>
+           <spacer name="verticalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <item>
+             <spacer name="horizontalSpacer_6">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <layout class="QVBoxLayout" name="verticalLayout_3">
+              <item>
+               <layout class="QHBoxLayout" name="horizontalLayout_8">
+                <item>
+                 <spacer name="horizontalSpacer_3">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+                <item>
+                 <widget class="QPushButton" name="stagg_launch_button">
+                  <property name="font">
+                   <font>
+                    <pointsize>12</pointsize>
+                   </font>
+                  </property>
+                  <property name="text">
+                   <string>Launch STAGG</string>
+                  </property>
+                 </widget>
+                </item>
+                <item>
+                 <spacer name="horizontalSpacer_8">
+                  <property name="orientation">
+                   <enum>Qt::Horizontal</enum>
+                  </property>
+                  <property name="sizeHint" stdset="0">
+                   <size>
+                    <width>40</width>
+                    <height>20</height>
+                   </size>
+                  </property>
+                 </spacer>
+                </item>
+               </layout>
+              </item>
+              <item>
+               <widget class="QGroupBox" name="imageformat_group">
+                <property name="title">
+                 <string>Image file format</string>
+                </property>
+                <layout class="QGridLayout" name="gridLayout_2">
+                 <item row="0" column="0">
+                  <layout class="QHBoxLayout" name="horizontalLayout_10">
+                   <item>
+                    <widget class="QRadioButton" name="svg_radioButton">
+                     <property name="text">
+                      <string>.svg</string>
+                     </property>
+                     <property name="checked">
+                      <bool>true</bool>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <widget class="QRadioButton" name="jpeg_radioButton">
+                     <property name="text">
+                      <string>.jpeg</string>
+                     </property>
+                    </widget>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </widget>
+              </item>
+             </layout>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_7">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_6">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+    <item row="2" column="0">
+     <spacer name="horizontalSpacer_4">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="sizeHint" stdset="0">
+       <size>
+        <width>40</width>
+        <height>20</height>
+       </size>
+      </property>
+     </spacer>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>breath_files_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>input_directory_r()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>731</x>
+     <y>288</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stagg_launch_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>r_message()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>678</x>
+     <y>570</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>499</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>output_dir_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>mothership_dir()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>293</x>
+     <y>233</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>breath_parameters</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>show_basic()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1687</x>
+     <y>243</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>basspro_launch_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>py_message()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>773</x>
+     <y>1989</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>metadata_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>prepare_meta()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>139</x>
+     <y>440</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>870</x>
+     <y>568</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>signal_files_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>get_signal_files()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>93</x>
+     <y>253</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>basspro_settings_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>get_autosections()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>93</x>
+     <y>288</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>399</x>
+     <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>sections_list</sender>
+   <signal>itemDoubleClicked(QListWidgetItem*)</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>open_click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>685</x>
+     <y>1682</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>breath_list</sender>
+   <signal>itemDoubleClicked(QListWidgetItem*)</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>open_click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3219</x>
+     <y>1260</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>stagg_settings_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>show_variable_config()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3751</x>
+     <y>876</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>check_timestamps</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>timestamp_dict()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>83</x>
+     <y>1690</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>manual_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>show_manual()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>86</x>
+     <y>1663</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>auto_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>show_auto()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>86</x>
+     <y>1592</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>metadata_list</sender>
+   <signal>itemDoubleClicked(QListWidgetItem*)</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>open_click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>685</x>
+     <y>1375</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>signal_files_list</sender>
+   <signal>itemDoubleClicked(QListWidgetItem*)</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>open_click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>685</x>
+     <y>1068</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>variable_list</sender>
+   <signal>itemDoubleClicked(QListWidgetItem*)</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>open_click()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>3100</x>
+     <y>249</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+ <slots>
+  <slot>get_signal_files()</slot>
+  <slot>select_signal_segment()</slot>
+  <slot>select_py_output()</slot>
+  <slot>select_breath_parameters()</slot>
+  <slot>go_py()</slot>
+  <slot>go_super()</slot>
+  <slot>go_r()</slot>
+  <slot>select_breath_files()</slot>
+  <slot>select_r_output()</slot>
+  <slot>select_autosection()</slot>
+  <slot>getfile()</slot>
+  <slot>input_directory_r()</slot>
+  <slot>output_directory_py()</slot>
+  <slot>output_directory_r()</slot>
+  <slot>get_parameter()</slot>
+  <slot>get_metadata()</slot>
+  <slot>make_metadata()</slot>
+  <slot>print_parameters()</slot>
+  <slot>get_sections()</slot>
+  <slot>progress_bar()</slot>
+  <slot>papr_directory()</slot>
+  <slot>get_autosections()</slot>
+  <slot>get_mansections()</slot>
+  <slot>breathcaller_directory()</slot>
+  <slot>auto_get_python_module()</slot>
+  <slot>mothership_dir()</slot>
+  <slot>auto_get_output_dir_py()</slot>
+  <slot>auto_get_signal_files()</slot>
+  <slot>auto_get_autosections()</slot>
+  <slot>auto_get_mansections()</slot>
+  <slot>auto_get_metadata()</slot>
+  <slot>auto_get_papr_module()</slot>
+  <slot>auto_get_breath_files()</slot>
+  <slot>auto_get_output_dir_r()</slot>
+  <slot>reset_parameter()</slot>
+  <slot>get_filemaker()</slot>
+  <slot>current()</slot>
+  <slot>run_command()</slot>
+  <slot>goBob()</slot>
+  <slot>updateProgress()</slot>
+  <slot>update_Rprogress()</slot>
+  <slot>cmd_feed()</slot>
+  <slot>update_Pyprogress()</slot>
+  <slot>thready()</slot>
+  <slot>pything_to_do()</slot>
+  <slot>superthing_to_do()</slot>
+  <slot>raylab_muid_plyuid_grabber()</slot>
+  <slot>filemaker_cascade()</slot>
+  <slot>getStudy()</slot>
+  <slot>auto_get_variable()</slot>
+  <slot>variable_config()</slot>
+  <slot>font_slider()</slot>
+  <slot>rthing_to_do()</slot>
+  <slot>show_variable_config()</slot>
+  <slot>panda_clade()</slot>
+  <slot>show_graph_config()</slot>
+  <slot>rthing_to_do_single()</slot>
+  <slot>pything_to_do_single()</slot>
+  <slot>py_message()</slot>
+  <slot>r_message()</slot>
+  <slot>stamp_to_do()</slot>
+  <slot>show_manual()</slot>
+  <slot>timestamp_dict()</slot>
+  <slot>show_auto()</slot>
+  <slot>show_basic()</slot>
+  <slot>auto_get_basic()</slot>
+  <slot>show_annot()</slot>
+  <slot>input_directory_r_env()</slot>
+  <slot>set_mothership()</slot>
+  <slot>open_click()</slot>
+  <slot>connect_database()</slot>
+  <slot>delete()</slot>
+  <slot>prepare_meta()</slot>
+ </slots>
+</ui>
