@@ -1420,8 +1420,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Print message to user if there is a mismatch with metadata
         if self.metadata_df is not None and \
             not self.test_signal_metadata_match(filenames, self.metadata_df):
-            notify_error("Signal files mismatch with metadata")
-            return
+            notify_error("Signal files mismatch with metadata.")
+            # return
 
         # Overwrite existing files?
         if self.signal_files_list.count() > 0:
@@ -1691,7 +1691,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 'Plethysmography': [
                     'MUID',
                     'PlyUID',
-                    'Misc. Variable 1 Value',
+                    # 'Misc. Variable 1 Value',
                     'Group',
                     'Weight',
                     'Experiment_Name',
@@ -1710,7 +1710,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'Calibration_Volume',
                     'Experimental_Date',
                     'Calibration_Condition',
-                    'Experimental_Condition',
+                    # 'Experimental_Condition',
                     'Experimental_Treatment',
                     'Gas 1',
                     'Gas 2',
