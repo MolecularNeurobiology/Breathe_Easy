@@ -145,8 +145,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # TODO: these are just bypassing the gui_config defaults?
         # path to the BASSPRO module script and STAGG scripts directory
-        self.basspro_path = "scripts/python_module.py"
-        self.papr_dir = "scripts/papr"
+        self.basspro_path = os.path.join("scripts", "python_module.py")
+        self.papr_dir = os.path.join("scripts", "papr")
 
         # STAGG Settings
         self.variable_config_df = None

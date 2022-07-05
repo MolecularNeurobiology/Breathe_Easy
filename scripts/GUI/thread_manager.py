@@ -90,7 +90,7 @@ class ThreadManager:
                 self.monitors[monitor_id]['dialog_window'] = None
 
             # TODO: implement BASSPRO cancel, not just STAGG continuation
-            # If it's been longer than 1 minute since we've heard from the threads
+            # If it's been longer than 2 minutes since we've heard from the threads
             if datetime.now() - last_heard > timedelta(minutes=2) and \
                 not monitor['dialog_window']:
                 msg = f"{monitor['proc_name']} is taking a while, would you like to cancel checking for STAGG autostart?"

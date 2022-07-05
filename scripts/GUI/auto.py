@@ -235,13 +235,12 @@ class Auto(QDialog, Ui_Auto):
         if curr_selection == 'Custom':
             # set curr data to loaded data
             self.data = self.loaded_data
-            # self.keys = self.loaded_keys
         else:
             auto_dict = self.defaults[curr_selection]
             df = pd.DataFrame(auto_dict)
 
-            # Set columns as keys
-            # self.keys = df.columns
+            # Set key row as columns
+            df.loc['Keys'] = df.columns
 
             # Set aliases as columns
             df.columns = df.loc['Alias']
