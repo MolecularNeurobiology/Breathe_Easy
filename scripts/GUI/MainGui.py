@@ -778,7 +778,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             import_options = ["Select files"]
             if self.stagg_input_files:
                 import_options.append("BASSPRO output")
-            if self.metadata_df is not None and (self.autosections_df is not None or self.mansections is not None):
+            if self.metadata_df is not None and (self.autosections_df is not None or self.mansections_df is not None):
                 import_options.append("Settings files")
 
             # If we only have one option, choose it (load files)
