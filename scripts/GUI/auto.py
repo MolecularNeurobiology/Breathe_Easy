@@ -240,7 +240,7 @@ class Auto(QDialog, Ui_Auto):
             df = pd.DataFrame(auto_dict)
 
             # Set key row as columns
-            df.loc['Keys'] = df.columns
+            df.loc['Key'] = df.columns
 
             # Set aliases as columns
             df.columns = df.loc['Alias']

@@ -2570,33 +2570,34 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 notify_error("Must pick a file named Rscript")
 
         ##  Handle large input  ##
+        unique_dirs = set([os.path.dirname(y) for y in self.stagg_input_files])
         # If more than 200 input files
-        if len(self.stagg_input_files) > 200:
+            
             # STAGG has troubles importing too many files when provided as a list of file paths,
             #   so in these cases, we want args$JSON to be a directory path instead
 
-            unique_dirs = set([os.path.dirname(y) for y in self.stagg_input_files])
+        # If more than 1 dir involved
+        if len(unique_dirs) > 1:
 
-            # If more than 1 dir involved
-            if len(unique_dirs) > 1:
-                # Need to have a different command line, so instead we'll regulate the user:
+            if len(self.stagg_input_files) > 200:
+            # Need to have a different command line, so instead we'll regulate the user:
                 title = "That's a lot of JSON"
                 msg = 'The STAGG input provided consists of more than 200 files from multiple directories.'
                 msg += '\nPlease condense the files into one directory for STAGG to analyze.'
                 notify_info(msg, title)
                 return False
 
-            # Use directory path instead
             else:
-                self.stagg_input_dir_or_files = os.path.dirname(self.stagg_input_files[0])
-                return True
-        else:
             # If there aren't a ridiculous number of json files in Main.stagg_input_files,
             #   then we just need to render the list of file paths into an unbracketed string 
             #   so that STAGG can recognize it as a list. STAGG didn't like the brackets.
-            self.stagg_input_dir_or_files = ','.join(item for item in self.stagg_input_files)
+                self.stagg_input_dir_or_files = ','.join(item for item in self.stagg_input_files)
+                return True
+
+        # Use directory path instead
+        else:
+            self.stagg_input_dir_or_files = os.path.dirname(self.stagg_input_files[0])
             return True
-    
 
 class STAGGInputSettings(Settings):
 
