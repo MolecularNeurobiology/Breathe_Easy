@@ -663,8 +663,10 @@ class Annot(QDialog, Ui_Annot):
         # Add new group to metadata
         for group in self.groups:
             for value in group["kids"]:
-                row_idx = metadata_temp.loc[metadata_temp[curr_column].astype(str)==str(value)].index[0]
-                metadata_temp.at[row_idx, new_column] = group["alias"]
+                metadata_temp.loc[metadata_temp[curr_column].astype(str)==str(value),[new_column]] = group["alias"]
+                
+                # row_idx = metadata_temp.loc[metadata_temp[curr_column].astype(str)==str(value)].index[0]
+                # metadata_temp.at[row_idx, new_column] = group["alias"]
         
         # Clean up list widgets
         self.variable_list_columns.clear()
@@ -709,7 +711,7 @@ class Annot(QDialog, Ui_Annot):
         try:
             if MetadataSettings.save_file(data=self.data, output_dir=self.output_dir):
                 # Tell the user it's a success
-                notify_info("Metadata file saved")
+                notify_info("Metadata file saved.")
 
         except PermissionError:
             notify_error('One or more of the files you are trying to save is open in another program.', title="File in use")

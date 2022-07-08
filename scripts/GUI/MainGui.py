@@ -1694,7 +1694,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     # 'Misc. Variable 1 Value',
                     'Group',
                     'Weight',
-                    'Experiment_Name',
+                    # 'Experiment_Name',
                     'Researcher',
                     'Experimental_Date',
                     'time started',
@@ -1712,18 +1712,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'Calibration_Condition',
                     # 'Experimental_Condition',
                     'Experimental_Treatment',
-                    'Gas 1',
-                    'Gas 2',
-                    'Gas 3',
-                    'Tank 1',
-                    'Tank 2',
-                    'Tank 3',
-                    'Dose',
-                    'Habituation',
-                    'Plethysmography',
-                    'PlyUID',
-                    'Notes',
-                    'Project Number',
+                    # 'Gas 1',
+                    # 'Gas 2',
+                    # 'Gas 3',
+                    # 'Tank 1',
+                    # 'Tank 2',
+                    # 'Tank 3',
+                    # 'Dose',
+                    # 'Habituation',
+                    # 'Plethysmography',
+                    'PlyUID'
+                    # 'Notes',
+                    # 'Project Number',
                 ],
                 'Mouse_List': [
                     'MUID',
@@ -1732,6 +1732,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'Comments',
                     'Date of Birth',
                     'Tag Number',
+                    'Age_days'
                 ]
             }
             
