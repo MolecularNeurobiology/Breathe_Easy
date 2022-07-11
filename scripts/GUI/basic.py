@@ -249,7 +249,8 @@ class Basic(QDialog, Ui_Basic):
         """
         for ref_box, ref_button_dict in self.ref_buttons.items():
             if str(buttoned) in ref_button_dict:
-                ref_box.setPlainText(self.ref_definitions[buttoned.replace("help_","")])
+                ref_text = self.ref_definitions.get(buttoned.replace("help_",""), "No Reference Info")
+                ref_box.setPlainText(ref_text)
                 ref_box.setOpenExternalLinks(True)
    
     def update_summary_table(self):

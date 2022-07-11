@@ -2321,7 +2321,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         workers = {}
 
         rscript_des = os.path.abspath(self.gui_config['Dictionaries']['Paths']['rscript'])
-        graph_config = pd.read_csv("Z:\Projects\PM101_ST_APP_TTA_Longitudinal_Respiratory_Study\Final Files\STAGG_output\STAGG_output_20220710_142051\graph_config_20220710_142051.csv")
 
         # Launch STAGG worker!
         for job in MainGUIworker.get_jobs_r(rscript=rscript_des,

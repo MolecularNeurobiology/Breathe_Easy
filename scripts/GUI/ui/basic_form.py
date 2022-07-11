@@ -1165,6 +1165,10 @@ class Ui_Basic(object):
 
         self.output_tab = QtWidgets.QWidget()
         self.output_tab.setObjectName("output_tab")
+
+        self.output_tab_layout = QtWidgets.QHBoxLayout()
+        self.output_tab_layout.setObjectName("output_tab_layout")
+
         self.layoutWidget_5 = QtWidgets.QWidget(self.output_tab)
         self.layoutWidget_5.setGeometry(QtCore.QRect(0, 0, 2451, 1291))
         self.layoutWidget_5.setObjectName("layoutWidget_5")
@@ -1327,6 +1331,9 @@ class Ui_Basic(object):
         self.horizontalLayout_21.setStretch(2, 1)
         self.horizontalLayout_21.setStretch(3, 7)
         self.horizontalLayout_21.setStretch(4, 1)
+
+        self.output_tab_layout.addWidget(self.layoutWidget_5)
+        self.output_tab.setLayout(self.output_tab_layout)
         self.autotabs.addTab(self.output_tab, "")
 
         self.frame_tab = QtWidgets.QWidget()
