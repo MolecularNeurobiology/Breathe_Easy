@@ -156,7 +156,6 @@ def get_jobs_r(rscript, pipeline, papr_dir, output_dir, stagg_input_dir_or_files
         # The path to the STAGG scripts directory
         '--Sum', papr_dir
     ]
-    print(' '.join([f'"{i}"' if i[0]!='-' else i for i in papr_cmd]))
     
     yield papr_cmd
 
