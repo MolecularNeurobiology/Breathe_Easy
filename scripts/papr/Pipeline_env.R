@@ -109,7 +109,7 @@ setwd(args2$dir)
 full_dirs <- unlist(strsplit(args2$JSON, ","))
 renv_dir <-  grep("\\.RData", full_dirs, value = TRUE)
 
-if(length(full_dirs) > 1){
+if(length(renv_dir) > 1){
   stop("More than one R data file selected.")
 }
 
