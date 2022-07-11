@@ -442,7 +442,7 @@ class Basic(QDialog, Ui_Basic):
         self.data = self.get_dataframe()
 
         if BasicSettings.save_file(self.data, output_dir=self.output_dir):
-            notify_info("Basic settings saved")
+            notify_info("Basic settings saved.")
 
     def load_file(self):
         """

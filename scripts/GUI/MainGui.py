@@ -1691,11 +1691,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 'Plethysmography': [
                     'MUID',
                     'PlyUID',
-                    # 'Misc. Variable 1 Value',
-                    'Group',
+                    'Misc. Variable 1 Value',
+                    # 'Group',
                     'Weight',
                     # 'Experiment_Name',
-                    'Researcher',
+                    # 'Researcher',
                     'Experimental_Date',
                     'time started',
                     'Rig',
@@ -1711,9 +1711,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'Experimental_Date',
                     'Calibration_Condition',
                     # 'Experimental_Condition',
-                    'Experimental_Treatment',
+                    # 'Experimental_Treatment',
                     # 'Gas 1',
-                    # 'Gas 2',
+                    'Gas 2',
                     # 'Gas 3',
                     # 'Tank 1',
                     # 'Tank 2',
@@ -1729,7 +1729,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'MUID',
                     'Sex',
                     'Genotype',
-                    'Comments',
+                    # 'Comments',
                     'Date of Birth',
                     'Tag Number',
                     'Age_days'
@@ -2452,6 +2452,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         shared_queue = queue.Queue()
         workers = {}
 
+        print(f"before: {basic_file}")
+
+        basic_file = "Z:/Lab_Folders/atwitch/Yuan/basics.csv"
+        print(f"after: {basic_file}")
         ## Start Jobs ##
         for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
                                              module=self.basspro_path,
@@ -2597,7 +2601,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Use directory path instead
         else:
-            self.stagg_input_dir_or_files = os.path.dirname(self.stagg_input_files[0])
+            if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
+                self.stagg_input_dir_or_files = ','.join(item for item in self.stagg_input_files)
+            else:
+                self.stagg_input_dir_or_files = os.path.dirname(self.stagg_input_files[0])
             return True
 
 class STAGGInputSettings(Settings):

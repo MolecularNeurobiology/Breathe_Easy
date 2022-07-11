@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.12.4, 2022-07-08T15:55:57. -->
+<!-- Written by QtCreator 4.12.4, 2022-07-08T16:15:35. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -155,12 +155,9 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">main2</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">PythonEditor.RunConfiguration.Z:/Scripts/BASSPRO-STAGG/scripts_shaun/BASSPRO-STAGG/scripts/GUI/main.py</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">Z:/Scripts/BASSPRO-STAGG/scripts_shaun/BASSPRO-STAGG/scripts/GUI/main.py</value>
-    <value type="bool" key="PythonEditor.RunConfiguation.Buffered">false</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Interpreter">{5ed75f39-00fa-4eb0-a12b-9159f75077d5}</value>
-    <value type="QString" key="PythonEditor.RunConfiguation.Script">Z:\Scripts\BASSPRO-STAGG\scripts_shaun\BASSPRO-STAGG\scripts\GUI\main.py</value>
+    <value type="QString" key="ProjectExplorer.CustomExecutableRunConfiguration.Executable"></value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">ProjectExplorer.CustomExecutableRunConfiguration</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey"></value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>
