@@ -739,7 +739,7 @@ class Ui_Config(object):
         item = self.loop_table.horizontalHeaderItem(8)
         item.setText(_translate("Config", "Y axis maximum"))
         item = self.loop_table.horizontalHeaderItem(9)
-        item.setText(_translate("Config", "Include all breaths"))
+        item.setText(_translate("Config", "Filter breaths?"))
         __sortingEnabled = self.loop_table.isSortingEnabled()
         self.loop_table.setSortingEnabled(False)
         self.loop_table.setSortingEnabled(__sortingEnabled)
