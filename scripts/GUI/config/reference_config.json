@@ -230,7 +230,7 @@
             "include_sigh": "Definition: Indicates whether to exclude breaths from calm breathing if they are also categorized as an sigh\nDefault Values: No",
             "include_high_chamber_temp": "Definition: Indicates whether to include data where the chamber temperature has exceeded the body temperature of the animal\nDescription: Including such data will likely lead abberant values for Bartlett and Tennery corrected tidal volumes.\nDefault Values: No",
             "maxTV": "Definition: Maximum tidal volume\nDescription: Maximum tidal volume for a breath to be considered a candidate of calm breathing.\nDefault Value: off",
-            "max_VEVO2": "Definition: Maximum ventilation normalized to oxygen consumption\nDescription: Any breaths with VEVO2 values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: off",
+            "maxVEVO2": "Definition: Maximum ventilation normalized to oxygen consumption\nDescription: Any breaths with VEVO2 values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: off",
             "max_calibrated_TV": "Definition: Maximum calibrated tidal volume\nDescription: Any breaths with tidal volumes greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: 5"
         }
     }
