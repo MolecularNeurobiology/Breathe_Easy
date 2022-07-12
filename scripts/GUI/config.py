@@ -1285,11 +1285,6 @@ class ConfigSettings(Settings):
             notify_error(error_msg)
 
     @staticmethod
-    def _save_file(filepath, df):
-        # Write df to csv at `path`
-        df.to_csv(filepath, index=False)
-
-    @staticmethod
     def get_default_variable_df(variable_names):
         default_values = [0, 0, 0, 0, 0, 0, 0, []]
         default_data = [[var_name, var_name] + default_values for var_name in variable_names]
@@ -1359,6 +1354,14 @@ class GraphSettings(ConfigSettings):
     def attempt_load(filepath):
         gdf = pd.read_csv(filepath, index_col=False)
         return gdf
+
+    def _save_file(filepath, df):
+        # Transform each Order vals list into '@'-separated string
+        for i, record in df.iterrows():
+            vals = record['Order']
+            # TODO: can we guarantee a data type for all input variables?
+            df.at[i, 'Order'] = '@'.join([str(v) for v in vals])
+        df.to_csv(filepath, index=False)
 
 
 class OtherSettings(ConfigSettings):
