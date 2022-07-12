@@ -82,7 +82,7 @@ class Auto(QDialog, Ui_Auto):
             self.help_max_co2,
             self.help_min_o2,
             self.help_max_calibrated_TV,
-            self.help_max_VEVO2,
+            self.help_maxVEVO2,
             self.help_max_o2,
             self.help_within_start,
             self.help_within_end,
