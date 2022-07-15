@@ -797,7 +797,7 @@ class Config(QDialog, Ui_Config):
                 self.loop_table.cellWidget(row, headers.index("Covariates")).currentData(),
                 self.loop_table.cellWidget(row, headers.index("Y axis minimum")).text(),
                 self.loop_table.cellWidget(row, headers.index("Y axis maximum")).text(),
-                int(self.loop_table.cellWidget(row, headers.index("Include all breaths")).currentText() == "Yes")
+                int(self.loop_table.cellWidget(row, headers.index("Filter breaths?")).currentText() == "Yes")
             ]
 
             yield loop_row
