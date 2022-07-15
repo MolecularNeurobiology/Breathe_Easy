@@ -7,7 +7,7 @@ required_libs <- c("rjson", "tidyverse", "magrittr", "data.table",
                    "ggpubr", "kableExtra", "rmarkdown", "argparser",
                    "lme4", "lmerTest", "multcomp", "xtable", 
                    "tidyselect", "ggthemes", "RColorBrewer", "openxlsx",
-                   "reshape2")
+                   "reshape2", "svglite")
 
 for(libb in required_libs){
   lib_test <- eval(parse(text = paste0("require(", libb, ")")))

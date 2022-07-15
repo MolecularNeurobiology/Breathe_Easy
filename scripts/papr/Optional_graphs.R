@@ -740,11 +740,19 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
         facet_grid(form_string) + 
         scale_color_manual(values = cPalette) +
         labs(x = "T", y = "T+1", color = pointdodge_wu, title = paste0("Poincare: ", resp_var, " ~ ", ll)) +
-        theme_few() 
+        theme_few(base_size = 14) 
       
       name_part <- str_replace_all(c(resp_var, ll), "[[:punct:]]", "")
       graph_file <- str_replace_all(paste0("Poincare_", name_part[1], "_", name_part[2], args$I), " ", "") %>% str_replace_all(" ", "")
-      ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm")
+      
+      if(grep(".svg", graph_file)){
+        svglite(paste0(args$Output, "/", graph_file), width = 7, height = 7)
+        print(p)
+        dev.off()
+      } else {
+        ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm", dpi = 300)
+      }
+      
     }
     
   } else {
@@ -760,11 +768,19 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
       facet_grid(form_string) + 
       scale_color_manual(values = cPalette) +
       labs(x = "T", y = "T+1", color = pointdodge_wu, title = paste0("Poincare: ", resp_var)) +
-      theme_few() 
+      theme_few(base_size = 14) 
     
     name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
     graph_file <- str_replace_all(paste0("Poincare_", name_part, args$I), " ", "") %>% str_replace_all(" ", "")
-    ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm")
+    
+    if(grep(".svg", graph_file)){
+      svglite(paste0(args$Output, "/", graph_file), width = 7, height = 7)
+      print(p)
+      dev.off()
+    } else {
+      ggsave(graph_file, plot = p, path = args$Output, width = 17.5, height = 17.5, units = "cm", dpi = 300)
+    }
+    
   }
   return()
 }
@@ -812,16 +828,25 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     psd_df <-  reshape2::melt(as.data.frame(psd_list))
     psd_df$tt <- rep(2:max_hz, length(unique(graph_data[[pointdodge]])))
     
+    base_pt <- 11 * sqrt(length(unique(graph_data[[pointdodge]])))
     # Make graph + save
     psd_p <- ggplot(data = psd_df) +
       geom_path(aes(x = tt, y = value)) +
       facet_grid(rows = vars(variable), scales = "free_y") +
       labs(x = "Hz", y = "Magnitude", title = paste0("Spectral: ", resp_var)) +
-      theme_bw()
+      theme_few(base_size = base_pt)
     
     name_part <- str_replace_all(c(resp_var, pointdodge), "[[:punct:]]", "")
     graph_file <- paste0("Spectral_", name_part[1], "_", name_part[2], args$I)
-    ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2 * length(unique(graph_data[[pointdodge]])), units = "in")
+    
+    if(grep(".svg", graph_file)){
+      svglite(paste0(args$Output, "/", graph_file), width = 6, height = 2 * length(unique(graph_data[[pointdodge]])))
+      print(p)
+      dev.off()
+    } else {
+      ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2 * length(unique(graph_data[[pointdodge]])), 
+             units = "in", dpi = 300)
+    }
     
   } else {
     # Remove NAs
@@ -833,11 +858,18 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     psd_p <- ggplot() +
       geom_path(aes(x = 2:max_hz, y = psd[2:max_hz])) +
       labs(x = "Hz", y = "Magnitude", title = paste0("Spectral: ", resp_var)) +
-      theme_bw()
+      theme_few(base_size = 11)
     
     name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
     graph_file <- paste0("Spectral_", name_part, args$I) %>% str_replace_all(" ", "")
-    ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2, units = "in")
+    
+    if(grep(".svg", graph_file)){
+      svglite(paste0(args$Output, "/", graph_file), width = 6, height = 2)
+      print(p)
+      dev.off()
+    } else {
+      ggsave(graph_file, plot = psd_p, path = args$Output, width = 6, height = 2, units = "in", dpi = 300)
+    }
   }
   return()
 }
