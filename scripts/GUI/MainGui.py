@@ -2161,6 +2161,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             
             # Set function in case cancel is selected
             cancel_func = lambda : self.basspro_launch_button.setEnabled(True) or self.enable_stagg_buttons(True)
+            cancel_msg = "would you like to cancel checking for STAGG autostart?"
 
         else:
 
@@ -2169,6 +2170,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             # Set function in case cancel is selected
             cancel_func = lambda : self.basspro_launch_button.setEnabled(True)
+            cancel_msg = None
 
         # Monitor the basspro processes and execute a function after completion
         self.thread_manager.add_monitor(workers,
@@ -2176,7 +2178,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                         execute_after=execute_after,
                                         exec_after_cancel=cancel_func,
                                         print_funcs=[self.status_message],
-                                        proc_name="BASSPRO")
+                                        proc_name="BASSPRO",
+                                        cancel_msg=cancel_msg,
+                                        )
+
 
 
     def complete_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
@@ -2452,10 +2457,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         shared_queue = queue.Queue()
         workers = {}
 
-        print(f"before: {basic_file}")
-
-        basic_file = "Z:/Lab_Folders/atwitch/Yuan/basics.csv"
-        print(f"after: {basic_file}")
         ## Start Jobs ##
         for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
                                              module=self.basspro_path,

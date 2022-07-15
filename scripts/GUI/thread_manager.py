@@ -14,10 +14,11 @@ class ThreadManager:
         if exec_after_cancel:
             exec_after_cancel()
 
-    def add_monitor(self, workers, msg_queue, execute_after=None, exec_after_cancel=None, proc_name=None, print_funcs=[]):
+    def add_monitor(self, workers, msg_queue, execute_after=None, exec_after_cancel=None, proc_name=None, print_funcs=[], cancel_msg=None):
         new_id = generate_unique_id(self.monitors.keys())
         cancel_func = lambda : self.cancel_monitor(new_id, exec_after_cancel=exec_after_cancel)
         no_cancel_func = lambda : self._reset_last_msg_time(new_id)
+        default_cancel_message = "would you like to cancel waiting for followup processing?"
         self.monitors[new_id] = {
             'status': 'running',
             'execute_after': execute_after,
@@ -25,9 +26,10 @@ class ThreadManager:
             'msg_queue': msg_queue,
             'dialog_window': None,
             'last_heard': datetime.now(),
-            'proc_name': proc_name if proc_name else f"Process {new_id}",
+            'proc_name': proc_name or f"Process {new_id}",
             'cancel_func': cancel_func,
             'no_cancel_func': no_cancel_func,
+            'cancel_msg': cancel_msg or default_cancel_message
         }
 
         # monitor worker to execute next function
@@ -93,7 +95,7 @@ class ThreadManager:
             # If it's been longer than 2 minutes since we've heard from the threads
             if datetime.now() - last_heard > timedelta(minutes=2) and \
                 not monitor['dialog_window']:
-                msg = f"{monitor['proc_name']} is taking a while, would you like to cancel checking for STAGG autostart?"
+                msg = f"{monitor['proc_name']} is taking a while, {monitor['cancel_msg']}"
                 yes_func = monitor['cancel_func']
                 no_func = monitor['no_cancel_func']
                 msg_box = nonblocking_msg(msg, (yes_func, no_func), title="Longrunning Process", msg_type='yes')

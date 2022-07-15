@@ -1343,8 +1343,6 @@ class VariableSettings(ConfigSettings):
             trans = [t.replace("raw", "non") for t in trans]
             trans = [t.replace("ln", "log") for t in trans]
             df.at[i, 'Transformation'] = '@'.join(trans)
-        print(trans)
-        print(df)
         df.to_csv(filepath, index=False)
 
 class GraphSettings(ConfigSettings):
