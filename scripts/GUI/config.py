@@ -1,9 +1,10 @@
 
 import os
+from typing import Dict, List, Optional, Tuple
 import pandas as pd
 import numpy as np
 from PyQt5.QtWidgets import QDialog, QSpacerItem, QSizePolicy, QButtonGroup, QTableWidgetItem, QRadioButton, QLineEdit, QComboBox, QFileDialog
-from PyQt5.QtCore import QObject, Qt
+from PyQt5.QtCore import Qt
 from checkable_combo_box import CheckableComboBox
 from align_delegate import AlignDelegate
 from custom import Custom
@@ -82,22 +83,16 @@ class Config(QDialog, Ui_Config):
     Ui_Config: class
         The Config class inherits widgets and layouts defined in the Ui_Config class.
     """
-    def __init__(self, ref_definitions, data, col_vals, output_dir=""):
+    def __init__(self, ref_definitions: Dict[str, str], data: Dict[str, pd.DataFrame], col_vals: Dict[str, List[str]], output_dir: str = ""):
         """
         Instantiate the Config class.
 
         Parameters 
         --------
-
-        Outputs
-        --------
-        self.dependent_vars: list
-            This attribute is set as an empty list.
-        
-        Outcomes
-        --------
-        self.setup_variables_config()
-            Add the CheckableComboBox to the STAGG settings subGUI layout, establish attributes, and assign clicked signals and self.reference_event slots to each self.help_{setting} ToolButton.
+        ref_definitions: the help text for each help button
+        data: ('variable', 'graph', and 'other') data for populating the window
+        col_vals: values for each column variable in the data
+        output_dir: path to output directory
         """
         super(Config, self).__init__()
         self.setupUi(self)
@@ -178,34 +173,16 @@ class Config(QDialog, Ui_Config):
         #   -Loop table
         self.update_loop(renamed=(old_name, new_name))
     
-    def update_loop(self, __checked=None, renamed=None):
-        """
-        Update the contents of self.clades_other_dict with the contents of self.loop_widgets and then update the contents of self.loop_table with the newly updated contents of self.clades_other_dict.
+    def update_loop(self,
+                    idx: int = None,
+                    renamed: Optional[Tuple[str]] = None):
+        """Update the loop table with data in other widgets
         
         Parameters
         --------
-        self.variable_table_df: Dataframe
-            This attribute is a dataframe that contains the states of the self.variable_table widgets for each variable.
-        self.loop_table: QTableWidget
-            This TableWidget displays the settings for additional models either via widgets or loading previously made other_config.csv with previous STAGG run's settings for additional models.
-        self.loop_widgets: dict
-            The nested dictionary used to populate and save the text, CheckBox, ComboBox, and CheckableComboBox states of Config.loop_table (TableWidget) in the Config subGUI.
-        self.clades_other_dict: dict
-            This dictionary is populated and updated with the current states of the widgets stored in self.loop_widgets.
-        
-        Outputs
-        --------
-        self.dependent_vars: Series
-            This attribute is a Series of the variables, specifically the "Alias" column of dataframe self.variable_table_df derived from self.variable_table.
-        self.loop_table: QTableWidget
-            This TableWidget is populated with the settings for additional models either via widgets or loading previously made other_config.csv with previous STAGG run's settings for additional models.
-        self.clades_other_dict: dict
-            This dictionary is populated and updated with the current states of the widgets stored in self.loop_widgets.
-        
-        Outcomes
-        --------
+        idx: selected index of combo box change that (optionally) initiated update
+        renamed: tuple specifying the (old_name, new_name) of a renamed alias
         """
-
         # Update widgets
         for row_num in range(self.loop_table.rowCount()):
 
@@ -821,24 +798,11 @@ class Config(QDialog, Ui_Config):
     
     @property
     def other_config_df(self):
-        """
-        Populate self.other_config_df with a dataframe derived from the contents of self.clades_other_dict after the latter was updated with the current states of the widgets stored in self.loop_widgets (dict).
+        """Create other_config dataframe from current GUI widget state
 
-        Parameters
+        Returns
         --------
-        self.loop_widgets: dict
-            This Plethysmography class attribute is a nested dictionary used to populate and save the text, CheckBox, ComboBox, and CheckableComboBox states of Config.loop_table (TableWidget) in the Config subGUI.
-        self.loop_table: QTableWidget
-            This TableWidget is populated with the contents of self.loop_widgets.
-        self.feature_combo: QComboBox
-            This ComboBox is the drop-down menu that allows the user to choose whether or not to include plots of respiratory features (i.e. apneas, sighs) with STAGG output.
-        
-        Outputs
-        --------
-        self.clades_other_dict: dict
-            This attribute is set as an empty dictionary and populated with the contents of self.loop_widgets which is populated with the current text of widgets in self.loop_table.
-        self.other_config_df: Dataframe
-            This attribute is set as a dataframe populated from self.clades_other_dict and the self.feature_combo selection.
+        pd.DataFrame: other_config data
         """
         other_config_widget_data = self.get_loop_widget_rows()
         other_config_df = pd.DataFrame(other_config_widget_data,
@@ -919,11 +883,7 @@ class Config(QDialog, Ui_Config):
         self.accept()
 
     def add_loop(self):
-        """
-        - Update self.loop_widgets with another key corresponding to the additional row
-        - add another row to self.loop_table
-        ]- and populate the row with the text and widgets stored in self.loop_widgets.
-        """
+        """Add row to loop_table"""
 
         loop_row = self.loop_table.rowCount()
         self.loop_table.insertRow(loop_row)
@@ -931,9 +891,9 @@ class Config(QDialog, Ui_Config):
         self.loop_table.setCellWidget(loop_row, 0, QLineEdit())
 
         # Response Var, Xvar, Pointdodge, Facet1, Facet2
-        for idx in range(6):
+        for idx in range(1, 6):
             new_combo_box = self.new_other_settings_combo_box()
-            self.loop_table.setCellWidget(loop_row, idx+1, new_combo_box)
+            self.loop_table.setCellWidget(loop_row, idx, new_combo_box)
 
         covariates_checkable_combo = self.new_covariates_checkable_combo()
         self.loop_table.setCellWidget(loop_row, 6, covariates_checkable_combo)
