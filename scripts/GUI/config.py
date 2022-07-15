@@ -1159,7 +1159,7 @@ class Config(QDialog, Ui_Config):
                         covariate_combo.updateText()
                     continue
 
-                if header == "Include all breaths":
+                if header == "Filter breaths?":
                     new_text = "Yes" if odf.at[row_num, "Inclusion"] else "No"
                 elif header == "Graph name":
                     new_text = str(odf.at[row_num, "Graph"])
