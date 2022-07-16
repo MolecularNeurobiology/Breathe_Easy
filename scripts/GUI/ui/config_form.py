@@ -644,7 +644,7 @@ class Ui_Config(object):
 
         self.retranslateUi(Config)
         self.load_config.clicked.connect(Config.load_configs)
-        self.minus_loop_button.clicked.connect(Config.minus_loop)
+        self.minus_loop_button.clicked.connect(Config.remove_loop)
         self.add_loop_button.clicked.connect(Config.add_loop)
         self.custom_config_button.clicked.connect(Config.show_custom)
         self.clear_config.clicked.connect(Config.reset_config)

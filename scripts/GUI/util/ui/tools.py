@@ -44,11 +44,53 @@ def update_combo_values(combo, valid_values, renamed=None, default_value=""):
         if curr_value == old_name:
             curr_value = new_name
 
-    # if curr selection is still indep/cov, keep in box
+    # if curr selection is still valid, keep in box
     if curr_value in valid_values:
         combo.setCurrentText(curr_value)
 
     combo.blockSignals(False)
+
+def update_hierarchical_combos(valid_values, combos, default_value, renamed=None, enable_set=True, first_required=False):
+    """ Populate a sequence of combo boxes which maintain dependencies on their previous sibling
+    Dependencies:
+        - Combo box enabled only if previous sibling has a selected value other than the `default_value`
+        - Valid values are the previous valid values, less the selected value of the previous sibling
+    
+    Args:
+        valid_values: initial valid values used to populate the first combo box
+        combos: list of combo boxes to populate, in order
+        default_value: default option used to populate the first index of the combos
+        renamed: tuple mapping a renamed value from its old value to its new value
+        enable_set: bool determining whether the set of combo boxes should be enabled
+                    in case there is an external dependency
+    """
+    prev_selected = enable_set
+    for i, combo in enumerate(combos):
+        enabled = prev_selected
+        combo.setEnabled(enabled)
+
+        # Set all disabled boxes to default val
+        # NOTE: Continue on to make sure that values are populated.
+        #   This becomes important when setting the text of the
+        #   combo from loaded data requires that the value is
+        #   available in the list already
+        if not enabled:
+            combo.blockSignals(True)
+            combo.setCurrentText(default_value)
+            combo.blockSignals(False)
+
+        # If this one is required, dont provide a default
+        _default_value = None if (first_required and i==0) else default_value
+
+        # Update value based on valid values and any renamed variables
+        update_combo_values(combo, valid_values, renamed=renamed, default_value=_default_value)
+
+        # Check if the curr_value was set back to default
+        curr_value = combo.currentText()
+        prev_selected = (curr_value != default_value)
+
+        # remove this value from the options for the next boxes
+        valid_values = valid_values[valid_values != curr_value]
 
 def read_widget(widget):
 

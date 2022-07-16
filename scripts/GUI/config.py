@@ -10,7 +10,7 @@ from align_delegate import AlignDelegate
 from custom import Custom
 from util.tools import Settings, avert_name_collision
 from util.ui.dialogs import notify_error, notify_info
-from util.ui.tools import write_widget, update_combo_values, update_checkable_combo_values
+from util.ui.tools import update_hierarchical_combos, write_widget, update_combo_values, update_checkable_combo_values
 from ui.config_form import Ui_Config
 from ordering import OrderingWindow
 
@@ -127,7 +127,7 @@ class Config(QDialog, Ui_Config):
         # Setup cell changed callbacks
         self.variable_table.cellChanged.connect(self.change_alias)
 
-    def minus_loop(self):
+    def remove_loop(self):
         """Remove the selected row from self.loop_table"""
         curr_row = self.loop_table.currentRow()
         self.loop_table.removeRow(curr_row)
@@ -174,14 +174,14 @@ class Config(QDialog, Ui_Config):
         self.update_loop(renamed=(old_name, new_name))
     
     def update_loop(self,
-                    idx: int = None,
+                    __idx: int = None,
                     renamed: Optional[Tuple[str]] = None):
         """Update the loop table with data in other widgets
         
         Parameters
         --------
-        idx: selected index of combo box change that (optionally) initiated update
-        renamed: tuple specifying the (old_name, new_name) of a renamed alias
+        __idx: Selected index of combo box change that (optionally) initiated update
+        renamed: Tuple specifying the (old_name, new_name) of a renamed alias
         """
         # Update widgets
         for row_num in range(self.loop_table.rowCount()):
@@ -208,7 +208,7 @@ class Config(QDialog, Ui_Config):
             # All of these are dependent on the previous
             combos_to_update = [self.loop_table.cellWidget(row_num, col_num) for col_num in range(2, 6)]
             default_value = ""
-            self.update_hierarchical_combos(valid_values_no_covariate, combos_to_update, default_value, renamed=renamed, first_required=True)
+            update_hierarchical_combos(valid_values_no_covariate, combos_to_update, default_value, renamed=renamed, first_required=True)
 
             # Extract current status for use in populating covariate combo box
             combo_set_vals = [combo.currentText() for combo in combos_to_update]
@@ -240,71 +240,11 @@ class Config(QDialog, Ui_Config):
         return headers
 
     def setup_variables_config(self): 
-        """
-        Add the CheckableComboBox to the STAGG settings subGUI layout
-        Establish attributes
-        Assign clicked signals and self.reference_event slots to each self.help_{setting} ToolButton.
-
-        Parameters
-        --------
-        self.variable_table_df: Dataframe
-            This attribute is a dataframe that containts the states of the self.variable_table widgets for each variable.
-        self.graph_config_df: Dataframe
-            This attribute is a dataframe that containts the states of the many comboBoxes that define graph roles for selected variables.
-        self.other_config_df: Dataframe
-            This attribute is a dataframe that containts the states of the self.loop_table widgets for each variable as well as the states for self.feature_combo comboBox..
-        self.feature_combo: QCombobBox
-            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to produce plots of respiratory features such as sighs and apneas.
-        self.Poincare_combo: QComboBox
-            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to produce Poincare plots for all or none of the selected dependent variables.
-        self.Spectral_combo: QComboBox
-            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to produce Spectral plots for all or none of the selected dependent variables.
-        self.transform_combo: CheckableComboBox
-            This CheckableComboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose to run STAGG on different model transformations.
-        self.Xvar_combo: QComboBox
-            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose which independent or covariate variable should determine the x axis of figures of the main model.
-        self.Pointdodge_combbo: QComboBox
-            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose which independent or covariate variable should determine the groups of symbol of figures of the main model.
-        self.Facet1_combo: QComboBox
-            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose which independent or covariate variable should determine the splitting of the x axis if at all.
-        self.Facet2_combo: QComboBox
-            The comboBox provides a drop-down menu in the STAGG settings subGUI that allows the user to choose which independent or covariate variable should determine the splitting of the y axis if at all.
-        self.config_reference: QTextBrowser
-            This TableWidget displays the definition, description, and default value of the user-selected setting.
-        self.help_{setting}: QToolButton
-            These buttons are assigned clicked signals and slotted for self.reference_event().
-        self.variable_config: str
-            This Plethysmography class attribute is the file path to one of the STAGG settings files.
-        self.graph_config: str
-            This Plethysmography class attribute is the file path to one of the STAGG settings files.
-        self.other_config: str
-            This Plethysmography class attribute is the file path to one of the STAGG settings files.
-
-        Outputs
-        --------
-        self.additional_dict: dict
-            This dictionary relates certain header strings to their corresponding comboBoxes.
-        self.graph_config_combos: dict
-            A nested dictionary that relates the graph settings comboBoxes to their headers.
-        self.custom_dict: dict
-            This attribue is set as an empty dictionary.
-        self.custom_port: dict
-            This attribute is set as an empty dictionary.
-        self.clades_other_dict: dict
-            This dictionary is populated and updated with the current states of the widgets stored in self.loop_widgets.
-        self.variable_table_df: Dataframe | list
-            This attribute is set as an empty list.
-        self.graph_config_df: Dataframe | list
-            This attribute is set as an empty list.
-        self.other_config_df: Dataframe | list
-            This attribute is set as an empty list.
-        self.configs: dict
-            This attribute is populated with a nested dictionary in which each item contains a dictionary unique to each settings file - variable_config.csv, graph_config.csv, and other_config.csv. Each dictionary has the following key, value items: "variable", the Plethysmography class attribute that refers to the file path to the settings file; "path", the string file path to the settings file; "frame", the attribute that refers to the dataframe; "df", the dataframe.
-
-        Outcomes
-        --------
-        self.setup_transform_combo()
-            Add widget from custom class CheckableComboBox to STAGG settings subGUI layout to serve as drop-down menu for data transformation options.
+        """General window setup
+        
+        Set widget callbacks
+        Establish widget groupings for easier reference later
+        Add CheckableComboBox to layout
         """
         self.additional_dict = {
             "Feature": self.feature_combo,
@@ -428,19 +368,11 @@ class Config(QDialog, Ui_Config):
 
     def get_variable_table_df(self):
         """
-        - Populate several list attributes and self.variable_table_df dataframe with text
-           and widget statuses from self.buttonDict_variable (dict)
-        - create columns for self.graph_config_df and self.other_config_df.
+        Create a DataFrame from the current variable_table widget state
 
-        Parameters
+        Returns
         --------
-        self.buttonDict_variable: dict
-            This Plethysmography class attribute is a nested dictionary used to populate and save the text and RadioButton states of Config.variable_table (TableWidget) in the Config subGUI.
-        
-        Outputs
-        --------
-        self.variable_table_df: Dataframe
-            This attribute is populated with a dataframe that contains the states of the self.variable_table widgets for each variable as stored in self.buttonDict_variable (dict).
+        pd.DataFrame: variable_config data
         """
         # Create base dataframe
         variable_table_df = pd.DataFrame(
@@ -643,42 +575,6 @@ class Config(QDialog, Ui_Config):
         else:
             self.transform_combo.loadCustom(["Custom"])
 
-    def update_hierarchical_combos(self, valid_values, combos, default_value, renamed=None, enable_set=True, first_required=False):
-        """ Populate a sequence of combo boxes which maintain dependencies on their previous sibling
-        Dependencies:
-            - Combo box enabled only if previous sibling has a selected value other than the `default_value`
-            - Valid values are the previous valid values, less the selected value of the previous sibling
-        
-        Args:
-            valid_values: initial valid values used to populate the first combo box
-            combos: list of combo boxes to populate, in order
-            default_value: default option used to populate the first index of the combos
-            renamed: tuple mapping a renamed value from its old value to its new value
-            enable_set: bool determining whether the set of combo boxes should be enabled
-                        in case there is an external dependency
-        """
-        prev_selected = enable_set
-        for i, combo in enumerate(combos):
-            combo.setEnabled(prev_selected)
-
-            # Immediately restore all following to defaults if previous not selected
-            if not prev_selected:
-                combo.blockSignals(True)
-                combo.setCurrentText(default_value)
-                combo.blockSignals(False)
-                continue
-
-            # Update value based on valid values and any renamed variables
-            _default_value = None if (first_required and i==0) else default_value
-            update_combo_values(combo, valid_values, renamed=renamed, default_value=_default_value)
-
-            # Check if the curr_value was set back to default
-            curr_value = combo.currentText()
-            prev_selected = (curr_value != default_value)
-
-            # remove this value from the options for the next boxes
-            valid_values = valid_values[valid_values != curr_value]
-
     def update_graph_config(self, __checked=None, renamed=None):
         """
         Update the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes whenever the user selects
@@ -706,7 +602,7 @@ class Config(QDialog, Ui_Config):
         default_value = "Select variable:"
         valid_values = self.get_independent_covariate_vars()
 
-        self.update_hierarchical_combos(valid_values, combos, default_value, renamed=renamed)
+        update_hierarchical_combos(valid_values, combos, default_value, renamed=renamed)
 
 
     # TODO: group utilities together
@@ -794,7 +690,6 @@ class Config(QDialog, Ui_Config):
         covariates_checkable_combo = CheckableComboBox()
         covariates_checkable_combo.currentIndexChanged.connect(self.update_loop)
         return covariates_checkable_combo
-
     
     @property
     def other_config_df(self):
@@ -816,7 +711,6 @@ class Config(QDialog, Ui_Config):
                                                 "ymin",
                                                 "ymax",
                                                 "Inclusion"])
-
 
         # Add plots for Apneas and/or Sighs
         if self.feature_combo.currentText() != "None":
@@ -1107,6 +1001,7 @@ class Config(QDialog, Ui_Config):
         # Clear loop table
         self.clear_loops()
 
+        # TODO: is there a faster/cleaner way to iterate?
         # Populate each row of loop_table
         for row_num in odf.index:
             self.add_loop()
