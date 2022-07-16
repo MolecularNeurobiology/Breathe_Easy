@@ -21,9 +21,7 @@ from datetime import datetime
 
 # data parsing
 import json
-import csv
 import pandas as pd
-from bs4 import BeautifulSoup as bs
 
 # multithreading
 import queue
@@ -143,9 +141,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.papr_dir = os.path.join("scripts", "papr")
 
         # STAGG Settings
-        self.variable_config_df = None
-        self.graph_config_df = self.DEFAULT_GRAPH_CONFIG_DF.copy()
-        self.other_config_df = self.DEFAULT_OTHER_CONFIG_DF.copy()
+        self.config_data = None  # {var=None, graph/other=defaults}
         self.stagg_input_dir_or_files = ""  # path to the STAGG input directory
 
         # Basspro settings
@@ -254,19 +250,24 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             data = filepath_or_data
             self.autosections_df = data
 
+        # Preparing to clean up the timestamp options below
+        custom_timestamp_idx = self.necessary_timestamp_box.findText("Custom") 
+
         if self.autosections_df is None:
             self.auto_layout.delete_button.hide()
-            if self.necessary_timestamp_box.findText("Custom") != -1:
-                self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
-                self.necessary_timestamp_box.setCurrentIndex(0)
+            if custom_timestamp_idx != -1:
+                if self.necessary_timestamp_box.currentIndex() == custom_timestamp_idx:
+                    # Set back to default
+                    self.necessary_timestamp_box.setCurrentIndex(0)
+                self.necessary_timestamp_box.removeItem(custom_timestamp_idx)
+
             # Remove old autosections
             for item in self.sections_list.findItems("auto", Qt.MatchContains):
                 self.sections_list.takeItem(self.sections_list.row(item))
         else:
             self.auto_layout.delete_button.show()
-            if self.necessary_timestamp_box.findText("Custom") != -1:
-                self.necessary_timestamp_box.removeItem(self.necessary_timestamp_box.findText("Custom"))
-            self.necessary_timestamp_box.addItem("Custom")
+            if custom_timestamp_idx == -1:
+                self.necessary_timestamp_box.addItem("Custom")
 
     @property
     def mansections(self):
@@ -302,11 +303,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     @property
     def config_data(self):
-        """Get all STAGG settings data -- variable, graph, other"""
-        # Get all config data collectively
+        """Get collective STAGG settings data -- variable, graph, other"""
         var_df = self.variable_config_df
 
-        # If var configs is None, return None (others always have at least default values)
+        # If var configs is None, return None (others will always have at least default values)
         if var_df is None:
             return None
         # Otherwise return dict of data
@@ -330,6 +330,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             graph_df = new_data['graph']
             other_df = new_data['other']
             self.variable_config_df = var_df if var_df is None else var_df.copy()
+            # Set defaults if None is given
             self.graph_config_df = self.DEFAULT_GRAPH_CONFIG_DF.copy() if graph_df is None else graph_df.copy()
             self.other_config_df = self.DEFAULT_OTHER_CONFIG_DF.copy() if other_df is None else other_df.copy()
             self.stagg_settings_layout.delete_button.show()
