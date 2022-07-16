@@ -31,7 +31,7 @@ import threading
 
 # pyqt
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog
-from PyQt5.QtCore import QThreadPool, Qt, QTimer
+from PyQt5.QtCore import QThreadPool, Qt
 
 # Local imports
 from thinbass_controller import Thinbass
@@ -76,15 +76,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Instantiate the Plethysmography class and its attributes
 
         This function extends QMainWindow and the custom
-        Ui_Plethysmography class to create the Main GUI window. Below
+        Ui_Plethysmography class to create the MainGUI window. Below
         are setup methods for PyQt, widget population, initial
         attribute assignments, and callback methods for GUI events
-        
-        # TODO: move these to BP and STAGG functions
-
-        Parameters
-        --------
-
         """
 
         super(Plethysmography, self).__init__()
@@ -152,7 +146,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.variable_config_df = None
         self.graph_config_df = self.DEFAULT_GRAPH_CONFIG_DF.copy()
         self.other_config_df = self.DEFAULT_OTHER_CONFIG_DF.copy()
-        self.breath_df = []  # TODO: unused?
         self.stagg_input_dir_or_files = ""  # path to the STAGG input directory
 
         # Basspro settings
@@ -692,9 +685,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if new_metadata is not None:
             self.metadata = new_metadata
 
-            #if self.breath_df != []:
-            #    self.update_breath_df("metadata")
-
     def show_manual(self):
         """Show the manual BASSPRO settings subGUI to edit manual settings"""
         # Populate GUI widgets with experimental condition choices:
@@ -703,9 +693,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                            self.output_dir)
         if new_settings is not None:
             self.mansections = new_settings
-
-            #if self.breath_df != []:
-            #    self.update_breath_df("manual settings")
 
     def show_auto(self):
         """
@@ -725,11 +712,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         if new_settings is not None:
             self.autosections = new_settings
-
-            # TODO: why?
-            #if self.breath_df != []:
-            #    self.update_breath_df("automated settings")
-
 
     def show_basic(self):
         """
@@ -944,132 +926,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.config_data = None
         notify_info("STAGG settings removed.")
 
-
-
-    def update_breath_df(self, updated_file):
-        """
-        Ask the user if they want to update the self.breath_df list to include the
-          latest updates to the metadata and/or the automated or manual BASSPRO settings
-        If so, reset and repopulate the STAGG settings subGUI widgets, namely Config.variable_table.
-
-        Parameters
-        --------
-        self.breath_df: list
-            This attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
-        self.metadata: str
-            This attribute refers to the file path of the metadata file.
-        self.autosections: str
-            This attribute refers to the file path of the automated BASSPRO settings file.
-        self.mansections: str
-            This attribute refers to the file path of the manual BASSPRO settings file.
-        self.basspro_path: str
-            The path to the BASSPRO module script.
-        self.buttonDict_variable: dict
-            This attribute is either an empty dictionary or a nested dictionary used to populate and save the text and RadioButton states of Config.variable_table (TableWidget) in the Config subGUI.
-        Config.vdf: dict
-            This Config attribute is either an empty dictionary or a nested dictionary populated with only those settings from variable_config file that are not null or 0.
-        Config.variable_table: QTableWidget
-            This TableWidget is defined in the Config class, displayed in the STAGG settings subGUI, and populated with rows based on the list of variables (self.breath_df).
-        
-        Outputs
-        --------
-        old_bdf: list
-            This attribute is a copy of self.breath_df before it is emptied.
-        self.breath_df: list
-            This attribute is emptied, repopulated with variables from the BASSPRO module script, the metadata, and the BASSPRO settings, and compared to old_bdf.
-        reply: QMessageBox
-            If there is a difference between old_bdf and self.breath_df, then this MessageBox asks the user if they would like to update the list of variables presented in the STAGG settings subGUI and warned that unsaved changes may be lost.
-        self.missing_meta: list
-            This attribute is a list of file paths for files that could not be accessed.
-        self.buttonDict_variable: dict
-            The relevant items of this nested dictionary are updated based on corresponding values in Config.vdf (dict).
-        Config.variable_table: QTableWidget
-            cellChanged signals are assigned to the TableWidgets cells for two slots: Config.no_duplicates() and Config.update_loop().
-
-        Outcomes
-        --------
-        self.try_open(path)
-            This method ensures that the file passed and its contents are accessible.
-        Config.setup_table_config()
-            This Config class method assigns delegates to Config.variable_table and Config.loop_table, sets self.buttonDict_variable as an empty dictionary, repopulates it with text and widgets based on items listed in self.breath_df (list), assigns the RadioButton widgets of each row to a ButtonGroup, populates Config.variable_table (TableWidget) with the contents of self.buttonDict_variable, assigns toggled signals slotted for Config.add_combos() to the RadioButtons in self.buttonDict_variable that correspond to those in the "Independent" and "Covariate" columns of the TableWidget, and adjusts the size of the cells of Config.variable_table.
-        Config.no_duplicates()
-            This method automatically renames the variable in the "Alias" column of Config.variable_table (TableWidget) to avoid duplicate variable names.
-        Config.update_loop()
-            This method updates the contents of Config.clades_other_dict with the contents of self.loop_menu and then update the contents of Config.loop_table with the newly updated contents of Config.clades_other_dict.
-        Config.load_custom_config()
-            This Config class method populates Custom.custom_table based on the dependent variables selected by the user according to the dataframe derived from the variable config .csv file the user selected. 
-        Config.load_graph_config()
-            This Config class method populates the Xvar, Pointdodge, Facet1, and Facet2 comboBoxes with the variables selected as independent or covariate according to the variable_config .csv file; if there is no variable_config file, then it populates those comboBoxes with the variables in the dataframe read from the graph_config file and sets the comboBoxes current text.
-        """
-        old_bdf = self.breath_df
-        self.breath_df = []
-        missing_meta = []
-        for p in [self.metadata, self.autosections, self.mansections]:
-            if not self.try_open(p):
-                missing_meta.append(p)
-
-        try:
-            with open(self.basspro_path) as bc:
-                soup = bs(bc, 'html.parser')
-            for child in soup.basspro_outputs.stripped_strings:
-                self.breath_df.append(child)
-        except Exception as e:
-            missing_meta.append(self.basspro_path)
-
-        if set(self.breath_df) != set(old_bdf):
-            non_match_old = set(old_bdf) - set(self.breath_df)
-            non_match_new = set(self.breath_df) - set(old_bdf)
-            non_match = list(non_match_old) + list(non_match_new)
-            if len(non_match)>0:
-                reply = QMessageBox.question(self,
-                                             f'New {updated_file} selected',
-                                             'Would you like to update the variable list in STAGG configuration settings?\n\nUnsaved changes may be lost.\n', QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes)
-                if reply == QMessageBox.Yes:
-                    stagg_settings_window.setup_table_config()
-
-                    for a in stagg_settings_window.variable_table_df:
-                        self.buttonDict_variable[a]['Alias'].setText(stagg_settings_window.vdf[a]['Alias'])
-                        for k in ["Independent","Dependent","Covariate"]:
-                            if stagg_settings_window.vdf[a][k] == '1':
-                                self.buttonDict_variable[a][k].setChecked(True)
-                    stagg_settings_window.load_custom_config()
-                    stagg_settings_window.load_graph_config()
-                else:
-                    self.breath_df = old_bdf
-
-    def try_open(self,path):
-        """
-        Ensure that the file passed and its contents are accessible.
-
-        Parameters
-        --------
-        path: str
-            This argument is a file path stored in either self.metadata, self.autosections, or self.mansections.
-        self.breath_df: list
-            This attribute is either an empty list or populated with a list of variables derived from the metadata, BASSPRO settings, or STAGG settings.
-        self.missing_meta: list
-            This attribute is either an empty list or a list of file paths for files that could not be accessed.
-        
-        Outputs
-        --------
-        self.breath_df: list
-            This attribute is populated with a list of variables read from the passed file.
-        self.missing_meta: list
-            This attribute is populated with file paths that were not accessible.  
-        """
-        try:
-            with open(path,encoding='utf-8') as file:
-                columns = next(csv.reader(file))
-            for column in columns:
-                if "section" in str(path):
-                    if "AUTO_" or "MAN_" in column:
-                        self.breath_df.append(column)
-                else:
-                    self.breath_df.append(column)
-        except Exception as e:
-            return False
-        return True
-
     def select_output_dir(self):
         """
         Prompt the user to choose an output directory where both BASSPRO and STAGG output will be written to, detect any relevant input that may already be present in that directory, ask the user if they would like to keep previous selections for input or replace them with the contents of the selected directory if there are previous selections for input and update self.breath_df (list).
@@ -1108,8 +964,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             Detect a metadata file, set self.metadata as its file path, and populate self.metadata_list with the file path for display to the user.
         self.auto_get_basic()
             Detect a basic BASSPRO settings file, set self.basicap as its file path, and populate self.sections_list with the file path for display to the user.
-        self.update_breath_df()
-            This method updates self.breath_df to reflect any changes to the variable list used to populate Config.variable_table if the user chooses to replace previously selected input with input detected in the selected output directory.
         """
 
         # If we already have a workspace dir, set the initial choosing dir to the workspace parent
@@ -1131,7 +985,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if self.dir_contains_valid_import_files(output_dir):
 
             # If any data exists already, ask user before overwriting
-            if self.breath_df or self.metadata or self.autosections or self.basicap or self.mansections:
+            if self.metadata or self.autosections or self.basicap or self.mansections:
 
                 reply = ask_user_ok('Input detected',
                                     'The selected directory has recognizable input.\n\nWould you like to overwrite your current input selection?')
@@ -1142,8 +996,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.auto_get_mansections()
             self.auto_load_metadata()
             self.auto_get_basic()
-            #if len(self.breath_df) > 0:
-            #    self.update_breath_df("settings")
         
     def create_output_folder(self, toolname):
         """
@@ -1489,8 +1341,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             A standard FileDialog allows the user to select multiple signal files from one directory.
         self.metadata_list: QListWidget
             This ListWidget inherited from Ui_Plethysmography class displays the file path of the current metadata file on the main GUI.
-        self.breath_df: list
-            This attribute is either an empty list or a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
         
         Outputs
         --------
@@ -1501,8 +1351,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
         Outcomes
         --------
-        self.update_breath_df()
-            If self.breath_df is not empty, this method is called to update the list of variables used to populate self.breath_df and show the STAGG settings subGUI to reflect any changes in metadata-derived variables.
         self.check_metadata_file()
             If self.signals is not empty, this method checks whether or not references to the selected signals files are found in the current metadata file.
         """
@@ -1522,10 +1370,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if self.test_signal_metadata_match(self.signal_files, data):
                 self.metadata = meta_file
                 break
-
-                #if len(self.breath_df) > 0:
-                #    self.update_breath_df("metadata")
-
 
     def mp_parser(self):
         """
@@ -1950,8 +1794,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             This attribute refers to the path of the user-selected output directory.
         self.sections_list: QListWidget
             This ListWidget inherited from the Ui_Plethysmography class displays the file path of the current BASSPRO settings files intended as input for BASSPRO or as a source of variables for the populating of self.breath_df and the display of the STAGG settings subGUI.
-        self.breath_df: list
-            This attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
         Thumbass: class
             This class defines a simple dialog that gives the user information.
         
@@ -1966,8 +1808,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
         Outcomes
         --------
-        self.update_breath_df()
-            This method updates self.breath_df to reflect any changes to the variable list used to populate Config.variable_table and display the STAGG settings subGUI due to selection of new settings.
         Thumbass.show()
             This method displays the Thumbass dialog.
         """
