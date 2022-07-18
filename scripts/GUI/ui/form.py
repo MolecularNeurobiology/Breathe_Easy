@@ -410,9 +410,9 @@ class Ui_Plethysmography(object):
         self.necessary_timestamp_box.setItemText(0, _translate("Plethysmography", "Select dataset..."))
         self.metadata_button.setText(_translate("Plethysmography", "Select metadata"))
         self.basspro_settings_button.setText(_translate("Plethysmography", "Select BASSPRO\nsettings files"))
-        self.label_2.setText(_translate("Plethysmography", "Advanced Settings"))
-        self.auto_button.setText(_translate("Plethysmography", "Automatic Selection"))
-        self.manual_button.setText(_translate("Plethysmography", "Manual Selection"))
+        self.label_2.setText(_translate("Plethysmography", "Advanced BASSPRO Settings"))
+        self.auto_button.setText(_translate("Plethysmography", "Automated Settings"))
+        self.manual_button.setText(_translate("Plethysmography", "Manual Settings"))
         self.breath_parameters.setText(_translate("Plethysmography", "Basic Settings"))
         self.stagg_settings_button.setText(_translate("Plethysmography", "Select STAGG settings"))
         self.breath_files_button.setText(_translate("Plethysmography", "Select STAGG\n"
