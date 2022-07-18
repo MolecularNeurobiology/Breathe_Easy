@@ -37,7 +37,8 @@ class Settings:
     @classmethod
     def open_files(cls, output_dir=""):
         while True:
-            files, filter = QFileDialog.getOpenFileNames(None, cls.file_chooser_message, output_dir)
+            filter = ' '.join(['*' + ext for ext in cls.valid_filetypes])
+            files, filter = QFileDialog.getOpenFileNames(None, cls.file_chooser_message, output_dir, filter)
 
             # Break if cancelled
             if not files:

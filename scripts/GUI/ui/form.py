@@ -377,9 +377,9 @@ class Ui_Plethysmography(object):
         
         ## CALLBACKS ##
         #   basspro
-        self.signal_files_button.clicked.connect(Plethysmography.get_signal_files)
+        self.signal_files_button.clicked.connect(Plethysmography.select_signal_files)
         self.metadata_button.clicked.connect(Plethysmography.show_annot)
-        self.basspro_settings_button.clicked.connect(Plethysmography.get_autosections)
+        self.basspro_settings_button.clicked.connect(Plethysmography.load_basspro_settings)
         self.output_dir_button.clicked.connect(Plethysmography.select_output_dir)
         self.basspro_launch_button.clicked.connect(Plethysmography.basspro_run)
 
