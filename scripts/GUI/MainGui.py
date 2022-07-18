@@ -669,6 +669,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             elif selected_option == "Load from Database":
                 self.connect_database()
 
+        # TODO: get metadata returned from above functions, rather than set to self
+        #   -want to be able to cancel after opening!
         # If still no metadata, then we must have cancelled
         if self.metadata_df is None:
             return
@@ -679,7 +681,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.metadata = new_metadata
 
     def show_manual(self):
-        """Show the manual BASSPRO settings subGUI to edit manual settings"""
+        """Show the manual BASSPRO settings subGUI to edit manual settings."""
         # Populate GUI widgets with experimental condition choices:
         new_settings = ManualSettings.edit(self.bc_config['Dictionaries']['Manual Settings']['default'],
                                            self.mansections_df,
@@ -690,11 +692,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def show_auto(self):
         """
         Show the automated BASSPRO settings subGUI defined in the Auto class.
-
-        Outcomes
-        --------
-        Auto.show()
-            This method displays the automated BASSPRO settings subGUI.
         """
         new_settings = AutoSettings.edit(self.bc_config['Dictionaries']['Auto Settings']['default'],
                                          self.gui_config['Dictionaries']['Settings Names']['Auto Settings'],
@@ -709,13 +706,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def show_basic(self):
         """
         Show the basic BASSPRO settings subGUI defined in the Basic class.
-
-        Outcomes
-        --------
-        Basic.show()
-            This method displays the basic BASSPRO settings subGUI.
         """
-        #self.basic_settings_window.show()
         new_settings = BasicSettings.edit(self.bc_config['Dictionaries']['AP']['default'],
                                           self.rc_config['References']['Definitions'],
                                           self.basicap_df,
@@ -724,17 +715,50 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.basicap = new_settings
         
         
-    def prepare_stagg_settings(self):
+    def finish_import(self, kill_thread=False):
+        """
+        Called at the conclusion of reading columns and values from Basspro json output
+          OR at the cancellation of existing import process
+        """
+
+        # TODO: Make sure there is no overlap of new thread and an old thread waiting to die
+        #   -do proper cleanup!
+        if self.import_thread:
+            if kill_thread:
+                self.status_message("Killing thread...")
+                # TODO: ensure the thread cleans up properly!
+                # Remove finished callback
+                self.import_thread.quit()
+
+            else:
+                self.status_message("Done!")
+                self.stagg_settings_button.setStyleSheet("background-color: #0f0")
+                self.col_vals = self.import_thread.output
+                self.imported_files = self.stagg_input_files
+
+                # Automatically set result as current data
+                variable_names = self.col_vals.keys()
+                var_config_df = ConfigSettings.get_default_variable_df(variable_names)
+
+                self.config_data = {
+                    'variable': var_config_df,
+                    'graph': self.graph_config_df,
+                    'other': self.other_config_df}
+
+            self.breath_files_button.setEnabled(True)
+            self.import_thread = None
+
+    def show_stagg_settings(self):
         """
         Ensure that there is a source of variables to populate Config.variable_table with,
-        then call stagg settings
+        then show stagg settings window to edit variable, graph, and other configuration.
 
-        Can be sourced from:
+        Settings can be sourced from:
           - metadata and (autosections or mansections)
           - self.variable_config_df
           - self.stagg_input_files (jsons)
 
-        NOTE: the need for this "prepare_" function comes from the potentially longrunning import of
+        NOTE: this method may initiate a potentially longrunning import of
               stagg settings from JSON basspro output files
         """
 
@@ -838,57 +862,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             elif selected_option == "Settings files":
                 col_vals, input_data = self.get_cols_vals_from_settings()
 
-        # Open settings window
-        self.show_stagg_settings(input_data, col_vals)
-
-    def finish_import(self, kill_thread=False):
-        """
-        Called at the conclusion of reading columns and values from Basspro json output
-          OR at the cancellation of existing import process
-        """
-
-        # TODO: Make sure there is no overlap of new thread and an old thread waiting to die
-        #   -do proper cleanup!
-        if self.import_thread:
-            if kill_thread:
-                self.status_message("Killing thread...")
-                # TODO: ensure the thread cleans up properly!
-                # Remove finished callback
-                self.import_thread.quit()
-
-            else:
-                self.status_message("Done!")
-                self.stagg_settings_button.setStyleSheet("background-color: #0f0")
-                self.col_vals = self.import_thread.output
-                self.imported_files = self.stagg_input_files
-
-                # Automatically set result as current data
-                variable_names = self.col_vals.keys()
-                var_config_df = ConfigSettings.get_default_variable_df(variable_names)
-
-                self.config_data = {
-                    'variable': var_config_df,
-                    'graph': self.graph_config_df,
-                    'other': self.other_config_df}
-
-            self.breath_files_button.setEnabled(True)
-            self.import_thread = None
-
-    def show_stagg_settings(self, input_data, col_vals):
-        """
-        Show stagg settings window to edit variable, graph, and other configuration
-
-        Parameters
-        --------
-        input_data (Dict, DataFrame):
-            data for variable-, graph-, and other- configs
-        col_vals (Dict, list):
-            column names and their values
-
-        Outcomes
-        --------
-        On window "Ok", apply changes to current config data
-        """
         # Open Config editor GUI
         new_config_data = ConfigSettings.edit(self.rc_config['References']['Definitions'],
                                               input_data,
