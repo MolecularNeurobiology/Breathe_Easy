@@ -65,7 +65,7 @@ class Ui_GroupOrdering(object):
 
     def retranslateUi(self, GroupOrdering):
         _translate = QtCore.QCoreApplication.translate
-        GroupOrdering.setWindowTitle(_translate("GroupOrdering", "Dialog"))
+        GroupOrdering.setWindowTitle(_translate("GroupOrdering", "Variable Order"))
         self.title.setText(_translate("GroupOrdering", "All Items"))
         self.up_button.setText(_translate("GroupOrdering", "Up"))
         self.down_button.setText(_translate("GroupOrdering", "Down"))
