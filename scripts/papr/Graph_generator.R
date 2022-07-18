@@ -118,11 +118,22 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   # Facet code string generation for graph
   form_string <- as.formula(paste0(facet2_g, " ~ ", facet1_g))
   
+  # Set manual width of plot to ensure the graph is wide enough.
+  x_width <- max(dev.size("cm")[1], max(length(unique(graph_data[[xvar_g]])), 1) * 
+                   max(length(unique(graph_data[[pointdodge_g2]])), 1) * 
+                   max(length(unique(graph_data[[facet1_g]])), 1) * 2 / 3 + 5)
+  
+  # Set manual height of plot to ensure the graph is tall enough.
+  y_height <- max(dev.size("cm")[2], max(length(unique(graph_data[[facet2_g]])), 1) * 7.5 + 10)
+  
+  # Set text label base size
+  base_pt <- 14 * sqrt(y_height / 17.5)
+  
   # Initialize plot
   p <- ggplot() +
     geom_blank(aes_string(x = xvar_g, y = resp_var), data = graph_data) +
     facet_grid(form_string, scales = "fixed") + 
-    theme_few() 
+    theme_few(base_size = base_pt) 
   
   # Draw lines between points corresponding to same mouse.
   p <- p + geom_path(aes_string(x = "linex", y = resp_var, group = "grouppath"), data = graph_data,
@@ -491,16 +502,14 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                                 expand = expansion(mult = c(0.035, 0.07)))
   }
   
-  # Set manual width of plot to ensure the graph is wide enough.
-  x_width <- max(dev.size("cm")[1], max(length(unique(graph_data[[xvar_g]])), 1) * 
-                   max(length(unique(graph_data[[pointdodge_g2]])), 1) * 
-                   max(length(unique(graph_data[[facet1_g]])), 1) * 2 / 3 + 5)
-  
-  # Set manual height of plot to ensure the graph is tall enough.
-  y_height <- max(dev.size("cm")[2], max(length(unique(graph_data[[facet2_g]])), 1) * 7.5 + 10)
-  
   # Saves graphs to designated folder from user selections in GUI.
-  ggsave(savename, plot = p, path = args$Output, width = x_width, height = y_height, units = "cm")
+  if(grep(".svg", savename)){
+    svglite(paste0(args$Output, "/", savename), width = x_width / 2.5, height = y_height / 2.5)
+    print(p)
+    dev.off()
+  } else {
+    ggsave(savename, plot = p, path = args$Output, width = x_width, height = y_height, units = "cm", dpi = 300)
+  }
 }
 
 
