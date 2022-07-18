@@ -349,7 +349,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.basicap_df = BasicSettings.attempt_load(filepath)
                 if self.basicap_df is not None:
                     # Remove old basic settings
-                    for item in self.sections_list.findItems("basics",Qt.MatchContains):
+                    for item in self.sections_list.findItems("basics", Qt.MatchContains):
                         self.sections_list.takeItem(self.sections_list.row(item))
                     
                     # Add new one
@@ -372,15 +372,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return [self.breath_list.item(i).text() for i in range(self.breath_list.count())]
     ##         ##
 
-    def get_settings_file_from_list(self, type):
+    def get_settings_file_from_list(self, ftype):
         """Retrieve a particular STAGG settings file from listwidget"""
         all_settings = [self.sections_list.item(i).text() for i in range(self.sections_list.count())]
 
         for settings_file in all_settings:
 
-            if (type == 'auto' and AutoSettings.validate(settings_file)) or \
-               (type == 'manual' and ManualSettings.validate(settings_file)) or \
-               (type == 'basic' and BasicSettings.validate(settings_file)):
+            if (ftype == 'auto' and AutoSettings.validate(settings_file)) or \
+               (ftype == 'manual' and ManualSettings.validate(settings_file)) or \
+               (ftype == 'basic' and BasicSettings.validate(settings_file)):
                 return settings_file
         return None
 
@@ -651,14 +651,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         return check
 
 
-    def prepare_meta(self):
-        """
-        Show popup to choose source of metadata, before
-        opening the variable annotation window
+    def show_annot(self):
+        """Show the metadata settings subGUI to edit metadata
+
+        On initialization, show popup to choose source of metadata.
         """
         if self.metadata_df is None:
-            valid_options = ["Select file", "Load from Database"]
-            thinb = Thinbass(valid_options=valid_options)
+            options = ["Select file", "Load from Database"]
+            thinb = Thinbass(valid_options=options)
             if not thinb.exec():
                 return
 
@@ -669,16 +669,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             elif selected_option == "Load from Database":
                 self.connect_database()
 
-        if self.metadata_df is not None:
-            self.show_annot()
-
-
-    def show_annot(self):
-        """Show the metadata settings subGUI to edit metadata"""
-
-        # If no metadata files in play
+        # If still no metadata, then we must have cancelled
         if self.metadata_df is None:
-            notify_info("Please import a metadata file")
             return
 
         new_metadata = MetadataSettings.edit(self.metadata_df,

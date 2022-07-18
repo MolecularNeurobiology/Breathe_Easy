@@ -51,18 +51,20 @@ def update_combo_values(combo, valid_values, renamed=None, default_value=""):
     combo.blockSignals(False)
 
 def update_hierarchical_combos(valid_values, combos, default_value, renamed=None, enable_set=True, first_required=False):
-    """ Populate a sequence of combo boxes which maintain dependencies on their previous sibling
+    """Populate a sequence of combo boxes which maintain dependencies on their previous sibling
+    
+    Parameters
+    --------
+    valid_values: initial valid values used to populate the first combo box
+    combos: list of combo boxes to populate, in order
+    default_value: default option used to populate the first index of the combos
+    renamed: tuple mapping a renamed value from its old value to its new value
+    enable_set: bool determining whether the set of combo boxes should be enabled
+                in case there is an external dependency
+
     Dependencies:
         - Combo box enabled only if previous sibling has a selected value other than the `default_value`
         - Valid values are the previous valid values, less the selected value of the previous sibling
-    
-    Args:
-        valid_values: initial valid values used to populate the first combo box
-        combos: list of combo boxes to populate, in order
-        default_value: default option used to populate the first index of the combos
-        renamed: tuple mapping a renamed value from its old value to its new value
-        enable_set: bool determining whether the set of combo boxes should be enabled
-                    in case there is an external dependency
     """
     prev_selected = enable_set
     for i, combo in enumerate(combos):
