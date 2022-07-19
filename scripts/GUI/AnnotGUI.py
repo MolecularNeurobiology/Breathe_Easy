@@ -597,24 +597,21 @@ class Annot(QDialog, Ui_Annot):
         if old_name != new_name:
 
             # Prevent duplicate names
-            if new_name in self.data.columns:
-                new_name = avert_name_collision(new_name, self.data.columns)
-                if new_name is None:
-                    new_name = old_name
+            new_name = avert_name_collision(new_name, self.data.columns)
 
-        # If there is *still* a name change
-        if old_name != new_name:
-            # Prevent this function from firing again on set command
+            # User cancelled, set back to old name
+            if new_name is None:
+                new_name = old_name
+
+            # Set text in widget, may be user-entered name, mangled name, or old name
             self.variable_list_columns.blockSignals(True)
-
-            # Set text in widget
             curr_item.setText(new_name)
-
             self.variable_list_columns.blockSignals(False)
 
+            # Update new name in data
             # TODO: don't mess with dataframe until saving or retrieving after accept; will clean up above logic too ^^
-            # Rename column old_name to new_name
             self.data.rename(columns = {old_name: new_name}, inplace=True, errors='raise')
+
 
     def add_column(self):
         """
