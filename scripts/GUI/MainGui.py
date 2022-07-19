@@ -1818,12 +1818,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # launch STAGG
         self.stagg_run()
 
-    def enable_stagg_buttons(self, status: bool):
+    def enable_stagg_buttons(self, enabled: bool):
         """Enable/Disable collection of STAGG buttons"""
-        self.stagg_settings_button.setEnabled(status)
-        self.stagg_settings_layout.delete_button.setEnabled(status)
-        self.breath_files_button.setEnabled(status)
-        self.stagg_launch_button.setEnabled(status)
+        self.stagg_settings_button.setEnabled(enabled)
+        self.stagg_settings_layout.delete_button.setEnabled(enabled)
+        self.breath_files_button.setEnabled(enabled)
+        self.stagg_launch_button.setEnabled(enabled)
 
     def status_message(self, msg):
         """Write message to status window"""
