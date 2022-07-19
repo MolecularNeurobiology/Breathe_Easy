@@ -1314,11 +1314,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 baddies.append(s)
 
         if len(baddies) > 0:
-            title = "Metadata and signal files mismatch"
+            title = "Metadata and signal files mismatch."
             msg = "The following signals files were not found in the selected metadata file:"
             msg += f"\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n"
             notify_error(msg, title)
-            return False
+            return True
 
         return True
 
