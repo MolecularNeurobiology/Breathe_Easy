@@ -97,7 +97,7 @@ class Config(QDialog, Ui_Config):
         super(Config, self).__init__()
         self.setupUi(self)
         self.setWindowTitle("STAGG Variable Configuration")
-        self.graphic.setStyleSheet("border-image:url(:resources/graphic.png)")
+        self.graphic.setStyleSheet("border-image:url(scripts/GUI/resources/graphic.png)")
         self.isMaximized()
 
         ## CUSTOM SETUP ##
