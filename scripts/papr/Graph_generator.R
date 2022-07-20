@@ -503,7 +503,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   }
   
   # Saves graphs to designated folder from user selections in GUI.
-  if(grep(".svg", savename)){
+  if(grepl(".svg", savename)){
     svglite(paste0(args$Output, "/", savename), width = x_width / 2.5, height = y_height / 2.5)
     print(p)
     dev.off()

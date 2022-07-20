@@ -745,7 +745,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
       name_part <- str_replace_all(c(resp_var, ll), "[[:punct:]]", "")
       graph_file <- str_replace_all(paste0("Poincare_", name_part[1], "_", name_part[2], args$I), " ", "") %>% str_replace_all(" ", "")
       
-      if(grep(".svg", graph_file)){
+      if(grepl(".svg", graph_file)){
         svglite(paste0(args$Output, "/", graph_file), width = 7, height = 7)
         print(p)
         dev.off()
@@ -773,7 +773,7 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
     name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
     graph_file <- str_replace_all(paste0("Poincare_", name_part, args$I), " ", "") %>% str_replace_all(" ", "")
     
-    if(grep(".svg", graph_file)){
+    if(grepl(".svg", graph_file)){
       svglite(paste0(args$Output, "/", graph_file), width = 7, height = 7)
       print(p)
       dev.off()
@@ -839,7 +839,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     name_part <- str_replace_all(c(resp_var, pointdodge), "[[:punct:]]", "")
     graph_file <- paste0("Spectral_", name_part[1], "_", name_part[2], args$I)
     
-    if(grep(".svg", graph_file)){
+    if(grepl(".svg", graph_file)){
       svglite(paste0(args$Output, "/", graph_file), width = 6, height = 2 * length(unique(graph_data[[pointdodge]])))
       print(p)
       dev.off()
@@ -863,7 +863,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     name_part <- str_replace_all(resp_var, "[[:punct:]]", "")
     graph_file <- paste0("Spectral_", name_part, args$I) %>% str_replace_all(" ", "")
     
-    if(grep(".svg", graph_file)){
+    if(grepl(".svg", graph_file)){
       svglite(paste0(args$Output, "/", graph_file), width = 6, height = 2)
       print(p)
       dev.off()
