@@ -61,7 +61,7 @@
        </spacer>
       </item>
       <item>
-       <widget class="QPushButton" name="output_dir_button">
+       <widget class="QPushButton" name="mother_button">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
           <horstretch>0</horstretch>
@@ -118,7 +118,7 @@
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout">
             <item>
-             <widget class="QPushButton" name="signal_files_button">
+             <widget class="QPushButton" name="signal_files">
               <property name="font">
                <font>
                 <pointsize>10</pointsize>
@@ -168,7 +168,7 @@
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_8" stretch="2,0,3">
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0,1">
+             <layout class="QVBoxLayout" name="verticalLayout_6" stretch="0,0,0,0,1">
               <item>
                <spacer name="verticalSpacer_10">
                 <property name="orientation">
@@ -183,7 +183,7 @@
                </spacer>
               </item>
               <item>
-               <widget class="QPushButton" name="metadata_button">
+               <widget class="QPushButton" name="metadata">
                 <property name="font">
                  <font>
                   <pointsize>10</pointsize>
@@ -191,6 +191,26 @@
                 </property>
                 <property name="text">
                  <string>Select metadata file</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="filemaker_button">
+                <property name="font">
+                 <font>
+                  <pointsize>8</pointsize>
+                 </font>
+                </property>
+                <property name="text">
+                 <string>Source metadata
+from database</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="variable_annotation_button">
+                <property name="text">
+                 <string>Variable Annotation</string>
                 </property>
                </widget>
               </item>
@@ -223,9 +243,9 @@
              </spacer>
             </item>
             <item>
-             <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,0,0,0,0,0,0">
+             <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0,0,0,0,0,0,0,0">
               <item>
-               <widget class="QPushButton" name="basspro_settings_button">
+               <widget class="QPushButton" name="signal_segments">
                 <property name="font">
                  <font>
                   <pointsize>10</pointsize>
@@ -234,6 +254,13 @@
                 <property name="text">
                  <string>Select BASSPRO
  settings files</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QPushButton" name="delete_sections">
+                <property name="text">
+                 <string>Delete</string>
                 </property>
                </widget>
               </item>
@@ -326,7 +353,20 @@
            </layout>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_11" stretch="1,3">
+           <layout class="QVBoxLayout" name="verticalLayout_11" stretch="0,1,0,3,0">
+            <item>
+             <spacer name="verticalSpacer_13">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
             <item>
              <widget class="QListWidget" name="metadata_list">
               <property name="acceptDrops">
@@ -335,11 +375,37 @@
              </widget>
             </item>
             <item>
+             <spacer name="verticalSpacer_5">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
              <widget class="QListWidget" name="sections_list">
               <property name="acceptDrops">
                <bool>true</bool>
               </property>
              </widget>
+            </item>
+            <item>
+             <spacer name="verticalSpacer_14">
+              <property name="orientation">
+               <enum>Qt::Vertical</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>20</width>
+                <height>40</height>
+               </size>
+              </property>
+             </spacer>
             </item>
            </layout>
           </item>
@@ -395,7 +461,7 @@
                </spacer>
               </item>
               <item>
-               <widget class="QPushButton" name="stagg_settings_button">
+               <widget class="QPushButton" name="variable_button">
                 <property name="font">
                  <font>
                   <pointsize>10</pointsize>
@@ -420,7 +486,7 @@
                </spacer>
               </item>
               <item>
-               <widget class="QPushButton" name="breath_files_button">
+               <widget class="QPushButton" name="breath_files">
                 <property name="font">
                  <font>
                   <pointsize>10</pointsize>
@@ -488,7 +554,7 @@
             <item>
              <layout class="QVBoxLayout" name="verticalLayout_9">
               <item>
-               <widget class="QPushButton" name="basspro_launch_button">
+               <widget class="QPushButton" name="py_go">
                 <property name="font">
                  <font>
                   <pointsize>12</pointsize>
@@ -597,7 +663,7 @@
                  </spacer>
                 </item>
                 <item>
-                 <widget class="QPushButton" name="stagg_launch_button">
+                 <widget class="QPushButton" name="r_go">
                   <property name="font">
                    <font>
                     <pointsize>12</pointsize>
@@ -637,7 +703,7 @@
                       <string>.svg</string>
                      </property>
                      <property name="checked">
-                      <bool>false</bool>
+                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
@@ -645,9 +711,6 @@
                     <widget class="QRadioButton" name="jpeg_radioButton">
                      <property name="text">
                       <string>.jpeg</string>
-                     </property>
-                     <property name="checked">
-                      <bool>true</bool>
                      </property>
                     </widget>
                    </item>
@@ -711,7 +774,7 @@
  <resources/>
  <connections>
   <connection>
-   <sender>breath_files_button</sender>
+   <sender>breath_files</sender>
    <signal>clicked()</signal>
    <receiver>Plethysmography</receiver>
    <slot>input_directory_r()</slot>
@@ -727,7 +790,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>stagg_launch_button</sender>
+   <sender>r_go</sender>
    <signal>clicked()</signal>
    <receiver>Plethysmography</receiver>
    <slot>r_message()</slot>
@@ -743,7 +806,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>output_dir_button</sender>
+   <sender>mother_button</sender>
    <signal>clicked()</signal>
    <receiver>Plethysmography</receiver>
    <slot>mothership_dir()</slot>
@@ -775,7 +838,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>basspro_launch_button</sender>
+   <sender>py_go</sender>
    <signal>clicked()</signal>
    <receiver>Plethysmography</receiver>
    <slot>py_message()</slot>
@@ -791,10 +854,10 @@
    </hints>
   </connection>
   <connection>
-   <sender>metadata_button</sender>
+   <sender>metadata</sender>
    <signal>clicked()</signal>
    <receiver>Plethysmography</receiver>
-   <slot>prepare_meta()</slot>
+   <slot>get_metadata()</slot>
    <hints>
     <hint type="sourcelabel">
      <x>139</x>
@@ -807,7 +870,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>signal_files_button</sender>
+   <sender>signal_files</sender>
    <signal>clicked()</signal>
    <receiver>Plethysmography</receiver>
    <slot>get_signal_files()</slot>
@@ -823,7 +886,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>basspro_settings_button</sender>
+   <sender>signal_segments</sender>
    <signal>clicked()</signal>
    <receiver>Plethysmography</receiver>
    <slot>get_autosections()</slot>
@@ -835,6 +898,22 @@
     <hint type="destinationlabel">
      <x>399</x>
      <y>299</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>filemaker_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>connect_database()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>293</x>
+     <y>1381</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
     </hint>
    </hints>
   </connection>
@@ -871,7 +950,7 @@
    </hints>
   </connection>
   <connection>
-   <sender>stagg_settings_button</sender>
+   <sender>variable_button</sender>
    <signal>clicked()</signal>
    <receiver>Plethysmography</receiver>
    <slot>show_variable_config()</slot>
@@ -927,6 +1006,22 @@
     <hint type="sourcelabel">
      <x>86</x>
      <y>1592</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>1919</x>
+     <y>1079</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>variable_annotation_button</sender>
+   <signal>clicked()</signal>
+   <receiver>Plethysmography</receiver>
+   <slot>show_annot()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>1368</x>
+     <y>203</y>
     </hint>
     <hint type="destinationlabel">
      <x>1919</x>
@@ -1056,6 +1151,5 @@
   <slot>open_click()</slot>
   <slot>connect_database()</slot>
   <slot>delete()</slot>
-  <slot>prepare_meta()</slot>
  </slots>
 </ui>

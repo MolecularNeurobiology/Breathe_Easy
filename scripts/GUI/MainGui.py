@@ -812,7 +812,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     # TODO: remaining backwards compatible for files without the Order column
                     order_str = record.get('Order', None)
                     if order_str:
-                        col_vals[record['Alias']] = order_str.split('@')
+                        col_vals[record['Alias']] = str(order_str).split('@')
                 
             elif selected_option == "BASSPRO output":
                 # Import currently running
