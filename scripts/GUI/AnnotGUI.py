@@ -243,6 +243,7 @@ class Annot(QDialog, Ui_Annot):
 
         # Catch any non-numeric types
         if value_list.dtypes == object:
+            print(value_list.dtypes)
             self.group_list.addItem("Selected variable has non-numeric values.")
             return False
 
