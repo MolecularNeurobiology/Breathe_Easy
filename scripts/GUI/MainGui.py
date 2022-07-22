@@ -2021,23 +2021,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         --------
         full_run: flag indicating whether user is performing a full run
         """
-        # stagg settings will be created after basspro if doing a full run
-        if not full_run and (
-            self.variable_config_df is None or \
-            self.graph_config_df is None or \
-            self.other_config_df is None):
-            notify_error("Missing STAGG config")
-            return False
-
-        # if we cant expect output from basspro, then we need to make sure the files are already there
-        if not full_run and len(self.stagg_input_files) == 0:
-            notify_error("Missing STAGG input files")
-            return False
 
         # Ensure we have a workspace dir selected
         if not self.require_output_dir():
             return False
-
 
         # Set Rscript path
         rscript_path = os.path.abspath(self.gui_config['Dictionaries']['Paths']['rscript'])
@@ -2067,38 +2054,53 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                 notify_error("Must pick a file named Rscript.")
 
-        ##  Handle large input  ##
-        unique_dirs = set([os.path.dirname(y) for y in self.stagg_input_files])
-        # If more than 200 input files
-            
-            # STAGG has troubles importing too many files when provided as a list of file paths,
-            #   so in these cases, we want args$JSON to be a directory path instead
+        if not full_run:
+            # wait for stagg settings and stagg input to be created after basspro
 
-        # If more than 1 dir involved
-        if len(unique_dirs) > 1:
-
-            if len(self.stagg_input_files) > 200:
-            # Need to have a different command line, so instead we'll regulate the user:
-                title = "That's a lot of JSON"
-                msg = 'The STAGG input provided consists of more than 200 files from multiple directories.'
-                msg += '\nPlease condense the files into one directory for STAGG to analyze.'
-                notify_info(msg, title)
+            if self.variable_config_df is None or \
+                    self.graph_config_df is None or \
+                    self.other_config_df is None:
+                notify_error("Missing STAGG config")
                 return False
 
-            else:
-            # If there aren't a ridiculous number of json files in Main.stagg_input_files,
-            #   then we just need to render the list of file paths into an unbracketed string 
-            #   so that STAGG can recognize it as a list. STAGG didn't like the brackets.
-                self.stagg_input_dir_or_files = ','.join(item for item in self.stagg_input_files)
-                return True
+            if len(self.stagg_input_files) == 0:
+                notify_error("Missing STAGG input files")
+                return False
 
-        # Use directory path instead
-        else:
-            if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
-                self.stagg_input_dir_or_files = ','.join(item for item in self.stagg_input_files)
+
+            ##  Handle large input  ##
+            unique_dirs = set([os.path.dirname(y) for y in self.stagg_input_files])
+            # If more than 200 input files
+                
+                # STAGG has troubles importing too many files when provided as a list of file paths,
+                #   so in these cases, we want args$JSON to be a directory path instead
+
+            # If more than 1 dir involved
+            if len(unique_dirs) > 1:
+
+                if len(self.stagg_input_files) > 200:
+                    # Need to have a different command line, so instead we'll regulate the user:
+                    title = "That's a lot of JSON"
+                    msg = 'The STAGG input provided consists of more than 200 files from multiple directories.'
+                    msg += '\nPlease condense the files into one directory for STAGG to analyze.'
+                    notify_info(msg, title)
+                    return False
+
+                else:
+                    # If there aren't a ridiculous number of json files in Main.stagg_input_files,
+                    #   then we just need to render the list of file paths into an unbracketed string 
+                    #   so that STAGG can recognize it as a list. STAGG didn't like the brackets.
+                    self.stagg_input_dir_or_files = ','.join(item for item in self.stagg_input_files)
+
+            # Use directory path instead
             else:
-                self.stagg_input_dir_or_files = os.path.dirname(self.stagg_input_files[0])
-            return True
+                if any(os.path.basename(b).endswith("RData") for b in self.stagg_input_files):
+                    self.stagg_input_dir_or_files = ','.join(item for item in self.stagg_input_files)
+                else:
+                    self.stagg_input_dir_or_files = os.path.dirname(self.stagg_input_files[0])
+
+        return True
+
 
 class STAGGInputSettings(Settings):
     valid_filetypes = ['.json', '.RData']
