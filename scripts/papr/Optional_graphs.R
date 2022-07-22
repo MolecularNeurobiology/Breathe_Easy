@@ -175,7 +175,7 @@ if(nrow(other_config) > 0){
     }
     
     # Whether to use the breath inclusion filter
-    if((!is.null(other_config_row$Inclusion)) && (other_config_row$Inclusion == 1)){
+    if((!is.null(other_config_row$Inclusion)) && (other_config_row$Inclusion == 0)){
       inclusion_filter <- FALSE
     } else {
       inclusion_filter <- TRUE
