@@ -1087,29 +1087,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     #     return True
 
-    def auto_get_breath_files(self, basspro_run_folder, clear_files):
-        """
-        Populate self.stagg_input_files with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
+    def auto_get_breath_files(self, basspro_run_folder: str, clear_files: bool):
+        """Populate gui with stagg input files (*.json) from a given directory.
 
         Parameters
         --------
-        self.output_dir_py: str
-            This attribute is set as a file path to the timestamped BASSPRO_output_{time} folder within the BASSPRO_output directory within the user-selected directory self.output_dir. It is not spawned until self.require_output_dir() is called when BASSPRO is launched.
-        self.breath_list: QListWidget
-            This ListWidget inherited from the Ui_Plethysmography class displays the file paths of the STAGG input.
-        self.stagg_input_files: list
-            This attribute is either an empty list or is a list of file paths for STAGG input (either JSON files or .RData file or both).
-        
-        Outputs
-        --------
-        reply: QMessageBox
-            If self.stagg_input_files is not empty, this MessageBox asks the user if they would like to keep the previously selected STAGG input files or replace them.
-        self.breath_list: QListWidget
-            This ListWidget is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it appends the files paths from the most recent BASSPRO run to its existing population.
-        self.stagg_input_files: list
-            This attribute is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it is SUPPOSED TO append the file paths from the most recent BASSPRO to its existing items but it looks like it just replaces the list of existing items with a new list of the file paths from self.output_dir_py regardless of the user's choice.
+        basspro_run_folder: path to basspro run output
+        clear_files: flag indicating whether to clear existing breath files
         """
-        # This method needs fixing. If they say yes, I want to keep them, then what happens? It looks like self.stagg_input_files populates with the new files regardless of the user's choice.
+
         if len(self.stagg_input_files) and clear_files:
             self.breath_list.clear()
 
@@ -1890,6 +1876,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                             output_dir_r=stagg_run_folder,
                                             image_format=image_format
                                             ):
+            # TODO: temporary output for debugging
+            cmd_len = len(" ".join(job))
+            self.status_message(f"Length of command: {cmd_len}")
+
             worker_id = generate_unique_id(workers.keys())
             # create a Worker
             new_worker = MainGUIworker.Worker(
@@ -2070,8 +2060,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             unique_dirs = set([os.path.dirname(y) for y in self.stagg_input_files])
             # If more than 200 input files
                 
-                # STAGG has troubles importing too many files when provided as a list of file paths,
-                #   so in these cases, we want args$JSON to be a directory path instead
+            # STAGG has troubles importing too many files when provided as a list of file paths,
+            #   so in these cases, we want args$JSON to be a directory path instead
 
             # If more than 1 dir involved
             if len(unique_dirs) > 1:
