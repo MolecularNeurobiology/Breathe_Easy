@@ -656,7 +656,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         On initialization, show popup to choose source of metadata.
         """
-        if self.metadata_df is None:
+        if self.metadata_df is not None:
+            input_data = self.metadata_df
+
+        else:
             options = ["Select file", "Load from Database"]
             thinb = Thinbass(valid_options=options)
             if not thinb.exec():
@@ -665,20 +668,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             selected_option = thinb.get_value()
 
             if selected_option == "Select file":
-                self.load_metadata()
+                resp = self.load_metadata()
             elif selected_option == "Load from Database":
-                self.connect_database()
+                resp = self.connect_database()
 
-        # TODO: get metadata returned from above functions, rather than set to self
-        #   -want to be able to cancel after opening!
-        # If still no metadata, then we must have cancelled
-        if self.metadata_df is None:
-            return
+            if resp is None:
+                return
 
-        new_metadata = MetadataSettings.edit(self.metadata_df,
+            input_data, filepath = resp
+
+
+        new_metadata = MetadataSettings.edit(input_data,
                                              self.output_dir)
         if new_metadata is not None:
             self.metadata = new_metadata
+
+            # If we did get information from filesystem, add file to listwidget
+            if filepath:
+                self.metadata_list.clear()
+                self.metadata_list.addItem(filepath)
 
     def show_manual(self):
         """Show the manual BASSPRO settings subGUI to edit manual settings."""
@@ -1186,18 +1194,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             meta_file = MetadataSettings.open_file(self.output_dir)
             # break out of cancel
             if not meta_file:
-                return
+                return None
 
             data = MetadataSettings.attempt_load(meta_file)
             if data is None:
                 notify_error("Could not load metadata")
-                return
+                return None
 
             # TODO: this should be done in `attempt_load()` ?? Need to push validation back -- is this function really just require_load()?
             # If there are not valid files, try again
             if self.test_signal_metadata_match(self.signal_files, data):
-                self.metadata = meta_file
-                break
+                return data, meta_file
 
     def mp_parser(self):
         """
@@ -1257,32 +1264,36 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # TODO: Is this true?
         # Cannot connect to database if no signal files
         if self.signal_files_list.count() == 0:
-            return
+            return None
 
         self.status_message("Gauging Filemaker connection...")
         try:
 
             mp_parsed = self.mp_parser()
             if not self.require_output_dir():
-                return
+                return None
 
+            # TODO: Make this a constant or class attribute -- move to a DatabaseManager class?
             dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
             mousedb = pyodbc.connect(dsn)
             mousedb.timeout = 1
 
             # Retrieve metadata from database
-            self.metadata = self.get_study(mousedb, mp_parsed)
+            metadata_df = self.get_study(mousedb, mp_parsed)
 
             mousedb.close()
+
+            # TODO: stop handling files, to simplify this logic and use of load_metadata()
+            return metadata_df, None  # `files` is None
 
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
             msg = "You were unable to connect to the database."
-            msg += "\nWould you like to select another metadata file?"
+            msg += "\nWould you like to select an existing metadata file?"
             reply = ask_user_yes('Unable to connect to database', msg)
             if reply:
-                self.load_metadata()
+                return self.load_metadata()
 
     def get_study(self, mousedb, mp_parsed, fixformat=True):
         """
