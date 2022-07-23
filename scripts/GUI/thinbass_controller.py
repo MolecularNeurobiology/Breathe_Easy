@@ -37,7 +37,7 @@ class Thinbass(QDialog,Ui_Thinbass):
 
         assert len(valid_options) <= 3, "Max 3 options for Thinbass dialog"
 
-        for i, option in enumerate(set(valid_options)):
+        for i, option in enumerate(valid_options):
             new_button = QPushButton(option)
             new_button.clicked.connect(lambda _checked, selection=option : self.make_selection(selection))
             self.horizontalLayout_4.insertWidget(i, new_button)

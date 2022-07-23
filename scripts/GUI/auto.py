@@ -2,7 +2,6 @@
 import numpy as np
 import pandas as pd
 from PyQt5.QtWidgets import QDialog, QInputDialog
-from PyQt5.QtCore import Qt
 from util.tools import avert_name_collision
 from util import Settings
 from util.ui.dialogs import notify_info
@@ -207,6 +206,9 @@ class Auto(QDialog, Ui_Auto):
 
         df = convert_timestamps_to_autosections(self.signal_files)
         self.load_data(df)
+        msg = "Please see documentation for help with"
+        msg += "\nsetting values appropriately."
+        notify_info(msg)
 
     def update_template_selection(self):
         """

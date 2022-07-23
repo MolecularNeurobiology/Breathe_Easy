@@ -93,13 +93,13 @@ class ThreadManager:
 
             # TODO: implement BASSPRO cancel, not just STAGG continuation
             # If it's been longer than 2 minutes since we've heard from the threads
-            if datetime.now() - last_heard > timedelta(minutes=2) and \
-                not monitor['dialog_window']:
-                msg = f"{monitor['proc_name']} is taking a while, {monitor['cancel_msg']}"
-                yes_func = monitor['cancel_func']
-                no_func = monitor['no_cancel_func']
-                msg_box = nonblocking_msg(msg, (yes_func, no_func), title="Longrunning Process", msg_type='yes')
-                self.monitors[monitor_id]['dialog_window'] = msg_box
+            # if datetime.now() - last_heard > timedelta(minutes=2) and \
+            #     not monitor['dialog_window']:
+            #     msg = f"{monitor['proc_name']} is taking a while, {monitor['cancel_msg']}"
+            #     yes_func = monitor['cancel_func']
+            #     no_func = monitor['no_cancel_func']
+            #     msg_box = nonblocking_msg(msg, (yes_func, no_func), title="Longrunning Process", msg_type='yes')
+            #     self.monitors[monitor_id]['dialog_window'] = msg_box
             
             # Check again in a second
             # TODO: make this a timer on interval, not singleshot

@@ -658,7 +658,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         On initialization, show popup to choose source of metadata.
         """
-        if self.metadata_df is None:
+        if self.metadata_df is not None:
+            input_data = self.metadata_df
+
+        else:
             options = ["Select file", "Load from Database"]
             thinb = Thinbass(valid_options=options)
             if not thinb.exec():
@@ -667,20 +670,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             selected_option = thinb.get_value()
 
             if selected_option == "Select file":
-                self.load_metadata()
+                resp = self.load_metadata()
             elif selected_option == "Load from Database":
-                self.connect_database()
+                resp = self.connect_database()
 
-        # TODO: get metadata returned from above functions, rather than set to self
-        #   -want to be able to cancel after opening!
-        # If still no metadata, then we must have cancelled
-        if self.metadata_df is None:
-            return
+            if resp is None:
+                return
 
-        new_metadata = MetadataSettings.edit(self.metadata_df,
+            input_data, filepath = resp
+
+
+        new_metadata = MetadataSettings.edit(input_data,
                                              self.output_dir)
         if new_metadata is not None:
             self.metadata = new_metadata
+
+            # If we did get information from filesystem, add file to listwidget
+            if filepath:
+                self.metadata_list.clear()
+                self.metadata_list.addItem(filepath)
 
     def show_manual(self):
         """Show the manual BASSPRO settings subGUI to edit manual settings."""
@@ -767,6 +775,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Reset button color in case indicating import completion
         self.stagg_settings_button.setStyleSheet("background-color: #eee")
 
+        # Use later to check if data was loaded from filesystem
+        # TODO: should be obsolete later!
+        files = None
+
         # If we already have data for all the configs, use this
         if self.variable_config_df is not None:
             input_data = self.config_data
@@ -804,16 +816,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     notify_error("Could not import files")
                     return
 
-                # Add files to widget to indicate they were loaded
-                self.variable_list.clear()
-                [self.variable_list.addItem(file) for file in files.values()]
-
                 graph_config_df = input_data['graph']
                 col_vals = {}
                 for record in graph_config_df.to_dict('records'):
                     # TODO: remaining backwards compatible for files without the Order column
                     order_str = record.get('Order', None)
                     if order_str:
+                        # TODO: move this logic to occur immediately on file load!
                         col_vals[record['Alias']] = str(order_str).split('@')
                 
             elif selected_option == "BASSPRO output":
@@ -872,6 +881,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if new_config_data is not None:
             self.config_data = new_config_data
             self.col_vals = col_vals
+
+            # If we did get information from filesystem, add files to listwidget
+            if files:
+                self.variable_list.clear()
+                [self.variable_list.addItem(file) for file in files.values()]
 
 
     def delete_meta(self):
@@ -1089,29 +1103,15 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     #     return True
 
-    def auto_get_breath_files(self, basspro_run_folder, clear_files):
-        """
-        Populate self.stagg_input_files with the file paths of the JSON files held in the directory of the most recent BASSPRO run within the same session (the directory file path stored in self.output_dir_py) and populate self.breath_list (ListWidget) with the file paths of those JSON files.
+    def auto_get_breath_files(self, basspro_run_folder: str, clear_files: bool):
+        """Populate gui with stagg input files (*.json) from a given directory.
 
         Parameters
         --------
-        self.output_dir_py: str
-            This attribute is set as a file path to the timestamped BASSPRO_output_{time} folder within the BASSPRO_output directory within the user-selected directory self.output_dir. It is not spawned until self.require_output_dir() is called when BASSPRO is launched.
-        self.breath_list: QListWidget
-            This ListWidget inherited from the Ui_Plethysmography class displays the file paths of the STAGG input.
-        self.stagg_input_files: list
-            This attribute is either an empty list or is a list of file paths for STAGG input (either JSON files or .RData file or both).
-        
-        Outputs
-        --------
-        reply: QMessageBox
-            If self.stagg_input_files is not empty, this MessageBox asks the user if they would like to keep the previously selected STAGG input files or replace them.
-        self.breath_list: QListWidget
-            This ListWidget is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it appends the files paths from the most recent BASSPRO run to its existing population.
-        self.stagg_input_files: list
-            This attribute is either emptied and populated with the file paths of the JSON files from the most recent BASSPRO run within the same session or it is SUPPOSED TO append the file paths from the most recent BASSPRO to its existing items but it looks like it just replaces the list of existing items with a new list of the file paths from self.output_dir_py regardless of the user's choice.
+        basspro_run_folder: path to basspro run output
+        clear_files: flag indicating whether to clear existing breath files
         """
-        # This method needs fixing. If they say yes, I want to keep them, then what happens? It looks like self.stagg_input_files populates with the new files regardless of the user's choice.
+
         if len(self.stagg_input_files) and clear_files:
             self.breath_list.clear()
 
@@ -1197,18 +1197,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             meta_file = MetadataSettings.open_file(self.output_dir)
             # break out of cancel
             if not meta_file:
-                return
+                return None
 
             data = MetadataSettings.attempt_load(meta_file)
             if data is None:
                 notify_error("Could not load metadata")
-                return
+                return None
 
             # TODO: this should be done in `attempt_load()` ?? Need to push validation back -- is this function really just require_load()?
             # If there are not valid files, try again
             if self.test_signal_metadata_match(self.signal_files, data):
-                self.metadata = meta_file
-                break
+                return data, meta_file
 
     def mp_parser(self):
         """
@@ -1268,32 +1267,36 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # TODO: Is this true?
         # Cannot connect to database if no signal files
         if self.signal_files_list.count() == 0:
-            return
+            return None
 
         self.status_message("Gauging Filemaker connection...")
         try:
 
             mp_parsed = self.mp_parser()
             if not self.require_output_dir():
-                return
+                return None
 
+            # TODO: Make this a constant or class attribute -- move to a DatabaseManager class?
             dsn = 'DRIVER={FileMaker ODBC};Server=128.249.80.130;Port=2399;Database=MICE;UID=Python;PWD='
             mousedb = pyodbc.connect(dsn)
             mousedb.timeout = 1
 
             # Retrieve metadata from database
-            self.metadata = self.get_study(mousedb, mp_parsed)
+            metadata_df = self.get_study(mousedb, mp_parsed)
 
             mousedb.close()
+
+            # TODO: stop handling files, to simplify this logic and use of load_metadata()
+            return metadata_df, None  # `files` is None
 
         except Exception as e:
             print(f'{type(e).__name__}: {e}')
             print(traceback.format_exc())
             msg = "You were unable to connect to the database."
-            msg += "\nWould you like to select another metadata file?"
+            msg += "\nWould you like to select an existing metadata file?"
             reply = ask_user_yes('Unable to connect to database', msg)
             if reply:
-                self.load_metadata()
+                return self.load_metadata()
 
     def get_study(self, mousedb, mp_parsed, fixformat=True):
         """
@@ -1892,6 +1895,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                             output_dir_r=stagg_run_folder,
                                             image_format=image_format
                                             ):
+            # TODO: temporary output for debugging
+            cmd_len = len(" ".join(job))
+            self.status_message(f"Length of command: {cmd_len}")
+
             worker_id = generate_unique_id(workers.keys())
             # create a Worker
             new_worker = MainGUIworker.Worker(
@@ -1977,6 +1984,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                              manual=mansections_file,
                                              auto=autosections_file,
                                              basic=basic_file):
+            # TODO: temporary output for debugging
+            cmd_len = len(" ".join(job))
+            self.status_message(f"Length of command: {cmd_len}")
 
             worker_id = generate_unique_id(workers.keys())
 
@@ -2072,8 +2082,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             unique_dirs = set([os.path.dirname(y) for y in self.stagg_input_files])
             # If more than 200 input files
                 
-                # STAGG has troubles importing too many files when provided as a list of file paths,
-                #   so in these cases, we want args$JSON to be a directory path instead
+            # STAGG has troubles importing too many files when provided as a list of file paths,
+            #   so in these cases, we want args$JSON to be a directory path instead
 
             # If more than 1 dir involved
             if len(unique_dirs) > 1:
