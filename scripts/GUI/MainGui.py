@@ -765,6 +765,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Reset button color in case indicating import completion
         self.stagg_settings_button.setStyleSheet("background-color: #eee")
 
+        # Use later to check if data was loaded from filesystem
+        # TODO: should be obsolete later!
+        files = None
+
         # If we already have data for all the configs, use this
         if self.variable_config_df is not None:
             input_data = self.config_data
@@ -801,10 +805,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 if input_data is None:
                     notify_error("Could not import files")
                     return
-
-                # Add files to widget to indicate they were loaded
-                self.variable_list.clear()
-                [self.variable_list.addItem(file) for file in files.values()]
 
                 graph_config_df = input_data['graph']
                 col_vals = {}
@@ -870,6 +870,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if new_config_data is not None:
             self.config_data = new_config_data
             self.col_vals = col_vals
+
+            # If we did get information from filesystem, add files to listwidget
+            if files:
+                self.variable_list.clear()
+                [self.variable_list.addItem(file) for file in files.values()]
 
 
     def delete_meta(self):
