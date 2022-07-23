@@ -1982,6 +1982,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                              manual=mansections_file,
                                              auto=autosections_file,
                                              basic=basic_file):
+            # TODO: temporary output for debugging
+            cmd_len = len(" ".join(job))
+            self.status_message(f"Length of command: {cmd_len}")
 
             worker_id = generate_unique_id(workers.keys())
 
