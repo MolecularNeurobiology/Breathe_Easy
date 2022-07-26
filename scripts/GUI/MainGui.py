@@ -1682,7 +1682,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # If doing full run, check stagg reqs
         is_full_run = self.full_run_checkbox.isChecked()
-        if is_full_run and not self.check_stagg_reqs(full_run=True):
+        if is_full_run and not self.check_stagg_reqs(wait_for_basspro=True):
                 return
 
         # Prep stagg settings ahead of time using current BP settings
@@ -2022,12 +2022,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             msg += f"\n{baddies_list_str}"
             self.status_message(msg)
 
-    def check_stagg_reqs(self, full_run: bool = False):
+    def check_stagg_reqs(self, wait_for_basspro: bool = False):
         """Check requirements to run STAGG
 
         Parameters
         --------
-        full_run: flag indicating whether user is performing a full run
+        wait_for_basspro: flag indicating whether to expect BASSPRO to produce necessary input
         """
 
         # Ensure we have a workspace dir selected
@@ -2062,8 +2062,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                 notify_error("Must pick a file named Rscript")
 
-        if not full_run:
-            # wait for stagg settings and stagg input to be created after basspro
+        # This will all be handled after basspro runs
+        if not wait_for_basspro:
 
             if self.variable_config_df is None or \
                     self.graph_config_df is None or \
@@ -2078,7 +2078,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             ##  Handle large input  ##
             unique_dirs = set([os.path.dirname(y) for y in self.stagg_input_files])
-            # If more than 200 input files
                 
             # STAGG has troubles importing too many files when provided as a list of file paths,
             #   so in these cases, we want args$JSON to be a directory path instead
