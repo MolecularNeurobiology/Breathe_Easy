@@ -602,8 +602,10 @@ if(sighs || apneas){
   
   # By default, set categories in order of appearance in data.
   for(ii in box_vars){
+    eventtab_join[[ii]] <- eventtab_join[[ii]] %>% str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")
     eventtab_join[[ii]] <- factor(eventtab_join[[ii]], 
-                                  levels = unique((tbl0 %>% dplyr::filter(!measure_breaks))[[ii]]))
+                                  levels = unique((tbl0 %>% dplyr::filter(!measure_breaks))[[ii]] %>% 
+                                                    str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")))
   }
   
   # Set label + internal variable names.
