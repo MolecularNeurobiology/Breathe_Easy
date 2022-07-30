@@ -197,7 +197,7 @@ if(nrow(other_config) > 0){
     # Body weight
     if(ocr2["Resp"] == "Weight") {
       
-      #Gathers alias names of data columnns that contain the body weight values the user wishes to graph.
+      #Gathers alias names of data columns that contain the body weight values the user wishes to graph.
       bw_vars <- c(var_names$Alias[which(var_names$Body.Weight == 1)])
       
       if(length(bw_vars) == 0) {
@@ -284,6 +284,111 @@ if(nrow(other_config) > 0){
       
       # Make graph + save
       graph_make(bw_vars, as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
+                 as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
+                 other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
+                 "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
+                 ymins, ymaxes)
+      
+      # Save stat results
+      other_mod_res_list[[other_config_row$Graph]] <- other_mod_res$lmer
+      other_tukey_res_list[[other_config_row$Graph]] <- other_mod_res$rel_comp
+      
+      if(exists("dirtest") && (class(dirtest) == "try-error")){
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+      }
+    #######################################################
+    # Age graphs. NB: Requires a column specifically named "Age"
+    } else if(ocr2["Resp"] == "Age") {
+      
+      # Check if there is an Age column
+      if("Age" %in% var_names$Alias) {
+        age_vars <- "Age"
+      } else {
+        print("No Age variable to plot.")
+        next
+      }
+      
+      # Set graphing variables as a vector.
+      box_vars <- c(ocr2["Xvar"], ocr2["Pointdodge"], ocr2["Facet1"], ocr2["Facet2"])
+      box_vars <- box_vars[box_vars != ""]
+      if(length(box_vars) == 0){ next }
+      names(box_vars) <- NULL
+      
+      # Check user settings
+      if((!is.null(other_config_row$Independent)) && (!is.na(other_config_row$Independent))){
+        for(jj in c(unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert))){
+          if(typeof(tbl0[[jj]]) == "numeric"){
+            tbl0[[jj]] <- as.character(tbl0[[jj]])
+          }
+          if(length(unique(tbl0[[jj]])) == 1){
+            warning(paste0("Independent variable ", jj, " has only one unique value. Results may be unreliable."))
+          }
+          if(length(unique(tbl0[[jj]])) > 20){
+            warning(paste0("Independent variable ", jj, 
+                           " has many unique values; this may cause memory issues. Should this be a covariate?"))
+          }
+        }
+      }
+      
+      if((!is.null(other_config_row$Covariate)) && (!is.na(other_config_row$Covariate))){
+        for(jj in c(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))){
+          if(length(unique(tbl0[[jj]])) == 1){
+            warning(paste0("Covariate ", jj, " has only one unique value. Results may be unreliable."))
+          }
+        }
+      }
+      
+      # Build stat modeling variable vector.
+      if((!is.null(other_config_row$Independent)) && (!is.na(other_config_row$Independent))){
+        other_inter_vars <- unique(c(box_vars, unlist(strsplit(other_config_row$Independent, "@")) %>% sapply(wu_convert)))
+      } else {
+        other_inter_vars <- box_vars
+      }
+      if((!is.null(other_config_row$Covariate)) && (!is.na(other_config_row$Covariate))){
+        other_covars <- unique(unlist(strsplit(other_config_row$Covariate, "@")) %>% sapply(wu_convert))
+      } else {
+        other_covars <- character(0)
+      }
+      
+      # Organizes data collected above for graphing.
+      other_df <- tbl0 %>%
+        dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
+        dplyr::summarise_at(age_vars, mean, na.rm = TRUE) %>%
+        dplyr::ungroup()
+      other_graph_df <- tbl0 %>%
+        dplyr::group_by_at(c(box_vars, "MUID")) %>%
+        dplyr::summarise_at(age_vars, mean, na.rm = TRUE) %>%
+        dplyr::ungroup()
+      
+      # Check that variables are factors; set in order of appearance in data.
+      for(jj in box_vars){
+        other_graph_df[[jj]] <- factor(other_graph_df[[jj]], levels = unique(tbl0[[jj]]))
+      }
+      
+      # Set order of categories in variables as specified by the user, if specified.
+      regraph_vars <- box_vars[which(box_vars %in% graph_v)] 
+      if(length(regraph_vars) != 0){
+        other_graph_df <- graph_reorder(other_graph_df, regraph_vars, graph_vars, tbl0)
+      }
+      
+      name_part <- str_replace_all(other_config_row$Graph, "[[:punct:]]", "")
+      graph_file <- paste0("Age_", name_part, args$I) %>% str_replace_all(" ", "")
+      
+      # Assumes weight is a mouse-level measurement.
+      if(length(unique(other_df$MUID)) == nrow(other_df)){
+        other_mod_res <- stat_run_other(age_vars, other_inter_vars, other_covars, other_df, FALSE)
+      } else {
+        other_mod_res <- stat_run(age_vars, other_inter_vars, other_covars, other_df, FALSE)
+      }
+      
+      # Make graph + save
+      graph_make(age_vars, as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
                  as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
                  other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
                  "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
@@ -474,7 +579,6 @@ if(nrow(other_config) > 0){
           other_df <- tbl0 %>%
             dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
             dplyr::filter(Breath_Inclusion_Filter == 1) %>%
-            #dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
             dplyr::ungroup()
           ## Data frame for plotting
           other_graph_df <- tbl0 %>%
@@ -486,7 +590,6 @@ if(nrow(other_config) > 0){
           ## Data frame for stat modeling
           other_df <- tbl0 %>%
             dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
-            #dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
             dplyr::ungroup()
           ## Data frame for plotting
           other_graph_df <- tbl0 %>%
@@ -602,8 +705,10 @@ if(sighs || apneas){
   
   # By default, set categories in order of appearance in data.
   for(ii in box_vars){
+    eventtab_join[[ii]] <- eventtab_join[[ii]] %>% str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")
     eventtab_join[[ii]] <- factor(eventtab_join[[ii]], 
-                                  levels = unique((tbl0 %>% dplyr::filter(!measure_breaks))[[ii]]))
+                                  levels = unique((tbl0 %>% dplyr::filter(!measure_breaks))[[ii]] %>% 
+                                                    str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")))
   }
   
   # Set label + internal variable names.
