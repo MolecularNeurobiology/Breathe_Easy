@@ -99,7 +99,7 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
         yield breathcaller_cmd
 
 
-def get_jobs_r(rscript, pipeline, papr_dir, output_dir, stagg_input_dir_or_files, variable_config, graph_config, other_config, output_dir_r, image_format):
+def get_jobs_r(rscript, pipeline, papr_dir, output_dir, inputpaths_file, variable_config, graph_config, other_config, output_dir_r, image_format):
     """
     Return the string fed to the command line to launch the STAGG module.
 
@@ -109,7 +109,7 @@ def get_jobs_r(rscript, pipeline, papr_dir, output_dir, stagg_input_dir_or_files
     pipeline (str): path to the appropriate .R script
     papr_dir (str): path to STAGG scripts directory
     output_dir (str): output directory selected by user
-    stagg_input_dir_or_files (str): path to the STAGG input files, or single directory
+    inputpaths_file (str): path to the file containing STAGG input filepaths
     variable_config (str): path to variable config 
     graph_config (str): path to graph config 
     other_config (str): path to other config 
@@ -131,7 +131,7 @@ def get_jobs_r(rscript, pipeline, papr_dir, output_dir, stagg_input_dir_or_files
         # The path to the output directory chosen by the user
         '-d', output_dir,
         # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
-        '-J', stagg_input_dir_or_files,
+        '-J', inputpaths_file,
         # The path to the variable_config.csv file
         '-R', variable_config,
         # The path to the graph_config.csv file
