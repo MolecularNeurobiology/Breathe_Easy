@@ -106,7 +106,10 @@ print("Loading data")
 starting_wd = getwd()
 setwd(args2$dir)
 
-full_dirs <- unlist(strsplit(args2$JSON, ","))
+# Find RData file.
+## Assume that all files are listed in a text file pointed at by args2$JSON. 
+## Newline separated text file.
+full_dirs <- unlist(read.delim(args2$JSON, sep = "\n", header = FALSE))
 renv_dir <-  grep("\\.RData", full_dirs, value = TRUE)
 
 if(length(renv_dir) > 1){
@@ -186,9 +189,11 @@ simple_appender <- function(fp, breath_df = NULL){
   return(breath_df)
 } 
 
-# Find JSONs in filepaths from command line arguments.
+# Find JSON files.
+## Assume that all json files are listed in a text file pointed at by args$JSON. 
+## Newline separated text file.
 if(!is.null(args$JSON) && !is.na(args$JSON) && is.character(args$JSON)){
-  full_dirs <- unlist(strsplit(args$JSON, ","))
+  full_dirs <- unlist(read.delim(args$JSON, sep = "\n", header = FALSE))
   filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE),
                  grep("\\.json", full_dirs, value = TRUE))
   

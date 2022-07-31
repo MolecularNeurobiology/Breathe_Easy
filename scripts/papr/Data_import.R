@@ -12,8 +12,10 @@ print("Importing data")
 # setwd("~/") 
 setwd(args$dir)
 
-#Finds all JSON files in file locations indicated in args$JSON.
-full_dirs <- unlist(strsplit(args$JSON, ","))
+# Find JSON files.
+## Assume that all json files are listed in a text file pointed at by args$JSON. 
+## Newline separated text file.
+full_dirs <- unlist(read.delim(args$JSON, sep = "\n", header = FALSE))
 filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE), 
                grep("\\.json", full_dirs, value = TRUE))
 
