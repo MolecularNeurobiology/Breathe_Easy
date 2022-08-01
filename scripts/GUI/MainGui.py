@@ -2055,6 +2055,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 notify_error("Missing STAGG input files")
                 return False
 
+        if self.thread_manager.is_process_named('STAGG'):
+            notify_error("A STAGG process is already running")
+            return False
+
+
         # Set Rscript path
         rscript_path = os.path.abspath(self.gui_config['Dictionaries']['Paths']['rscript'])
         # If path stored in gui_config.json does not exist or is not an Rscript executable file:
