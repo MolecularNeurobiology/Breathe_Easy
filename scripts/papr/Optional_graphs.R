@@ -739,9 +739,14 @@ if(sighs || apneas){
     eventtab_join <- graph_reorder(eventtab_join, graph_v, graph_vars, tbl0)
     
     # Make graph + save
-    graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join, 
+    sa_test <- try(graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join, 
                other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
-               r_vars_wu[ii], xvar_wu, pointdodge_wu)
+               r_vars_wu[ii], xvar_wu, pointdodge_wu))
+    
+    if(class(sa_test) == "try-error"){
+      print(paste0('Failed to make plots for ', r_vars[ii]))
+      next
+    }
   }
 }
 
