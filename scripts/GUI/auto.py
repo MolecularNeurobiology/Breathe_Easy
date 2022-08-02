@@ -2,10 +2,9 @@
 import numpy as np
 import pandas as pd
 from PyQt5.QtWidgets import QDialog, QInputDialog
-from PyQt5.QtCore import Qt
 from util.tools import avert_name_collision
 from util import Settings
-from util.ui.dialogs import notify_info
+from util.ui.dialogs import notify_info, notify_warning
 from util.ui.tools import populate_table
 from ui.auto_form import Ui_Auto
 
@@ -207,6 +206,11 @@ class Auto(QDialog, Ui_Auto):
 
         df = convert_timestamps_to_autosections(self.signal_files)
         self.load_data(df)
+        msg = "When using comments from your recordings, the settings"
+        msg += " for different gas exposures may not be appropriate for"
+        msg += " your experiment. Please refer to our table of settings"
+        msg += " and confirm values before proceeding."
+        notify_warning(msg, title="Comment Import Warning")
 
     def update_template_selection(self):
         """

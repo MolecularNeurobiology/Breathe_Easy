@@ -4,6 +4,7 @@ import os
 from queue import Queue
 import subprocess
 import threading
+from typing import List
 from PyQt5.QtCore import QRunnable
 
 
@@ -18,20 +19,15 @@ class Worker(QRunnable):
     QRunnable: class
         The Worker class inherits the properties and methods from teh QRunnable class.
     """
-    def __init__(self, path_to_script: str, worker_id: int, worker_queue: Queue):
+    def __init__(self, path_to_script: List[str], worker_id: int, worker_queue: Queue):
         """
         Instantiate the Worker Class.
 
         Parameters
         ---------
-        path_to_script: str
-            The string yielded by get_jobs_py() or get_jobs_r() that is given to the command line to launch either BASSPRO or STAGG respectively.
-        worker_id: int
-            The worker's number, determined by Plethysmography.counter.
-        worker_queue: Queue
-            A first-in, first-out queue constructor for safely exchanging information between threads.
-        pleth: Class
-            The Plethysmography Class.
+        path_to_script: command arguments yielded by get_jobs_py() or get_jobs_r() to launch either BASSPRO or STAGG respectively.
+        worker_id: unique identifier for this thread
+        worker_queue: FIFO queue constructor for safely exchanging information between threads.
         """
         super(Worker, self).__init__()
         self.path_to_script = path_to_script
@@ -71,19 +67,18 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
 
     Parameters
     --------
-        module (str): path to basspro script
-        output (str): path to folder created for basspro run output
-        signal_files (list): collection of input breath files
-        metadata (DataFrame): path to BASSPRO input metadata
-        manual (str, optional): path to manual BASSPRO settings
-        auto (str, optional): path to automated BASSPRO settings
-        basic (DataFrame): path to basic BASSPRO settings
-        NOTE: either mansections or autosections must be provided
+    module (str): path to basspro script
+    output (str): path to folder created for basspro run output
+    signal_files (list): collection of input breath files
+    metadata (DataFrame): path to BASSPRO input metadata
+    manual (str, optional): path to manual BASSPRO settings
+    auto (str, optional): path to automated BASSPRO settings
+    basic (DataFrame): path to basic BASSPRO settings
+    NOTE: either mansections or autosections must be provided
     
-    Returns
+    Outputs
     --------
-    output: breathcaller_cmd
-        The string given to the command line to launch the BASSPRO module.
+    list: Command line arguments to launch the BASSPRO module.
     """
     print('get_jobs_py thread id',threading.get_ident())
     print("get_jobs_py process id",os.getpid())
@@ -104,28 +99,27 @@ def get_jobs_py(signal_files, module, output, metadata, manual, auto, basic):
         yield breathcaller_cmd
 
 
-def get_jobs_r(rscript, pipeline, papr_dir, output_dir, stagg_input_dir_or_files, variable_config, graph_config, other_config, output_dir_r, image_format):
+def get_jobs_r(rscript, pipeline, papr_dir, output_dir, inputpaths_file, variable_config, graph_config, other_config, output_dir_r, image_format):
     """
     Return the string fed to the command line to launch the STAGG module.
 
     Parameters
     --------
-        rscript (str): path to the Rscript.exe file
-        pipeline (str): path to the appropriate .R script
-        papr_dir (str): path to STAGG scripts directory
-        output_dir (str): output directory selected by user
-        stagg_input_dir_or_files (str): path to the STAGG input files, or single directory
-        variable_config (str): path to variable config 
-        graph_config (str): path to graph config 
-        other_config (str): path to other config 
-        output_dir_r (str): path to the STAGG output directory
-        image_format (str): file format of STAGG output figures
-            Either ".svg" or ".jpeg"
+    rscript (str): path to the Rscript.exe file
+    pipeline (str): path to the appropriate .R script
+    papr_dir (str): path to STAGG scripts directory
+    output_dir (str): output directory selected by user
+    inputpaths_file (str): path to the file containing STAGG input filepaths
+    variable_config (str): path to variable config 
+    graph_config (str): path to graph config 
+    other_config (str): path to other config 
+    output_dir_r (str): path to the STAGG output directory
+    image_format (str): file format of STAGG output figures
+        Either ".svg" or ".jpeg"
 
-    Returns
+    Outputs
     --------
-    output: papr_cmd
-        The string given to the command line to launch the STAGG module.
+    list: Command line arguments to launch the STAGG module.
     """
     print('get_jobs_r thread id',threading.get_ident())
     print("get_jobs_r process id",os.getpid())
@@ -137,7 +131,7 @@ def get_jobs_r(rscript, pipeline, papr_dir, output_dir, stagg_input_dir_or_files
         # The path to the output directory chosen by the user
         '-d', output_dir,
         # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
-        '-J', stagg_input_dir_or_files,
+        '-J', inputpaths_file,
         # The path to the variable_config.csv file
         '-R', variable_config,
         # The path to the graph_config.csv file
