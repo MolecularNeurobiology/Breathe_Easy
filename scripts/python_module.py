@@ -16,10 +16,11 @@ Automated Breathcaller created by Christopher S Ward (C) 2020
 updates include contributions from Avery Twitchell-Heyne and feedback from
 Russell Ray, Savannah Lusk, and Andersen Chang
 
-'Breathcaller' function adapted from prior efforts by Christopher S Ward
-'WardBreathcaller' for python 3 (C) 2015,
-'Breath Caller' for python 2 (C) 2014
-'Breathing Analysis' for Matlab (C) 2011
+'Breath identification and annotation functionality adapted from prior efforts 
+by Christopher S Ward
+    'WardBreathcaller' for python 3 (C) 2015,
+    'Breath Caller' for python 2 (C) 2014
+    'Breathing Analysis' for Matlab (C) 2011
 
 ***
 Command Line Arguments
@@ -36,9 +37,19 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.0.6'
+__version__ = '36.1.0'
 
 """
+# v36.1.0 README
+    New updates are added to selection of breaths with Auto_Conditions to 
+    permit filtering based on new columns min_VO2, min_VCO2
+    * in progress
+    Updates to code documentation, docstrings etc.
+    * in progress
+
+# v36.0.1 README
+    addition of capability for processing of pneumotachography signals
+
 # v36.0.0 README
     v36 is a revision that updates a few areas, versioning moving forward
     will implement a modified nomenclature X.Y.Z
@@ -114,89 +125,7 @@ Breaths
 Segments
 
 
-!!!
-# TODO
-List of Expected Output Columns - bring the column dictionary up as a constant and generate the OUTPUT_COLUMNS for access by import
 """
-
-OUTPUT_COLUMNS = [
-    Mouse_And_Session_ID,
-    Breath_Inclusion_Filter,
-    Auto_Condition,
-    Man_Condition,
-    Exp_Condition,
-    Breath Number,
-    Timestamp_Inspiration,
-    Timestamp_Expiration,
-    Inspiratory_Duration,
-    Irreg_Score_Inspiratory_Duration,
-    Expiratory_Duration,
-    Irreg_Score_Expiratory_Duration,
-    Tidal_Volume_uncorrected,
-    Irreg_Score_Tidal_Volume_uncorrected,
-    Tidal_Volume_exhale_uncorrected,
-    Irreg_Score_Tidal_Volume_exhale_uncorrected,
-    VT__Tidal_Volume_corrected,
-    Irreg_Score_VT__Tidal_Volume_corrected,
-    VTpg__Tidal_Volume_per_gram_corrected,
-    Irreg_Score_VTpg__Tidal_Volume_per_gram_corrected,
-    Peak_Inspiratory_Flow,
-    Irreg_Score_Peak_Inspiratory_Flow,
-    Peak_Inspiratory_Flow_corrected,
-    Irreg_Score_Peak_Inspiratory_Flow_corrected,
-    Peak_Expiratory_Flow,
-    Irreg_Score_Peak_Expiratory_Flow,
-    Peak_Expiratory_Flow_corrected,
-    Irreg_Score_Peak_Expiratory_Flow_corrected,
-    Breath_Cycle_Duration,
-    Irreg_Score_Breath_Cycle_Duration,
-    VE__Ventilation,
-    Irreg_Score_VE__Ventilation,
-    VEpg__Ventilation_per_gram,
-    Irreg_Score_VEpg__Ventilation_per_gram,
-    VO2,
-    Irreg_Score_VO2,
-    VO2pg,
-    Irreg_Score_VO2pg,
-    VCO2,
-    Irreg_Score_VCO2,
-    VCO2pg,
-    Irreg_Score_VCO2pg,
-    VEVO2,
-    Irreg_Score_VEVO2,
-    VF,
-    Irreg_Score_VF,
-    TT_per_TV,
-    Irreg_Score_TT_per_TV,
-    TT_per_TVpg,
-    Irreg_Score_TT_per_TVpg,
-    O2_per_Air__VO2_x_TT_per_TV_,
-    Irreg_Score_O2_per_Air__VO2_x_TT_per_TV_,
-    Apnea,
-    Irreg_Score_Apnea,
-    Sigh,
-    Irreg_Score_Sigh,
-    DVTV,
-    Irreg_Score_DVTV,
-    per500,
-    Irreg_Score_per500,
-    mav,
-    Irreg_Score_mav,
-    O2_concentration,
-    Irreg_Score_O2_concentration,
-    CO2_concentration,
-    Irreg_Score_CO2_concentration,
-    Chamber_Temperature,
-    Irreg_Score_Chamber_Temperature,
-    O2_uncalibrated,
-    Irreg_Score_O2_uncalibrated,
-    CO2_uncalibrated,
-    Irreg_Score_CO2_uncalibrated,
-    Chamber_Temp_uncalibrated,
-    Irreg_Score_Chamber_Temp_uncalibrated,
-    Body_Temperature_Linear,
-    Irreg_Score_Body_Temperature_Linear,
-    ]
 
 
 
