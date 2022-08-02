@@ -2926,7 +2926,22 @@ def create_filters_for_automated_selections(
         else:
             high_VEVO2_filter = \
                 breath_list['ts_inhale'] == breath_list['ts_inhale']
-            
+        
+        if 'VO2' in breath_list.columns and \
+                current_auto_criteria['min_VO2'] != 'off':
+            low_VO2_filter = breath_list['VO2'] > \
+                float(current_auto_criteria['min_VO2'])
+        else: 
+            low_VO2_filter = \
+                breath_list['ts_inhale'] == breath_list['ts_inhale']
+                
+        if 'VCO2' in breath_list.columns and \
+                current_auto_criteria['min_VCO2'] != 'off':
+            low_VCO2_filter = breath_list['VCO2'] > \
+                float(current_auto_criteria['min_VCO2'])
+        else:
+            low_VCO2_filter = \
+                breath_list['ts_inhale'] == breath_list['ts_inhale']
 
 
         automated_block[key_and_alias] = 0
@@ -2963,7 +2978,9 @@ def create_filters_for_automated_selections(
             (current_auto_criteria['vol_mov_avg_drift'] >=
              breath_list['mov_avg_vol']) &
             (high_VEVO2_filter == 1) &
-            (high_TV_filter == 1),
+            (high_TV_filter == 1) &
+            (low_VO2_filter) &
+            (low_VCO2_filter),
             key_and_alias
             ] = 1
 
