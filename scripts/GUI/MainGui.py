@@ -49,21 +49,24 @@ from ui.form import Ui_Plethysmography
 # Chris's scripts
 from tools.columns_and_values_tools import columns_and_values_from_settings
 
-CONFIG_DIR = os.path.join("scripts","GUI","config")
+CONFIG_DIR = os.path.join("scripts", "GUI", "config")
 
 # TODO: only for development!
 AUTOLOAD = 'shaun' in os.getcwd()
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
-    The Plethysmography class inherits widgets and layouts of Ui_Plethysmography and defines the main GUI.
+    The Plethysmography class extends Ui_Plethysmography and defines the main GUI.
 
     Parameters
-    --------
-    QMainWindow: class
-        The Plethysmography class inherits properties and methods from the QMainWindow class.
-    Ui_Plethysmography: class
-        The Plethysmography class inherits widgets and layouts defined in the Ui_Plethysmography class.
+    ---------
+    DEFAULT_GRAPH_CONFIG_DF: (DataFrame):
+        default data for graph config
+    DEFAULT_OTHER_CONFIG_DF (DataFrame):
+        default data for other config
+    gui_config (str): path to default gui config
+    stamp (str): path to timestamp settings
+    bc_config (str): path to default basspro settings
     """
 
     DEFAULT_GRAPH_CONFIG_DF = pd.DataFrame(data=[(1, "", ""), (2, "", ""), (3, "", ""), (4, "", "")], columns=['Role', 'Alias', 'Order'])
@@ -2051,6 +2054,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             if len(self.stagg_input_files) == 0:
                 notify_error("Missing STAGG input files")
                 return False
+
+        if self.thread_manager.is_process_named('STAGG'):
+            notify_error("A STAGG process is already running")
+            return False
+
 
         # Set Rscript path
         rscript_path = os.path.abspath(self.gui_config['Dictionaries']['Paths']['rscript'])

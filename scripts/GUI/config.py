@@ -913,11 +913,8 @@ class Config(QDialog, Ui_Config):
         if alias_name == "Select variable:":
             return
 
-        alias_idx = self.aliases.index(alias_name)
-        group_name = self.variable_names[alias_idx]
-
         # Notify user if values are not available
-        if group_name not in self.col_vals:
+        if alias_name not in self.col_vals:
             msg  = "No values available to order."
             msg += "\n\nTry loading STAGG Settings from:"
             msg += "\n  -Previous BASSPRO Settings"
@@ -925,18 +922,18 @@ class Config(QDialog, Ui_Config):
             notify_info(msg)
             return
 
-        items = self.col_vals[group_name]
+        items = self.col_vals[alias_name]
 
         # Check if value list is empty
         if len(items) == 0:
             notify_info("There are no values for this variable")
             return
 
-        order_window = OrderingWindow(combo_name, group_name, items)
+        order_window = OrderingWindow(combo_name, alias_name, items)
         reply = order_window.exec()
         if reply:
             # set new items
-            self.col_vals[group_name] = order_window.get_items()
+            self.col_vals[alias_name] = order_window.get_items()
 
     def load_graph_config(self, df):
         """
