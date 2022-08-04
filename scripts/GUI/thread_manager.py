@@ -9,6 +9,12 @@ class ThreadManager:
     def __init__(self):
         self.monitors = {}  # store callback loops used to monitor processes
 
+    def is_process_named(self, search_name):
+        for monitor in self.monitors.values():
+            if monitor['proc_name'] == search_name:
+                return True
+        return False
+
     def cancel_monitor(self, monitor_id, exec_after_cancel=None):
         self.monitors[monitor_id]['status'] = 'cancelled'
         if exec_after_cancel:

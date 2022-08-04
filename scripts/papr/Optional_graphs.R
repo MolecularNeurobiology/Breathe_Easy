@@ -702,15 +702,7 @@ if(sighs || apneas){
   ## Join tables to calculate rates.
   eventtab_join <- inner_join(eventtab, timetab, by = c(box_vars, "MUID")) %>%
     mutate(SighRate = sighs/measuretime*60, ApneaRate = apneas/measuretime*60)
-  
-  # By default, set categories in order of appearance in data.
-  for(ii in box_vars){
-    eventtab_join[[ii]] <- eventtab_join[[ii]] %>% str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")
-    eventtab_join[[ii]] <- factor(eventtab_join[[ii]], 
-                                  levels = unique((tbl0 %>% dplyr::filter(!measure_breaks))[[ii]] %>% 
-                                                    str_replace_all("[[:punct:]]", "") %>% str_replace_all(" ", "")))
-  }
-  
+
   # Set label + internal variable names.
   ## Depending on if sighs and/or apneas are desired.
   r_vars <- c()
@@ -728,6 +720,7 @@ if(sighs || apneas){
   for(ii in 1:length(r_vars)){
     graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
+    
     # Stat modeling, calculated ONLY using graphing variables as independent variables.
     if(length(unique(eventtab_join$MUID)) == nrow(eventtab_join)){
       other_mod_res <- stat_run_other(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
@@ -736,12 +729,17 @@ if(sighs || apneas){
     }
     
     # Set order of categories in variables as specified by the user, if specified.
-    eventtab_join <- graph_reorder(eventtab_join, graph_v, graph_vars, tbl0)
+    eventtab_join_graph <- graph_reorder(eventtab_join, box_vars, graph_vars, tbl0)
     
     # Make graph + save
-    graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join, 
+    sa_test <- try(graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join_graph, 
                other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
-               r_vars_wu[ii], xvar_wu, pointdodge_wu)
+               r_vars_wu[ii], xvar_wu, pointdodge_wu))
+    
+    if(class(sa_test) == "try-error"){
+      print(paste0('Failed to make plots for ', r_vars[ii]))
+      next
+    }
   }
 }
 
@@ -932,6 +930,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     # Turn results to data frame for plotting
     psd_df <-  reshape2::melt(as.data.frame(psd_list))
     psd_df$tt <- rep(2:max_hz, length(unique(graph_data[[pointdodge]])))
+    psd_df <- graph_reorder(psd_df, pointdodge, graph_vars, tbl0)
     
     base_pt <- 7 * sqrt(length(unique(graph_data[[pointdodge]])))
     # Make graph + save
