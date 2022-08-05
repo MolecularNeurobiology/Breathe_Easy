@@ -378,7 +378,7 @@ class Ui_Plethysmography(object):
         ## CALLBACKS ##
         #   basspro
         self.signal_files_button.clicked.connect(Plethysmography.select_signal_files)
-        self.metadata_button.clicked.connect(Plethysmography.show_annot)
+        self.metadata_button.clicked.connect(Plethysmography.edit_metadata)
         self.basspro_settings_button.clicked.connect(Plethysmography.load_basspro_settings)
         self.output_dir_button.clicked.connect(Plethysmography.select_output_dir)
         self.basspro_launch_button.clicked.connect(Plethysmography.basspro_run)
@@ -386,14 +386,14 @@ class Ui_Plethysmography(object):
         #   stagg
         self.stagg_launch_button.clicked.connect(Plethysmography.stagg_run)
         self.breath_files_button.clicked.connect(Plethysmography.select_stagg_input_files)
-        self.stagg_settings_button.clicked.connect(Plethysmography.show_stagg_settings)
-        self.auto_button.clicked.connect(Plethysmography.show_auto)
+        self.stagg_settings_button.clicked.connect(Plethysmography.edit_stagg_settings)
+        self.auto_button.clicked.connect(Plethysmography.edit_auto)
 
-        self.breath_parameters.clicked.connect(Plethysmography.show_basic)
+        self.breath_parameters.clicked.connect(Plethysmography.edit_basic)
         self.sections_list.itemDoubleClicked['QListWidgetItem*'].connect(Plethysmography.open_click)
         self.breath_list.itemDoubleClicked['QListWidgetItem*'].connect(Plethysmography.open_click)
         self.check_timestamps.clicked.connect(Plethysmography.timestamp_dict)
-        self.manual_button.clicked.connect(Plethysmography.show_manual)
+        self.manual_button.clicked.connect(Plethysmography.edit_manual)
         self.metadata_list.itemDoubleClicked['QListWidgetItem*'].connect(Plethysmography.open_click)
         self.signal_files_list.itemDoubleClicked['QListWidgetItem*'].connect(Plethysmography.open_click)
         self.variable_list.itemDoubleClicked['QListWidgetItem*'].connect(Plethysmography.open_click)
