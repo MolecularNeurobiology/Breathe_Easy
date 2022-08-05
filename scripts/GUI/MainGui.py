@@ -707,7 +707,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         Show the automated BASSPRO settings subGUI defined in the Auto class.
         """
         new_settings = AutoSettings.edit(self.bc_config['Dictionaries']['Auto Settings']['default'],
-                                         self.gui_config['Dictionaries']['Settings Names']['Auto Settings'],
+                                         self.gui_config['Dictionaries']['Settings Types']['Auto Settings'],
                                          self.rc_config['References']['Definitions'],
                                          self.signal_files,
                                          data=self.autosections_df,

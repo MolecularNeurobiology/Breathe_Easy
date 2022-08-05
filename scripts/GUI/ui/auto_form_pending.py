@@ -14,7 +14,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_Auto(object):
     def setupUi(self, Auto):
         Auto.setObjectName("Auto")
-        Auto.resize(3100, 1800)
+        Auto.resize(3100, 2082)
         self.gridLayout = QtWidgets.QGridLayout(Auto)
         self.gridLayout.setObjectName("gridLayout")
         self.verticalLayout_4 = QtWidgets.QVBoxLayout()
@@ -79,11 +79,11 @@ class Ui_Auto(object):
         spacerItem10 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
         self.horizontalLayout_2.addItem(spacerItem10)
         self.autotabs = QtWidgets.QTabWidget(Auto)
-        # sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
-        # sizePolicy.setHorizontalStretch(0)
-        # sizePolicy.setVerticalStretch(0)
-        # sizePolicy.setHeightForWidth(self.autotabs.sizePolicy().hasHeightForWidth())
-        # self.autotabs.setSizePolicy(sizePolicy)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.autotabs.sizePolicy().hasHeightForWidth())
+        self.autotabs.setSizePolicy(sizePolicy)
         self.autotabs.setObjectName("autotabs")
         self.sections_tab = QtWidgets.QWidget()
         self.sections_tab.setObjectName("sections_tab")
@@ -1459,17 +1459,11 @@ class Ui_Auto(object):
         self.autotabs.addTab(self.thresh_tab, "")
         self.frame_tab = QtWidgets.QWidget()
         self.frame_tab.setObjectName("frame_tab")
-
-        self.frame_tab_layout = QtWidgets.QHBoxLayout()
-        self.frame_tab_layout.setObjectName("frame_tab_layout")
-        
         self.summary_table = QtWidgets.QTableWidget(self.frame_tab)
         self.summary_table.setGeometry(QtCore.QRect(0, 0, 2701, 1251))
         self.summary_table.setObjectName("summary_table")
         self.summary_table.setColumnCount(0)
         self.summary_table.setRowCount(0)
-        self.frame_tab_layout.addWidget(self.summary_table)
-        self.frame_tab.setLayout(self.frame_tab_layout)
         self.autotabs.addTab(self.frame_tab, "")
         self.horizontalLayout_2.addWidget(self.autotabs)
         spacerItem207 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -1520,8 +1514,6 @@ class Ui_Auto(object):
         self.load_auto_button.clicked.connect(Auto.load_file)
         self.save_as_button.clicked.connect(Auto.save_as)
         self.timestamps_from_signals_button.clicked.connect(Auto.timestamps_from_signals)
-        self.ok_button.clicked.connect(Auto.confirm)
-        self.cancel_button.clicked.connect(Auto.reject)
         QtCore.QMetaObject.connectSlotsByName(Auto)
 
     def retranslateUi(self, Auto):
