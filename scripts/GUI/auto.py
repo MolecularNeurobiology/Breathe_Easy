@@ -331,16 +331,7 @@ class Auto(QDialog, Ui_Auto):
         self.signals_off()
 
         # Populate table of tabs with appropriately sliced dataframes derived from selected settings template
-        [self.sections_char_table,
-                self.sections_spec_table,
-                self.sections_veras_table,
-                self.sections_time_table,
-                self.cal_table,
-                self.inc_table,
-                self.sections_art_table,
-                self.gas_thresh_table,
-                self.time_thresh_table,
-                self.summary_table]
+        
         # Populate Section Characterization table
         all_sec_char_items = self.auto_labels['Section Settings']['Section Naming'].values()
         sec_char_df = self.data.loc[(self.data.index.isin(all_sec_char_items)),:]
