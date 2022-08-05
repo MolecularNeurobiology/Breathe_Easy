@@ -204,10 +204,11 @@ class Auto(QDialog, Ui_Auto):
 
         df = convert_timestamps_to_autosections(self.signal_files)
         self.load_data(df)
-        msg = "When using comments from your recordings, the settings"
-        msg += " for different gas exposures may not be appropriate for"
-        msg += " your experiment. Please refer to our table of settings"
-        msg += " and confirm values before proceeding."
+        msg = ("When using comments from your recordings, the settings"
+               " for different gas exposures may not be appropriate for"
+               " your experiment. Please refer to our table of default"
+               " automated settings in the references folder of the GitHub"
+               " repository and confirm values before proceeding.")
         notify_warning(msg, title="Comment Import Warning")
 
     def update_template_selection(self):
