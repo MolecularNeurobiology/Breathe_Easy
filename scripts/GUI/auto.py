@@ -1,7 +1,8 @@
 
+from typing import List, Optional
 import numpy as np
 import pandas as pd
-from PyQt5.QtWidgets import QDialog, QInputDialog
+from PyQt5.QtWidgets import QDialog, QInputDialog, QTableWidget
 from util.tools import avert_name_collision
 from util import Settings
 from util.ui.dialogs import notify_info, notify_warning
@@ -12,47 +13,33 @@ from tools.convert_timestamps_to_autosections import convert_timestamps_to_autos
 
 class Auto(QDialog, Ui_Auto):
     """
-    The Auto class defines the the properties, attributes, and methods used by the automated BASSPRO settings subGUI.
+    Defines the properties, attributes, and methods used by the automated BASSPRO settings subGUI.
 
-    Parameters
-    --------
-    QWidget: class
-        The Basic class inherits properties and methods from the QWidget class. 
-    Ui_Auto: class
-        The Auto class inherits widgets and layouts defined in the Ui_Auto class.
+    Attributes
+    ---------
+    ref_buttons (dict): the help messages for each help button, mapped to the appropriate display box
+    defaults (dict): default values for a set of template selections
+    auto_labels (dict): names of auto section variables, split into named groupings
+    ref_definitions (dict): help text for each auto section variable
+    signal_files (List[str]): list of signal file paths
+    output_dir (str): current working directory
+    loaded_data (Optional[pd.DataFrame]): current custom data loaded by user (as opposed to default sets)
+    data (pd.DataFrame): current data reflected in the GUI widgets
     """
-    def __init__(self, defaults, auto_labels, ref_definitions, signal_files, data=None, output_dir=""):
+    def __init__(self, defaults: dict, auto_labels: dict, ref_definitions: dict,
+                 signal_files: List[str], data: Optional[pd.DataFrame] = None, output_dir: str = ""):
         """
         Instantiate the Auto class.
 
         Parameters
-        --------
-        Plethysmography.bc_config: dict
-            This Plethysmography class attribute is a nested dictionary loaded from basspro_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
-        Plethysmography.rc_config: dict
-            This attribute is a shallow dictionary loaded from reference_config.json. It contains definitions, descriptions, and recommended values for every basic, manual, and automated BASSPRO setting.
-        self.{tab}_reference: QTextBrowser
-            These widgets display the definition, description, and default value of the user-selected setting. There is a TextBrowser for each of the first four tabs of the subGUI.
-        self.help_{setting}: QToolButton
-            These are buttons intended to provide helpful information to the user about the relevant setting.
-        self.auto_setting_combo: QComboBox
-            A comboBox that serves as a drop-down menu of the available experimental setups to choose the appropriate default settings.
-
-        Outputs
-        --------
-        self.pleth: class
-            Shorthand for the Plethysmography class.
-        self.ref_buttons: dict
-            This dictionary relates the self.help_{setting} ToolButtons with the appropriate self.{tab}_reference TextBrowser.
-        self.help_{setting}: QToolButton
-            These buttons are assigned clicked signals and slotted for self.reference_event().
-        self.auto_setting_combo: QComboBox
-            A comboBox that is populated with the experimental setups for which the GUI has default automated BASSPRO settings. These experimental setups are sourced from the keys of the "default" dictionary nested in the "Auto Settings" dictionary from Plethysmography.bc_config.
+        ---------
+        defaults: default values for a set of template selections
+        auto_labels: names of auto section variables, split into named groupings
+        ref_definitions: help text for each auto section variable
+        signal_files: list of signal file paths
+        data: current data reflected in the GUI widgets
+        output_dir: current working directory
         
-        Outcomes
-        --------
-        self.choose_dict()
-            This method populates the automated BASSPRO settings subGUI widgets with default values derived from Plethysmography.bc_config (basspro_config.json).
         """
         super(Auto, self).__init__()
         self.setupUi(self)
@@ -117,7 +104,7 @@ class Auto(QDialog, Ui_Auto):
         # Setup help button callbacks
         for ref_button_dict in self.ref_buttons.values():
             for ref_button in ref_button_dict.values():
-                ref_button.clicked.connect(self.reference_event)
+                ref_button.clicked.connect(self.show_help)
 
         self.defaults = defaults
         self.auto_labels = auto_labels
@@ -149,20 +136,26 @@ class Auto(QDialog, Ui_Auto):
             table.horizontalHeader().sectionDoubleClicked.connect(self.set_new_header)
 
 
-    def set_new_header(self, col_idx):
+    def set_new_header(self, col_idx: int):
+        """
+        Display dialog to set table header
+
+        Parameters
+        ---------
+        col_idx: index of column header to set
+        """
         headers = self.data.columns.values
         old_header = headers[col_idx]
         new_name, ok = QInputDialog.getText(self, "Rename Column", f'Change "{old_header}" to:')
         if ok and new_name != "":
+            # Update data with new name
             headers[col_idx] = new_name
             self.data.columns = pd.Index(headers, name='Alias')
+            # Update GUI with new name
             self.update_tabs()
 
     def untransform_data(self, df):
-        """
-        Re-transpose data back to original format for
-        writing to file
-        """
+        """Re-transpose data to format for writing to file"""
         col_count = self.summary_table.columnCount()
         headers = [self.summary_table.horizontalHeaderItem(i).text() for i in range(col_count)]
         variable_column_name = headers[0]
@@ -174,9 +167,6 @@ class Auto(QDialog, Ui_Auto):
     @staticmethod
     def transform_loaded_data(df):
         """Transform data into format for loading widgets"""
-        
-        # Remove Key column (we will use Aliases)
-        # df = df.drop(columns='Key')
 
         df = df.fillna("")
 
@@ -194,6 +184,7 @@ class Auto(QDialog, Ui_Auto):
         return df
 
     def all_tables(self):
+        """Retrieve list of all tables in window"""
         return [self.sections_char_table,
                 self.sections_spec_table,
                 self.sections_veras_table,
@@ -206,6 +197,7 @@ class Auto(QDialog, Ui_Auto):
                 self.summary_table]
 
     def timestamps_from_signals(self):
+        """Import autosections from signal file timestamps"""
         if not self.signal_files:
             notify_info("Must load signal files to generate auto template")
             return
@@ -220,24 +212,7 @@ class Auto(QDialog, Ui_Auto):
 
     def update_template_selection(self):
         """
-        This method populates the automated BASSPRO settings
-          subGUI widgets with default values derived from 
-          Plethysmography.bc_config (basspro_config.json).
-
-        Parameters
-        --------
-        self.auto_setting_combo: QComboBox
-            A comboBox that is populated with the experimental setups for which the GUI has default automated BASSPRO settings. These experimental setups are sourced from the keys of the "default" dictionary nested in the "Auto Settings" dictionary from Plethysmography.bc_config.
-
-        Outputs
-        --------
-        self.auto_dict: dict
-            This attribute stores the nested dictionary in Plethysmography.bc_config that contains the default automated BASSPRO settings of multiple experimental setups.
-        self.data: Dataframe
-            This attribute stores the dataframe converted from self.auto_dict.
-
-        Outcomes
-        --------
+        Update GUI widgets to reflect template selection
         """
 
         # Get the appropriate template based on user's choice of experimental condition
@@ -262,12 +237,19 @@ class Auto(QDialog, Ui_Auto):
 
             self.data = df
 
+        # Propagate update to tabs
         self.update_tabs()
 
-    def edit_cell(self, table, row, col):
+    def edit_cell(self, table: QTableWidget, row: int, col: int):
         """
         Receive callback for editing a table cell
         Update underlying dataframe and propogate to other tables
+
+        Parameters
+        ---------
+        table: widget that is being edited
+        row: row number of cell being edited
+        col: column number of cell being edited
         """
 
         # Get edited cell
@@ -300,37 +282,30 @@ class Auto(QDialog, Ui_Auto):
             self.update_tabs()
 
     def signals_off(self):
+        """
+        Disable signals for all tables
+        
+        This prevents editing callbacks from firing
+        when performing server-side edits to widgets
+        """
         for table in self.all_tables():
             table.blockSignals(True)
 
     def signals_on(self):
+        """Enable signals for all tables"""
         for table in self.all_tables():
             table.blockSignals(False)
 
     def update_tabs(self):
         """
-        This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (basspro_config.json).
-        
-        Parameters
-        --------
-        self.pleth.gui_config: dict
-            This attribute is a nested dictionary loaded from gui_config.json. It contains paths to the BASSPRO and STAGG modules and the local Rscript.exe file, the fields of the database accessed when building a metadata file, and settings labels used to organize the populating of the TableWidgets in the BASSPRO settings subGUIs. See the README file for more detail.
-        self.data: Dataframe
-            This attribute stores the dataframe converted from self.auto_dict.
-        self.{division}_table: QTableWidget
-            These TableWidgets display the automated BASSPRO settings is in the appropriate TableWidgets over multiple tabs.
-        self.summary_table: QTableWidget
-            The TableWidget displays the automated BASSPRO settings in one table on the fifth tab.
-        
-        Outcomes
-        --------
-        populate_table(frame,table)
-            This method populates the self.{division}_table widgets with the appropriate portions of the self.data dataframe based on the relationship of particular rows to particular divisions as defined in the "Settings Names" dictionary within self.pleth.gui_config.
+        Update tab widgets to reflect latest `data` attribute
         """
         # Block signals to prevent endless table edit callback loop
         self.signals_off()
 
-        # Populate table of tabs with appropriately sliced dataframes derived from selected settings template
+        ################
+        ## Populate table of tabs with appropriately sliced
+        ## dataframes derived from selected settings template
         
         # Populate Section Characterization table
         all_sec_char_items = self.auto_labels['Section Settings']['Section Naming'].values()
@@ -355,12 +330,12 @@ class Auto(QDialog, Ui_Auto):
         # Populate Calibration Settings table
         all_cal_items = self.auto_labels['Calibration Settings']['Volume and Gas Calibrations'].values()
         cal_df = self.data.loc[(self.data.index.isin(all_cal_items)),:]
-        populate_table(cal_df,self.cal_table)
+        populate_table(cal_df, self.cal_table)
 
         # Populate Inclusion DF table
         all_inc_items = self.auto_labels['Breath Inclusion Criteria']['Limits'].values()
         inc_df = self.data.loc[(self.data.index.isin(all_inc_items)),:]
-        populate_table(inc_df,self.inc_table)
+        populate_table(inc_df, self.inc_table)
 
         # Populate Artifact Exclusion table
         all_sec_art_items = self.auto_labels['Breath Inclusion Criteria']['Artifact Exclusion'].values()
@@ -370,66 +345,33 @@ class Auto(QDialog, Ui_Auto):
         # Populate Gass Threshold Settings table
         all_gas_thresh_items = self.auto_labels['Additional Settings']['Featured Breathing'].values()
         gas_thresh_df = self.data.loc[(self.data.index.isin(all_gas_thresh_items)),:]
-        populate_table(gas_thresh_df,self.gas_thresh_table)
+        populate_table(gas_thresh_df, self.gas_thresh_table)
 
         # Populate Time Threshold Settings table
         all_time_thresh_items = self.auto_labels['Additional Settings']['Temperature Settings'].values()
         time_thresh_df = self.data.loc[(self.data.index.isin(all_time_thresh_items)),:]
-        populate_table(time_thresh_df,self.time_thresh_table)
-
+        populate_table(time_thresh_df, self.time_thresh_table)
 
         # Populate summary table with all data
-        populate_table(self.data,self.summary_table)
+        populate_table(self.data, self.summary_table)
 
         # Re-enable signals
         self.signals_on()
     
-    def reference_event(self):
-        """
-        Respond to the signal emitted by the self.help_{setting} ToolButton clicked by the user by calling self.populate_reference(self.sender.objectName()) to populate the appropriate TextBrowser with the definition, description, and default value of corresponding setting.
-        """
+    def show_help(self):
+        """Callback to display help text for the caller"""
         sbutton = self.sender()
-        self.populate_reference(sbutton.objectName())
-
-    def populate_reference(self,buttoned):
-        """
-        Populate the appropriate reference TextBrowser with the definition, description, and default values of the appropriate setting as indicated by the suffix of the ToolButton's objectName(), e.g. "help_{setting}" from Plethysmography.rc_config (reference_config.json).
-        """
+        button_name = sbutton.objectName()
         for ref_box, ref_button_dict in self.ref_buttons.items():
             # If this is my ref_box, set the help text
-            if str(buttoned) in ref_button_dict:
-                ref_box.setPlainText(self.ref_definitions[buttoned.replace("help_","")])
+            if str(button_name) in ref_button_dict:
+                ref_box.setPlainText(self.ref_definitions[button_name.replace("help_","")])
 
     def save_as(self):
         """
-        Write the contents of the self.summary_table TableWidget to .csv file as indicated in the file path self.pleth.auto_sections, call self.pleth.update_breath_df(), and add self.pleth.auto_sections to self.pleth.sections_list (ListWidget) for display in the main GUI. 
-
-        Parameters
-        --------
-        self.path: str
-            This attribute stores the file path selected by the user to which the .csv file of the automated BASSPRO settings wll be saved.
-        self.pleth.breath_df: list
-            This Plethysmography class attribute is a list of variables derived from one of the following sources: 1) the metadata csv file and the BASSPRO settings files, or 2) user-selected variable_config.csv file, or 3) user-selected BASSPRO JSON output file.
-        self.summary_table: QTableWidget
-            The TableWidget displays the automated BASSPRO settings in one table on the fifth tab.
-        self.pleth.autosections: str
-            This Plethysmography class attribute is either an empty string or stores a file path.
-
-        Outputs
-        --------
-        reply: QMessageBox
-            This specialized dialog communicates information to the user.
-        self.pleth.autosections: str
-            This attribute is updated with self.path, the file path to the .csv file of automated BASSPRO settings.
-        self.pleth.sections_list: QListWidget
-            This Plethysmography class ListWidget displays the file paths of the .csv files defining the BASSPRO settings. It is updated to display self.pleth.autosections.
-        autosections.csv: CSV file
-            The .csv file that the automated BASSPRO settings are saved to.
+        Save current data to user-selected file
         
-        Outcomes
-        --------
-        self.update_breath_df()
-            This Plethysmography class method updates the Plethysmography class attribute self.pleth.breath_df to reflect the changes to the metadata.
+        Display error if file in use and cannot be written
         """
         try:
             if AutoSettings.save_file(data=self.data, output_dir=self.output_dir):
@@ -440,6 +382,7 @@ class Auto(QDialog, Ui_Auto):
                         msg='One or more of the files you are trying to save is open in another program.')
 
     def load_file(self):
+        """Load auto settings from user-selected file"""
         # TODO: streamline this like the other settings
         # Opens open file dialog
         filepath = AutoSettings.open_file(self.output_dir)
@@ -452,36 +395,13 @@ class Auto(QDialog, Ui_Auto):
         if data is not None:
             self.load_data(data)
 
-    def load_data(self, df):
+    def load_data(self, df: pd.DataFrame):
         """
-        Prompt the user to indicate the location of a previously made file - either .csv, .xlsx, or .json formatted file - detailing the basic BASSPRO settings of a previous run, populate self.basic_df with a dataframe from that file, call populate_table(), and warn the user if they chose files in formats that are not accepted and ask if they would like to select a different file.
+        Load a given DataFrame into the GUI widgets
 
         Parameters
         --------
-        file: QFileDialog
-            This variable stores the path of the file the user selected via the FileDialog.
-        yes: int
-            This variable is used to indicate whether or not self.basic_df was successfully populated with a dataframe from the user-selected file.
-        Plethysmography.mothership: str
-            The path to the user-selected directory for all output.
-        self.basic_df: Dataframe
-            This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
-        self.summary_table: QTableWidget
-            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
-        reply: QMessageBox
-            This specialized dialog communicates information to the user.
-
-        Outputs
-        --------
-        self.basic_df: Dataframe
-            This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
-        self.summary_table: QTableWidget
-            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
-        
-        Outcomes
-        --------
-        self.update_tabs()
-            This method populates the automated BASSPRO settings subGUI widgets with default values of the experimental setup derived from Plethysmography.bc_config (basspro_config.json).
+        df: data to be loaded
         """
 
         first_time_loading = self.loaded_data is None
@@ -495,11 +415,7 @@ class Auto(QDialog, Ui_Auto):
 
         # If 'Custom' is already selected, we need to manually call the update function
         if self.auto_setting_combo.currentText() == 'Custom':
-            # for table in self.all_tables():
-            #     table.blockSignals(True)
             self.update_template_selection()
-            # for table in self.all_tables():
-            #     table.blockSignals(False)
 
         # Otherwise, set to custom and let it automatically update
         else:
@@ -508,6 +424,7 @@ class Auto(QDialog, Ui_Auto):
             # ^this should eventually trigger update_tabs()
 
     def confirm(self):
+        """Reformat data for external use and confirm user input"""
         self.data = self.untransform_data(self.data)
 
         # Add the keys back in
@@ -515,6 +432,7 @@ class Auto(QDialog, Ui_Auto):
         self.accept()
 
 class AutoSettings(Settings):
+    """Attributes and methods for handling Auto sections"""
 
     valid_filetypes = ['.csv']
     naming_requirements = ['auto', 'sections']

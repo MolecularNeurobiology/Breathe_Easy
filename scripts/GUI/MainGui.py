@@ -29,7 +29,7 @@ import queue
 import threading
 
 # pyqt
-from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog
+from PyQt5.QtWidgets import QMainWindow, QFileDialog
 from PyQt5.QtCore import QThreadPool, Qt
 
 # Local imports

@@ -1,7 +1,22 @@
+from typing import Iterable, Optional, Union
+import pandas as pd
 from checkable_combo_box import CheckableComboBox
-from PyQt5.QtWidgets import QTableWidgetItem, QComboBox, QCheckBox, QLineEdit
+from PyQt5.QtWidgets import QTableWidgetItem, QComboBox, QCheckBox, QLineEdit, QTableWidget
 
-def update_checkable_combo_values(combo, valid_values, renamed=None, default_value=""):
+def update_checkable_combo_values(combo: QComboBox, valid_values: Iterable[str],
+                                  renamed: Optional[Iterable[str]] = None, default_value: str = ""):
+    """
+    Update the options and selections in a checkable combo box
+    
+    Account for renames and no-longer-valid values
+
+    Parameters
+    ---------
+    combo: combo box to update
+    valid_values: list of all possible valid options
+    renamed: tuple of (old, new) renamed item
+    default_value: default combo box option
+    """
     combo.blockSignals(True)
 
     # Store current value
@@ -26,7 +41,21 @@ def update_checkable_combo_values(combo, valid_values, renamed=None, default_val
 
     combo.blockSignals(False)
 
-def update_combo_values(combo, valid_values, renamed=None, default_value=""):
+def update_combo_values(combo: QComboBox, valid_values: Iterable[str],
+                        renamed: Optional[Iterable[str]] = None,
+                        default_value: str = ""):
+    """
+    Update the values and selection in a ComboBox
+    
+    Account for renames and no-longer-valid values
+
+    Parameters
+    ---------
+    combo: combo box to update
+    valid_values: list of all possible valid options
+    renamed: tuple of (old, new) renamed item
+    default_value: default combo box option
+    """
     combo.blockSignals(True)
 
     # Store current value
@@ -50,21 +79,26 @@ def update_combo_values(combo, valid_values, renamed=None, default_value=""):
 
     combo.blockSignals(False)
 
-def update_hierarchical_combos(valid_values, combos, default_value, renamed=None, enable_set=True, first_required=False):
-    """Populate a sequence of combo boxes which maintain dependencies on their previous sibling
+def update_hierarchical_combos(valid_values: Iterable[str], combos: Iterable[QComboBox], default_value: str,
+                               renamed: Optional[Iterable[str]] = None, enable_set: bool = True,
+                               first_required: bool = False):
+    """
+    Populate a sequence of combo boxes which maintain dependencies on their previous sibling
     
     Parameters
-    --------
+    ---------
     valid_values: initial valid values used to populate the first combo box
-    combos: list of combo boxes to populate, in order
+    combos: combo boxes to populate, in order
     default_value: default option used to populate the first index of the combos
-    renamed: tuple mapping a renamed value from its old value to its new value
-    enable_set: bool determining whether the set of combo boxes should be enabled
+    renamed: tuple of (old, new) renamed item
+    enable_set: whether the set of combo boxes should be enabled
                 in case there is an external dependency
+    first_required: whether the first should be given a default placeholder value
+                    or only the list of valid values
 
     Dependencies:
         - Combo box enabled only if previous sibling has a selected value other than the `default_value`
-        - Valid values are the previous valid values, less the selected value of the previous sibling
+        - Valid values are the previous valid values, minus the selected value of the previous sibling
     """
     prev_selected = enable_set
     for i, combo in enumerate(combos):
@@ -94,11 +128,13 @@ def update_hierarchical_combos(valid_values, combos, default_value, renamed=None
         # remove this value from the options for the next boxes
         valid_values = valid_values[valid_values != curr_value]
 
-def read_widget(widget):
+def read_widget(widget: Union[QTableWidget, QCheckBox, QComboBox, CheckableComboBox]):
+    """Return the value of the given widget"""
 
     if type(widget) is QTableWidgetItem:
         widget_data = widget.text()
 
+    # TODO: Should this return bool?
     elif type(widget) is QCheckBox:
         widget_data = int(widget.isChecked())
 
@@ -113,7 +149,8 @@ def read_widget(widget):
 
     return widget_data
 
-def write_widget(widget, text):
+def write_widget(widget: Union[QComboBox, QLineEdit], text: str):
+    """Set the text of a widget"""
     widget.blockSignals(True)
     if type(widget) is QComboBox:
         widget.setCurrentText(text)
@@ -123,28 +160,19 @@ def write_widget(widget, text):
         raise RuntimeError(f"Cannot write {type(widget)}!!")
     widget.blockSignals(False)
 
-def populate_table(frame, table):
-    """
-    This method populates the self.{division}_table widgets with the appropriate portions of the self.data dataframe based on the relationship of particular rows to particular divisions as defined in the "Settings Names" dictionary within self.pleth.gui_config.
+def populate_table(df: pd.DataFrame, table: QTableWidget):
+    """Populate a given TableWidget with the data in a given DataFrame."""
+    # Set table size
+    table.setColumnCount(len(df.columns))
+    table.setRowCount(len(df))
 
-    Parameters
-    --------
-    frame: Dataframe
-        This variable refers to the appropriate portion of the self.data dataframe.
-    table: QTableWidget
-        This variable refers to the appropriate self.{division}_table.
-
-    Outputs
-    --------
-    self.{division}_table: QTableWidget
-        The TableWidget referred to by the argument "table" is populated with the appropriate settings from self.data dataframe as contained in the argument "frame".
-    """
-    # Populate tablewidgets with views of uploaded csv. Currently editable.
-    table.setColumnCount(len(frame.columns))
-    table.setRowCount(len(frame))
+    # Set table data
     for col in range(table.columnCount()):
         for row in range(table.rowCount()):
-            table.setItem(row,col,QTableWidgetItem(str(frame.iloc[row,col])))
-    table.setHorizontalHeaderLabels(frame.columns)
+            table.setItem(row,col,QTableWidgetItem(str(df.iloc[row,col])))
+
+    # Set headers
+    table.setHorizontalHeaderLabels(df.columns)
+
     table.resizeColumnsToContents()
     table.resizeRowsToContents()

@@ -1,4 +1,5 @@
 
+from typing import Iterable
 from PyQt5.QtWidgets import QComboBox, QStyledItemDelegate, qApp
 from PyQt5.QtGui import QPalette, QFontMetrics, QStandardItem
 from PyQt5.QtCore import QEvent, Qt
@@ -13,9 +14,16 @@ class CheckableComboBox(QComboBox):
     # source: https://gis.stackexchange.com/questions/350148/qcombobox-multiple-selection-pyqt5
     """
     The CheckableComboBox class populates a comboBox with checkable items (checkboxes).
+
+    Attributes
+    ---------
+    model: the underlying data of the widget
+    lineEdit: the main primary output line of the combobox that
+              remains when dropdown closes
     """
 
     def __init__(self, *args, **kwargs):
+        """Initialize instance and set data and display configuration"""
         super().__init__(*args, **kwargs)
 
         # Make the combo editable to set a custom text, but readonly
@@ -45,6 +53,7 @@ class CheckableComboBox(QComboBox):
         super().resizeEvent(event)
 
     def updateData(self, new_index):
+        """Update underlying data to reflect a new selection"""
         new_item = new_index.data()
 
         model = self.model()
@@ -57,9 +66,11 @@ class CheckableComboBox(QComboBox):
             self.check_items(["Custom"])
         # If something other than custom is selected, unselect custom
         elif "Custom" in checked_items and len(checked_items) > 1:
+            # TODO: Can we just re-use check_items() here? doing the same thing?
             self.uncheck_custom()
 
-    def check_items(self, items):
+    def check_items(self, items: Iterable[str]):
+        """Check the items in a given list"""
 
         model = self.model()
         all_options = [model.item(i).text() for i in range(model.rowCount())]
@@ -90,6 +101,7 @@ class CheckableComboBox(QComboBox):
         model.blockSignals(False)
 
     def eventFilter(self, object, event):
+        """Customize the response if various mouse events"""
         # If clicking lineedit, toggle popup
         if object == self.lineEdit():
             if event.type() == QEvent.MouseButtonRelease:
@@ -130,12 +142,6 @@ class CheckableComboBox(QComboBox):
         # Used to prevent immediate reopening when clicking on the lineEdit
         self.startTimer(100)
 
-        # Remove Custom from list if it's not being used
-        #model = self.model()
-        #checked_items = [model.item(i).text() for i in range(model.rowCount()) if model.item(i).checkState() == Qt.Checked]
-        #if "Custom" not in checked_items:
-        #    self.remove_custom()
-
         # Refresh the display text when closing
         self.updateText()
 
@@ -145,12 +151,14 @@ class CheckableComboBox(QComboBox):
         self.closeOnLineEditClick = False
 
     def updateText(self):
-        texts = []
+        """Update text of primary viewport (lineEdit)"""
+        items = []
         for i in range(self.model().rowCount()):
             if self.model().item(i).checkState() == Qt.Checked:
-                texts.append(self.model().item(i).text())
+                items.append(self.model().item(i).text())
 
-        text = ", ".join(texts)
+        # join all items with commas
+        text = ", ".join(items)
 
         # Compute elided text (with "...")
         metrics = QFontMetrics(self.lineEdit().font())
@@ -171,6 +179,7 @@ class CheckableComboBox(QComboBox):
             self.model().blockSignals(False)
 
     def remove_custom(self):
+        """Remove the custom option from the combobox"""
         model = self.model()
         all_text = [model.item(i).text() for i in range(model.rowCount())]
         if "Custom" in all_text:
@@ -178,14 +187,20 @@ class CheckableComboBox(QComboBox):
             self.removeItem(custom_idx)
 
     def loadCustom(self, items):
-        """
-        Check all the items listed in tran
-        """
+        """Check all the items given"""
         self.remove_custom()
         self.check_items(items)
         self.updateText()
 
-    def addItem(self, text, data=None):
+    def addItem(self, text: str, data=None):
+        """
+        Add a new item to the combo
+        
+        Parameters
+        ---------
+        text: label of new item
+        data: 
+        """
         item = QStandardItem()
         item.setText(text)
         if data is None:
@@ -196,8 +211,16 @@ class CheckableComboBox(QComboBox):
         item.setData(Qt.Unchecked, Qt.CheckStateRole)
         self.model().appendRow(item)
 
-    def addItems(self, texts, datalist=None):
-        for i, text in enumerate(texts):
+    def addItems(self, items: Iterable[str], datalist=None):
+        """
+        Add multiple items to the combo
+
+        Parameters
+        ---------
+        items: all items to be added
+        datalist:
+        """
+        for i, text in enumerate(items):
             if datalist is None:
                 data = None
             else:
@@ -205,6 +228,7 @@ class CheckableComboBox(QComboBox):
             self.addItem(text, data)
 
     def currentData(self):
+        """Return a list of the currently checked items"""
         # Return the list of selected items data
         res = []
         for i in range(self.model().rowCount()):
