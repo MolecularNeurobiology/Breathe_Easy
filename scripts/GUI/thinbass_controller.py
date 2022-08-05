@@ -1,42 +1,35 @@
 
-import json
+from typing import List
 from PyQt5.QtWidgets import QDialog, QPushButton
 from PyQt5.QtCore import Qt
-from config import ConfigSettings
 from ui.thinbass import Ui_Thinbass
 
 class Thinbass(QDialog,Ui_Thinbass):
     """
-    This class is used when the user has metadata and BASSPRO settings files as well as JSON files
-        - either can be a source for building the variable list that populates the STAGG Settings subGUI.
-      This dialog prompts them to decide which source they'd like to use.
+    General popup window used to provide arbitrary list of user-selectable options
 
-    Parameters
-    --------
-    QDialog: class
-        The Thinbass class inherits properties and methods from the QDialog class.
-    Ui_Thinbass: class
-        The Thinbass class inherits widgets and layouts from the Ui_Thinbass class.
+    Attributes
+    ---------
+    selected_option: attribute set upon user selection
     """
-    def __init__(self, valid_options):
+    def __init__(self, valid_options: List[str]):
         """"
-        Instantiate the Thinbass class in the method Plethysmography.show_variable_config().
+        Set valid options and their callbacks for popup dialog
 
         Parameters
         --------
-        Ui_Thinbass: class
-            Thinbass inherits widgets and layouts of Ui_Thinbass.
-        Plethysmography: class
-            Thinbass inherits Plethysmography's methods, properties, and widgets, including the Config class.
+        valid_options: list of options to set as buttons on dialog window
         """
         super(Thinbass, self).__init__()
         self.setupUi(self)
-        self.setWindowTitle("Multiple data sources")
+        self.setWindowTitle("Select an option")
         self.setAttribute(Qt.WA_DeleteOnClose)
+
         self.selected_option = None
 
         assert len(valid_options) <= 3, "Max 3 options for Thinbass dialog"
 
+        # Set callbacks for all options
         for i, option in enumerate(valid_options):
             new_button = QPushButton(option)
             new_button.clicked.connect(lambda _checked, selection=option : self.make_selection(selection))
@@ -47,4 +40,5 @@ class Thinbass(QDialog,Ui_Thinbass):
         self.accept()
 
     def get_value(self):
+        """Used by caller to retrieve the selected option"""
         return self.selected_option
