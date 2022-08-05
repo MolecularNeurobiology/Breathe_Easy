@@ -425,7 +425,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air": {
                         "Alias": "Room Air",
@@ -460,7 +462,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     }
                 }
             },
@@ -499,7 +503,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Cal 20 5% CO2": {
                         "Alias": "Cal 20 5% CO2",
@@ -534,7 +540,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Pre-CNO Room Air": {
                         "Alias": "Pre-CNO Room Air",
@@ -569,7 +577,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Pre-CNO 5% CO2": {
                         "Alias": "Pre-CNO 5% CO2",
@@ -604,7 +614,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Pre-CNO Post-CO2 Recovery": {
                         "Alias": "Pre-CNO Post-CO2 Recovery",
@@ -639,7 +651,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Post-CNO Room Air": {
                         "Alias": "Post-CNO Room Air",
@@ -674,7 +688,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Post-CNO 5% CO2": {
                         "Alias": "Post-CNO 5% CO2",
@@ -709,7 +725,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Post-CNO Post-CO2 Recovery": {
                         "Alias": "Post-CNO Post-CO2 Recovery",
@@ -744,7 +762,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     }
                 },
                 "CNO 10% Hypoxia": {
@@ -781,7 +801,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Cal 20 10% O2": {
                         "Alias": "Cal 20 10% O2",
@@ -816,7 +838,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Pre-CNO Room Air": {
                         "Alias": "Pre-CNO Room Air",
@@ -851,7 +875,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Pre-CNO 10% O2": {
                         "Alias": "Pre-CNO 10% O2",
@@ -886,7 +912,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Pre-CNO Post-O2 Recovery": {
                         "Alias": "Pre-CNO Post-O2 Recovery",
@@ -921,7 +949,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Post-CNO Room Air": {
                         "Alias": "Post-CNO Room Air",
@@ -956,7 +986,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Post-CNO 10% O2": {
                         "Alias": "Post-CNO 10% O2",
@@ -991,7 +1023,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Post-CNO Post-O2 Recovery": {
                         "Alias": "Post-CNO Post-O2 Recovery",
@@ -1026,7 +1060,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     }
                 },
                 "5% Hypercapnia": {
@@ -1063,7 +1099,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Cal 20 5% CO2": {
                         "Alias": "Cal 20 5% CO2",
@@ -1098,7 +1136,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air": {
                         "Alias": "Room Air",
@@ -1133,7 +1173,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "5% CO2": {
                         "Alias": "5% CO2",
@@ -1168,7 +1210,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air 2": {
                         "Alias": "Room Air 2",
@@ -1203,7 +1247,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     }
                 },
                 "7% Hypercapnia": {
@@ -1240,7 +1286,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Cal 20 7% CO2": {
                         "Alias": "Cal 20 7% CO2",
@@ -1275,7 +1323,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air": {
                         "Alias": "Room Air",
@@ -1310,7 +1360,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "7% CO2": {
                         "Alias": "7% CO2",
@@ -1345,7 +1397,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air 2": {
                         "Alias": "Room Air 2",
@@ -1380,7 +1434,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     }
                 },
                 "10% Hypercapnia": {
@@ -1417,7 +1473,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Cal 20 10% CO2": {
                         "Alias": "Cal 20 10% CO2",
@@ -1452,7 +1510,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air": {
                         "Alias": "Room Air",
@@ -1487,7 +1547,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "10% CO2": {
                         "Alias": "10% CO2",
@@ -1522,7 +1584,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air 2": {
                         "Alias": "Room Air 2",
@@ -1557,7 +1621,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     }
                 },
                 "5% Hypercapnia/10% Hypoxia": {
@@ -1594,7 +1660,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Cal 20 5% CO2": {
                         "Alias": "Cal 20 5% CO2",
@@ -1629,7 +1697,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Cal 20 10% O2": {
                         "Alias": "Cal 20 10% O2",
@@ -1664,7 +1734,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air": {
                         "Alias": "Room Air",
@@ -1699,7 +1771,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "5% CO2": {
                         "Alias": "5% CO2",
@@ -1734,7 +1808,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air 2": {
                         "Alias": "Room Air 2",
@@ -1769,7 +1845,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "10% O2": {
                         "Alias": "10% O2",
@@ -1804,10 +1882,12 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air 3": {
-                        "Alias": "Room Air 2",
+                        "Alias": "Room Air 3",
                         "Cal Seg": "Cal 20 Room Air",
                         "AUTO_IND_INCLUDE": 0,
                         "AUTO_IND_CAL": 0,
@@ -1839,7 +1919,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     }
                 },
                 "10% Hypoxia": {
@@ -1876,7 +1958,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Cal 20 10% O2": {
                         "Alias": "Cal 20 10% O2",
@@ -1911,7 +1995,9 @@
                         "within_start": 300,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air": {
                         "Alias": "Room Air",
@@ -1946,7 +2032,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "10% O2": {
                         "Alias": "10% O2",
@@ -1981,7 +2069,9 @@
                         "within_start": 43200,
                         "within_end": 600,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     },
                     "Room Air 2": {
                         "Alias": "Room Air 2",
@@ -2016,7 +2106,9 @@
                         "within_start": 43200,
                         "within_end": 43200,
                         "after_start": 0,
-                        "before_end": 0
+                        "before_end": 0,
+                        "min_VO2": "off",
+                        "min_VCO2": "off"
                     }
                 }
             },

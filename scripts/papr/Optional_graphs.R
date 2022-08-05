@@ -930,6 +930,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     # Turn results to data frame for plotting
     psd_df <-  reshape2::melt(as.data.frame(psd_list))
     psd_df$tt <- rep(2:max_hz, length(unique(graph_data[[pointdodge]])))
+    psd_df <- graph_reorder(psd_df, pointdodge, graph_vars, tbl0)
     
     base_pt <- 7 * sqrt(length(unique(graph_data[[pointdodge]])))
     # Make graph + save

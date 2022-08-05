@@ -339,12 +339,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         """Set all STAGG settings data -- variable, graph, other"""
         # Set all config data collectively
         if new_data is None:
+            print("none")
             self.variable_config_df = None
             self.graph_config_df = self.DEFAULT_GRAPH_CONFIG_DF.copy()
             self.other_config_df = self.DEFAULT_OTHER_CONFIG_DF.copy()
             self.variable_list.clear()
             self.stagg_settings_layout.delete_button.hide()
         else:
+            print("not non")
             var_df = new_data['variable']
             graph_df = new_data['graph']
             other_df = new_data['other']
@@ -699,7 +701,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         If subGUI edits confirmed, store selections
         """
         new_settings = AutoSettings.edit(self.bc_config['Dictionaries']['Auto Settings']['default'],
-                                         self.gui_config['Dictionaries']['Settings Names']['Auto Settings'],
+                                         self.gui_config['Dictionaries']['Settings Types']['Auto Settings'],
                                          self.rc_config['References']['Definitions'],
                                          self.signal_files,
                                          data=self.autosections_df,
@@ -1125,9 +1127,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'MUID',
                     'PlyUID',
                     'Misc. Variable 1 Value',
-                    # 'Group',
+                    'Group',
                     'Weight',
-                    # 'Experiment_Name',
+                    'Experiment_Name',
                     # 'Researcher',
                     'Experimental_Date',
                     'time started',
@@ -1944,7 +1946,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                         json.dump(self.gui_config, gconfig_file)
                     break
 
-                notify_error("Must pick a file named Rscript")
+                notify_error("Must pick a file named Rscript.")
 
         return True
 

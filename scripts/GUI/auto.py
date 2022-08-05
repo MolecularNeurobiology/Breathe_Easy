@@ -61,12 +61,18 @@ class Auto(QDialog, Ui_Auto):
 
         sections_reference = [
             self.help_key,
+            self.help_alias,
             self.help_cal_seg,
-            self.help_auto_ind_include, 
-            self.help_auto_ind_injection,
-            self.help_startpoint,
-            self.help_midpoint,
-            self.help_endpoint
+            self.help_auto_ind_injection, 
+            self.help_auto_ind_include,
+            self.help_min_co2,
+            self.help_max_co2,
+            self.help_min_o2,
+            self.help_max_o2,
+            self.help_within_start,
+            self.help_within_end,
+            self.help_after_start,
+            self.help_before_end
             ]
 
         cal_reference = [
@@ -77,30 +83,27 @@ class Auto(QDialog, Ui_Auto):
             ]
 
         thresh_reference = [
-            self.help_min_co2,
-            self.help_max_co2,
-            self.help_min_o2,
-            self.help_max_calibrated_TV,
-            self.help_maxVEVO2,
-            self.help_max_o2,
-            self.help_within_start,
-            self.help_within_end,
-            self.help_after_start,
-            self.help_before_end
+            self.help_include_apnea,
+            self.help_include_sigh,
+            self.help_startpoint,
+            self.help_midpoint,
+            self.help_endpoint,
+            self.help_include_high_chamber_temp
             ]
 
         inc_reference = [
+            self.help_min_VO2,
+            self.help_min_VCO2,
+            self.help_min_tv,
+            self.help_max_calibrated_TV,
+            self.help_max_VEVO2,
             self.help_min_TT,
             self.help_max_TT,
             self.help_max_dvtv,
             self.help_X,
             self.help_max_pX,
-            self.help_vol_mov_avg_drift,
-            self.help_min_tv,
-            self.help_min_bout,
-            self.help_include_apnea,
-            self.help_include_sigh,
-            self.help_include_high_chamber_temp
+            self.help_vol_mov_avg_drift,            
+            self.help_min_bout
             ]
 
         # Store ref buttons with their reference box
@@ -193,10 +196,13 @@ class Auto(QDialog, Ui_Auto):
     def all_tables(self):
         return [self.sections_char_table,
                 self.sections_spec_table,
+                self.sections_veras_table,
+                self.sections_time_table,
                 self.cal_table,
+                self.inc_table,
+                self.sections_art_table,
                 self.gas_thresh_table,
                 self.time_thresh_table,
-                self.inc_table,
                 self.summary_table]
 
     def timestamps_from_signals(self):
@@ -327,34 +333,50 @@ class Auto(QDialog, Ui_Auto):
         # Populate table of tabs with appropriately sliced dataframes derived from selected settings template
         
         # Populate Section Characterization table
-        all_sec_char_items = self.auto_labels['Section Characterization']['Section Identification and Settings'].values()
+        all_sec_char_items = self.auto_labels['Section Settings']['Section Naming'].values()
         sec_char_df = self.data.loc[(self.data.index.isin(all_sec_char_items)),:]
         populate_table(sec_char_df, self.sections_char_table)
 
         # Populate Section Spec table
-        all_sec_spec_items = self.auto_labels['Section Characterization']['Interruptions'].values()
+        all_sec_spec_items = self.auto_labels['Section Settings']['Experiment Settings'].values()
         sec_spec_df = self.data.loc[(self.data.index.isin(all_sec_spec_items)),:]
         populate_table(sec_spec_df, self.sections_spec_table)
+
+        # Populate Section Verification table
+        all_sec_veras_items = self.auto_labels['Section Settings']['Section Verification'].values()
+        sec_veras_df = self.data.loc[(self.data.index.isin(all_sec_veras_items)),:]
+        populate_table(sec_veras_df, self.sections_veras_table)
+
+        # Populate Section Timing table
+        all_sec_time_items = self.auto_labels['Section Settings']['Section Timing'].values()
+        sec_time_df = self.data.loc[(self.data.index.isin(all_sec_time_items)),:]
+        populate_table(sec_time_df, self.sections_time_table)
         
-        # Populate Section Calibration table
-        all_cal_items = self.auto_labels['Section Calibration']['Volume and Gas Calibrations'].values()
+        # Populate Calibration Settings table
+        all_cal_items = self.auto_labels['Calibration Settings']['Volume and Gas Calibrations'].values()
         cal_df = self.data.loc[(self.data.index.isin(all_cal_items)),:]
         populate_table(cal_df,self.cal_table)
 
+        # Populate Inclusion DF table
+        all_inc_items = self.auto_labels['Breath Inclusion Criteria']['Limits'].values()
+        inc_df = self.data.loc[(self.data.index.isin(all_inc_items)),:]
+        populate_table(inc_df,self.inc_table)
+
+        # Populate Artifact Exclusion table
+        all_sec_art_items = self.auto_labels['Breath Inclusion Criteria']['Artifact Exclusion'].values()
+        sec_art_df = self.data.loc[(self.data.index.isin(all_sec_art_items)),:]
+        populate_table(sec_art_df, self.sections_art_table)
+
         # Populate Gass Threshold Settings table
-        all_gas_thresh_items = self.auto_labels['Threshold Settings']['Gas Thresholds'].values()
+        all_gas_thresh_items = self.auto_labels['Additional Settings']['Featured Breathing'].values()
         gas_thresh_df = self.data.loc[(self.data.index.isin(all_gas_thresh_items)),:]
         populate_table(gas_thresh_df,self.gas_thresh_table)
 
         # Populate Time Threshold Settings table
-        all_time_thresh_items = self.auto_labels['Threshold Settings']['Time Thresholds'].values()
+        all_time_thresh_items = self.auto_labels['Additional Settings']['Temperature Settings'].values()
         time_thresh_df = self.data.loc[(self.data.index.isin(all_time_thresh_items)),:]
         populate_table(time_thresh_df,self.time_thresh_table)
 
-        # Populate Inclusion DF table
-        all_inc_items = self.auto_labels['Inclusion Criteria']['Breath Quality Standards'].values()
-        inc_df = self.data.loc[(self.data.index.isin(all_inc_items)),:]
-        populate_table(inc_df,self.inc_table)
 
         # Populate summary table with all data
         populate_table(self.data,self.summary_table)
