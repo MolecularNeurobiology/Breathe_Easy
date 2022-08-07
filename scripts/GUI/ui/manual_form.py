@@ -194,7 +194,7 @@ class Ui_Manual(object):
         self.dialog_button.accepted.connect(Manual.accept)
         self.merge_button.clicked.connect(Manual.manual_merge)
         self.preset_menu.currentIndexChanged['QString'].connect(Manual.get_preset)
-        self.load_manual_button.clicked.connect(Manual.load_manual_file)
+        self.load_manual_button.clicked.connect(Manual.load_file)
         self.export_button.clicked.connect(Manual.export)
         QtCore.QMetaObject.connectSlotsByName(Manual)
 

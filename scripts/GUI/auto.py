@@ -13,7 +13,7 @@ from tools.convert_timestamps_to_autosections import convert_timestamps_to_autos
 
 class Auto(QDialog, Ui_Auto):
     """
-    Defines the properties, attributes, and methods used by the automated BASSPRO settings subGUI.
+    Properties, attributes, and methods used by the automated BASSPRO settings subGUI.
 
     Attributes
     ---------
@@ -37,7 +37,7 @@ class Auto(QDialog, Ui_Auto):
         auto_labels: names of auto section variables, split into named groupings
         ref_definitions: help text for each auto section variable
         signal_files: list of signal file paths
-        data: current data reflected in the GUI widgets
+        data: initial data given from caller
         output_dir: current working directory
         
         """
@@ -425,7 +425,11 @@ class Auto(QDialog, Ui_Auto):
             # ^this should eventually trigger update_tabs()
 
     def confirm(self):
-        """Reformat data for external use and confirm user input"""
+        """
+        Confirm user input and close window
+
+        Current dataframe will be reformatted for external use
+        """
         self.data = self.untransform_data(self.data)
 
         # Add the keys back in

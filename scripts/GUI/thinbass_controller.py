@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QDialog, QPushButton
 from PyQt5.QtCore import Qt
 from ui.thinbass import Ui_Thinbass
 
-class Thinbass(QDialog,Ui_Thinbass):
+class Thinbass(QDialog, Ui_Thinbass):
     """
     General popup window used to provide arbitrary list of user-selectable options
 
@@ -12,18 +12,39 @@ class Thinbass(QDialog,Ui_Thinbass):
     ---------
     selected_option: attribute set upon user selection
     """
-    def __init__(self, valid_options: List[str]):
+    def __init__(self, valid_options: List[str], msg: str = "Please choose one of the following sources:", title: str = "Select an option"):
         """"
         Set valid options and their callbacks for popup dialog
 
         Parameters
-        --------
+        ---------
         valid_options: list of options to set as buttons on dialog window
+        msg: window message to display
+        title: window title
         """
         super(Thinbass, self).__init__()
         self.setupUi(self)
-        self.setWindowTitle("Select an option")
         self.setAttribute(Qt.WA_DeleteOnClose)
+        self.setWindowTitle(title)
+
+        # Break up any long messages into multiple lines
+        max_line_len = 50
+        if len(msg) > max_line_len:
+            msg = [msg]
+            # Break the string into separate lines
+            while len(msg[-1]) > max_line_len:
+                breakup_str = msg[-1]
+                break_idx = max_line_len
+                # Search for a space to split on
+                while breakup_str[break_idx] != " " and break_idx > 0:
+                    break_idx -= 1
+                # If no spaces to break at, then quit
+                if break_idx == 0:
+                    break
+                msg[-1] = breakup_str[:break_idx]
+                msg.append(breakup_str[break_idx + 1:])
+            msg = '\n'.join(msg)
+        self.label_2.setText(msg)
 
         self.selected_option = None
 

@@ -169,7 +169,7 @@ def populate_table(df: pd.DataFrame, table: QTableWidget):
     # Set table data
     for col in range(table.columnCount()):
         for row in range(table.rowCount()):
-            table.setItem(row,col,QTableWidgetItem(str(df.iloc[row,col])))
+            table.setItem(row, col, QTableWidgetItem(str(df.iloc[row, col])))
 
     # Set headers
     table.setHorizontalHeaderLabels(df.columns)

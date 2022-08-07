@@ -212,16 +212,14 @@ class Ui_Annot(object):
         self.gridLayout.addLayout(self.verticalLayout_6, 0, 0, 1, 1)
 
         self.retranslateUi(Annot)
-        self.load_metadata_button.clicked.connect(Annot.load_metadata_file) # type: ignore
+        self.load_metadata_button.clicked.connect(Annot.load_file) # type: ignore
         self.variable_list_columns.itemSelectionChanged.connect(Annot.populate_list_values) # type: ignore
         self.add_configuration.clicked.connect(Annot.add_column) # type: ignore
         self.ok_button.clicked.connect(Annot.accept) # type: ignore
         self.save_as_button.clicked.connect(Annot.save_as) # type: ignore
-        self.group_list.doubleClicked['QModelIndex'].connect(Annot.relabel_group) # type: ignore
-        self.move_button.clicked.connect(Annot.recode) # type: ignore
+        self.move_button.clicked.connect(Annot.manual_bin) # type: ignore
         self.bin_value.clicked.connect(Annot.binning_value) # type: ignore
         self.group_list.itemChanged['QListWidgetItem*'].connect(Annot.tree_label) # type: ignore
-        self.variable_list_columns.itemDoubleClicked['QListWidgetItem*'].connect(Annot.relabel_column) # type: ignore
         self.variable_list_columns.itemChanged['QListWidgetItem*'].connect(Annot.column_label) # type: ignore
         self.bin_count.clicked.connect(Annot.binning_count) # type: ignore
         self.cancel_button.clicked.connect(Annot.reject) # type: ignore

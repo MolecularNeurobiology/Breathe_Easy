@@ -13,10 +13,10 @@ import os
 import traceback
 
 # general
+from typing import Dict
 from glob import glob
 from pathlib import Path
 import re
-from typing import Dict
 import pyodbc
 from datetime import datetime
 
@@ -26,7 +26,6 @@ import pandas as pd
 
 # multithreading
 import queue
-import threading
 
 # pyqt
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
@@ -649,6 +648,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         On initialization, show popup to choose source of metadata.
         If subGUI edits confirmed, store selections
         """
+        filepath = None
         if self.metadata_df is not None:
             input_data = self.metadata_df
 

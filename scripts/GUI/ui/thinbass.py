@@ -64,5 +64,4 @@ class Ui_Thinbass(object):
     def retranslateUi(self, Thinbass):
         _translate = QtCore.QCoreApplication.translate
         Thinbass.setWindowTitle(_translate("Thinbass", "Dialog"))
-        self.label_2.setText(_translate("Thinbass", "Please choose one of the following sources:"))
         self.cancel_button.setText(_translate("Thinbass", "Cancel"))

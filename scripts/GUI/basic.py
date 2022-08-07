@@ -1,48 +1,40 @@
 
 from copy import deepcopy
 from pathlib import Path
+from typing import Optional
+
 import pandas as pd
-from PyQt5.QtWidgets import QDialog, QTableWidgetItem
-from PyQt5.QtCore import QObject
-from ui.basic_form import Ui_Basic
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDialog, QTableWidgetItem
+
+from ui.basic_form import Ui_Basic
 from util import Settings
 from util.ui.dialogs import notify_info
 from util.ui.tools import populate_table
 
 class Basic(QDialog, Ui_Basic):
     """
-    The Basic class defines the the properties, attributes, and methods used by the basic BASSPRO settings subGUI.
+    Properties, attributes, and methods used by the basic BASSPRO settings subGUI.
 
-    Parameters
-    --------
-    QWidget: class
-        The Basic class inherits properties and methods from the QWidget class. 
-    Ui_Basic: class
-        The Basic class inherits widgets and layouts defined in the Ui_Basic class.
+    Attributes
+    ---------
+    defaults (dict): default basic settings
+    ref_definitions (dict): help text for each auto section variable
+    data (pd.DataFrame): current data reflected in the GUI widgets
+    output_dir (str): current working directory
+    ref_buttons (dict): the help messages for each help button, mapped to the appropriate display box
+    lineEdits (dict): lineEdit widgets mapped to their labels
     """
-    def __init__(self, defaults, ref_definitions, data=None, output_dir=""):
+    def __init__(self, defaults: dict, ref_definitions: dict, data: Optional[pd.DataFrame] = None, output_dir: str = ""):
         """
         Instantiate the Basic class.
 
         Parameters
-        --------
-        Plethysmography: class
-            The Basic class inherits properties, attributes and methods of the Plethysmography class.
-        
-        Outputs
-        --------
-        self.pleth: class
-            Shorthand for the Plethysmography class.
-        self.path: str
-            This attribute is set as an empty string.
-
-        Outcomes
-        --------
-        self.setup_variables()
-            This method organizes widgets in dictionaries and assigns signals and slots to certain widgets.
-        self.load_data()
-            This method populates the basic BASSPRO settings subGUI widgets with default values derived from Plethysmography.bc_config (breathcaller_config.json).
+        ---------
+        defaults: default basic settings
+        ref_definitions: help text for each auto section variable
+        data: initial data given from caller
+        output_dir: current working directory
         """
         super(Basic, self).__init__()
         self.setupUi(self)
@@ -64,38 +56,9 @@ class Basic(QDialog, Ui_Basic):
 
     def setup_variables(self):
         """
-        Organize widgets in dictionaries and assign signals and slots to relevant buttons.
-
-        Parameters
-        --------
-        Plethysmography.bc_config: dict
-            This Plethysmography class attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
-        self.{tab}_reference: QTextBrowser
-            These TextBrowsers display the definition, description, and default value of the user-selected setting. There is a TextBrowser for each of the first three tabs of the subGUI.
-        self.help_{setting}: QToolButton
-            These are buttons intended to provide helpful information to the user about the relevant setting.
-        self.lineEdit_{setting}: QLineEdit
-            These LineEdits widgets display the values of the basic settings. They are editable.
-        self.reset_{setting}: QToolButton
-            These ToolButtons revert the value of the setting displayed in the corresponding LineEdit to the default value stored in Plethysmography.bc_config.
-        
-        Outputs
-        --------
-        self.defaults: dict
-            This attribute stores the nested dictionary in Plethysmography.bc_config that contains the default basic BASSPRO settings.
-        self.ref_buttons: dict
-            This dictionary relates the self.help_{setting} widgets with the appropriate TextBrowser.
-        self.lineEdits: dict
-            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
-        self.resets: list
-            This list makes it easier to iteratively assign signals and slots to all the self.reset_{setting} widgets.
-        self.help_{setting}: QToolButton
-            These buttons are assigned clicked signals and slotted for self.reference_event().
-        self.lineEdit_{setting}: QLineEdit
-            These LineEdits are assigned textChanged signals and slotted for self.update_table_event().
-        self.reset_{setting}: QToolButton
-            These buttons are assigned clicked signals and slotted for self.reset_event().
+        Organize widgets into dictionaries and assign signals and slots to relevant buttons.
         """
+        # Set up help buttons and callbacks
         basic_reference = [self.help_minTI,self.help_minPIF,self.help_minPEF,self.help_TTwin,self.help_SIGHwin,self.help_minAplTT,self.help_minApsTT]
         rig_reference = [self.help_ConvertTemp,self.help_ConvertCO2,self.help_ConvertO2,self.help_Flowrate,self.help_Roto_x,self.help_Roto_y,self.help_chamber_temp_cutoffs,self.help_chamber_temperature_units,self.help_chamber_temperature_default,self.help_chamber_temperature_trim_size,self.help_chamber_temperature_narrow_fix]
         crude_reference = [self.help_per500win,self.help_perX,self.help_maxPer500,self.help_maximum_DVTV,self.help_apply_smoothing_filter,self.help_maxTV,self.help_maxVEVO2]
@@ -137,7 +100,7 @@ class Basic(QDialog, Ui_Basic):
             self.lineEdit_Aggregate_Output: "Aggregate_Output"
         }
         
-        self.resets = [
+        resets = [
             self.reset_minimum_TI,
             self.reset_minimum_PIF,
             self.reset_minimum_PEF,
@@ -167,43 +130,21 @@ class Basic(QDialog, Ui_Basic):
             self.reset_Aggregate_Output
             ]
 
+        # Connect help message signals to help buttons
         for ref_button_dict in self.ref_buttons.values():
             for ref_button in ref_button_dict.values():
-                ref_button.clicked.connect(self.reference_event)
+                ref_button.clicked.connect(self.show_help)
         
-        for r in self.resets:
-            r.clicked.connect(self.reset_event)
+        # Connect reset button callbacks
+        for r in resets:
+            r.clicked.connect(self.reset_parameter)
         
+        # Connect lineEdit callbacks
         for l in self.lineEdits:
-            l.textChanged.connect(self.update_table_event)
+            l.textChanged.connect(self.update_table_cell)
 
     def load_data(self):
-        """
-        Populate widgets in each tab with appropriate values for the default basic BASSPRO settings stored in self.defaults.
-
-        Parameters
-        --------
-        self.lineEdits: dict
-            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
-        self.defaults: dict
-            This attribute stores the nested dictionary in Plethysmography.bc_config that contains the default basic BASSPRO settings.
-        Plethysmography.basicap: str
-            The path of the user-selected basic BASSPRO settings file.
-        self.summary_table: QTableWidget
-            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
-        
-        Outputs
-        --------
-        self.lineEdit_{setting}: QLineEdit
-            The LineEdits' values are iteratively set as the values of the corresponding keys in self.defaults.
-        self.data: Dataframe
-            This attribute stores a dataframe derived either from self.defaults or from the .csv file indicated by the user-selected file path (self.basicap).
-        
-        Outcomes
-        --------
-        self.update_summary_table()
-            This method populates self.summary_table (TableWidget) with the self.data dataframe.
-        """
+        """Populate widgets with current data"""
 
         # If no data, load defaults
         if self.data is None:
@@ -215,113 +156,75 @@ class Basic(QDialog, Ui_Basic):
         populate_table(self.data, self.summary_table)
         self.summary_table.blockSignals(False)
 
-        ## Populate lineEdit widgets with default basic parameter values from breathcaller configuration file:
-        #for widget in self.lineEdits:
-        #    widget.setText(str(self.defaults[self.lineEdits[widget]]))
-
-        # Update lineEdits to match table:
+        # Update lineEdits to match table
         self.update_all_lineedits()
     
-    def reference_event(self):
-        """
-        Respond to the signal emitted by the self.help_{setting} ToolButton clicked by the user by calling self.display_help(self.sender.objectName()) to populate the appropriate TextBrowser with the definition, description, and default value of corresponding setting.
-        """
+    def show_help(self):
+        """Callback to display help text for the caller"""
         sbutton = self.sender()
-        self.display_help(sbutton.objectName())
-    
-    def reset_event(self):
-        """
-        Respond to the signal emitted by the self.reset_{setting} ToolButton clicked by the user by calling self.reset_parameters(self.sender.objectName()) to revert the LineEdit value to the default value in the default basic BASSPRO settings dictionary (self.defaults).
-        """
-        sbutton = self.sender()
-        self.reset_parameter(sbutton.objectName())
-    
-    def update_table_event(self):
-        """
-        Respond to the signal emitted by the self.lineEdit_{setting} LineEdit edited by the user by calling self.update_summary_cell(self.sender.objectName()) to update self.summary_table to reflect changes made to LineEdits in other tabs.
-        """
-        sbutton = self.sender()
-        self.update_summary_cell(sbutton.objectName())
-
-    def display_help(self, buttoned):
-        """
-        Populate the appropriate reference TextBrowser with the definition, description, and default values of the appropriate setting as indicated by the suffix of the ToolButton's objectName(), e.g. "help_{setting}" from Plethysmography.rc_config (reference_config.json).
-        """
+        button_name = sbutton.objectName()
         for ref_box, ref_button_dict in self.ref_buttons.items():
-            if str(buttoned) in ref_button_dict:
-                ref_text = self.ref_definitions.get(buttoned.replace("help_",""), "No Reference Info")
+            if str(button_name) in ref_button_dict:
+                ref_text = self.ref_definitions.get(button_name.replace("help_",""), "No Reference Info")
                 ref_box.setPlainText(ref_text)
                 ref_box.setOpenExternalLinks(True)
-   
-    def update_summary_table(self):
-        """
-        Populate self.summary_table (TableWidget) with the self.data dataframe.
+    
+    def reset_parameter(self):
+        """Callback to reset the caller's parameter to default"""
+        sbutton = self.sender()
+        button_name = sbutton.objectName()
+        for widget in self.lineEdits:
+            if widget.objectName().replace("lineEdit_","") == str(button_name).replace("reset_",""):
+                widget.setText(str(self.defaults[self.lineEdits[widget]]))
+    
+    def update_table_cell(self):
+        """Callback to update the summary table with a changed lineEdit"""
 
-        Parameters
-        --------
-        frame: Dataframe
-            This variable refers to the self.data dataframe.
-        table: QTableWidget
-            This variable refers to self.summary_table (TableWidget).
+        lineedit = self.sender()
 
-        Outputs
-        --------
-        self.summary_table: QTableWidget
-            The TableWidget is populated by the contents of the self.data dataframe, assigned cellChanged signals slotted to self.update_all_lineedits, and cell dimensions adjusted to accommodate the text.
-        """
-        frame = self.data
+        # Get updated data in lineedit
+        updated_data = lineedit.text()
 
-        # Populate tablewidgets with views of uploaded csv. Currently editable.
-        self.summary_table.setColumnCount(len(frame.columns))
-        self.summary_table.setRowCount(len(frame))
+        variable_to_update = lineedit.objectName().replace("lineEdit_","")
 
-        for col in range(self.summary_table.columnCount()):
-            for row in range(self.summary_table.rowCount()):
-                self.summary_table.setItem(row, col, QTableWidgetItem(str(frame.iloc[row, col])))
-                self.summary_table.item(row,0).setFlags(Qt.ItemIsEditable)
-
-        self.summary_table.setHorizontalHeaderLabels(frame.columns)
-        self.summary_table.resizeColumnsToContents()
-        self.summary_table.resizeRowsToContents()
-
-    def update_summary_cell(self, donor: QObject.objectName):
-        """
-        Update self.summary_table (TableWidget) to reflect changes to LineEdits.
-
-        Parameters
-        --------
-        donor: QObject.objectName
-            This variable is the objectName of the LineEdit that emitted the signal self.update_table_event that called this method. Its suffix is used to identify the appropriate cell in self.summary_table (TableWidget).
-        self.lineEdits: dict
-            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
-        self.summary_table: QTableWidget
-            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
-
-        Outputs
-        --------
-        self.summary_table: QTableWidget
-            The cell that contains the value of the setting that was updated by the user editing a LineEdit is updated to reflect the edit.
-        """
         # Prevent endless loop of triggering lineEdit update and back
         self.summary_table.blockSignals(True)
 
-        variable_to_update = donor.replace("lineEdit_","")
-
-        # Get name of updated widget
-        for l in self.lineEdits:
-            if donor == l.objectName():
-                updated_data = l.text()
-
-        # Find the corresponding cell
+        # Find the corresponding cell to update
         for row in range(self.summary_table.rowCount()):
             sum_table_index_name = self.summary_table.item(row, 0).text()
             if sum_table_index_name == variable_to_update:
-                self.summary_table.item(row,1).setText(updated_data)
+                self.summary_table.item(row, 1).setText(updated_data)
         
         # Reenable signals
         self.summary_table.blockSignals(False)
 
-    def update_lineedit(self, row, col):
+
+    def update_summary_table(self):
+        """Populate the summary table with the current data"""
+
+        # Populate tablewidgets with views of uploaded csv. Currently editable.
+        self.summary_table.setColumnCount(len(self.data.columns))
+        self.summary_table.setRowCount(len(self.data))
+
+        for col in range(self.summary_table.columnCount()):
+            for row in range(self.summary_table.rowCount()):
+                self.summary_table.setItem(row, col, QTableWidgetItem(str(self.data.iloc[row, col])))
+                self.summary_table.item(row,0).setFlags(Qt.ItemIsEditable)
+
+        self.summary_table.setHorizontalHeaderLabels(self.data.columns)
+        self.summary_table.resizeColumnsToContents()
+        self.summary_table.resizeRowsToContents()
+
+    def update_lineedit(self, row: int, col: int):
+        """
+        Update a lineedit to match the associated summary table cell
+        
+        Parameters
+        ---------
+        row: row of summary table cell
+        column: column of summary table cell
+        """
         # Get the index name of that row's parameter
         sum_table_index_name = self.summary_table.item(row, 0).text()
 
@@ -343,48 +246,15 @@ class Basic(QDialog, Ui_Basic):
         
     def update_all_lineedits(self):
         """
-        Update the LineEdits to reflect changes to self.summary_table (TableWidget).
-
-        Parameters
-        --------
-        self.summary_table: QTableWidget
-            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
-        self.lineEdits: dict
-            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
-        
-        Outputs
-        --------
-        self.lineEdit_{settings}: QLineEdit
-            The LineEdit whose objectName suffix matches the setting that was edited by the user in self.summary_table (TableWidget) is updated to reflect the edit.
+        Update all LineEdits to reflect the current data in the summary table.
         """
-
         # For each row in the summary table
         for row in range(self.summary_table.rowCount()):
             self.update_lineedit(row, None)
 
 
-    def reset_parameter(self,butts):
-        """
-        Revert the settings to its corresponding default value in the basic BASSPRO settings stored in the self.defaults.
-
-        Parameters
-        --------
-        self.lineEdits: dict
-            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
-        self.data: Dataframe
-            This attribute stores a dataframe derived either from self.defaults or from the .csv file indicated by the user-selected file path (self.basicap).
-
-        Outputs
-        --------
-        self.lineEdit_{settings}: QLineEdit
-            The LineEdit whose objectName suffix matches the setting that was edited by the user in self.summary_table (TableWidget) is updated to reflect the edit.
-        """
-        print("basic.reset_parameter()")
-        for widget in self.lineEdits:
-            if widget.objectName().replace("lineEdit_","") == str(butts).replace("reset_",""):
-                widget.setText(str(self.defaults[self.lineEdits[widget]]))
-
     def confirm(self):
+        """Confirm user input and close window"""
         # Update dataframe with latest edits
         self.data = self.get_dataframe()
         
@@ -393,19 +263,7 @@ class Basic(QDialog, Ui_Basic):
 
     def get_dataframe(self):
         """
-        Scrape the values of the LineEdits to update the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config.
-
-        Parameters
-        --------
-        Plethysmography.bc_config: dict
-            This attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
-        self.lineEdits: dict
-            This dictionary relates the self.lineEdit_{setting} widgets with the string of the setting name.
-
-        Outputs
-        --------
-        self.data: Dataframe
-            This attribute stores a dataframe made from the "current" dictionary that was updated with the values of the corresponding LineEdits.
+        Return DataFrame created from current lineEdit widget values
         """
         # Read lineEdit widgets and create dataframe
         lineedit_data = [(param_name, widg.text()) for widg, param_name in self.lineEdits.items()]
@@ -413,38 +271,7 @@ class Basic(QDialog, Ui_Basic):
         return data
 
     def save_as(self):
-        """
-        Write self.data dataframe to a .csv file, dump the nested dictionary stored in Plethysmography.bc_config to breathcaller_config.json to save changes made to the "current" dictionary in the basic BASSPRO settings dictionary in Plethysmography.bc_config, and add the file path self.basicap to the ListWidget self.sections_list for display in the main GUI.
-
-        Parameters
-        --------
-        self.path: str
-            This attribute stores the file path automatically generated based on the user-selected output directory.
-        Plethysmography.basicap: str
-            This Plethysmography class attribute stores the file path of the .csv file that the basic BASSPRO settings are saved to.
-        self.data: Dataframe
-            This attribute stores a dataframe made from the "current" dictionary that was updated with the values of the corresponding LineEdits.
-        Plethysmography.bc_config: dict
-            This Plethysmography class attribute is a nested dictionary loaded from breathcaller_config.json. It contains the default settings of multiple experimental setups for basic, automated, and manual BASSPRO settings and  the most recently saved settings for automated and basic BASSPRO settings. See the README file for more detail.
-        Plethysmography.sections_list: QListWidget
-            This Plethysmography class ListWidget displays the file paths of the .csv files defining the BASSPRO settings.
-        Plethysmography.hangar: QTextEdit
-            This TextEdit displays feedback on user activity and feedback on BASSPRO or STAGG processing.
-
-        Outputs
-        --------
-        Plethysmography.basicap: str
-            This Plethysmography class attribute stores the file path of the .csv file that the basic BASSPRO settings are saved to.
-        Plethysmography.sections_list: QListWidget
-            This Plethysmography class ListWidget is updated to display the path to the basic BASSPRO settings .csv file.
-        Plethysmography.hangar: QTextEdit
-            This TextEdit is updated to describe the user's activity.
-        
-        basic.csv: CSV file
-            The .csv file that the basic BASSPRO settings are saved to.
-        breathcaller_config.json: JSON file
-            The JSON file that the updated Plethysmography.bc_config dictionary is dumped to.
-        """
+        """Save current data to user-selected file"""
         # Update dataframe from curr widget inputs
         self.data = self.get_dataframe()
 
@@ -452,38 +279,7 @@ class Basic(QDialog, Ui_Basic):
             notify_info("Basic settings saved.")
 
     def load_file(self):
-        """
-        Prompt the user to indicate the location of a previously made file - either .csv, .xlsx, or .json formatted file - detailing the basic BASSPRO settings of a previous run, populate self.data with a dataframe from that file, call self.update_summary_table(), and warn the user if they chose files in formats that are not accepted and ask if they would like to select a different file.
-
-        Parameters
-        --------
-        file: QFileDialog
-            This variable stores the path of the file the user selected via the FileDialog.
-        yes: int
-            This variable is used to indicate whether or not self.data was successfully populated with a dataframe from the user-selected file.
-        Plethysmography.output_dir: str
-            The path to the user-selected directory for all output.
-        self.data: Dataframe
-            This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
-        self.summary_table: QTableWidget
-            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
-        reply: QMessageBox
-            This specialized dialog communicates information to the user.
-
-        Outputs
-        --------
-        self.data: Dataframe
-            This attribute stores a dataframe derived from the .csv file indicated by the user-selected file path (Plethysmography.basicap).
-        self.summary_table: QTableWidget
-            The TableWidget displays the dataframe compiling all the basic BASSPRO settings on the fourth tab. Its contents are editable.
-        
-        Outcomes
-        --------
-        self.update_summary_table()
-            Populate self.summary_table (TableWidget) with the self.data dataframe.
-        self.load_basic_file()
-            Prompt the user to indicate the location of a previously made file - either .csv, .xlsx, or .json formatted file - detailing the basic BASSPRO settings of a previous run, populate self.data with a dataframe from that file, call self.update_summary_table(), and warn the user if they chose files in formats that are not accepted and ask if they would like to select a different file.
-        """
+        """Load basic settings from user-selected file"""
         while True:
             # Opens open file dialog
             filepath = BasicSettings.open_file(self.output_dir)
@@ -498,12 +294,10 @@ class Basic(QDialog, Ui_Basic):
 
                 self.load_data()
                 break
-            
-            # If no dataframe, loop again and try to open a different file
-
 
 
 class BasicSettings(Settings):
+    """Attributes and methods for handling Basic settings"""
 
     valid_filetypes = ['.csv', '.xlsx']
     naming_requirements = ['basic']
