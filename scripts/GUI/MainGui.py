@@ -58,12 +58,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
     The Plethysmography class extends Ui_Plethysmography and defines the main GUI.
 
-    Parameters
+    Attributes
     ---------
-    DEFAULT_GRAPH_CONFIG_DF: (DataFrame):
-        default data for graph config
-    DEFAULT_OTHER_CONFIG_DF (DataFrame):
-        default data for other config
+    DEFAULT_GRAPH_CONFIG_DF (DataFrame): default data for graph config
+    DEFAULT_OTHER_CONFIG_DF (DataFrame): default data for other config
     gui_config (str): path to default gui config
     stamp (dict): timestamp settings
     bc_config (dict): default basspro settings
@@ -72,30 +70,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     qthreadpool (QThreadPool): used to allocate processes across CPU cores
     thread_manager (ThreadManager): used to monitor running threads
     import_thread (Thread): used on import of STAGG Settings from BP output
-    imported_files (list[str]): list of STAGG input paths previously used to import STAGG Settings
-    col_vals (Dict[str, list]): all values for each column in STAGG Settings
+    imported_files (list[str]):
+        list of STAGG input paths previously used to import STAGG Settings
+    col_vals (Dict[str, list]):
+        all values for each column in STAGG Settings
     basspro_path (str): path to BASSPRO python script
     papr_dir (str): path to STAGG scripts directory
-    config_data (Dict[str, DataFrame]): variable, graph, and other data for STAGG Settings
-    autosections_df (DataFrame): ...
-    mansections_df (DataFrame): ...
-    metadata_df (DataFrame): ...
-    basicap_df (DataFrame): ...
-
+    config_data (Dict[str, DataFrame]):
+        'variable', 'graph', and 'other' data for STAGG Settings
+    autosections_df (DataFrame): autosections data
+    mansections_df (DataFrame): mansections data
+    metadata_df (DataFrame): metadata settings data
+    basicap_df (DataFrame): basic settings data
     """
 
     DEFAULT_GRAPH_CONFIG_DF = pd.DataFrame(data=[(1, "", ""), (2, "", ""), (3, "", ""), (4, "", "")], columns=['Role', 'Alias', 'Order'])
     DEFAULT_OTHER_CONFIG_DF = pd.DataFrame(columns=["Graph", "Variable", "Xvar", "Pointdodge", "Facet1", "Facet2", "Covariates", "ymin", "ymax", "Inclusion"])
 
     def __init__(self):
-        """
-        Instantiate the Plethysmography class and its attributes
-
-        This function extends QMainWindow and the custom
-        Ui_Plethysmography class to create the MainGUI window. Below
-        are setup methods for PyQt, widget population, initial
-        attribute assignments, and callback methods for GUI events
-        """
+        """Instantiate the Plethysmography class and its attributes"""
 
         super(Plethysmography, self).__init__()
 
@@ -423,7 +416,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Compare the timestamps of the signal files to those of the experimental
         setup selected by the user. Results are printed in the status window.
-
 
         Attributes-In
         ------------

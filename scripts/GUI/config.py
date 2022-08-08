@@ -1,10 +1,12 @@
 
 import os
 from typing import Dict, Iterable, List, Optional, Tuple
+
 import pandas as pd
 import numpy as np
 from PyQt5.QtWidgets import QDialog, QSpacerItem, QSizePolicy, QButtonGroup, QTableWidgetItem, QRadioButton, QLineEdit, QComboBox, QFileDialog
 from PyQt5.QtCore import Qt
+
 from checkable_combo_box import CheckableComboBox
 from align_delegate import AlignDelegate
 from custom import Custom
