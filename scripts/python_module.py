@@ -3061,7 +3061,7 @@ def create_filters_for_manual_selections(
         chunk_start = manual_selection.iloc[segment_index]['start']
         chunk_stop = manual_selection.iloc[segment_index]['stop']
 
-        if manual_selection.iloc[segment_index]['Alias'] not in block_dict:
+        if manual_selection.iloc[segment_index]['Alias'] not in alias_dict:
             alias_dict[manual_selection.iloc[segment_index]['Alias']] = []
 
         alias_dict[manual_selection.iloc[segment_index]
