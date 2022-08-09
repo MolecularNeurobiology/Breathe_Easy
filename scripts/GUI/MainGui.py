@@ -940,6 +940,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Add signal files
         [self.signal_files_list.addItem(file) for file in files]
 
+    def auto_get_breath_files(self, basspro_run_folder: str, clear_files: bool):
+        """Populate gui with stagg input files (*.json) from a given directory.
+
+        Parameters
+        --------
+        basspro_run_folder: path to basspro run output
+        clear_files: flag indicating whether to clear existing breath files
+        """
+
+        if len(self.stagg_input_files) and clear_files:
+            self.breath_list.clear()
+
+        # Get all json files in basspro_run_folder
+        stagg_input_files = glob(os.path.join(basspro_run_folder, "*.json"))
+        for file in stagg_input_files:
+            self.breath_list.addItem(file)
+
     def open_click(self, item):
         """Open the double-clicked ListWidgetItem in the default program."""
         if Path(item.text()).exists():
