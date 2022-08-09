@@ -645,7 +645,7 @@ class Config(QDialog, Ui_Config):
         for config_name, (config_df, settings_class) in self.configs.items():
 
             path = os.path.join(save_dir, f"{config_name}.csv")
-            settings_class.save_file(config_df, path, self.output_dir)
+            settings_class.save_file(config_df, path)
 
         notify_info("All settings files have been saved.")
 

@@ -275,7 +275,7 @@ class Basic(QDialog, Ui_Basic):
         # Update dataframe from curr widget inputs
         self.data = self.get_dataframe()
 
-        if BasicSettings.save_file(self.data, output_dir=self.output_dir):
+        if BasicSettings.save_file(self.data):
             notify_info("Basic settings saved.")
 
     def load_file(self):

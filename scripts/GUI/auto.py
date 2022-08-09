@@ -375,7 +375,7 @@ class Auto(QDialog, Ui_Auto):
         Display error if file in use and cannot be written
         """
         try:
-            if AutoSettings.save_file(data=self.data, output_dir=self.output_dir):
+            if AutoSettings.save_file(data=self.data):
                 notify_info("Automated settings saved")
 
         except PermissionError:

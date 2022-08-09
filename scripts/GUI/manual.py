@@ -176,7 +176,7 @@ class Manual(QDialog, Ui_Manual):
 
     def export(self):
         """Save current data to user-selected file"""
-        if ManualSettings.save_file(self.data, output_dir=self.output_dir):
+        if ManualSettings.save_file(self.data):
             notify_info("Manual sections file saved")
     
     def load_file(self):

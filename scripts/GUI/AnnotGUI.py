@@ -309,7 +309,7 @@ class Annot(QDialog, Ui_Annot):
     def save_as(self):
         """Save current data to user-selected file"""
         try:
-            if MetadataSettings.save_file(data=self.data, output_dir=self.output_dir):
+            if MetadataSettings.save_file(data=self.data):
                 # Tell the user it's a success
                 notify_info("Metadata file saved.")
 
