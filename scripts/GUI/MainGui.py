@@ -823,14 +823,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     notify_error("Could not import files")
                     return
 
-                graph_config_df = input_data['graph']
-                col_vals = {}
-                for record in graph_config_df.to_dict('records'):
-                    # TODO: remaining backwards compatible for files without the Order column
-                    order_str = record.get('Order', None)
-                    if order_str:
-                        # TODO: move this logic to occur immediately on file load!
-                        col_vals[record['Alias']] = str(order_str).split('@')
+                # Retrieve col vals from graph config dataframe
+                col_vals = GraphSettings.get_col_vals(input_data['graph'])
                 
             elif selected_option == "BASSPRO output":
                 # Import currently running
@@ -881,11 +875,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 col_vals, input_data = self.get_cols_vals_from_settings()
 
         # Open Config editor GUI
-        new_config_data = ConfigSettings.edit(self.rc_config['References']['Definitions'],
+        stagg_settings_data = ConfigSettings.edit(self.rc_config['References']['Definitions'],
                                               input_data,
                                               col_vals,
                                               self.output_dir)
-        if new_config_data is not None:
+        if stagg_settings_data is not None:
+            new_config_data, col_vals = stagg_settings_data
             self.config_data = new_config_data
             self.col_vals = col_vals
 

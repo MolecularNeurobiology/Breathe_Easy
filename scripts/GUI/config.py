@@ -25,13 +25,14 @@ class Config(QDialog, Ui_Config):
     ---------
     ref_definitions (Dict[str, str]): the help text for each help button
     data (Dict[str, pd.DataFrame]): ('variable', 'graph', and 'other') data for populating the window
-    col_vals (Dict[str, List[str]]): values for each column variable in the data
+    col_vals_variable (Dict[str, List[str]]): values for each column variable in the data
+    col_vals_alias (Dict[str, List[str]]): referenced by caller to get all col_vals mapped to alias name
     output_dir (str): path to output directory
     custom_data (dict): custom graphing selections
     variable_names (List[str]): all the current variable names; used to keep the old name around when a user renames
     aliases (List[str]): all the current alias names; used to keep the old name around when a user renames
     """
-    def __init__(self, ref_definitions: Dict[str, str], data: Dict[str, pd.DataFrame], col_vals: Dict[str, List[str]], output_dir: str = ""):
+    def __init__(self, ref_definitions: Dict[str, str], data: Dict[str, pd.DataFrame], col_vals_alias: Dict[str, List[str]], output_dir: str = ""):
         """
         Instantiate the Config class.
 
@@ -39,7 +40,9 @@ class Config(QDialog, Ui_Config):
         --------
         ref_definitions: the help text for each help button
         data: ('variable', 'graph', and 'other') data for populating the window
-        col_vals: values for each column variable in the data
+        col_vals_alias:
+            values for each variable *alias* in the data; mapping is
+            converted to use variable name instead
         output_dir: path to output directory
         """
         super(Config, self).__init__()
@@ -60,10 +63,19 @@ class Config(QDialog, Ui_Config):
         # GET INPUTS #
         self.output_dir = output_dir
         self.ref_definitions = ref_definitions
-        self.col_vals = col_vals
         self.custom_data = None
 
+        # Set up attributes and populate variable table
         self.load_variable_config(data['variable'])
+        
+        # `col_vals_alias` maps Alias names to values
+        # Translate the alias mapping to use Variable names instead
+        # This will ensure that the values can still be referenced when aliases change
+        self.col_vals_variable = {}
+        for alias in col_vals_alias:
+            alias_idx = self.aliases.index(alias)
+            var_name = self.variable_names[alias_idx]
+            self.col_vals_variable[var_name] = col_vals_alias[alias]
 
         # Do this after populating variable table
         self.graph_config_df = data['graph'].copy() if data['graph'] is not None else None
@@ -542,8 +554,10 @@ class Config(QDialog, Ui_Config):
                 selected_values = []
             else:
                 var_df = self.get_variable_table_df()
+                # Select the variable name that this alias is for
                 selected_var = var_df[var_df['Alias'] == alias].iloc[0]['Column']
-                selected_values = self.col_vals.get(selected_var, [])
+                # Get all the values for that variable
+                selected_values = self.col_vals_variable.get(selected_var, [])
             data.append((role, alias, selected_values))
 
         graph_config_df = pd.DataFrame(data=data,
@@ -664,11 +678,20 @@ class Config(QDialog, Ui_Config):
 
     def confirm(self):
         """Confirm user input and close window"""
-        # set data to be retrieved by caller
-        self.data = {
+        all_config_data = {
             'variable': self.get_variable_table_df(),
             'graph': self.graph_config_df,
             'other': self.other_config_df}
+
+        col_vals_alias = {}
+        for var_name, values in self.col_vals_variable.items():
+            var_idx = self.variable_names.index(var_name)
+            alias = self.aliases[var_idx]
+            col_vals_alias[alias] = values
+
+        # set data to be retrieved by caller
+        self.data = (all_config_data, col_vals_alias)
+
         self.accept()
 
     def add_loop(self):
@@ -790,7 +813,7 @@ class Config(QDialog, Ui_Config):
 
         Attributes-In
         ------------
-        col_vals: get list of current values
+        col_vals_variable: get list of current values
 
         Attributes-Out
         -------------
@@ -804,8 +827,11 @@ class Config(QDialog, Ui_Config):
         if alias_name == "Select variable:":
             return
 
+        alias_idx = self.aliases.index(alias_name)
+        var_name = self.variable_names[alias_idx]
+
         # Notify user if values are not available
-        if alias_name not in self.col_vals:
+        if var_name not in self.col_vals_variable:
             msg  = "No values available to order."
             msg += "\n\nTry loading STAGG Settings from:"
             msg += "\n  -Previous BASSPRO Settings"
@@ -813,18 +839,18 @@ class Config(QDialog, Ui_Config):
             notify_info(msg)
             return
 
-        items = self.col_vals[alias_name]
+        items = self.col_vals_variable[var_name]
 
         # Check if value list is empty
         if len(items) == 0:
             notify_info("There are no values for this variable")
             return
 
-        order_window = OrderingWindow(combo_name, alias_name, items)
+        order_window = OrderingWindow(combo_name, var_name, items)
         reply = order_window.exec()
         if reply:
             # set new items
-            self.col_vals[alias_name] = order_window.get_items()
+            self.col_vals_variable[var_name] = order_window.get_items()
 
     def load_graph_config(self, df):
         """Load the given data into the graph config widgets"""
@@ -1085,6 +1111,7 @@ class GraphSettings(ConfigSettings):
 
     def attempt_load(filepath):
         gdf = pd.read_csv(filepath, index_col=False)
+        gdf.fillna("", inplace=True)
         return gdf
 
     def _save_file(filepath, df):
@@ -1094,6 +1121,18 @@ class GraphSettings(ConfigSettings):
             # TODO: can we guarantee a data type for all input variables?
             df.at[i, 'Order'] = '@'.join([str(v) for v in vals])
         df.to_csv(filepath, index=False)
+
+    @staticmethod
+    def get_col_vals(df):
+        """Get variable values from the Order column of the graph config"""
+        col_vals = {}
+        for record in df.to_dict('records'):
+            # TODO: remaining backwards compatible for files without the Order column
+            order_str = record.get('Order', None)
+            if order_str:
+                # TODO: can we move this logic to occur immediately on file load?
+                col_vals[record['Alias']] = str(order_str).split('@')
+        return col_vals
 
 
 class OtherSettings(ConfigSettings):
