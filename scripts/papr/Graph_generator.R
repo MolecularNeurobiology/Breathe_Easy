@@ -1,8 +1,13 @@
-
-
+#########################
+###### DESCRIPTION ######
+#########################
+#Graph_generator.R assigns all variables and options selected by the user and
+#implements those selections to generate all expected graphs. 
 print("Preparing graphs")
-# library(tidyverse)
 
+########################
+## ORDERING VARIABLES ##
+########################
 # Set order of categories in variables as specified by the user, if specified.
 ## If not, order by first appearance.
 ## Inputs 
@@ -42,7 +47,10 @@ graph_reorder <- function(graph_data_frame, plot_vars, graph_config, full_data){
   return(graph_data_frame)
 }
 
-# Graphing function'
+#########################
+### GRAPHING FUNCTION ###
+#########################
+# Creates main loop graphs.
 ## Inputs:
 ### resp_var: character string, name of dependent variable.
 ### xvar: character string, name of independent variable mapped to x-axis.
@@ -512,8 +520,9 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   }
 }
 
-
-#### Loop to run everything
+#####################################
+## LOOP FOR GRAPHING ALL VARIABLES ##
+#####################################
 # For each response variable, run on original variable, then on all desired transformations.
 print("Making graphs")
 
@@ -586,9 +595,3 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     
   }
 }
-
-
-
-
-
-
