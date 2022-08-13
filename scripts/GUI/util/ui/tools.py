@@ -2,6 +2,7 @@ from typing import Iterable, Optional, Union
 import pandas as pd
 from checkable_combo_box import CheckableComboBox
 from PyQt5.QtWidgets import QTableWidgetItem, QComboBox, QCheckBox, QLineEdit, QTableWidget
+from PyQt5.QtCore import Qt
 
 def update_checkable_combo_values(combo: QComboBox, valid_values: Iterable[str],
                                   renamed: Optional[Iterable[str]] = None, default_value: str = ""):
@@ -160,8 +161,16 @@ def write_widget(widget: Union[QComboBox, QLineEdit], text: str):
         raise RuntimeError(f"Cannot write {type(widget)}!!")
     widget.blockSignals(False)
 
-def populate_table(df: pd.DataFrame, table: QTableWidget):
-    """Populate a given TableWidget with the data in a given DataFrame."""
+def populate_table(df: pd.DataFrame, table: QTableWidget, disable_edit: Iterable = []):
+    """
+    Populate a given TableWidget with the data in a given DataFrame.
+    
+    Parameters
+    ---------
+    df: given data
+    table: table widget to populate
+    disable_edit: all columns to be disabled
+    """
     # Set table size
     table.setColumnCount(len(df.columns))
     table.setRowCount(len(df))
@@ -169,7 +178,10 @@ def populate_table(df: pd.DataFrame, table: QTableWidget):
     # Set table data
     for col in range(table.columnCount()):
         for row in range(table.rowCount()):
-            table.setItem(row, col, QTableWidgetItem(str(df.iloc[row, col])))
+            new_item = QTableWidgetItem(str(df.iloc[row, col]))
+            if col in disable_edit:
+                new_item.setFlags(new_item.flags() & ~Qt.ItemIsEditable)  # read-only!
+            table.setItem(row, col, new_item)
 
     # Set headers
     table.setHorizontalHeaderLabels(df.columns)

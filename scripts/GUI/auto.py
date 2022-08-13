@@ -128,11 +128,10 @@ class Auto(QDialog, Ui_Auto):
         ## NOTE: ^^ The update will automatically trigger on index change ^^
         # - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - #
 
-        # Set callback for any table item edits
         for table in self.all_tables():
+            # Set callback for any table item edits
             table.cellChanged.connect(lambda row, col, t=table : self.edit_cell(t, row, col))
-
-        for table in self.all_tables():
+            # Allow editing of table headers
             table.horizontalHeader().sectionDoubleClicked.connect(self.set_new_header)
 
 
@@ -258,9 +257,19 @@ class Auto(QDialog, Ui_Auto):
 
         # Get new data
         new_data = cell.text()
+
+        # Must get the index differently if not changing summary table
+        # User can rename variable name and makes for some complexities
+        # Editing variable name is disabled on non-summary tables, so we know
+        #   this will be a valid lookup key
+        if table is not self.summary_table:
+            var_name = table.item(row, 0).text()
+            index = self.data[self.data['Variable'] == var_name].index[0]
+        else:
+            index = self.data.index[row]
         
         # Get the value currently stored in the df
-        prev_data = self.data.iloc[row, col]
+        prev_data = self.data.loc[index][col]
         
         # If data changed, perform update
         if prev_data != new_data:
@@ -277,7 +286,7 @@ class Auto(QDialog, Ui_Auto):
                     new_data = prev_data
 
             # Set new data
-            self.data.iloc[row, col] = new_data
+            self.data.loc[index].iat[col] = new_data
 
             # Update all table widgets
             self.update_tabs()
@@ -311,47 +320,47 @@ class Auto(QDialog, Ui_Auto):
         # Populate Section Characterization table
         all_sec_char_items = self.auto_labels['Section Settings']['Section Naming'].values()
         sec_char_df = self.data.loc[(self.data.index.isin(all_sec_char_items)),:]
-        populate_table(sec_char_df, self.sections_char_table)
+        populate_table(sec_char_df, self.sections_char_table, disable_edit=(0,))
 
         # Populate Section Spec table
         all_sec_spec_items = self.auto_labels['Section Settings']['Experiment Settings'].values()
         sec_spec_df = self.data.loc[(self.data.index.isin(all_sec_spec_items)),:]
-        populate_table(sec_spec_df, self.sections_spec_table)
+        populate_table(sec_spec_df, self.sections_spec_table, disable_edit=(0,))
 
         # Populate Section Verification table
         all_sec_veras_items = self.auto_labels['Section Settings']['Section Verification'].values()
         sec_veras_df = self.data.loc[(self.data.index.isin(all_sec_veras_items)),:]
-        populate_table(sec_veras_df, self.sections_veras_table)
+        populate_table(sec_veras_df, self.sections_veras_table, disable_edit=(0,))
 
         # Populate Section Timing table
         all_sec_time_items = self.auto_labels['Section Settings']['Section Timing'].values()
         sec_time_df = self.data.loc[(self.data.index.isin(all_sec_time_items)),:]
-        populate_table(sec_time_df, self.sections_time_table)
+        populate_table(sec_time_df, self.sections_time_table, disable_edit=(0,))
         
         # Populate Calibration Settings table
         all_cal_items = self.auto_labels['Calibration Settings']['Volume and Gas Calibrations'].values()
         cal_df = self.data.loc[(self.data.index.isin(all_cal_items)),:]
-        populate_table(cal_df, self.cal_table)
+        populate_table(cal_df, self.cal_table, disable_edit=(0,))
 
         # Populate Inclusion DF table
         all_inc_items = self.auto_labels['Breath Inclusion Criteria']['Limits'].values()
         inc_df = self.data.loc[(self.data.index.isin(all_inc_items)),:]
-        populate_table(inc_df, self.inc_table)
+        populate_table(inc_df, self.inc_table, disable_edit=(0,))
 
         # Populate Artifact Exclusion table
         all_sec_art_items = self.auto_labels['Breath Inclusion Criteria']['Artifact Exclusion'].values()
         sec_art_df = self.data.loc[(self.data.index.isin(all_sec_art_items)),:]
-        populate_table(sec_art_df, self.sections_art_table)
+        populate_table(sec_art_df, self.sections_art_table, disable_edit=(0,))
 
         # Populate Gass Threshold Settings table
         all_gas_thresh_items = self.auto_labels['Additional Settings']['Featured Breathing'].values()
         gas_thresh_df = self.data.loc[(self.data.index.isin(all_gas_thresh_items)),:]
-        populate_table(gas_thresh_df, self.gas_thresh_table)
+        populate_table(gas_thresh_df, self.gas_thresh_table, disable_edit=(0,))
 
         # Populate Time Threshold Settings table
         all_time_thresh_items = self.auto_labels['Additional Settings']['Temperature Settings'].values()
         time_thresh_df = self.data.loc[(self.data.index.isin(all_time_thresh_items)),:]
-        populate_table(time_thresh_df, self.time_thresh_table)
+        populate_table(time_thresh_df, self.time_thresh_table, disable_edit=(0,))
 
         # Populate summary table with all data
         populate_table(self.data, self.summary_table)
