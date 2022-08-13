@@ -50,7 +50,7 @@ class Auto(QDialog, Ui_Auto):
             self.help_key,
             self.help_alias,
             self.help_cal_seg,
-            self.help_auto_ind_injection, 
+            self.help_auto_ind_injection,
             self.help_auto_ind_include,
             self.help_min_co2,
             self.help_max_co2,
@@ -89,7 +89,7 @@ class Auto(QDialog, Ui_Auto):
             self.help_max_dvtv,
             self.help_X,
             self.help_max_pX,
-            self.help_vol_mov_avg_drift,            
+            self.help_vol_mov_avg_drift,
             self.help_min_bout
             ]
 
