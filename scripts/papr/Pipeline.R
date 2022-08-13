@@ -1,8 +1,15 @@
-# DESCRIPTION:
+#########################
+#######DESCRIPTION#######
+#########################
 # pipeline.r is the main wrapper of all the scripts for papr. 
 # Additionally, it provides the methods to parse the command line arguments and loads all required libraries.
 print("Setting pipeline")
 
+#########################
+####### LIBRARIES #######
+#########################
+
+#Loads required libraries for all following R scripts into the R environment. 
 required_libs <- c("rjson", "tidyverse", "magrittr", "data.table",
                    "ggpubr", "kableExtra", "rmarkdown", "argparser",
                    "lme4", "lmerTest", "multcomp", "xtable", 
@@ -21,34 +28,17 @@ for(libb in required_libs){
   }
 }
 
-# library(rjson)
-# library(tidyverse)
-# library(magrittr)
-# library(data.table)
-# library(ggpubr)
-# library(kableExtra)
-
-library(rmarkdown)
 pandoc_info = find_pandoc(dir="../pandoc-2.18/")
 pandoc_absolute = normalizePath(pandoc_info$dir)
 find_pandoc(cache = FALSE, dir=pandoc_absolute)
 
-# library(argparser)
-# library(lme4)
-# library(lmerTest)
-# library(multcomp)
-# library(xtable)
-# library(tidyselect)
-# library(ggthemes)
-# library(RColorBrewer)
-# library(openxlsx)
-
 ################### Adds arguments that are inserted to the terminal for file locations ####################
+# Adds arguments that are inserted to the terminal for file locations.
 # Arguments to be defined in the command line call; these are read via the add_argument function.
 
 p <- arg_parser("Run STAGG")
 
-p <- add_argument (p, "--dir", help="Set the working directory for R, should be Mothership")
+p <- add_argument (p, "--dir", help="Set the working directory for R")
 
 p <- add_argument (p, "--JSON", help="Filepath to location of folder with all JSON files from Breathcaller")
 

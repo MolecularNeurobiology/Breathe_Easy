@@ -1,13 +1,13 @@
-# DESCRIPTION:
+#########################
+##### DESCRIPTION #######
+#########################
 # stat_runner.r runs LMER tests on all variables assigned in the subGUI by the user. 
 # This code performs necessary adjustments/ changes required for stats to run properly and filters the results.
 print("Running Statistics")
 
-
 #########################
 ######### LMER ##########
 #########################
-
 # Helper function for avoiding parsing errors from strings with leading numbers.
 ## Inputs:
 ### string_val: name of category
@@ -42,6 +42,14 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE)
     run_data <- run_data %>% drop_na(any_of(inter_vars))
   }
   
+  # Basic stats 
+  b_stat_data <- run_data %>%
+    group_by_at(c(inter_vars)) %>%
+    dplyr::summarise_at(resp_var, list(mean, sd), na.rm = TRUE) %>%
+    ungroup() %>% na.omit()
+  
+  colnames(b_stat_data)[ncol(b_stat_data) - 1] <- "Mean"
+  colnames(b_stat_data)[ncol(b_stat_data)] <- "Std.Dev."
   # Remove special characters and spaces in interaction variables categories. Necessary for relevant category finding below.
   # Needs to be processed in the same manner in the graph_maker function as well.
   for(vv in inter_vars){
@@ -116,12 +124,14 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE)
     labs(x = "Empirical Quantile", y = "Theoretical Quantile", title = paste0("Q-Q: ", resp_var, " ~ ", paste(inter_vars, collapse = " + "))) + 
     geom_qq_line(aes(sample = resid(temp_mod))) +
     theme_few() 
-  
+    
+    
   # Create return values
   return_values$rel_comp <- vttukey
   return_values$lmer <- summary(temp_mod)$coef
   return_values$residplot <- g1
   return_values$qqplot <- g2
+  return_values$b_stat <- b_stat_data
   
   return(return_values)
 }
@@ -137,6 +147,8 @@ if(!dir.exists(stat_dir)){
 mod_res_list <- list()
 ## Saves Tukey test results
 tukey_res_list <- list()
+## Saves basic statistics
+b_stat_list <- list()
 
 if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_vars)) && (!is_empty(interaction_vars))){ 
   # For each response variable, run on original variable, then on all desired transformations.
@@ -145,10 +157,15 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     # Runs the model on the original, non-transformed dependent variable (if selected by user)
     if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii])))){
       print(paste0("Running model for ", response_vars[ii]))
+      
       ## Run models
       mod_res <- stat_run(response_vars[ii], interaction_vars, covariates, tbl0, inc_filt = TRUE)
+      
+      ## Save parts of output
       mod_res_list[[response_vars[ii]]] <- mod_res$lmer
       tukey_res_list[[response_vars[ii]]] <- mod_res$rel_comp
+      b_stat_list[[response_vars[ii]]] <- mod_res$b_stat
+      
       ## Save residual plots
       if(exists("dirtest") && (class(dirtest) == "try-error")){
         ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = args$Output)
@@ -183,10 +200,15 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           }
           
           print(paste0("Running model for ", new_colname))
+          
           ## Run models
           mod_res <- stat_run(new_colname, interaction_vars, covariates, tbl0, inc_filt = TRUE)
+          
+          ## Save parts of output
           mod_res_list[[new_colname]] <- mod_res$lmer
           tukey_res_list[[new_colname]] <- mod_res$rel_comp
+          b_stat_list[[new_colname]] <- mod_res$b_stat
+          
           ## Save residual plots
           if(exists("dirtest") && (class(dirtest) == "try-error")){
             ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = args$Output)
@@ -205,32 +227,24 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
   names(mod_res_list_save) <- str_trunc(names(mod_res_list_save), 31, side = "center", ellipsis = "___")
   tukey_res_list_save <- tukey_res_list
   names(tukey_res_list_save) <- str_trunc(names(tukey_res_list_save), 31, side = "center", ellipsis = "___")
-  
-  ## Calculate some basic univariate statistics
-  basic_stat <- function(x, dat) {
-    sumstat <- c(summary(dat[[x]])[1:6], sd(dat[[x]], na.rm = TRUE))
-    names(sumstat)[7] <- "Std. Dev"
-    return(sumstat)
-  }
-  b_stat <- sapply(response_vars, basic_stat, dat = tbl0)
+  b_stat_list_save <- b_stat_list
+  names(b_stat_list_save) <- str_trunc(names(b_stat_list_save), 31, side = "center", ellipsis = "___")
+
   # Save basic statistics results to Excel.
   if(exists("dirtest") && (class(dirtest) == "try-error")){
     try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/stat_res.xlsx"), row.names=TRUE))
     try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/tukey_res.xlsx"), row.names=TRUE))
-    try(openxlsx::write.xlsx(b_stat, file=paste0(args$Output, "/stat_basic.xlsx"), row.names=TRUE))
+    try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/stat_basic.xlsx"), row.names=TRUE))
   } else {
     try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/StatResults/stat_res.xlsx"), row.names=TRUE))
     try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/StatResults/tukey_res.xlsx"), row.names=TRUE))
-    try(openxlsx::write.xlsx(b_stat, file=paste0(args$Output, "/StatResults/stat_basic.xlsx"), row.names=TRUE))
+    try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/StatResults/stat_basic.xlsx"), row.names=TRUE))
   }
   # Memory clearing
   rm(mod_res_list_save)
   rm(tukey_res_list_save)
-  rm(b_stat)
+  rm(b_stat_list_save)
 }
-
-
-
 
 # Savepoint
 save_atp <- try(save.image(file=paste0(args$Output, "/myEnv_",format(Sys.time(),'%Y%m%d_%H%M%S'),".RData")))

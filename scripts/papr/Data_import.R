@@ -7,9 +7,8 @@ print("Importing data")
 #########################
 #####JSON LOCATION#######
 #########################
-#Sets working directory to the Mothership so arguments in command line that indicate file locations are 
-#understood and found by R.
-# setwd("~/") 
+# Sets working directory so arguments in command line that indicate file locations are 
+# understood and found by R.
 setwd(args$dir)
 
 # Find JSON files.
@@ -19,6 +18,7 @@ full_dirs <- unlist(read.delim(args$JSON, sep = "\n", header = FALSE))
 filepaths <- c(list.files(full_dirs, pattern = "\\.json", full.names = TRUE, recursive = TRUE), 
                grep("\\.json", full_dirs, value = TRUE))
 
+# No data?
 if(length(filepaths) == 0) {
   stop("No JSON files found.")
 }
@@ -109,7 +109,7 @@ import_data <- function(fp){
   return(breath_df)
 } 
 
-# Calls the above function and loads in all JSON files as one data frame.
+# Finds and loads in all JSON files as one data frame.
 tbl0 <- import_data(filepaths)
 
 #########################
@@ -135,8 +135,10 @@ wu_convert <- function(colname) {
 
 print("Loading variable configuration")
 
-# Loads R configuration file. This file has settings for independent, dependent, and covariate variables;
-# body weight and temperature; and alias assignment if a variable name change is desired by the user.
+#Loads variable configuration file. This file has settings for independent, dependent, and covariate variables;
+#alias assignment if a variable name change is desired by the user; spectral and poincare plots selected by the user;
+#maximum and minimum settings for the y-axis as designated by the user;                            
+#and transformations chosen by the user for data in the main loop.       
 var_names <- read.csv(args$R_config, stringsAsFactors=FALSE, na.strings = c("NA", "", " "))
 
 #Convert raw names to names without units, to be used internally.
@@ -187,8 +189,9 @@ transform_set <- var_names$Transformation[which(var_names$Dependent != 0)]
 ##### GRAPH CONFIG ######
 #########################
 
-
-# Loads graph configuration file. This file has settings for which independent variables are to be displayed in plot aesthetics.
+#Loads graph configuration file. This file has settings for graphing in the main loop;
+#xvar, pointdodge, facet1 and facet2; and ordering of variables to be graphed in the main loop.
+#Orders set for the main loop are also applied to the optional graphs where the same variables
 
 print("Loading graph settings")
 graph_vars <- read.csv(args$Graph, stringsAsFactors = FALSE)
@@ -205,6 +208,7 @@ xvar_wu <- graph_vars$With_units[which(graph_vars$Role == 1)]
 pointdodge_wu <- graph_vars$With_units[which(graph_vars$Role == 2)]
 facet1_wu <- graph_vars$With_units[which(graph_vars$Role == 3)]
 facet2_wu <- graph_vars$With_units[which(graph_vars$Role == 4)]
+
 ## The names without units are for internal usage.
 xvar <- graph_vars$Alias[which(graph_vars$Role == 1)]
 pointdodge <- graph_vars$Alias[which(graph_vars$Role == 2)]
@@ -221,7 +225,8 @@ for(gg in c(xvar, pointdodge, facet1, facet2)){
 #########################
 ### USER GRAPH CONFIG ###
 #########################
-
+#Loads optional graph configuration file. This file has settings for all optional graphs added by the user;
+#and apnea and sigh featured breathing graphs, if selected for production by the user.
 print("Loading optional graph settings")
 
 other_config <- read.csv(args$Foxtrot, stringsAsFactors = FALSE, na.strings = c("", " ", "NA"))
@@ -233,7 +238,7 @@ if(is.null(args$I)){
 ## Character Conversion ##
 ##########################
 
-# Truncate long column names
+# Truncates very long category names in preparation for plotting.
 for(ii in 1:ncol(tbl0)){
   if(typeof(tbl0[[ii]]) == "character"){
     tbl0[[ii]] <- str_trunc(tbl0[[ii]], 25, side = "center", ellipsis = "___")

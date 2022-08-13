@@ -1,13 +1,20 @@
-# library(gridExtra)
-# library(data.table)
+#########################
+#######DESCRIPTION#######
+#########################
+#This script brings in settings and options for graphs that are not part of the main loop.
+# These graphs are optional to the user, but allow the user more flexibility to graph variables in different
+##ways or new variables that aren't respiratory outcomes. 
+
+# Color palette for use in graphs
+cPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
 # Breath filter
-cPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
-# other_config <- read.csv("/D/Resp/StaGG/V0_4/Other_config/Other_config1.csv", stringsAsFactors = FALSE, na.strings = c("", " ", "NA"))
 sighs <- FALSE
 apneas <- FALSE
 
-# Runs the statistical modeling when mixed effects is not appropriate.
+###############################################
+##ALTERNATIVE STATS WHEN LMER NOT APPROPRIATE##
+###############################################
 ## Inputs:
 ### resp_var: character string, name of dependent variable.
 ### inter_vars: character vector, names of independent variables.
@@ -149,8 +156,7 @@ if(nrow(other_config) > 0){
       apneas <- TRUE
       next
     }
-    
-    
+   
     # Set graphing variables
     ocr2_wu <- c(other_config_row$Variable,
                  ifelse(is.null(other_config_row$Xvar), "", other_config_row$Xvar),
@@ -746,7 +752,6 @@ if(sighs || apneas){
 #######################################
 ########## Poincare plots #############
 #######################################
-
 # Function to make poincare plots.
 ## Inputs:
 ### resp_var: character string, name of dependent variable.
