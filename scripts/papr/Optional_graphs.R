@@ -935,16 +935,19 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     # Turn results to data frame for plotting
     psd_df <-  reshape2::melt(as.data.frame(psd_list))
     psd_df$tt <- rep(2:max_hz, length(unique(graph_data[[pointdodge]])))
+    setnames(psd_df, "variable", pointdodge)
     psd_df <- graph_reorder(psd_df, pointdodge, graph_vars, tbl0)
+    setnames(psd_df, pointdodge, "pointdodge")
     
     base_pt <- 7 * sqrt(length(unique(graph_data[[pointdodge]])))
     # Make graph + save
     psd_p <- ggplot(data = psd_df) +
       geom_path(aes(x = tt, y = value)) +
-      facet_grid(rows = vars(variable), scales = "free_y") +
+      facet_grid(rows = vars(pointdodge), scales = "free_y") +
       labs(x = "Hz", y = "Magnitude", title = paste0("Spectral: ", resp_var)) +
       theme_few(base_size = base_pt)
-    
+    print(psd_p)
+    return()
     name_part <- str_replace_all(c(resp_var, pointdodge), "[[:punct:]]", "")
     graph_file <- paste0("Spectral_", name_part[1], "_", name_part[2], args$I)
     
