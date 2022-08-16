@@ -946,8 +946,6 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
       facet_grid(rows = vars(pointdodge), scales = "free_y") +
       labs(x = "Hz", y = "Magnitude", title = paste0("Spectral: ", resp_var)) +
       theme_few(base_size = base_pt)
-    print(psd_p)
-    return()
     name_part <- str_replace_all(c(resp_var, pointdodge), "[[:punct:]]", "")
     graph_file <- paste0("Spectral_", name_part[1], "_", name_part[2], args$I)
     
