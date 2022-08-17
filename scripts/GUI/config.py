@@ -1,3 +1,7 @@
+"""
+Module defining the STAGG Settings Editor, where the user can
+define statistical and graphing settings that will be used in R.
+"""
 
 import os
 from typing import Dict, Iterable, List, Optional, Tuple
@@ -639,7 +643,6 @@ class Config(QDialog, Ui_Config):
     def other_config_df(self, new_data):
         """Load the given data into the other config widgets"""
         if new_data is None:
-            # TODO: this does weird things with widget placement...
             #self.reset_config()
             pass
         else:
@@ -969,10 +972,9 @@ class Config(QDialog, Ui_Config):
                 cell_widget.setChecked(True)
 
 
-# TODO: this is kinda gross -- split these out!
+# TODO: this is hard to organize -- split these out!
 class ConfigSettings(Settings):
     """Attributes and methods for handling Config settings files"""
-
     valid_filetypes = ['.csv', '.xlsx']
     file_chooser_message = 'Select variable config files to edit'
     editor_class = Config
@@ -1011,7 +1013,6 @@ class ConfigSettings(Settings):
                 files_represented.add('other')
         all_files_covered = len(files_represented) == 3
         return right_size and all(valid_files) and all_files_covered
-
 
     # Overwriting parent method for list of files
     @classmethod
@@ -1062,9 +1063,8 @@ class ConfigSettings(Settings):
         return variable_table_df
 
 
-
 class VariableSettings(ConfigSettings):
-
+    """Attributes and methods for handling Variable settings"""
     naming_requirements = ['variable', 'config']
     default_filename = 'variable_config.csv'
 
@@ -1105,7 +1105,7 @@ class VariableSettings(ConfigSettings):
         df.to_csv(filepath, index=False)
 
 class GraphSettings(ConfigSettings):
-
+    """Attributes and methods for handling Graph settings"""
     naming_requirements = ['graph', 'config']
     default_filename = 'graph_config.csv'
 
@@ -1118,7 +1118,8 @@ class GraphSettings(ConfigSettings):
         # Transform each Order vals list into '@'-separated string
         for i, record in df.iterrows():
             vals = record['Order']
-            # TODO: can we guarantee a data type for all input variables?
+            # TODO: can we guarantee a data type for all input variables
+            #   such that we don't have to cast?
             df.at[i, 'Order'] = '@'.join([str(v) for v in vals])
         df.to_csv(filepath, index=False)
 
@@ -1134,9 +1135,8 @@ class GraphSettings(ConfigSettings):
                 col_vals[record['Alias']] = str(order_str).split('@')
         return col_vals
 
-
 class OtherSettings(ConfigSettings):
-
+    """Attributes and methods for handling Other settings"""
     naming_requirements = ['other', 'config']
     default_filename = 'other_config.csv'
 

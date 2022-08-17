@@ -1,3 +1,6 @@
+"""
+Module for class used to format loop table in STAGG Settings Editor
+"""
 
 from PyQt5.QtWidgets import QStyledItemDelegate
 from PyQt5.QtCore import Qt

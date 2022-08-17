@@ -1,3 +1,6 @@
+"""
+Module for creating and executing BASSPRO and STAGG runs, asynchoronously
+"""
 
 from typing import List
 import sys
@@ -59,7 +62,7 @@ class Worker(QRunnable):
         self.worker_queue.put((self.worker_id, "DONE"))
 
 
-def get_jobs_py(signal_files: List[str], module: str, output: str,
+def get_jobs_py(signal_files: List[str], module: str, output_folder: str,
                 metadata: str, manual: str, auto: str, basic: str):
     """
     Return the list of arguments fed to the command line to launch
@@ -69,7 +72,7 @@ def get_jobs_py(signal_files: List[str], module: str, output: str,
     --------
     signal_files: collection of input breath files
     module: path to basspro script
-    output: path to folder created for basspro run output
+    output_folder: path to folder created for basspro run output
     metadata: path to BASSPRO input metadata
     manual: path to manual BASSPRO settings
     auto: path to automated BASSPRO settings
@@ -82,13 +85,11 @@ def get_jobs_py(signal_files: List[str], module: str, output: str,
     """
     for file_py in signal_files:
         breathcaller_cmd = [
-            #'python',
-            sys.executable,  # TODO: change this back to just 'python'
-            '-u',
-            module,  # path to basspro script
+            sys.executable,  # path to the current python executable
+            '-u', module,  # path to basspro script
             '-i', os.path.dirname(file_py),  # signal dir
             '-f', os.path.basename(file_py),  # signal file
-            '-o', output,
+            '-o', output_folder,
             '-a', metadata,
             '-m', manual if manual else "",
             '-c', auto if auto else "",

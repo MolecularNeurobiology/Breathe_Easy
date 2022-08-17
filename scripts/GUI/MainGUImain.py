@@ -1,7 +1,9 @@
+"""
+The purpose of this script is to initiate the main GUI
+"""
 
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import QDir
 import sys
 import os
 import threading
@@ -28,5 +30,3 @@ def main():
 if __name__ == "__main__": 
     freeze_support()
     main()
-#endregion
-# %%

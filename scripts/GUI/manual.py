@@ -23,7 +23,7 @@ class Manual(QDialog, Ui_Manual):
                          reflected in the GUI widgets
     manual_df: same as data
     output_dir (str): current working directory
-    vals (List[str]): 
+    vals (List[str]): mandatory datapad columns
     datapad (pd.DataFrame): datapad info
     preset (pd.DataFrame): default info
     """
@@ -95,7 +95,7 @@ class Manual(QDialog, Ui_Manual):
 
             keys = dc.columns
             mand = {}
-            for key,val in zip(keys,self.vals):
+            for key,val in zip(keys, self.vals):
                 mand.update({key: val})
 
             dc = dc.rename(columns = mand)

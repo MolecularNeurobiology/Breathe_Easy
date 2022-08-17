@@ -37,9 +37,6 @@ unique values contained within.
             truncate_to = 10,
             truncate_all = True
             ):
-
-
-
 """
 
 import pandas
@@ -122,7 +119,7 @@ __BASSPRO_CONTINUOUS__ = [
 
 
 
-#%%
+#%% define functions
 
 def columns_and_values_from_jsons(
         paths_to_jsons,

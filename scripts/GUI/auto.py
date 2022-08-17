@@ -1,8 +1,12 @@
-
+"""
+Module for the autosections GUI, allowing the user to select
+options for an automated run of BASSPRO.
+"""
 from typing import List, Optional
 import numpy as np
 import pandas as pd
 from PyQt5.QtWidgets import QDialog, QInputDialog, QTableWidget
+
 from util.tools import avert_name_collision
 from util import Settings
 from util.ui.dialogs import notify_info, notify_warning
@@ -393,7 +397,6 @@ class Auto(QDialog, Ui_Auto):
 
     def load_file(self):
         """Load auto settings from user-selected file"""
-        # TODO: streamline this like the other settings
         # Opens open file dialog
         filepath = AutoSettings.open_file(self.output_dir)
         # Catch cancel

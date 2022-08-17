@@ -1,3 +1,9 @@
+"""
+Module for Basic Settings Editor, where the user configures and
+edits basic settings and criteria by which to define a breath
+within a plethysmography recording. These settings only define
+breathing, not "good" breathing.
+"""
 
 from copy import deepcopy
 from pathlib import Path
@@ -52,7 +58,6 @@ class Basic(QDialog, Ui_Basic):
 
         # Update the lineEdits when a cell is changed in the summary table
         self.summary_table.cellChanged.connect(self.update_lineedit)
-
 
     def setup_variables(self):
         """
@@ -198,7 +203,6 @@ class Basic(QDialog, Ui_Basic):
         
         # Reenable signals
         self.summary_table.blockSignals(False)
-
 
     def update_summary_table(self):
         """Populate the summary table with the current data"""

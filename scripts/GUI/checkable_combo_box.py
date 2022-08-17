@@ -1,3 +1,6 @@
+"""
+Module defining a custom combo box containing checkable items.
+"""
 
 from typing import Iterable
 from PyQt5.QtWidgets import QComboBox, QStyledItemDelegate, qApp

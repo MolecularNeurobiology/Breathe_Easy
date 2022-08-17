@@ -1,18 +1,11 @@
 """
-BASSPRO-STAGG GUI
-
+The following code defines classes and functions for the main GUI.
 Signficant contributions and help from Chris Ward, Savannah Lusk, Andersen Chang, and Russell Ray.
-
-version 5 trillion
 """
-
-
 
 from collections import defaultdict
 import os
 import traceback
-
-# general
 from typing import Dict
 from glob import glob
 from pathlib import Path
@@ -49,10 +42,20 @@ from ui.form import Ui_Plethysmography
 # Chris's scripts
 from tools.columns_and_values_tools import columns_and_values_from_settings
 
+# Directory containing configuration JSONs
 CONFIG_DIR = os.path.join("scripts", "GUI", "config")
 
-# TODO: only for development!
-AUTOLOAD = 'shaun' in os.getcwd()
+
+#%% Define Classes
+class STAGGInputSettings(Settings):
+    """Attributes and methods for handling STAGG input files"""
+    valid_filetypes = ['.json', '.RData']
+    file_chooser_message = 'Choose STAGG input files from BASSPRO output'
+
+class BASSPROInputSettings(Settings):
+    """Attributes and methods for handling BASSPRO input files"""
+    valid_filetypes = ['.txt']
+    file_chooser_message = 'Select signal files'
 
 class Plethysmography(QMainWindow, Ui_Plethysmography):
     """
@@ -114,7 +117,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         #   multiple experimental setups and an empty dictionary that
         #   will be populated by the timestamps of signal files
         #   selected by the user.
-        # TODO: why do we do this?? Never accessed!
+        # TODO: this is never accessed, except for a file write
         with open(os.path.join(CONFIG_DIR, 'timestamps.json'), 'r') as stamp_file:
             self.stamp = json.load(stamp_file)
 
@@ -146,7 +149,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.col_vals = None
 
 
-        # TODO: these are just bypassing the gui_config defaults?
+        # TODO: deconflict with paths stored in gui config defaults
         # path to the BASSPRO module script and STAGG scripts directory
         self.basspro_path = os.path.join("scripts", "python_module.py")
         self.papr_dir = os.path.join("scripts", "papr")
@@ -174,23 +177,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.basic_layout.delete_button.clicked.connect(self.delete_basic)
         self.stagg_settings_layout.delete_button.clicked.connect(self.delete_stagg_settings)
 
-        # Autoload configuration (dev only)
-        if AUTOLOAD:
-            self.signal_files_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/Text files/M39622.txt")
-            self.metadata = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/metadata.csv"
-            self.output_dir = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/output"
-            self.autosections = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/BASSPRO Configuration Files/auto_sections.csv"
-            self.basicap = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/BASSPRO Configuration Files/basics.csv"
-
-            # Pick either RData or json
-            if False:
-                self.breath_list.addItem("/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/R Environment/myEnv_20220324_140527.RData")
-            else:
-                json_glob = "/home/shaun/Projects/Freelancing/BASSPRO_STAGG/data/Test Dataset/JSON files/*"
-                for json_path in glob(json_glob):
-                    self.breath_list.addItem(json_path)
-
+    #######################
     ## Getters & Setters ##
+    #######################
     @property
     def output_dir(self):
         """Get output directory path from widget"""
@@ -383,7 +372,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     def stagg_input_files(self):
         """Get STAGG input files from listwidget"""
         return [self.breath_list.item(i).text() for i in range(self.breath_list.count())]
-    ##         ##
 
     def get_settings_file_from_list(self, ftype):
         """Retrieve a particular STAGG settings file from listwidget"""
@@ -409,230 +397,61 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     return True
         return False
 
+    #####################
+    ## Delete Settings ##
+    #####################
+    def delete_meta(self):
+        self.metadata = None
+        notify_info("Metadata removed.")
 
-    def timestamp_dict(self):
+    def delete_auto(self):
+        self.autosections = None
+        notify_info("Auto settings removed.")
+
+    def delete_manual(self):
+        self.mansections = None
+        notify_info("Manual settings removed.")
+
+    def delete_basic(self):
+        self.basicap = None
+        notify_info("Basic settings removed.")
+
+    def delete_stagg_settings(self):
+        self.config_data = None
+        notify_info("STAGG settings removed.")
+
+    ###############
+    ## Utilities ##
+    ###############
+    def open_click(self, item):
+        """Open the double-clicked ListWidgetItem in the default program."""
+        if Path(item.text()).exists():
+            os.startfile(item.text())
+
+    def nonblocking_msg(self, msg: str, title: str = ""):
         """
-        Check timestamp data and print to file
-
-        Compare the timestamps of the signal files to those of the experimental
-        setup selected by the user. Results are printed in the status window.
-
-        Attributes-In
-        ------------
-        self.stamp: default timestamp data; populated with timestamp
-                    comparison data below and written to a file
-        self.bc_config: config used to pull default experimental setup
-        self.signal_files: used to check if we have signal files selected
-        """
-        combo_need = self.necessary_timestamp_box.currentText()
-
-        # Check if user has made any combobox selection
-        if combo_need == "Select dataset...":
-            notify_info(title='Missing dataset',
-                        msg='Please select one of the options from the dropdown menu above.')
-            return
-
-        # Check if user has selected signal files
-        if len(self.signal_files) == 0:
-            notify_info(title='Missing signal files',
-                        msg='Please select signal files.')
-            return
-
-        # Populate self.stamp with keys based on directories of signal files.
-        self.stamp['Dictionaries']['Data'] = {}
-
-        # wut?
-        # I'm leaving this weird epoch, condition stuff in here because I don't want to break anything but I don't remember why I did this.
-        #   Maybe I thought comparisons for multiple signal file selections would be saved to the same dictionary? T
-        epochs = []
-        conditions = []
-        
-        for f in self.signal_files:
-            if os.path.basename(Path(f).parent.parent) in epochs:
-                continue
-            else:
-                epochs.append(os.path.basename(Path(f).parent.parent))
-                if os.path.basename(Path(f).parent) in conditions:
-                    continue
-                else:
-                    conditions.append(os.path.basename(Path(f).parent))
-
-        stamp_data = self.stamp['Dictionaries']['Data']
-        for condition in conditions:
-            for epoch in epochs:
-                if epoch in stamp_data:
-                    if condition in stamp_data[epoch]:
-                        continue
-                    else:
-                        self.stamp['Dictionaries']['Data'][epoch][condition] = {}
-                else:
-                    self.stamp['Dictionaries']['Data'][epoch] = {}
-                    self.stamp['Dictionaries']['Data'][epoch][condition] = {}
-
-        if combo_need == "Custom":
-            timestamps_needed = dict(zip(self.autosections_df['Alias'],[[x] for x in self.autosections_df['Alias']]))
-        else:
-            bc = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
-            timestamps_needed = bc.fromkeys(bc.keys())
-
-        for ts in timestamps_needed:
-            timestamps_needed[ts] = [ts]
-
-        self.status_message("Checking timestamps...")
-
-        # TODO: put in separate thread/process
-        tsbyfile = self.grabTimeStamps()
-        check = self.checkFileTimeStamps(tsbyfile, timestamps_needed)
-
-        # Store timestamp comparison data
-        for epoch in epochs:
-            for condition in conditions:
-                self.stamp['Dictionaries']['Data'][epoch][condition]["tsbyfile"] = tsbyfile
-                for notable in check:
-                    self.stamp['Dictionaries']['Data'][epoch][condition][notable] = check[notable]  
-
-        try:
-            # Dump self.stamp into a JSON saved in the same directory as the first signal file listed in self.signals.
-            curr_time_str = datetime.now().strftime('%Y%m%d_%H%M%S')
-            dir_of_first_signal = Path(self.signal_files[0]).parent
-            dir_of_first_signal_basename = os.path.basename(dir_of_first_signal)
-            tpath = os.path.join(dir_of_first_signal, f"timestamp_{dir_of_first_signal_basename}_{curr_time_str}")
-            with open(tpath,"w") as f:
-                f.write(json.dumps(self.stamp))
-
-        except Exception as e:
-            print(f'{type(e).__name__}: {e}')
-            print(traceback.format_exc())
-            notify_error(title=f"{type(e).__name__}: {e}", msg=f"The timestamp file could not be written.")
-
-        # Print summary of timestamps review to the hangar.
-        self.status_message("Timestamp output saved.")
-        self.status_message("---Timestamp Summary---")
-        self.status_message(f"Files with missing timestamps: {', '.join(set([w for m in check['files_missing_a_ts'] for w in check['files_missing_a_ts'][m]]))}")
-        self.status_message(f"Files with duplicate timestamps: {', '.join(set([y for d in check['files_with_dup_ts'] for y in check['files_with_dup_ts'][d]]))}")
-
-        if len(set([z for n in check['new_ts'] for z in check['new_ts'][n]])) == len(self.signal_files):
-            self.status_message(f"Files with novel timestamps: all signal files")
-        else:
-            self.status_message(f"Files with novel timestamps: {', '.join(set([z for n in check['new_ts'] for z in check['new_ts'][n]]))}")
-
-        self.nonblocking_msg(f"Full review of timestamps located at:\n{tpath}")
-
-
-    def grabTimeStamps(self):
-        """
-        Read timestamps from signal files
-
-        Attributes-In
-        ------------
-        self.signals_files: this function iterates over all signal files
-        
-        Returns
-        ------
-        dict: timestamps for every signal file, indexed by filename
-        """
-        tsbyfile = {}
-        for CurFile in self.signal_files:
-            tsbyfile[CurFile] = []
-            with open(CurFile,'r') as opfi:
-                for i, line in enumerate(opfi):
-                    if '#' in line:
-                        # found timestamp!
-                        print('{} TS AT LINE: {} - {}'.format(os.path.basename(CurFile), i, line.split('#')[1][2:]))
-                        c = line.split('#')[1][2:].split(' \n')[0]
-                        tsbyfile[CurFile].append(f"{c}")
-
-            # TODO: does this do anything?? -- `[1, 2, 3] = [1, 2, 3]` ?
-            tsbyfile[CurFile] = [i for i in tsbyfile[CurFile]]
-        return tsbyfile
-
-    def checkFileTimeStamps(self, tsbyfile, timestamps_needed):
-        """
-        Compare list of timestamps to a set of required timestamps
-
-        Missing, duplicate, and novel timestamps are returned to the caller
+        Create new nonblocking dialog message.
 
         Parameters
         ---------
-        tsbyfile (dict):
-            timestamps for every signal file, indexed by filename
-        timestamps_needed (dict):
-            Required timestamps to compare against
+        msg: message to display
+        title: title of dialog window
         
-        Returns
-        ------
-        dict: goodfiles, filesmissingts, filesextrats, and new_ts.
+        Attributes-In
+        ------------
+        self.dialogs: stores the new nonblocking dialog
         """
-        new_ts = defaultdict(list)
-        filesmissingts = defaultdict(list)
-        filesextrats = defaultdict(list)
-        goodfiles = []
+        dialog_id = generate_unique_id(self.dialogs.keys())
+        ok_callback = lambda : self.dialogs.pop(dialog_id)  # remove dialog
+        self.dialogs[dialog_id] = nonblocking_msg(msg, [ok_callback], title=title, msg_type='info')
 
-        # Go through all signal files
-        for f in tsbyfile:
-            error = False
+    def status_message(self, msg):
+        """Write message to status window"""
+        self.hangar.append(msg)
 
-            for k in timestamps_needed: 
-                nt_found = 0
-
-                for t in tsbyfile[f]:
-                    if t in timestamps_needed[k]:
-                        nt_found += 1
-
-                if nt_found == 1:
-                    continue
-
-                # Too many timestamps!
-                elif nt_found > 1:
-                    error = True
-                    filesextrats[k].append(os.path.basename(f))
-
-                # Missing timestamp!
-                else:
-                    error = True
-                    filesmissingts[k].append(os.path.basename(f))
-
-            for t in tsbyfile[f]:
-                ts_found = False
-
-                for k in timestamps_needed:
-                    if t in timestamps_needed[k]:
-                        ts_found = True
-
-                # Novel timestamp!
-                if not ts_found:
-                    error = True
-                    new_ts[t].append(os.path.basename(f))
-
-            if not error:
-                goodfiles.append(os.path.basename(f))
-
-        # Reduce error message grouping if all files included
-        for m in filesmissingts:
-            if len(filesmissingts[m]) == len(self.signal_files):
-                filesmissingts[m] = ["all signal files"]
-
-        if len(goodfiles) == len(self.signal_files):
-            goodfiles = ["all signal files"]
-
-        for n in filesextrats:
-            if len(filesextrats[n]) == len(self.signal_files):
-                filesextrats[n] = ["all signal files"]
-
-        for p in new_ts:
-            if len(new_ts[p]) == len(self.signal_files):
-                new_ts[p] = ["all signal files"]
-
-        # Compile return information
-        check = {
-            'good_files': goodfiles,
-            'files_missing_a_ts': filesmissingts,
-            'files_with_dup_ts': filesextrats,
-            'new_ts': new_ts
-        } 
-        return check
-
-
+    #######################
+    ## Launching subGUIs ##
+    #######################
     def edit_metadata(self):
         """
         Show the metadata settings subGUI to edit metadata
@@ -783,7 +602,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.stagg_settings_button.setStyleSheet("background-color: #eee")
 
         # Use later to check if data was loaded from filesystem
-        # TODO: should be obsolete later!
+        # TODO: will be obsolete when we stop holding filepaths
         files = None
 
         # If we already have data for all the configs, use this
@@ -889,6 +708,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 self.variable_list.clear()
                 [self.variable_list.addItem(file) for file in files.values()]
 
+    ##############################
+    ## File/Directory Selection ##
+    ##############################
     def select_output_dir(self):
         """Allow user to select an output folder, used for both BASSPRO and STAGG"""
 
@@ -905,6 +727,25 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Set output dir
         self.output_dir = output_dir
+
+    def require_output_dir(self):
+        """
+        Ensure the user has selected an output directory
+
+        Returns
+        ------
+        bool: whether the user has selected an output directory
+        """
+
+        # Keep looping until we get an output directory
+        while not self.output_dir:
+            if not ask_user_ok('No Output Folder', 'Please select an output folder.'):
+                return False
+
+            # open a dialog that prompts the user to choose the directory
+            self.select_output_dir()
+
+        return True
         
     def select_signal_files(self):
         """
@@ -913,8 +754,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         User may choose signal files from multiple directories by calling this
         method multiple times.
         """
-        # TODO: Move this logic to Settings sub-class
-        # TODO: add setter
         # Only allowed to select .txt files
         files = BASSPROInputSettings.open_files(self.output_dir)
         # Catch cancel
@@ -928,35 +767,71 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         # Overwrite existing files?
         if self.signal_files_list.count() > 0:
-            reply = ask_user_yes(title='Clear signal files list?', msg='Would you like to remove the previously selected signal files?')
+            reply = ask_user_yes(title='Clear signal files list?',
+                                 msg='Would you like to remove the previously selected signal files?')
             if reply:
                 self.signal_files_list.clear()
 
         # Add signal files
         [self.signal_files_list.addItem(file) for file in files]
-
-    def auto_get_breath_files(self, basspro_run_folder: str, clear_files: bool):
-        """Populate gui with stagg input files (*.json) from a given directory.
-
-        Parameters
-        --------
-        basspro_run_folder: path to basspro run output
-        clear_files: flag indicating whether to clear existing breath files
+      
+    def load_basspro_settings(self):
         """
+        Prompt user to select BASSPRO Settings files
 
-        if len(self.stagg_input_files) and clear_files:
-            self.breath_list.clear()
+        The following can be selected at once:
+            * Auto sections
+            * Manual sections
+            * Basic settings
+        """
+        filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.output_dir)
+        # Catch cancel
+        if not filenames:
+            return
 
-        # Get all json files in basspro_run_folder
-        stagg_input_files = glob(os.path.join(basspro_run_folder, "*.json"))
-        for file in stagg_input_files:
-            self.breath_list.addItem(file)
+        skipped_files = []
+        for file in filenames:
+            if AutoSettings.validate(file):
+                self.autosections = file
 
-    def open_click(self, item):
-        """Open the double-clicked ListWidgetItem in the default program."""
-        if Path(item.text()).exists():
-            os.startfile(item.text())
+            elif ManualSettings.validate(file):
+                self.mansections = file
 
+            elif BasicSettings.validate(file):
+                self.basicap = file
+
+            else:
+                skipped_files.append(file)
+
+        # Notify user if invalid files were picked
+        if len(skipped_files):
+            msg = "Could not load files: "
+            msg += ", ".join(skipped_files)
+            notify_warning(msg)
+
+    def select_stagg_input_files(self):
+        """
+        Prompt user to select STAGG input files
+
+        Only .RData files or JSON files are accepted.
+        """
+        files = STAGGInputSettings.open_files(self.output_dir)
+        # Catch cancel
+        if not files:
+            return
+
+        # if we already have a selection, check about overwrite
+        if self.breath_list.count():
+            if ask_user_yes('Clear STAGG input list?',
+                            'Would you like to remove the previously selected STAGG input files?'):
+                self.breath_list.clear()
+
+        for x in files:
+            self.breath_list.addItem(x)
+
+    ######################
+    ## Metadata Loading ##
+    ######################
     @staticmethod
     def test_signal_metadata_match(signal_files: list, meta_df: pd.DataFrame):
         """
@@ -989,7 +864,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             msg = "The following signals files were not found in the selected metadata file:"
             msg += f"\n\n{os.linesep.join([os.path.basename(thumb) for thumb in baddies])}\n"
             notify_error(msg, title)
-            # TODO: fix this logic
+            # TODO: clean up the Trues here
             return True
 
         return True
@@ -1011,7 +886,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 notify_error("Could not load metadata")
                 return None
 
-            # TODO: this should be done in `attempt_load()` ?? Need to push validation back -- is this function really just require_load()?
+            # TODO: push this to `attempt_load()`
+            #   Could we use this as require_load()?
             # If there are not valid files, try again
             if self.test_signal_metadata_match(self.signal_files, data):
                 return data, meta_file
@@ -1096,7 +972,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             mousedb.close()
 
-            # TODO: stop handling files, to simplify this logic and use of load_metadata()
+            # TODO: when no longer handling files, simplify this logic and use of load_metadata()
             return metadata_df, None  # `files` is None
 
         except Exception as e:
@@ -1134,7 +1010,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'Group',
                     'Weight',
                     'Experiment_Name',
-                    # 'Researcher',
                     'Experimental_Date',
                     'time started',
                     'Rig',
@@ -1149,26 +1024,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     'Calibration_Volume',
                     'Experimental_Date',
                     'Calibration_Condition',
-                    # 'Experimental_Condition',
-                    # 'Experimental_Treatment',
-                    # 'Gas 1',
                     'Gas 2',
-                    # 'Gas 3',
-                    # 'Tank 1',
-                    # 'Tank 2',
-                    # 'Tank 3',
-                    # 'Dose',
-                    # 'Habituation',
-                    # 'Plethysmography',
                     'PlyUID'
-                    # 'Notes',
-                    # 'Project Number',
                 ],
                 'Mouse_List': [
                     'MUID',
                     'Sex',
                     'Genotype',
-                    # 'Comments',
                     'Date of Birth',
                     'Tag Number',
                     'Age_days'
@@ -1251,7 +1113,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
             metadata_warnings, metadata_pm_warnings = self.metadata_checker_filemaker(mp_parsed, p_mouse_dict, m_mouse_dict)
 
-            # TODO: build the dict like this from the beginning
+            # TODO: we're just converting format here.
+            #   build it like this when it's first created
             plys = {}
             for ply_id, warnings in metadata_warnings.items():
                 for warning in warnings:
@@ -1371,125 +1234,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                 metadata_warnings[f"Ply{p}"] = [f"Empty metadata for {fp}"]
 
             return metadata_warnings, metadata_pm_warnings
-      
-    def load_basspro_settings(self):
-        """
-        Prompt user to select BASSPRO Settings files
 
-        The following can be selected at once:
-            * Auto sections
-            * Manual sections
-            * Basic settings
-        """
-        filenames, filter = QFileDialog.getOpenFileNames(self, 'Select files', self.output_dir)
-        # Catch cancel
-        if not filenames:
-            return
-
-        skipped_files = []
-        for file in filenames:
-            if AutoSettings.validate(file):
-                self.autosections = file
-
-            elif ManualSettings.validate(file):
-                self.mansections = file
-
-            elif BasicSettings.validate(file):
-                self.basicap = file
-
-            else:
-                skipped_files.append(file)
-
-        # Notify user if invalid files were picked
-        if len(skipped_files):
-            msg = "Could not load files: "
-            msg += ", ".join(skipped_files)
-            notify_warning(msg)
-
-    def select_stagg_input_files(self):
-        """
-        Prompt user to select STAGG input files
-
-        Only .RData files or JSON files are accepted.
-        """
-        files = STAGGInputSettings.open_files(self.output_dir)
-        # Catch cancel
-        if not files:
-            return
-
-        # if we already have a selection, check about overwrite
-        if self.breath_list.count():
-            if ask_user_yes('Clear STAGG input list?',
-                            'Would you like to remove the previously selected STAGG input files?'):
-                self.breath_list.clear()
-
-        for x in files:
-            self.breath_list.addItem(x)
-    
-    def check_bp_reqs(self):
-        """
-        Check requirements for running BASSPRO
-        
-        Returns
-        ------
-        bool: whether all requirements are met
-        """
-        if len(self.signal_files) == 0:
-            notify_error("Please select signal files")
-            return False
-
-        if self.metadata_df is None:
-            notify_error("Please select a metadata file")
-            return False
-
-        if self.autosections_df is None and self.mansections_df is None:
-            notify_error("Please select a sections file")
-            return False
-        
-        if self.basicap_df is None:
-            notify_error("Please select a basic settings file")
-            return False
-
-        # Make sure we have an output dir
-        if not self.require_output_dir():
-            return False
-        
-        return True
-
-    def get_cols_vals_from_settings(self):
-        """
-        Import columns and values from current BASSPRO settings files.
-        
-        The output will be used to populate the STAGG settings.
-
-        Returns
-        ------
-        tuple[dict[str, list], dict[str, pd.DataFrame]]:
-            [0]: list of values for every column name
-            [1]: dataframe for each of "variable", "graph", and "other" configs
-        """
-
-        # Import columns and values from settings files
-        col_vals = columns_and_values_from_settings(self.metadata_df, self.autosections_df, self.mansections_df)
-
-        # For any column guaranteed to output from BASSPRO
-        #   -if its not included yet, add the column name with an empty list
-        for col in BASSPRO_OUTPUT:
-            if col not in col_vals:
-                col_vals[col] = []
-
-        # Create default df with imported variables
-        variable_names = col_vals.keys()
-        var_config_df = ConfigSettings.get_default_variable_df(variable_names)
-
-        config_data = {
-            'variable': var_config_df.copy(),
-            'graph': self.graph_config_df.copy(),
-            'other': self.other_config_df.copy()}
-
-        return col_vals, config_data
-
-
+    #################
+    ## Run BASSPRO ##
+    #################
     def basspro_run(self):
         """
         Check BASSPRO requirements, then launch BASSPRO and track asynchronously.
@@ -1556,7 +1304,94 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                         proc_name="BASSPRO",
                                         cancel_msg=cancel_msg,
                                         )
+    
+    def launch_basspro(self):
+        """Kick off a BASSPRO run as a collection of asynchronous processes."""
 
+        # Create new folder for run
+        basspro_output_dir = os.path.join(self.output_dir, 'BASSPRO_output')
+
+        if not os.path.exists(basspro_output_dir):
+            os.mkdir(basspro_output_dir)
+
+        curr_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        basspro_run_folder = os.path.join(basspro_output_dir, f'BASSPRO_output_{curr_timestamp}')
+        os.mkdir(basspro_run_folder)
+
+        # Write metadata file
+        metadata_file = os.path.join(basspro_run_folder, f"metadata_{curr_timestamp}.csv")
+        MetadataSettings.save_file(self.metadata_df, metadata_file)
+
+        # Write autosections file
+        autosections_file = ""
+        if self.autosections_df is not None:
+            autosections_file = os.path.join(basspro_run_folder, f"auto_sections_{curr_timestamp}.csv")
+            AutoSettings.save_file(self.autosections_df, autosections_file)
+    
+        # Write mansections file
+        mansections_file = ""
+        if self.mansections_df is not None:
+            mansections_file = os.path.join(basspro_run_folder, f"manual_sections_{curr_timestamp}.csv")
+            ManualSettings.save_file(self.mansections_df, mansections_file)
+
+        # Write basic settings
+        basic_file = os.path.join(basspro_run_folder, f"basics_{curr_timestamp}.csv")
+        BasicSettings.save_file(self.basicap_df, basic_file)
+
+        # Write json config to gui_config location
+        with open(os.path.join(CONFIG_DIR, 'gui_config.json'), 'w') as gconfig_file:
+            json.dump(self.gui_config, gconfig_file)
+
+        ## Threading Settings ##
+        # Adjust thread limit for the qthreadpool
+        thread_limit = int(self.parallel_combo.currentText())
+        self.qthreadpool.setMaxThreadCount(thread_limit)
+
+        shared_queue = queue.Queue()
+        workers = {}
+
+        ## Start Jobs ##
+        for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
+                                             module=self.basspro_path,
+                                             output=basspro_run_folder,
+                                             metadata=metadata_file,
+                                             manual=mansections_file,
+                                             auto=autosections_file,
+                                             basic=basic_file):
+            worker_id = generate_unique_id(workers.keys())
+            # create a Worker
+            new_worker = MainGUIworker.Worker(
+                job,
+                worker_id,
+                shared_queue,
+                )
+
+            # Add the 'QRunnable' worker to the threadpool which will manage how
+            # many are started at a time
+            self.qthreadpool.start(new_worker)
+
+            # Keep the worker around in a dict
+            workers[worker_id] = new_worker
+
+        return basspro_run_folder, shared_queue, workers
+    
+    def output_check(self):
+        """Check for signal files that did not produce BASSPRO output."""
+
+        # Compare just the MUID numbers
+        # TXT can be MXXX.txt or MXXX_PlyYYY.txt
+        signal_basenames = set([os.path.basename(f).split('.')[0].split('_')[0] for f in self.signal_files])
+        # JSONs can be MXXX_PlyYYY.json
+        json_basenames = set([os.path.basename(f).split('.')[0].split('_')[0] for f in self.stagg_input_files])
+
+        # TODO: should only match on portion that is actually written MXXX or MXXX_PlyYYY
+        baddies = signal_basenames.difference(json_basenames)
+
+        if len(baddies) > 0:
+            baddies_list_str = ', '.join(baddies)
+            msg  = "\nThe following signals files did not pass BASSPRO:"
+            msg += f"\n{baddies_list_str}"
+            self.status_message(msg)
 
     def complete_basspro(self,basspro_run_folder: str, clear_stagg_input: bool,
                          config_data: Dict[str, pd.DataFrame], col_vals: Dict[str, list]):
@@ -1589,39 +1424,109 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         msg = f"Output can be found at: {basspro_run_folder}."
         self.nonblocking_msg(msg, title)
 
-    def complete_stagg(self, stagg_output_folder: str):
+    def auto_get_breath_files(self, basspro_run_folder: str, clear_files: bool):
         """
-        Follow-up processing after STAGG run
+        Parameters
+        --------
+        basspro_run_folder: path to basspro run output
+        clear_files: flag indicating whether to clear existing breath files
+        """
+
+        if len(self.stagg_input_files) and clear_files:
+            self.breath_list.clear()
+
+        # Get all json files in basspro_run_folder
+        stagg_input_files = glob(os.path.join(basspro_run_folder, "*.json"))
+        for file in stagg_input_files:
+            self.breath_list.addItem(file)
+
+    def check_bp_reqs(self):
+        """
+        Check requirements for running BASSPRO
+        
+        Returns
+        ------
+        bool: whether all requirements are met
+        """
+        if len(self.signal_files) == 0:
+            notify_error("Please select signal files")
+            return False
+
+        if self.metadata_df is None:
+            notify_error("Please select a metadata file")
+            return False
+
+        if self.autosections_df is None and self.mansections_df is None:
+            notify_error("Please select a sections file")
+            return False
+        
+        if self.basicap_df is None:
+            notify_error("Please select a basic settings file")
+            return False
+
+        # Make sure we have an output dir
+        if not self.require_output_dir():
+            return False
+        
+        return True
+
+    def get_cols_vals_from_settings(self):
+        """
+        Import columns and values from current BASSPRO settings files.
+        
+        The output will be used to populate the STAGG settings.
+
+        Returns
+        ------
+        tuple[dict[str, list], dict[str, pd.DataFrame]]:
+            [0]: list of values for every column name
+            [1]: dataframe for each of "variable", "graph", and "other" configs
+        """
+
+        # Import columns and values from settings files
+        col_vals = columns_and_values_from_settings(self.metadata_df, self.autosections_df, self.mansections_df)
+
+        # For any column guaranteed to output from BASSPRO
+        #   -if its not included yet, add the column name with an empty list
+        for col in BASSPRO_OUTPUT:
+            if col not in col_vals:
+                col_vals[col] = []
+
+        # Create default df with imported variables
+        variable_names = col_vals.keys()
+        var_config_df = ConfigSettings.get_default_variable_df(variable_names)
+
+        config_data = {
+            'variable': var_config_df.copy(),
+            'graph': self.graph_config_df.copy(),
+            'other': self.other_config_df.copy()}
+
+        return col_vals, config_data
+
+    def pickup_after_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
+        """
+        Full-run processing to transition from BASSPRO to STAGG
         
         Parameters
         ---------
-        stagg_output_folder: path to folder containing STAGG output
+        basspro_run_folder: path to folder containing BASSPRO output
+        clear_stagg_input: flag whether to clear existing STAGG input
+        config_data: stagg settings
+        col_vals: all input column names and their values
         """
 
-        self.stagg_launch_button.setEnabled(True)
+        # Let the user edit STAGG again
+        self.enable_stagg_buttons(True)
 
-        # Indicate completion to the user
-        title = "STAGG finished"
-        msg = f"Output can be found at: {stagg_output_folder}."
-        self.nonblocking_msg(msg, title)
+        # check whether Basspro output is correct, re-enable basspro button
+        self.complete_basspro(basspro_run_folder, clear_stagg_input, config_data, col_vals)
 
-    def nonblocking_msg(self, msg: str, title: str = ""):
-        """
-        Create new nonblocking dialog message.
+        # launch STAGG
+        self.stagg_run()
 
-        Parameters
-        ---------
-        msg: message to display
-        title: title of dialog window
-        
-        Attributes-In
-        ------------
-        self.dialogs: stores the new nonblocking dialog
-        """
-        dialog_id = generate_unique_id(self.dialogs.keys())
-        ok_callback = lambda : self.dialogs.pop(dialog_id)  # remove dialog
-        self.dialogs[dialog_id] = nonblocking_msg(msg, [ok_callback], title=title, msg_type='info')
-
+    ###############
+    ## Run STAGG ##
+    ###############
     def stagg_run(self):
         """Check requirements, create output folder, and run STAGG"""
         if not self.check_stagg_reqs():
@@ -1657,39 +1562,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                         exec_after_cancel=cancel_func,
                                         print_funcs=[self.status_message],
                                         proc_name="STAGG")
-        
-
-    def pickup_after_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
-        """
-        Full-run processing to transition from BASSPRO to STAGG
-        
-        Parameters
-        ---------
-        basspro_run_folder: path to folder containing BASSPRO output
-        clear_stagg_input: flag whether to clear existing STAGG input
-        config_data: stagg settings
-        col_vals: all input column names and their values
-        """
-
-        # Let the user edit STAGG again
-        self.enable_stagg_buttons(True)
-
-        # check whether Basspro output is correct, re-enable basspro button
-        self.complete_basspro(basspro_run_folder, clear_stagg_input, config_data, col_vals)
-
-        # launch STAGG
-        self.stagg_run()
-
-    def enable_stagg_buttons(self, enabled: bool):
-        """Enable/Disable collection of STAGG buttons"""
-        self.stagg_settings_button.setEnabled(enabled)
-        self.stagg_settings_layout.delete_button.setEnabled(enabled)
-        self.breath_files_button.setEnabled(enabled)
-        self.stagg_launch_button.setEnabled(enabled)
-
-    def status_message(self, msg):
-        """Write message to status window"""
-        self.hangar.append(msg)
 
     def launch_stagg(self, pipeline_des: str):
         """
@@ -1757,10 +1629,6 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                                             output_dir_r=stagg_run_folder,
                                             image_format=image_format
                                             ):
-            # TODO: temporary output for debugging
-            cmd_len = len(" ".join(job))
-            self.status_message(f"Length of command: {cmd_len}")
-
             worker_id = generate_unique_id(workers.keys())
             # create a Worker
             new_worker = MainGUIworker.Worker(
@@ -1777,118 +1645,22 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             workers[worker_id] = new_worker
 
         return stagg_run_folder, shared_queue, workers
-
-    def require_output_dir(self):
+        
+    def complete_stagg(self, stagg_output_folder: str):
         """
-        Ensure the user has selected an output directory
-
-        Returns
-        ------
-        bool: whether the user has selected an output directory
+        Follow-up processing after STAGG run
+        
+        Parameters
+        ---------
+        stagg_output_folder: path to folder containing STAGG output
         """
 
-        # Keep looping until we get an output directory
-        while not self.output_dir:
-            if not ask_user_ok('No Output Folder', 'Please select an output folder.'):
-                return False
+        self.stagg_launch_button.setEnabled(True)
 
-            # open a dialog that prompts the user to choose the directory
-            self.select_output_dir()
-
-        return True
-    
-    def launch_basspro(self):
-        """Kick off a BASSPRO run as a collection of asynchronous processes."""
-
-        # Create new folder for run
-        basspro_output_dir = os.path.join(self.output_dir, 'BASSPRO_output')
-
-        if not os.path.exists(basspro_output_dir):
-            os.mkdir(basspro_output_dir)
-
-        curr_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        basspro_run_folder = os.path.join(basspro_output_dir, f'BASSPRO_output_{curr_timestamp}')
-        os.mkdir(basspro_run_folder)
-
-        # Write metadata file
-        metadata_file = os.path.join(basspro_run_folder, f"metadata_{curr_timestamp}.csv")
-        MetadataSettings.save_file(self.metadata_df, metadata_file)
-
-        # Write autosections file
-        autosections_file = ""
-        if self.autosections_df is not None:
-            autosections_file = os.path.join(basspro_run_folder, f"auto_sections_{curr_timestamp}.csv")
-            AutoSettings.save_file(self.autosections_df, autosections_file)
-    
-        # Write mansections file
-        mansections_file = ""
-        if self.mansections_df is not None:
-            mansections_file = os.path.join(basspro_run_folder, f"manual_sections_{curr_timestamp}.csv")
-            ManualSettings.save_file(self.mansections_df, mansections_file)
-
-        # Write basic settings
-        basic_file = os.path.join(basspro_run_folder, f"basics_{curr_timestamp}.csv")
-        BasicSettings.save_file(self.basicap_df, basic_file)
-
-        # Write json config to gui_config location
-        with open(os.path.join(CONFIG_DIR, 'gui_config.json'), 'w') as gconfig_file:
-            json.dump(self.gui_config, gconfig_file)
-
-        ## Threading Settings ##
-        # Adjust thread limit for the qthreadpool
-        thread_limit = int(self.parallel_combo.currentText())
-        self.qthreadpool.setMaxThreadCount(thread_limit)
-
-        shared_queue = queue.Queue()
-        workers = {}
-
-        ## Start Jobs ##
-        for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
-                                             module=self.basspro_path,
-                                             output=basspro_run_folder,
-                                             metadata=metadata_file,
-                                             manual=mansections_file,
-                                             auto=autosections_file,
-                                             basic=basic_file):
-            # TODO: temporary output for debugging
-            cmd_len = len(" ".join(job))
-            self.status_message(f"Length of command: {cmd_len}")
-
-            worker_id = generate_unique_id(workers.keys())
-
-            # create a Worker
-            new_worker = MainGUIworker.Worker(
-                job,
-                worker_id,
-                shared_queue,
-                )
-
-            # Add the 'QRunnable' worker to the threadpool which will manage how
-            # many are started at a time
-            self.qthreadpool.start(new_worker)
-
-            # Keep the worker around in a dict
-            workers[worker_id] = new_worker
-
-        return basspro_run_folder, shared_queue, workers
-    
-    def output_check(self):
-        """Check for signal files that did not produce BASSPRO output."""
-
-        # Compare just the MUID numbers
-        # TXT can be MXXX.txt or MXXX_PlyYYY.txt
-        signal_basenames = set([os.path.basename(f).split('.')[0].split('_')[0] for f in self.signal_files])
-        # JSONs can be MXXX_PlyYYY.json
-        json_basenames = set([os.path.basename(f).split('.')[0].split('_')[0] for f in self.stagg_input_files])
-
-        # TODO: should only match on portion that is actually written MXXX or MXXX_PlyYYY
-        baddies = signal_basenames.difference(json_basenames)
-
-        if len(baddies) > 0:
-            baddies_list_str = ', '.join(baddies)
-            msg  = "\nThe following signals files did not pass BASSPRO:"
-            msg += f"\n{baddies_list_str}"
-            self.status_message(msg)
+        # Indicate completion to the user
+        title = "STAGG finished"
+        msg = f"Output can be found at: {stagg_output_folder}."
+        self.nonblocking_msg(msg, title)
 
     def check_stagg_reqs(self, wait_for_basspro: bool = False):
         """Check requirements to run STAGG
@@ -1945,7 +1717,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 if os.path.splitext(os.path.basename(rscript_path))[0] == "Rscript":
                     # Got a good Rscript!
                     self.gui_config['Dictionaries']['Paths']['rscript'] = rscript_path
-                    # TODO: this should not overwrite defaults
+                    # TODO: should this overwrite defaults?
                     with open(os.path.join(CONFIG_DIR, "gui_config.json"), 'w') as gconfig_file:
                         json.dump(self.gui_config, gconfig_file)
                     break
@@ -1954,34 +1726,234 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         return True
 
+    def enable_stagg_buttons(self, enabled: bool):
+        """Enable/Disable collection of STAGG buttons"""
+        self.stagg_settings_button.setEnabled(enabled)
+        self.stagg_settings_layout.delete_button.setEnabled(enabled)
+        self.breath_files_button.setEnabled(enabled)
+        self.stagg_launch_button.setEnabled(enabled)
 
-    def delete_meta(self):
-        self.metadata = None
-        notify_info("Metadata removed.")
+    #######################
+    ## Timestamp Methods ##
+    #######################
+    def timestamp_dict(self):
+        """
+        Check timestamp data and print to file
 
-    def delete_auto(self):
-        self.autosections = None
-        notify_info("Auto settings removed.")
+        Compare the timestamps of the signal files to those of the experimental
+        setup selected by the user. Results are printed in the status window.
 
-    def delete_manual(self):
-        self.mansections = None
-        notify_info("Manual settings removed.")
+        Attributes-In
+        ------------
+        self.stamp: default timestamp data; populated with timestamp
+                    comparison data below and written to a file
+        self.bc_config: config used to pull default experimental setup
+        self.signal_files: used to check if we have signal files selected
+        """
+        combo_need = self.necessary_timestamp_box.currentText()
 
-    def delete_basic(self):
-        self.basicap = None
-        notify_info("Basic settings removed.")
+        # Check if user has made any combobox selection
+        if combo_need == "Select dataset...":
+            notify_info(title='Missing dataset',
+                        msg='Please select one of the options from the dropdown menu above.')
+            return
 
-    def delete_stagg_settings(self):
-        self.config_data = None
-        notify_info("STAGG settings removed.")
+        # Check if user has selected signal files
+        if len(self.signal_files) == 0:
+            notify_info(title='Missing signal files',
+                        msg='Please select signal files.')
+            return
+
+        # Populate self.stamp with keys based on directories of signal files.
+        self.stamp['Dictionaries']['Data'] = {}
+
+        # TODO: clean up epoch stuff
+        # Are comparisons for multiple signal file selections saved to the same dictionary?
+        epochs = []
+        conditions = []
+        
+        for f in self.signal_files:
+            if os.path.basename(Path(f).parent.parent) in epochs:
+                continue
+            else:
+                epochs.append(os.path.basename(Path(f).parent.parent))
+                if os.path.basename(Path(f).parent) in conditions:
+                    continue
+                else:
+                    conditions.append(os.path.basename(Path(f).parent))
+
+        stamp_data = self.stamp['Dictionaries']['Data']
+        for condition in conditions:
+            for epoch in epochs:
+                if epoch in stamp_data:
+                    if condition in stamp_data[epoch]:
+                        continue
+                    else:
+                        self.stamp['Dictionaries']['Data'][epoch][condition] = {}
+                else:
+                    self.stamp['Dictionaries']['Data'][epoch] = {}
+                    self.stamp['Dictionaries']['Data'][epoch][condition] = {}
+
+        if combo_need == "Custom":
+            timestamps_needed = dict(zip(self.autosections_df['Alias'],[[x] for x in self.autosections_df['Alias']]))
+        else:
+            bc = self.bc_config['Dictionaries']['Auto Settings']['default'][combo_need]
+            timestamps_needed = bc.fromkeys(bc.keys())
+
+        for ts in timestamps_needed:
+            timestamps_needed[ts] = [ts]
+
+        self.status_message("Checking timestamps...")
+
+        # TODO: put in separate thread/process
+        tsbyfile = self.grabTimeStamps()
+        check = self.checkFileTimeStamps(tsbyfile, timestamps_needed)
+
+        # Store timestamp comparison data
+        for epoch in epochs:
+            for condition in conditions:
+                self.stamp['Dictionaries']['Data'][epoch][condition]["tsbyfile"] = tsbyfile
+                for notable in check:
+                    self.stamp['Dictionaries']['Data'][epoch][condition][notable] = check[notable]  
+
+        try:
+            # Dump self.stamp into a JSON saved in the same directory as the first signal file listed in self.signals.
+            curr_time_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+            dir_of_first_signal = Path(self.signal_files[0]).parent
+            dir_of_first_signal_basename = os.path.basename(dir_of_first_signal)
+            tpath = os.path.join(dir_of_first_signal, f"timestamp_{dir_of_first_signal_basename}_{curr_time_str}")
+            with open(tpath,"w") as f:
+                f.write(json.dumps(self.stamp))
+
+        except Exception as e:
+            print(f'{type(e).__name__}: {e}')
+            print(traceback.format_exc())
+            notify_error(title=f"{type(e).__name__}: {e}", msg=f"The timestamp file could not be written.")
+
+        # Print summary of timestamps review to the hangar.
+        self.status_message("Timestamp output saved.")
+        self.status_message("---Timestamp Summary---")
+        self.status_message(f"Files with missing timestamps: {', '.join(set([w for m in check['files_missing_a_ts'] for w in check['files_missing_a_ts'][m]]))}")
+        self.status_message(f"Files with duplicate timestamps: {', '.join(set([y for d in check['files_with_dup_ts'] for y in check['files_with_dup_ts'][d]]))}")
+
+        if len(set([z for n in check['new_ts'] for z in check['new_ts'][n]])) == len(self.signal_files):
+            self.status_message(f"Files with novel timestamps: all signal files")
+        else:
+            self.status_message(f"Files with novel timestamps: {', '.join(set([z for n in check['new_ts'] for z in check['new_ts'][n]]))}")
+
+        self.nonblocking_msg(f"Full review of timestamps located at:\n{tpath}")
 
 
-class STAGGInputSettings(Settings):
-    """Attributes and methods for handling STAGG input files"""
-    valid_filetypes = ['.json', '.RData']
-    file_chooser_message = 'Choose STAGG input files from BASSPRO output'
+    def grabTimeStamps(self):
+        """
+        Read timestamps from signal files
 
-class BASSPROInputSettings(Settings):
-    """Attributes and methods for handling BASSPRO input files"""
-    valid_filetypes = ['.txt']
-    file_chooser_message = 'Select signal files'
+        Attributes-In
+        ------------
+        self.signals_files: this function iterates over all signal files
+        
+        Returns
+        ------
+        dict: timestamps for every signal file, indexed by filename
+        """
+        tsbyfile = {}
+        for CurFile in self.signal_files:
+            tsbyfile[CurFile] = []
+            with open(CurFile,'r') as opfi:
+                for i, line in enumerate(opfi):
+                    if '#' in line:
+                        # found timestamp!
+                        print('{} TS AT LINE: {} - {}'.format(os.path.basename(CurFile), i, line.split('#')[1][2:]))
+                        c = line.split('#')[1][2:].split(' \n')[0]
+                        tsbyfile[CurFile].append(f"{c}")
+
+            # TODO: may be obsolete -- `[1, 2, 3] = [1, 2, 3]` ?
+            tsbyfile[CurFile] = [i for i in tsbyfile[CurFile]]
+        return tsbyfile
+
+    def checkFileTimeStamps(self, tsbyfile, timestamps_needed):
+        """
+        Compare list of timestamps to a set of required timestamps
+
+        Missing, duplicate, and novel timestamps are returned to the caller
+
+        Parameters
+        ---------
+        tsbyfile (dict):
+            timestamps for every signal file, indexed by filename
+        timestamps_needed (dict):
+            Required timestamps to compare against
+        
+        Returns
+        ------
+        dict: goodfiles, filesmissingts, filesextrats, and new_ts.
+        """
+        new_ts = defaultdict(list)
+        filesmissingts = defaultdict(list)
+        filesextrats = defaultdict(list)
+        goodfiles = []
+
+        # Go through all signal files
+        for f in tsbyfile:
+            error = False
+
+            for k in timestamps_needed: 
+                nt_found = 0
+
+                for t in tsbyfile[f]:
+                    if t in timestamps_needed[k]:
+                        nt_found += 1
+
+                if nt_found == 1:
+                    continue
+
+                # Too many timestamps!
+                elif nt_found > 1:
+                    error = True
+                    filesextrats[k].append(os.path.basename(f))
+
+                # Missing timestamp!
+                else:
+                    error = True
+                    filesmissingts[k].append(os.path.basename(f))
+
+            for t in tsbyfile[f]:
+                ts_found = False
+
+                for k in timestamps_needed:
+                    if t in timestamps_needed[k]:
+                        ts_found = True
+
+                # Novel timestamp!
+                if not ts_found:
+                    error = True
+                    new_ts[t].append(os.path.basename(f))
+
+            if not error:
+                goodfiles.append(os.path.basename(f))
+
+        # Reduce error message grouping if all files included
+        for m in filesmissingts:
+            if len(filesmissingts[m]) == len(self.signal_files):
+                filesmissingts[m] = ["all signal files"]
+
+        if len(goodfiles) == len(self.signal_files):
+            goodfiles = ["all signal files"]
+
+        for n in filesextrats:
+            if len(filesextrats[n]) == len(self.signal_files):
+                filesextrats[n] = ["all signal files"]
+
+        for p in new_ts:
+            if len(new_ts[p]) == len(self.signal_files):
+                new_ts[p] = ["all signal files"]
+
+        # Compile return information
+        check = {
+            'good_files': goodfiles,
+            'files_missing_a_ts': filesmissingts,
+            'files_with_dup_ts': filesextrats,
+            'new_ts': new_ts
+        } 
+        return check
+

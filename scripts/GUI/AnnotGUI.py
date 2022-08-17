@@ -1,3 +1,7 @@
+"""
+This script outlines the class for the metadata subGUI, which allows
+users to modify names and group of variables.
+"""
 
 from typing import Any, List, Union
 import csv
@@ -89,7 +93,6 @@ class Annot(QDialog, Ui_Annot):
         # Get currently selected column
         curr_column = self.variable_list_columns.currentItem().text()
         
-        # TODO: this breaks when there are new columns
         # Populate values in this column
         #   skip null values
         for y in sorted(set([m for m in self.data[curr_column] if not pd.isnull(m)])):
@@ -103,7 +106,6 @@ class Annot(QDialog, Ui_Annot):
         ------
         bool: whether the values are valid for binning
         """
-
         # Catch any non-numeric types
         if value_list.dtypes == object:
             print(value_list.dtypes)
@@ -266,7 +268,6 @@ class Annot(QDialog, Ui_Annot):
             # TODO: don't mess with dataframe until saving or retrieving after accept; will clean up above logic too ^^
             self.data.rename(columns = {old_name: new_name}, inplace=True, errors='raise')
 
-
     def add_column(self):
         """Add the current groupings as new column and reset the window."""
         # Create copy of metadata
@@ -322,14 +323,11 @@ class Annot(QDialog, Ui_Annot):
         if not file:
             return
         
-        # TODO: make this throw a better error?
         # Attempt a load, will return None if fails
         metadata = MetadataSettings.attempt_load(file)
         if metadata is not None:
             self.data = metadata
             self.populate_list_columns()
-        else:
-            notify_error("Error loading metadata. Check your file extension")
 
 class MetadataSettings(Settings):
     """Attributes and methods for handling Metadata files"""
