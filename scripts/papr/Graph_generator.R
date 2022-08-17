@@ -71,7 +71,7 @@ graph_reorder <- function(graph_data_frame, plot_vars, graph_config, full_data){
 ## Outputs:
 ### Saves generated plot; otherwise no return value.
 graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2, 
-                      graph_data, tukey_res, inter_vars,
+                      graph_data, run_data, tukey_res, inter_vars,
                       savename, other = FALSE, resp_name = "", 
                       xvar_name = "", pointdodge_name = "",
                       yax_min = NA, yax_max = NA) {
@@ -176,19 +176,32 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   # Create data frame used for graphing.
   box_graph_df <- graph_data %>%
     group_by_at(box_vars) %>%
-    dplyr::summarise(mid = mean(eval(parse(text = resp_var)), na.rm = TRUE),
-                     sds = sd(eval(parse(text = resp_var)), na.rm = TRUE),
-                     linex = mean(linex, na.rm = TRUE),
+    dplyr::summarise(linex = mean(linex, na.rm = TRUE),
                      ymin = min(eval(parse(text = resp_var)), na.rm = TRUE),
                      ymax = max(eval(parse(text = resp_var)), na.rm = TRUE),
                      xmin = mean(xmin, na.rm = TRUE),
                      xmax = mean(xmax, na.rm = TRUE))
   
+  # Calculate errorbars 
+  b_stat_data <- run_data %>%
+    group_by_at(c(box_vars)) %>%
+    dplyr::summarise_at(resp_var, list(mean, sd), na.rm = TRUE) %>%
+    ungroup() %>% na.omit()
+  
+  colnames(b_stat_data)[ncol(b_stat_data) - 1] <- "mid"
+  colnames(b_stat_data)[ncol(b_stat_data)] <- "sds"
+  
+  # Reconvert to factor from character
+  b_stat_data <- left_join(box_graph_df, b_stat_data)
+  print(b_stat_data)
+  box_graph_df$mid <- b_stat_data$mid
+  box_graph_df$sds <- b_stat_data$sds
+  
   # Draw errorbar and mean points
   p <- p + 
-    geom_point(aes(x = linex, y = mid), data = box_graph_df,
+    geom_point(aes(x = linex, y = mid), data = b_stat_data,
                size = 5.5, pch = 21, stroke = 1, fill = NA) + 
-    geom_errorbar(aes(x = linex, ymin = mid + sds, ymax = mid - sds), data = box_graph_df,
+    geom_errorbar(aes(x = linex, ymin = mid + sds, ymax = mid - sds), data = b_stat_data,
                   alpha = 0.5) 
   
   # Find locations for statistical significance indicator features on graph.
@@ -553,7 +566,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
       # Run graph maker.
       graph_file  <- paste0(response_vars[ii], args$I)
       graph_make(response_vars[ii], xvar, pointdodge, facet1,
-                 facet2, graph_df, tukey_res_list[[response_vars[ii]]],
+                 facet2, graph_df, tbl0, tukey_res_list[[response_vars[ii]]],
                  interaction_vars, graph_file, other = FALSE,
                  response_var_names[ii], xvar_wu, pointdodge_wu,
                  yax_min = ymins[ii], yax_max = ymaxes[ii])
@@ -585,7 +598,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           # Run graph maker.
           graph_file  <- paste0(new_colname, args$I)
           graph_make(new_colname, xvar, pointdodge, facet1,
-                     facet2, graph_df, tukey_res_list[[new_colname]],
+                     facet2, graph_df, tbl0, tukey_res_list[[new_colname]],
                      interaction_vars, graph_file, other = FALSE,
                      response_var_names[ii], xvar_wu, pointdodge_wu)
         }

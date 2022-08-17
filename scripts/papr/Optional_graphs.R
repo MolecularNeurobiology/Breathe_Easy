@@ -8,7 +8,7 @@
 # Color palette for use in graphs
 cPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
 
-# Breath filter
+# Default settings
 sighs <- FALSE
 apneas <- FALSE
 
@@ -268,7 +268,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
     # Make graph + save
     graph_make(bw_vars, as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
-               other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
+               other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
                "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
@@ -368,7 +368,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
     # Make graph + save
     graph_make(age_vars, as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
-               other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
+               other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
                "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
@@ -480,7 +480,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
     # Make graph + save
     graph_make("Temp", "State", as.character(ocr2["Pointdodge"]), 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), melt_bt_graph_df, 
-               other_mod_res$rel_comp, temp_vars, graph_file, other = TRUE,
+               bodytemp_df, other_mod_res$rel_comp, temp_vars, graph_file, other = TRUE,
                "Temperature", "Time", as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
@@ -544,27 +544,15 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
       # Organizes data collected above for graphing.
       if(inclusion_filter) {
         ## Data frame for stat modeling
-        other_df <- tbl0 %>%
-          dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
-          dplyr::filter(Breath_Inclusion_Filter == 1) %>%
-          dplyr::ungroup()
-        ## Data frame for plotting
-        other_graph_df <- tbl0 %>%
-          dplyr::filter(Breath_Inclusion_Filter == 1) %>%
-          dplyr::group_by_at(c(box_vars, "MUID")) %>%
-          dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-          dplyr::ungroup()
-      } else {
-        ## Data frame for stat modeling
-        other_df <- tbl0 %>%
-          dplyr::group_by_at(c(other_inter_vars, other_covars, "MUID")) %>%
-          dplyr::ungroup()
-        ## Data frame for plotting
-        other_graph_df <- tbl0 %>%
-          dplyr::group_by_at(c(box_vars, "MUID")) %>%
-          dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
-          dplyr::ungroup()
-      }
+        tbl0 <- tbl0 %>%
+          dplyr::filter(Breath_Inclusion_Filter == 1) 
+      } 
+      
+      ## Data frame for plotting
+      other_graph_df <- tbl0 %>%
+        dplyr::group_by_at(c(box_vars, "MUID")) %>%
+        dplyr::summarise_at(as.character(ocr2["Resp"]), mean, na.rm = TRUE) %>%
+        dplyr::ungroup()
       
       # Check that variables are factors; set in order of appearance in data.
       for(jj in box_vars){
@@ -582,16 +570,16 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
       
       # Runs stat modeling
       # Assumes that each individual observation is relevant (and not mouse-level statistic.)
-      if(length(unique(other_df$MUID)) == nrow(other_df)){
-        other_mod_res <- stat_run_other(as.character(ocr2["Resp"]), other_inter_vars, other_covars, other_df, FALSE)
+      if(length(unique(tbl0$MUID)) == nrow(tbl0)){
+        other_mod_res <- stat_run_other(as.character(ocr2["Resp"]), other_inter_vars, other_covars, tbl0, FALSE)
       } else {
-        other_mod_res <- stat_run(as.character(ocr2["Resp"]), other_inter_vars, other_covars, other_df, FALSE)
+        other_mod_res <- stat_run(as.character(ocr2["Resp"]), other_inter_vars, other_covars, tbl0, FALSE)
       }
       
       # Make graph + save
       graph_make(as.character(ocr2["Resp"]), as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
                  as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
-                 other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
+                 tbl0, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
                  as.character(ocr2_wu["Resp"]), as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                  ymins, ymaxes)
       
@@ -745,8 +733,8 @@ if(sighs || apneas){
     
     # Make graph + save
     sa_test <- try(graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join_graph, 
-               other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
-               r_vars_wu[ii], xvar_wu, pointdodge_wu))
+                              eventtab_join, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
+                              r_vars_wu[ii], xvar_wu, pointdodge_wu))
     
     if(class(sa_test) == "try-error"){
       print(paste0('Failed to make plots for ', r_vars[ii]))
