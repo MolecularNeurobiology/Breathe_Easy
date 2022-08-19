@@ -1,30 +1,127 @@
-{"Dictionaries": {"Paths": {"breathcaller": "scripts\\python_module.py", "papr": "scripts\\papr", "rscript": "..\\R-Portable\\bin\\Rscript.exe", "basspro": "scripts\\python_module.py"}, "metadata": {"essential_fields": {"mouse": ["MUID"], "pleth": ["MUID", "PlyUID", "Weight", "Start_body_temperature", "Mid_body_temperature", "End_body_temperature", "Room_Temp", "Bar_Pres", "Rotometer_Flowrate", "Calibration_Volume"]}}, "Settings Types": {
-    "Auto Settings": {
-        "Section Settings": {
-            "Section Naming": {
-                "Signal file timestamp": "Key", "Intended timestamp": "Alias"}, 
-            "Experiment Settings": {
-                "Section calibration": "Cal Seg", "Injection status": "AUTO_IND_INJECTION", "Section(s) of interest": "AUTO_IND_INCLUDE"}, 
-            "Section Verification": {
-                "Minimum CO2": "min_CO2", "Maximum CO2": "max_CO2", "Minimum O2": "min_O2", "Maximum O2": "max_O2"},
-            "Section Timing": {
-                "Within start": "within_start", "Within end": "within_end", "After start": "after_start", "Before end": "before_end"}
-            }, 
-        "Calibration Settings": {
-            "Volume and Gas Calibrations": {
-                "Volume calibration": "AUTO_IND_CAL", "Gas calibration": "AUTO_IND_GAS_CAL", "CO2 calibration parameters": "CAL_CO2", "O2 calibration parameters": "CAL_O2"}
-            }, 
-        "Breath Inclusion Criteria": {
-            "Limits": {
-                "min_VO2": "min_VO2", "min_VCO2": "min_VCO2", "minTV": "min_TV", "Maximum tidal volume": "max_calibrated_TV", "Maximum VEVO2": "max_VEVO2", "minTT": "min_TT", "maxTT": "max_TT", "max_DVTV": "max_DVTV"}, 
-            "Artifact Exclusion": {
-                "X": "X", "max_pX": "max_pX", "vol_mov_avg_drift": "vol_mov_avg_drift", "minbout": "min_bout"}
+{
+    "Dictionaries": {
+        "Paths": {
+            "breathcaller": "scripts\\python_module.py",
+            "papr": "scripts\\papr",
+            "rscript": "..\\R-Portable\\bin\\Rscript.exe",
+            "basspro": "scripts\\python_module.py"
+        },
+        "metadata": {
+            "essential_fields": {
+                "mouse": [
+                    "MUID"
+                ],
+                "pleth": [
+                    "MUID",
+                    "PlyUID",
+                    "Weight",
+                    "Start_body_temperature",
+                    "Mid_body_temperature",
+                    "End_body_temperature",
+                    "Room_Temp",
+                    "Bar_Pres",
+                    "Rotometer_Flowrate",
+                    "Calibration_Volume"
+                ]
+            }
+        },
+        "Settings Types": {
+            "Auto Settings": {
+                "Section Settings": {
+                    "Section Naming": {
+                        "Signal file timestamp": "Key",
+                        "Intended timestamp": "Alias"
+                    },
+                    "Experiment Settings": {
+                        "Section calibration": "Cal Seg",
+                        "Injection status": "AUTO_IND_INJECTION",
+                        "Section(s) of interest": "AUTO_IND_INCLUDE"
+                    },
+                    "Section Verification": {
+                        "Minimum CO2": "min_CO2",
+                        "Maximum CO2": "max_CO2",
+                        "Minimum O2": "min_O2",
+                        "Maximum O2": "max_O2"
+                    },
+                    "Section Timing": {
+                        "Within start": "within_start",
+                        "Within end": "within_end",
+                        "After start": "after_start",
+                        "Before end": "before_end"
+                    }
+                },
+                "Calibration Settings": {
+                    "Volume and Gas Calibrations": {
+                        "Volume calibration": "AUTO_IND_CAL",
+                        "Gas calibration": "AUTO_IND_GAS_CAL",
+                        "CO2 calibration parameters": "CAL_CO2",
+                        "O2 calibration parameters": "CAL_O2"
+                    }
+                },
+                "Breath Inclusion Criteria": {
+                    "Limits": {
+                        "min_VO2": "min_VO2",
+                        "min_VCO2": "min_VCO2",
+                        "minTV": "min_TV",
+                        "Maximum tidal volume": "max_calibrated_TV",
+                        "Maximum VEVO2": "max_VEVO2",
+                        "minTT": "min_TT",
+                        "maxTT": "max_TT",
+                        "max_DVTV": "max_DVTV"
+                    },
+                    "Artifact Exclusion": {
+                        "X": "X",
+                        "max_pX": "max_pX",
+                        "vol_mov_avg_drift": "vol_mov_avg_drift",
+                        "minbout": "min_bout"
+                    }
+                },
+                "Additional Settings": {
+                    "Featured Breathing": {
+                        "include_apnea": "include_apnea",
+                        "include_sigh": "include_sigh"
+                    },
+                    "Temperature Settings": {
+                        "Start Temperature": "Startpoint",
+                        "Midpoint Temperature": "Midpoint",
+                        "Endpoint Temperature": "Endpoint",
+                        "include_high_chamber_temp": "include_high_chamber_temp"
+                    }
+                }
             },
-        "Additional Settings": {
-            "Featured Breathing": {
-                "include_apnea": "include_apnea", "include_sigh": "include_sigh"},
-            "Temperature Settings": {
-                "Start Temperature": "Startpoint", "Midpoint Temperature": "Midpoint", "Endpoint Temperature": "Endpoint", "include_high_chamber_temp": "include_high_chamber_temp"}
-            } 
-        }, 
-    "Basic Parameters": {"Breath Calling": {"Breath Identification": {"Minimum inspiratory time": "min_TI", "Minimum peak inspiratory flow": "min_PIF", "Minimum peak expiratory flow": "min_PEF"}, "Feature Detection": {"Apnea window size": "TTwin", "Sigh window size": "SIGHwin", "Coprophagy": "Copro"}}, "Rig Specifications": {"Conversions": {"Temperature": "ConvertTemp", "O2 gas": "ConvertO2", "CO2 gas": "ConvertCO2"}, "Specs": {"Flowrate": "Flowrate", "Roto_x": "Roto_x", "Roto_y": "Roto_y"}}, "Breath Inclusion": {"Filter": {"per500win": "per500win", "maxPer500": "maxPer500", "maxDVTV": "maxDVTV"}}}}}}
+            "Basic Parameters": {
+                "Breath Calling": {
+                    "Breath Identification": {
+                        "Minimum inspiratory time": "min_TI",
+                        "Minimum peak inspiratory flow": "min_PIF",
+                        "Minimum peak expiratory flow": "min_PEF"
+                    },
+                    "Feature Detection": {
+                        "Apnea window size": "TTwin",
+                        "Sigh window size": "SIGHwin",
+                        "Coprophagy": "Copro"
+                    }
+                },
+                "Rig Specifications": {
+                    "Conversions": {
+                        "Temperature": "ConvertTemp",
+                        "O2 gas": "ConvertO2",
+                        "CO2 gas": "ConvertCO2"
+                    },
+                    "Specs": {
+                        "Flowrate": "Flowrate",
+                        "Roto_x": "Roto_x",
+                        "Roto_y": "Roto_y"
+                    }
+                },
+                "Breath Inclusion": {
+                    "Filter": {
+                        "per500win": "per500win",
+                        "maxPer500": "maxPer500",
+                        "maxDVTV": "maxDVTV"
+                    }
+                }
+            }
+        }
+    }
+}
