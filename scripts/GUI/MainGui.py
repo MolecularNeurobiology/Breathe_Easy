@@ -1353,7 +1353,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         ## Start Jobs ##
         for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
                                              module=self.basspro_path,
-                                             output=basspro_run_folder,
+                                             output_folder=basspro_run_folder,
                                              metadata=metadata_file,
                                              manual=mansections_file,
                                              auto=autosections_file,
