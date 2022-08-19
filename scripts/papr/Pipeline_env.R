@@ -70,6 +70,12 @@ p <- add_argument (p, "--Sum", help="Filepath to directory with R markdown code 
 
 # Arguments are imported + stored as a list with the names defined as above.
 args2 <- parse_args(p)
+
+# Save list of arguments
+sink(paste0(args2$Output, "/CommandLineArgs.txt"))
+print(args2)
+sink()
+
 print("Loading data")
 
 #########################
