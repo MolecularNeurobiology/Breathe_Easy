@@ -236,6 +236,11 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   pd_line_graph_df$asty <- pd_line_graph_df$yline +  
     max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 0.05 
   
+  ## Draw line separating statistical significance indicators from data portion of plot.
+  p <- p +
+    geom_segment(aes(x = xmin, xend = xmax, y = yline, yend = yline), data = pd_line_graph_df,
+                 color = "grey") 
+  
   ## Plotting locations for each xvar category.
   facet_vars <-  c(facet1, facet2)
   facet_vars <- facet_vars[facet_vars != ""]
