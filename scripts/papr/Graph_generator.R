@@ -193,7 +193,6 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   
   # Reconvert to factor from character
   b_stat_data <- left_join(box_graph_df, b_stat_data)
-  print(b_stat_data)
   box_graph_df$mid <- b_stat_data$mid
   box_graph_df$sds <- b_stat_data$sds
   
@@ -216,6 +215,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
       dplyr::summarise(ymin = min(ymin, na.rm = TRUE),
                        ymax = max(ymax, na.rm = TRUE),
                        sdmax = max(mid + sds, na.rm = TRUE),
+                       sdmin = max(mid - sds, na.rm = TRUE),
                        xmin = mean(xmin, na.rm = TRUE),
                        xmax = mean(xmax, na.rm = TRUE))
   } else {
@@ -223,6 +223,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
       dplyr::summarise(ymin = min(ymin, na.rm = TRUE),
                        ymax = max(ymax, na.rm = TRUE),
                        sdmax = max(mid + sds, na.rm = TRUE),
+                       sdmin = max(mid - sds, na.rm = TRUE),
                        xmin = mean(xmin, na.rm = TRUE),
                        xmax = mean(xmax, na.rm = TRUE))
   }
@@ -230,14 +231,10 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   ## Calculate where lines and asterisks should go on y-axis for each pointdodge category.
   ### Line
   pd_line_graph_df$yline <- pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) + 
-    max(pd_line_graph_df$ymax - pd_line_graph_df$ymin) * 0.08
+    max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 0.08
   ### Asterisk
-  pd_line_graph_df$asty <- pd_line_graph_df$yline + max(pd_line_graph_df$ymax - pd_line_graph_df$ymin) * 0.05 
-  
-  ## Draw line separating statistical significance indicators from data portion of plot.
-  p <- p +
-    geom_segment(aes(x = xmin, xend = xmax, y = yline, yend = yline), data = pd_line_graph_df,
-                 color = "grey") 
+  pd_line_graph_df$asty <- pd_line_graph_df$yline +  
+    max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 0.05 
   
   ## Plotting locations for each xvar category.
   facet_vars <-  c(facet1, facet2)
