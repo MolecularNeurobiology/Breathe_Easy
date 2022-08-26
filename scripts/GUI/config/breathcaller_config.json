@@ -1069,11 +1069,11 @@
                     "Cal 20 Room Air": {
                         "Alias": "Cal 20 Room Air",
                         "Cal Seg": "Cal 20 Room Air",
+                        "AUTO_IND_INJECTION": "NA",
                         "AUTO_IND_INCLUDE": 0,
                         "AUTO_IND_CAL": 1,
                         "AUTO_IND_GAS_CAL": 1,
                         "AUTO_IND_GAS": "RA",
-                        "AUTO_IND_INJECTION": "NA",
                         "CAL_O2": "21,1.5,2.5",
                         "CAL_CO2": "0,-.1,.1",
                         "Midpoint": 0,

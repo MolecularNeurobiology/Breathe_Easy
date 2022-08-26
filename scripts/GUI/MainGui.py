@@ -1003,7 +1003,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.status_message("Building query...")
         try:
             FieldDict = {
-                'Plethysmography': [
+                'Adult Plethysmography': [
                     'MUID',
                     'PlyUID',
                     'Misc. Variable 1 Value',
@@ -1039,7 +1039,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             
             # assemble fields for SQL query
             m_FieldText='"' + '","'.join(FieldDict['Mouse_List']) + '"'
-            p_FieldText='"' + '","'.join(FieldDict['Plethysmography']) + '"'
+            p_FieldText='"' + '","'.join(FieldDict['Adult Plethysmography']) + '"'
             
             # filter sql query based on muid and plyuid info if provided
             if mp_parsed['MUIDLIST'] and mp_parsed['PLYUIDLIST']:
@@ -1064,7 +1064,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                 p_cursor = mousedb.execute(
                     """select """ + p_FieldText +
-                    """ from "Plethysmography" where "PLYUID" in (""" +
+                    """ from "Adult Plethysmography" where "PLYUID" in (""" +
                     ','.join([str(i) for i in mp_parsed['PLYUIDLIST']]) +
                     """) """)
 
@@ -1077,7 +1077,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                 p_cursor = mousedb.execute(
                     """select """ + p_FieldText +
-                    """ from "Plethysmography" where "MUID" in (""" +
+                    """ from "Adult Plethysmography" where "MUID" in (""" +
                     ','.join(["'M{}'".format(int(i)) for i in mp_parsed['MUIDLIST']]) +
 
                     """) """)
@@ -1088,7 +1088,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
                 p_cursor = mousedb.execute(
                     """select """ + p_FieldText +
-                    """ from "Plethysmography" """)
+                    """ from "Adult Plethysmography" """)
                 
             self.status_message("Fetching metadata...")
             m_mouse_list = m_cursor.fetchall()
