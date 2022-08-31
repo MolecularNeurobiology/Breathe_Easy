@@ -40,6 +40,12 @@ Command Line Arguments
 __version__ = '36.2.1'
 
 """
+# v36.3.0 README
+    *Updates to minVO2 filter (added min_VO2pg)
+    *gas signal smoothing Implementation of smoothing filter for O2 CO2 signals (rolling median, or 
+    outlier trim and impute approach)
+
+
 
 # v36.2.1 README
     Bugfix for runs using manual settings (bug caused only last selection of
@@ -1484,6 +1490,30 @@ def apply_smoothing_filter(signal_data,
 
     return lpf_hpf_signal
 
+
+def smooth_gas_signals(
+    signal_data,
+    analysis_parameters,
+    samplingHz = 1000,
+    window_sec = 10,
+    logger=None
+    ):
+    
+    if 'g' in str(
+            analysis_parameters['apply_smoothing_filter']
+            ):
+        return \
+            signal_data['corrected_o2'].rolling(
+            int(samplingHz*window_sec),min_periods=1
+            ).median(), \
+            signal_data['corrected_co2'].rolling(
+            int(samplingHz*window_sec),min_periods=1
+            ).median()
+    else:
+        return \
+            signal_data['corrected_o2'], \
+            signal_data['corrected_co2']
+            
 
 def getmaxbyindex(inputlist, indexlist):
     """
@@ -3058,8 +3088,24 @@ def create_filters_for_automated_selections(
             high_VEVO2_filter = \
                 breath_list['ts_inhale'] == breath_list['ts_inhale']
         
+        if 'VO2_per_gram' in breath_list.columns and \
+                current_auto_criteria.get('min_VO2pg','off') != 'off':
+            low_VO2pg_filter = breath_list['VO2_per_gram'] > \
+                float(current_auto_criteria['min_VO2pg'])
+        else: 
+            low_VO2pg_filter = \
+                breath_list['ts_inhale'] == breath_list['ts_inhale']
+                
+        if 'VCO2_per_gram' in breath_list.columns and \
+                current_auto_criteria.get('min_VCO2pg','off') != 'off':
+            low_VCO2pg_filter = breath_list['VCO2_per_gram'] > \
+                float(current_auto_criteria['min_VCO2pg'])
+        else:
+            low_VCO2pg_filter = \
+                breath_list['ts_inhale'] == breath_list['ts_inhale']
+                
         if 'VO2' in breath_list.columns and \
-                current_auto_criteria['min_VO2'] != 'off':
+                current_auto_criteria.get('min_VO2','off') != 'off':
             low_VO2_filter = breath_list['VO2'] > \
                 float(current_auto_criteria['min_VO2'])
         else: 
@@ -3067,7 +3113,7 @@ def create_filters_for_automated_selections(
                 breath_list['ts_inhale'] == breath_list['ts_inhale']
                 
         if 'VCO2' in breath_list.columns and \
-                current_auto_criteria['min_VCO2'] != 'off':
+                current_auto_criteria.get('min_VCO2','off') != 'off':
             low_VCO2_filter = breath_list['VCO2'] > \
                 float(current_auto_criteria['min_VCO2'])
         else:
@@ -3111,7 +3157,9 @@ def create_filters_for_automated_selections(
             (high_VEVO2_filter == 1) &
             (high_TV_filter == 1) &
             (low_VO2_filter) &
-            (low_VCO2_filter),
+            (low_VCO2_filter) &
+            (low_VO2pg_filter) &
+            (low_VCO2pg_filter),
             key_and_alias
             ] = 1
 
@@ -4426,6 +4474,14 @@ def main():
                         ],
                     logger
                     )
+                
+                # apply smoothing to gas signals if indicated in settings
+                Signal_Data.loc[:,'corrected_o2'], 
+                Signal_Data.loc[:,'corrected_co2'] = smooth_gas_signals(
+                    Signal_Data,
+                    Analysis_Parameters,
+                    logger = logger
+                    )
 
                 # repair chamber temperature if needed
                 Signal_Data.loc[:, 'corrected_temp'] = repair_temperature(
@@ -4494,10 +4550,15 @@ def main():
 
                 if 'vol' not in Signal_Data:
                     Signal_Data['vol'] = Signal_Data['flow'].cumsum()
-                    Signal_Data['vol'] = apply_smoothing_filter(
-                        Signal_Data,
-                        'vol'
-                        )
+                    if '1' in str(
+                            Analysis_Parameters['apply_smoothing_filter']
+                            ) or 'f' in str(
+                                Analysis_Parameters['apply_smoothing_filter']
+                                ): 
+                        Signal_Data['vol'] = apply_smoothing_filter(
+                            Signal_Data,
+                            'vol'
+                            )
                     logger.info('calculating vol data from flow data')
                 else:                
                     logger.info('vol data present in signal data')
@@ -4513,7 +4574,11 @@ def main():
                     ).mean()
 
                 # smooth data with high and low pass filter if option selected
-                if int(Analysis_Parameters['apply_smoothing_filter']) == 1:
+                if '1' in str(
+                        Analysis_Parameters['apply_smoothing_filter']
+                        ) or 'f' in str(
+                            Analysis_Parameters['apply_smoothing_filter']
+                            ):
                     Signal_Data['original_flow'] = Signal_Data['flow'].copy()
                     Signal_Data['flow'] = apply_smoothing_filter(
                         Signal_Data,
