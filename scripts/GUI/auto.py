@@ -83,7 +83,7 @@ class Auto(QDialog, Ui_Auto):
             ]
 
         inc_reference = [
-            self.help_min_VO2,
+            self.help_min_VO2pg,
             self.help_min_VCO2,
             self.help_min_tv,
             self.help_max_calibrated_TV,

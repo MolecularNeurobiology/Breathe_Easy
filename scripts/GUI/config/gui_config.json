@@ -60,7 +60,7 @@
                 },
                 "Breath Inclusion Criteria": {
                     "Limits": {
-                        "min_VO2": "min_VO2",
+                        "min_VO2pg": "min_VO2pg",
                         "min_VCO2": "min_VCO2",
                         "minTV": "min_TV",
                         "Maximum tidal volume": "max_calibrated_TV",

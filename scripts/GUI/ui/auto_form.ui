@@ -2517,7 +2517,7 @@
                      </spacer>
                     </item>
                     <item>
-                     <widget class="QToolButton" name="help_min_VO2">
+                     <widget class="QToolButton" name="help_min_VO2pg">
                       <property name="text">
                        <string>?</string>
                       </property>
@@ -2707,9 +2707,9 @@
                      </spacer>
                     </item>
                     <item>
-                     <widget class="QLabel" name="min_VO2_label">
+                     <widget class="QLabel" name="min_VO2pg_label">
                       <property name="text">
-                       <string>Minimum VO2</string>
+                       <string>Minimum VO2pg</string>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>
@@ -2725,7 +2725,7 @@
                        </font>
                       </property>
                       <property name="text">
-                       <string>min_VO2</string>
+                       <string>min_VO2pg</string>
                       </property>
                       <property name="alignment">
                        <set>Qt::AlignCenter</set>

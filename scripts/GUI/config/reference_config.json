@@ -232,7 +232,7 @@
             "maxTV": "Definition: Maximum tidal volume\nDescription: Maximum tidal volume for a breath to be considered a candidate of calm breathing.\nDefault Value: off",
             "maxVEVO2": "Definition: Maximum ventilation normalized to oxygen consumption\nDescription: Any breaths with VEVO2 values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: off",
             "max_calibrated_TV": "Definition: Maximum calibrated tidal volume\nDescription: Any breaths with tidal volumes greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: 5",
-            "min_VO2": "Definition: Minimum calibrated oxygen consumption\nDescription: Any breaths with oxygen consumption values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers. \nDefault Values: off",
+            "min_VO2pg": "Definition: Minimum calibrated oxygen consumption per gram\nDescription: Any breaths with standardized oxygen consumption values greater than this value are filtered out. This filter is intended to catch aberrant outliers. \nDefault Values: off",
             "min_VCO2": "Definition: Minimum calibrated carbon dioxide consumption\nDescription: Any breaths with carbon dioxide consumption values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers. \nDefault Values: off"
         }
     }
