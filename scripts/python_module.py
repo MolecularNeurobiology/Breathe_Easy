@@ -37,7 +37,7 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.2.1'
+__version__ = '36.2.2'
 
 """
 # v36.3.0 README
@@ -4476,7 +4476,7 @@ def main():
                     )
                 
                 # apply smoothing to gas signals if indicated in settings
-                Signal_Data.loc[:,'corrected_o2'], 
+                Signal_Data.loc[:,'corrected_o2'], \
                 Signal_Data.loc[:,'corrected_co2'] = smooth_gas_signals(
                     Signal_Data,
                     Analysis_Parameters,
