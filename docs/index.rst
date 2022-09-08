@@ -1,0 +1,32 @@
+.. Breathe Easy documentation master file, created by
+   sphinx-quickstart on Tue Sep  6 13:46:52 2022.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
+
+Breathe Easy
+================
+.. image::
+   Figures/Logo.svg
+
+**Breathe Easy** is a Python and R based software suite that can interrogate 
+respiratory waveforms from whole-body plethysmography recordings in an automated
+fashion according to quantitative user settings. The program further analyzes the
+data using a linear mixed effects model (LMEM) with Tukey post-hoc to test 
+for significant differences. Publication-worthy graphs are then generated
+with signficiance marks based on these tests automatically added for the user. 
+
+For source code and download, please see our GitHub page for this project `GitHub <https://www.GitHub.com/>`_
+
+.. note::
+  This project is under active development.
+
+
+.. toctree::
+   :maxdepth: 2
+
+   usage
+   Prepping Data
+   Quickstart
+   DetailedUserGuide
+   Output
+   Resources
