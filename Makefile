@@ -21,4 +21,4 @@ help:
 
 GitHub:
     @make html
-    @cp -a _build/html/. ../docs
+    @cp -a /docs
