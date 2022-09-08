@@ -26,7 +26,7 @@ Our software is available as source code and as a windows executable with all de
 
 # Where is the manual?
 [User Manual](/BPSt_Guide_V6.pdf) for this software.
-[BASSPRO](/docs/index.rst)
+[BASSPRO](/source/index.rst)
 
 # Where is practice data?
 Instructions for accessing, downloading, and running practice datasets can be found in the [User Manual](/BPSt_Guide_V6.pdf).
