@@ -37,7 +37,7 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.2.2'
+__version__ = '36.3.0'
 
 """
 # v36.3.0 README
