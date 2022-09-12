@@ -24,7 +24,7 @@ apneas <- FALSE
 ## Outputs (saved in list):
 ### rel_comp: data frame, pairwise comparison results for biologically relevant comparisons
 ### lm: data frame, coefficient estimates from the model for each of the interaction groups
-stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE){
+stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = TRUE){
   
   # Removes rows with NAs and breath inclusion filter.
   if(inc_filt){
@@ -160,9 +160,9 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
   
   # Whether to use the breath inclusion filter
   if((!is.null(other_config_row$Inclusion)) && (other_config_row$Inclusion == 0)){
-    inclusion_filter <- FALSE
-  } else {
     inclusion_filter <- TRUE
+  } else {
+    inclusion_filter <- FALSE
   }
   
   # Optional y-axis settings
@@ -759,7 +759,7 @@ if(sighs || apneas){
 ## Outputs:
 ### Saves generated plot; otherwise no return value.
 poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1, 
-                           facet2, pointdodge_name = "", inclusion_filter = TRUE) {
+                           facet2, pointdodge_name = "", inclusion_filter = FALSE) {
   
   if(!is.numeric(graph_data[[resp_var]])){
     print(paste0("Poincare plot variable '", resp_var, "' not numeric."))

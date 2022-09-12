@@ -33,7 +33,7 @@ X_num <- function(string_val) {
 ### lmer: data frame, coefficient estimates from the model for each of the interaction groups
 ### residplot: ggplot object, the residual plot from the model.
 ### qqplot: ggplot object, the q-q plot for the model residuals.
-stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE){
+stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = TRUE){
   
   # Removes rows with NAs and breath inclusion filter.
   if(inc_filt){
