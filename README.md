@@ -48,9 +48,6 @@ All dependencies are automatically installed when running Breathe Easy. However,
 ## Install Python3
 Find downloads [here](https://www.python.org/downloads/)
 
-## Install pip
-Find instructions [here](https://pip.pypa.io/en/stable/installation/)
-
 ## Install Dependencies
 Activate Python virtual environment to help manage package installation
 ```
