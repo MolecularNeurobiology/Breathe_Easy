@@ -44,8 +44,28 @@ All dependencies are automatically installed when running Breathe Easy. However,
 - scipy==1.9.0
 - six==1.16.0
 
+# Installation
+## Install Python
+_link_
+
+## Install pip
+_link_
+
+## Install Dependencies
+Activate Python virtual environment to help manage package installation
+```
+python3 -m venv venv
+source venv/bin/activate
+```
+Install dependencies
+`pip install -r requirements.txt`
+
 # How to launch?
+## From packaged version
 Double click the `launch.bat` file in the BASSPRO-STAGG_QUIPPL folder.
+
+## From source
+`python scripts/GUI/MainGUImain.py`
 
 # Licensing
 ***Whatever Baylor tells us to do.***
