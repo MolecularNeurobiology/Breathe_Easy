@@ -58,14 +58,18 @@ python3 -m venv venv
 source venv/bin/activate
 ```
 Install dependencies
-`pip install -r requirements.txt`
+```
+pip install -r requirements.txt
+```
 
 # How to launch?
 ## From packaged version
 Double click the `launch.bat` file in the BASSPRO-STAGG_QUIPPL folder.
 
 ## From source
-`python scripts/GUI/MainGUImain.py`
+```
+python scripts/GUI/MainGUImain.py
+```
 
 # Licensing
 ***Whatever Baylor tells us to do.***
