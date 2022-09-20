@@ -46,7 +46,7 @@ All dependencies are automatically installed when running Breathe Easy. However,
 
 # Installation
 ## Install Python3
-Find downloads [here](https://www.python.org/downloads/)
+Download python [here](https://www.python.org/downloads/)
 
 ## Install Dependencies
 Activate Python virtual environment to help manage package installation
@@ -65,7 +65,8 @@ Double click the `launch.bat` file in the BASSPRO-STAGG_QUIPPL folder.
 
 ## From source
 ```
-python scripts/GUI/MainGUImain.py
+source venv/bin/activate
+python3 scripts/GUI/MainGUImain.py
 ```
 
 # Licensing
