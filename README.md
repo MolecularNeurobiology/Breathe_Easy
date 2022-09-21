@@ -51,8 +51,13 @@ Download python [here](https://www.python.org/downloads/)
 ## Install Dependencies
 Activate Python virtual environment to help manage package installation
 ```
-python3 -m venv venv
-source venv/bin/activate
+# Posix
+python3 -m venv <venv>
+source <venv>/bin/activate
+
+# Windows
+python3 -m venv <venv>
+<venv>/Scripts/activate.bat
 ```
 Install dependencies
 ```
@@ -65,9 +70,17 @@ Double click the `launch.bat` file in the BASSPRO-STAGG_QUIPPL folder.
 
 ## From source
 ```
+# Posix
 source venv/bin/activate
+python3 scripts/GUI/MainGUImain.py
+
+# Windows
+<venv>/Scripts/activate.bat
 python3 scripts/GUI/MainGUImain.py
 ```
 
 # Licensing
+<section under review>
+'Breathe Easy' is dually licensed. The project is available under a 'GPLv3 or later' license as well as a commercial license (inquiries for commercial licensing may be directed to Russell.Ray@bcm.edu). The fully packaged version of 'Breathe Easy is distributed under a 'GPLv2 or later' license.
 ***Whatever Baylor tells us to do.***
+</section under review>
