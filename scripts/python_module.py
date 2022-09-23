@@ -37,15 +37,18 @@ Command Line Arguments
 
 ***
 """
-__version__ = '36.3.0'
+__version__ = '36.3.1'
 
 """
+# v36.3.1 README
+    *Updates to improve compatability with automated pneumotach data.
+    *Note - pneumo mode updates rely on a modified metadata that uses RUID
+     instead of MUID and PLYUID.
+
 # v36.3.0 README
     *Updates to minVO2 filter (added min_VO2pg)
-    *gas signal smoothing Implementation of smoothing filter for O2 CO2 signals (rolling median, or 
-    outlier trim and impute approach)
-
-
+    *gas signal smoothing Implementation of smoothing filter for O2 CO2 signals 
+    (rolling median, or outlier trim and impute approach)
 
 # v36.2.1 README
     Bugfix for runs using manual settings (bug caused only last selection of
@@ -383,6 +386,42 @@ def get_animal_metadata(csvpath):
     return animal_metadata
 
 
+def get_animal_metadata_pneumo(csvpath):
+    """
+    Returns a dictionary extracted from an 'Animal Metadata' csv file
+    note, RUID is a CASE-SENSITIVE REQUIRED column.
+
+    Parameters
+    ----------
+    csvpath : string
+        path to file containing Animal_Metadata
+
+    Returns
+    -------
+    animal_metadata : dict
+        dict containing metadata associated with animal (indexed by RUID)
+
+    """
+
+    animal_metadata = {}
+    text_list = []
+    if csvpath == "" or csvpath == None:
+        return animal_metadata
+    else:
+        with open(csvpath, 'r', encoding='UTF-8') as file:
+            data = csv.DictReader(file, delimiter=",")
+            for row in data:
+                text_list.append(row)
+        for row in text_list:
+            animal_metadata[row['RUID']] = {}
+            for k in row:
+                try:
+                    animal_metadata[row['RUID']][k] = float(row[k])
+                except:
+                    animal_metadata[row['RUID']][k] = row[k]
+    return animal_metadata
+
+
 def calculate_time_remaining(
         cur_file_num,
         tot_file_num,
@@ -420,7 +459,8 @@ def extract_muid_plyuid(
         filename,
         animal_metadata,
         extension='txt',
-        local_logger=None):
+        local_logger=None
+        ):
     """
     Extracts muid and plyuid information from a filename provided in
     MUID_PLYUID.txt format.
@@ -458,6 +498,43 @@ def extract_muid_plyuid(
                                 local_logger=local_logger)
 
     return muid, plyuid
+
+
+def extract_ruid(
+        filename,
+        extension='txt',
+        ):
+    """
+    Extracts ruid information from a filename provided in
+    YYMMDD_RUID.txt format.
+
+    Parameters
+    ----------
+    filename : string
+        filename, expected as MUID_PLYUID.txt format
+
+    animal_metadata : dict
+        dict indexed by 'PlyUID' containing animal metadata
+
+    extension : string
+        extension of the file, default is txt
+
+    Returns
+    -------
+    ruid : string
+
+    """
+
+    yymmdd_ruid_re = re.compile(
+        '^((?P<yymmdd>[^_\n\r]*?)_)?(?P<ruid>[^_\n\r(?!a|_)]+)'+\
+        '(?P<exported>(all|_[^\.\n\r]*?_[^\.\n\r]*?))?(?P<ext>\.{})$'.format(
+            extension
+            )
+        )
+    parsed_filename = re.search(yymmdd_ruid_re, os.path.basename(filename))
+    ruid = parsed_filename['ruid']
+    
+    return ruid
 
 
 def resolve_plyuid(muid, animal_metadata, local_logger=None):
@@ -1491,6 +1568,40 @@ def apply_smoothing_filter(signal_data,
     return lpf_hpf_signal
 
 
+def basicFilt(CT,sampleHz,f0,Q):
+    """
+    Applies a notch and butter filter to data, useful for reducing artifacts 
+    from electrical noise or voltage offsets. It is intended for use on an 
+    ECG signal.
+
+    Parameters
+    ----------
+    CT : list or pandas.Series
+        ecg voltage values
+    sampleHz : Float
+        the sampling rate of the data
+    f0 : Float
+        The target frequency to exclude
+    Q : Float
+        Quality factor. Dimensionless parameter that characterizes
+        notch filter -3 dB bandwidth ``bw`` relative to its center
+        frequency, ``Q = w0/bw``.
+
+    Returns
+    -------
+    filtered : list or pandas.Series
+        the filtered data
+
+    """
+    b,a=signal.iirnotch(f0/(sampleHz/2),Q)
+    
+    notched=signal.lfilter(b,a,CT)
+    
+    b,a=signal.butter(1,1/(sampleHz/2),btype='highpass')
+    filtered=signal.lfilter(b,a,notched)
+    return filtered
+
+
 def smooth_gas_signals(
     signal_data,
     analysis_parameters,
@@ -1894,9 +2005,13 @@ def basicRR(
         CT,
         TS,
         noisecutoff = 75,
-        threshfactor = 4,
+        threshfactor = 2,
         absthresh = 0.3,
-        minRR = 0.05):
+        minRR = 0.05,
+        ecg_filter = '1',
+        ecg_invert = '0',
+        analysis_parameters = None
+        ):
     """
     A simple RR based heart beat caller based on relative signal to noise 
     thresholding.
@@ -1918,6 +2033,12 @@ def basicRR(
     minRR : Float, optional
         minimum duration of heartbeat to be considered a valid beat. 
         The default is 0.05.
+    ecg_filter : Str ('1' or '0') 
+        1 = on, 0 = off for filtering of ecg signal.
+    ecg_invert : Str ('1' or '0')
+        1 = on, 0 = off for inversion of ecg signal.
+    analysis_parameters : dict, optional
+        dictionary which may contain settings to overide defaults
 
     Returns
     -------
@@ -1925,7 +2046,23 @@ def basicRR(
         DataFrame containing baseg heart beat parameters (timestamp, 'RR')
 
     """
+    if analysis_parameters is not None:
+        noisecutoff = float(
+            analysis_parameters.get('ecg_noise_cutoff',noisecutoff)
+            )
+        threshfactor = float(
+            analysis_parameters.get('ecg_threshfactor',threshfactor)
+            )
+        absthresh = float(analysis_parameters.get('ecg_absthresh',absthresh))
+        minRR = float(analysis_parameters.get('ecg_minRR',minRR))
+        ecg_filter = str(analysis_parameters.get('ecg_filter',ecg_filter))
+        ecg_invert = str(analysis_parameters.get('ecg_invert',ecg_invert))
     
+    if ecg_invert == '1':
+        CT = CT * -1
+    
+    if ecg_filter == '1':
+        CT = basicFilt(CT,1/(TS[1]-TS[0]),60,30)
     
     # get above thresh
     noise_level=numpy.percentile(CT,noisecutoff)
@@ -1938,7 +2075,7 @@ def basicRR(
     
     if len(index_crosses)==0:
     
-        return beats #pass no beats
+        return beats # pass no beats
     
     prevJ=0
     
@@ -1964,7 +2101,7 @@ def basicRR(
     beat_df = pandas.DataFrame(beats).transpose()
     beat_df.index.name = 'ts'
     beat_df.reset_index()
-    return beat_df
+    return beat_df['RR']
 
 
 def calculate_basic_breath_parameters(
@@ -3365,7 +3502,7 @@ def collect_calibration_parameters(
                           'units assumed to be SLPM')
     else:
         calibration_dict['Flowrate (SLPM)'] = 0.5
-        local_logger.warning('No Flowrate field fount, set at ' +
+        local_logger.warning('No Flowrate field found, set at ' +
                              'default of 0.5 SLPM')
 
     if 'Weight' in animal_metadata[plyuid]:
@@ -3940,7 +4077,7 @@ def create_output(
         animal_metadata,
         auto_criteria,
         manual_selection,
-        plyuid,
+        plyuid_or_ruid,
         automated_selections_filters,
         manual_selections_filters,
         column_dictionary,
@@ -4095,11 +4232,13 @@ def create_output(
                         breath_list[c] = ""
                         
                     if manual_selection[
-                            manual_selection['PLYUID'].astype(str)==plyuid
+                            manual_selection['PLYUID'].astype(str)==\
+                            plyuid_or_ruid \
                             ].groupby(['Alias',c]).ngroups > \
                             manual_selection[
                                 manual_selection['PLYUID'].astype(str)==\
-                                    plyuid].groupby(['Alias']).ngroups:
+                                    plyuid_or_ruid \
+                                    ].groupby(['Alias']).ngroups:
                         local_logger.warning(
                             'Shared Aliases in manual select with variant '+\
                             'entries for {}'.format(c)
@@ -4108,7 +4247,8 @@ def create_output(
                         'selection_filter'
                         ]==1,c] = manual_selection[
                             (manual_selection['Alias']==alias)&
-                            (manual_selection['PLYUID'].astype(str)==plyuid)
+                            (manual_selection['PLYUID'].astype(str)==\
+                            plyuid_or_ruid)
                             ][c].values[0]
             output_list['MAN_Condition_{}'.format(alias)] = 0
             output_list.loc[manual_selections_filters[alias]\
@@ -4131,12 +4271,13 @@ def create_output(
                             ['selection_filter']==1,
                             'MAN_Inclusion_Filter'] = 1
 
-    for m in animal_metadata[plyuid]:
-        output_list[m] = animal_metadata[plyuid][m]
+    for m in animal_metadata[plyuid_or_ruid]:
+        output_list[m] = animal_metadata[plyuid_or_ruid][m]
     
-    output_list['Mouse_And_Session_ID'] = \
-        output_list['MUID'].copy().astype(str) + '_' + \
-        output_list['PlyUID'].copy().astype(str)
+    if analysis_parameters.get('Pneumo_Mode') != '1':
+        output_list['Mouse_And_Session_ID'] = \
+            output_list['MUID'].copy().astype(str) + '_' + \
+            output_list['PlyUID'].copy().astype(str)
     
     for p in analysis_parameters:
         output_list[p] = analysis_parameters[p]
@@ -4359,7 +4500,7 @@ def main():
         logger.addHandler(console_handler)
         logger.addHandler(file_handler)
 
-        # log initial inputs
+        #%% log initial inputs
         logger.info('Beginning Analysis')
         logger.info('{}'.format(Launch_Time.isoformat()))
         log_info_from_dict(
@@ -4388,9 +4529,22 @@ def main():
             )
 
         # collect data from input files - raise exception or warning if needed
+        if Analysis_Parameters_Path is not None and \
+                Analysis_Parameters_Path != '':
+            Analysis_Parameters = pandas.read_csv(
+                Analysis_Parameters_Path,
+                sep=',',
+                encoding='UTF-8',
+                index_col='Parameter'
+                )['Setting'].to_dict()
+        else: raise Exception('No Analysis Parameters File Provided')
+        
         if Animal_Metadata_Path is not None and \
                 Animal_Metadata_Path != '':
-            Animal_Metadata = get_animal_metadata(Animal_Metadata_Path)
+            if Analysis_Parameters.get('Pneumo_Mode') != '1':
+                Animal_Metadata = get_animal_metadata(Animal_Metadata_Path)
+            else:
+                Animal_Metadata = get_animal_metadata_pneumo(Animal_Metadata_Path)
             if Animal_Metadata == {}:
                 raise Exception('Empty or unparsable Animal Metadata')
         else: raise Exception('No Animal Metadata File Provided')
@@ -4410,16 +4564,8 @@ def main():
             Auto_Criteria = pandas.read_csv(Auto_Criteria_Path, sep=',')
         else: Auto_Criteria = None
 
-        if Analysis_Parameters_Path is not None and \
-                Analysis_Parameters_Path != '':
-            Analysis_Parameters = pandas.read_csv(
-                Analysis_Parameters_Path,
-                sep=',',
-                encoding='UTF-8',
-                index_col='Parameter'
-                )['Setting'].to_dict()
-        else: raise Exception('No Analysis Parameters File Provided')
 
+        #
         First_File_Time = datetime.datetime.now()
         # iterate through files and call breaths
         for file_number in range(len(Signal_Files)):
@@ -4445,13 +4591,22 @@ def main():
                     pass
                 logger.info('{}'.format(File))
 
-                # confirm animal is present in metadata
+                #% confirm animal is present in metadata
                 # extract MUID and PLYUID
-                MUID, PLYUID = extract_muid_plyuid(
-                    File,
-                    Animal_Metadata,
-                    local_logger=logger
-                    )
+                
+                
+                if Analysis_Parameters.get('Pneumo_Mode') != '1':
+                    # normal mode sample id extract
+                    MUID, PLYUID = extract_muid_plyuid(
+                        File,
+                        Animal_Metadata,
+                        local_logger=logger
+                        )
+                    PLYUID_or_RUID = PLYUID
+                else:
+                    # pneumo mode sample id extract
+                    RUID = extract_ruid(File)
+                    PLYUID_or_RUID = RUID
 
                 # load current signal file
                 Signal_Data = load_signal_data(
@@ -4475,28 +4630,20 @@ def main():
                     logger
                     )
                 
-                # apply smoothing to gas signals if indicated in settings
-                Signal_Data.loc[:,'corrected_o2'], \
-                Signal_Data.loc[:,'corrected_co2'] = smooth_gas_signals(
-                    Signal_Data,
-                    Analysis_Parameters,
-                    logger = logger
-                    )
 
-                # repair chamber temperature if needed
-                Signal_Data.loc[:, 'corrected_temp'] = repair_temperature(
-                    Signal_Data,
-                    PLYUID,
-                    Animal_Metadata,
-                    Analysis_Parameters,
-                    local_logger=logger
-                    )
                 
                 if Analysis_Parameters.get('Pneumo_Mode') == '1':
                     purge_columns = []
-                    if 'temp' not in Signal_Data:
+                    if 'temp' and 'corrected_temp' not in Signal_Data:
+                        Signal_Data['temp'] = -1
+                        Signal_Data['corrected_temp'] = -1
+                        logger.warning('temperature data not in signal data')
+                        purge_columns.append('temp')
+                        purge_columns.append('corrected_temp')
+                    elif 'temp' not in Signal_Data:
                         Signal_Data['temp'] = Signal_Data['corrected_temp']
-                        purge_columns.append('temp','corrected_temp')
+                        purge_columns.append('temp')
+                        purge_columns.append('corrected_temp')
                         
                     if 'corrected_co2' not in Signal_Data:
                         Signal_Data['corrected_co2'] = \
@@ -4518,6 +4665,23 @@ def main():
                         purge_columns.append('calibrated_o2_default')
                         logger.warning('O2 data not in signal data')
 
+                # apply smoothing to gas signals if indicated in settings
+                Signal_Data.loc[:,'corrected_o2'], \
+                Signal_Data.loc[:,'corrected_co2'] = smooth_gas_signals(
+                    Signal_Data,
+                    Analysis_Parameters,
+                    logger = logger
+                    )
+
+                # repair chamber temperature if needed
+                Signal_Data.loc[:, 'corrected_temp'] = repair_temperature(
+                    Signal_Data,
+                    PLYUID_or_RUID,
+                    Animal_Metadata,
+                    Analysis_Parameters,
+                    local_logger=logger
+                    )
+
                 # collect time stamps
                 Timestamp_Dict = dict(
                     zip(
@@ -4533,7 +4697,7 @@ def main():
                 # apply linear estimation of body temperature
                 Signal_Data['Body_Temperature'] = calculate_body_temperature(
                     Signal_Data,
-                    PLYUID,
+                    PLYUID_or_RUID,
                     Timestamp_Dict,
                     Animal_Metadata,
                     Manual_Selection,
@@ -4595,13 +4759,20 @@ def main():
                 if 'ecg' in Signal_Data:
                     Beat_List = basicRR(Signal_Data['ecg'],Signal_Data['ts'])
                     if len(Beat_List)>0:
-                        Beat_List.to_csv(
-                            os.path.join(
-                                Output_Path,'{}_{}_beats.csv'.format(
-                                    MUID,PLYUID
+                        logger.info('ecg data detectd and heart beats found')
+                        if Analysis_Parameters.get('Pneumo_Mode') != '1':
+                            Beat_List.to_csv(
+                                os.path.join(
+                                    Output_Path,f'{MUID}_{PLYUID}_beats.csv'
                                     )
                                 )
-                            )
+                        else:
+                            Beat_List.to_csv(
+                                os.path.join(
+                                    Output_Path,f'{RUID}_beats.csv'
+                                    )
+                                )
+                        
                 else:
                     pass
                 
@@ -4614,7 +4785,7 @@ def main():
                         Breath_List,
                         Auto_Criteria,
                         Manual_Selection,
-                        PLYUID,
+                        PLYUID_or_RUID,
                         Timestamp_Dict,
                         logger
                         )
@@ -4634,7 +4805,7 @@ def main():
                     create_filters_for_manual_selections(
                         Breath_List,
                         Manual_Selection,
-                        PLYUID,
+                        PLYUID_or_RUID,
                         logger
                         )
 
@@ -4643,7 +4814,7 @@ def main():
                     Breath_List,
                     Analysis_Parameters,
                     Animal_Metadata,
-                    PLYUID,
+                    PLYUID_or_RUID,
                     Auto_Criteria,
                     Manual_Selection,
                     Automated_Selections_Filters,
@@ -4684,7 +4855,7 @@ def main():
                             ),
                         Analysis_Parameters,
                         Animal_Metadata,
-                        PLYUID,
+                        PLYUID_or_RUID,
                         Auto_Criteria,
                         Manual_Selection,
                         Revised_Automated_Selections_Filters,
@@ -4721,7 +4892,7 @@ def main():
                     Animal_Metadata, 
                     Auto_Criteria, 
                     Manual_Selection, 
-                    PLYUID, 
+                    PLYUID_or_RUID, 
                     Revised_Automated_Selections_Filters, 
                     Manual_Selections_Filters, 
                     Column_Dictionary, 
@@ -4735,41 +4906,74 @@ def main():
                             (Output_List['MAN_IND_INCLUDE'] == 1)
                             ]
                         )<1:
-                    logger.exception(
-                        "{}_{} does not have any includable breaths ".format(
-                            MUID,PLYUID
-                            )+
-                        "- no JSON file will be produced."+
-                        "This is probably due to problems during "+
-                        "sample collection or settings that are not "+
-                        "appropriate for the current file"
-                        )
-                else:
-                    logger.info(
-                        "{}_{} has includable breaths {}".format(
-                            MUID,PLYUID,len(Output_List)
-                            )+
-                        "- JSON file will be produced."
-                        )
-                    Output_List[
-                        (Output_List['AUTO_IND_INCLUDE'] == 1) |
-                        (Output_List['MAN_IND_INCLUDE'] == 1)
-                        ].to_json(
-                            os.path.join(
-                                Output_Path,
-                                '{}_{}.json'.format(MUID,PLYUID)
-                                )
+                    if Analysis_Parameters.get('Pneumo_Mode') != '1':
+                        logger.exception(
+                            "{}_{} does not have any includable breaths ".format(
+                                MUID,PLYUID
+                                )+
+                            "- no JSON file will be produced."+
+                            "This is probably due to problems during "+
+                            "sample collection or settings that are not "+
+                            "appropriate for the current file"
                             )
+                    else:
+                        logger.info(
+                            f'{RUID} run in Pneumo Mode. No '+
+                            'includable breaths defined by automated or '+
+                            'manual selection settings identified. This is '+
+                            'expected if no manual or automated settings were '+
+                            'provided.'
+                            )
+                else:
+                    if Analysis_Parameters.get('Pneumo_Mode') != '1':
+                        logger.info(
+                            "{}_{} has includable breaths {}".format(
+                                MUID,PLYUID,len(Output_List)
+                                )+
+                            "- JSON file will be produced."
+                            )
+                        Output_List[
+                            (Output_List['AUTO_IND_INCLUDE'] == 1) |
+                            (Output_List['MAN_IND_INCLUDE'] == 1)
+                            ].to_json(
+                                os.path.join(
+                                    Output_Path,
+                                    '{}_{}.json'.format(MUID,PLYUID)
+                                    )
+                                )
+                    else:
+                        logger.info(
+                            "{} has includable breaths {}".format(
+                                RUID,len(Output_List)
+                                )+
+                            "- JSON file will be produced."
+                            )
+                        Output_List[
+                            (Output_List['AUTO_IND_INCLUDE'] == 1) |
+                            (Output_List['MAN_IND_INCLUDE'] == 1)
+                            ].to_json(
+                                os.path.join(
+                                    Output_Path,
+                                    '{}.json'.format(RUID)
+                                    )
+                                )
                 
                 # provide 'all breath' breathlist if requested
-                if 'All_Breath_Output' in Analysis_Parameters:
-                    if Analysis_Parameters['All_Breath_Output'] == '1':
+                if Analysis_Parameters.get('All_Breath_Output') == '1':
+                    if Analysis_Parameters.get('Pneumo_Mode') != '1':
                         Output_List.to_csv(
                             os.path.join(
-                                Output_Path,'{}_{}_all.csv'.format(MUID,PLYUID)
+                                Output_Path,f'{MUID}_{PLYUID}_all.csv'
                                 )
                             )
-                
+                            
+                    else:
+                        Output_List.to_csv(
+                            os.path.join(
+                                Output_Path,f'{RUID}_all_breathlist.csv'
+                                )
+                            )
+                            
                 # provide 'aggregated breath data' output if requested
                 if 'Aggregate_Output' in Analysis_Parameters:
                     if Auto_Criteria is not None:
@@ -4808,12 +5012,20 @@ def main():
                             temp_df1['AGG_VEVO2'] = \
                                 temp_df1['AGG_VE'] / temp_df1['VO2']
                             
-                            temp_df1.to_csv(
-                                os.path.join(
-                                    Output_Path,
-                                    '{}_{}_agg_auto.csv'.format(MUID,PLYUID)
+                            if Analysis_Parameters.get('Pneumo_Mode') != '1':
+                                temp_df1.to_csv(
+                                    os.path.join(
+                                        Output_Path,
+                                        f'{MUID}_{PLYUID}_agg_auto.csv'
+                                        )
                                     )
-                                )
+                            else:
+                                temp_df1.to_csv(
+                                    os.path.join(
+                                        Output_Path,
+                                        f'{RUID}_agg_auto.csv'
+                                        )
+                                    )
                     if Manual_Selection is not None:
                         if Analysis_Parameters['Aggregate_Output'] != '':
                             group_by_vars = \
@@ -4850,12 +5062,20 @@ def main():
                             temp_df1['AGG_VEVO2'] = \
                                 temp_df1['AGG_VE'] / temp_df1['VO2']
                             
-                            temp_df1.to_csv(
-                                os.path.join(
-                                    Output_Path,
-                                    '{}_{}_agg_man.csv'.format(MUID,PLYUID)
+                            if Analysis_Parameters.get('Pneumo_Mode') != '1':
+                                temp_df1.to_csv(
+                                    os.path.join(
+                                        Output_Path,
+                                        f'{MUID}_{PLYUID}_agg_man.csv'
+                                        )
                                     )
-                                )
+                            else:
+                                temp_df1.to_csv(
+                                    os.path.join(
+                                        Output_Path,
+                                        f'{RUID}_agg_man.csv'
+                                        )
+                                    )
                     
                 logger.info('completed file {}'.format(File))
                 
@@ -4863,7 +5083,7 @@ def main():
 
 
                 
-                
+               
             except Exception as e:
                 logger.exception(
                     'Breathcaller was unable to process {} - {}'.format(
@@ -4874,7 +5094,7 @@ def main():
                     )
                 continue
             
-            
+    #%%        
     except Exception as e:
         logger.exception(
             'Breath Caller encountered an ERROR: {}'.format(e),
