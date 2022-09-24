@@ -9,5 +9,9 @@ There are a number of steps to preparing to run Breathe Easy. Below is a brief o
 the steps to set everything up within the GUI. Detailed instructions are linked within the 
 outline and in the following sections of this guide. 
 
-
-
+```
+python -m venv venv
+./venv/Scripts/activate.bat
+pip install -r requirements.txt
+python scripts/GUI/MainGUImain.py
+```
