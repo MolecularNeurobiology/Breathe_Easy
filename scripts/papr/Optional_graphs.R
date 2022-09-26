@@ -911,7 +911,7 @@ if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
 spec_graph <- function(resp_var, graph_data, pointdodge) {
   
   # Calculate range of frequencies to graph.
-  avg_breath_len <- mean(as.numeric(graph_data[["Breath_Cycle_Duration"]], na.rm = TRUE))
+  avg_breath_len <- mean(as.numeric(graph_data[["Breath_Cycle_Duration"]]), na.rm = TRUE)
   if(is.nan(avg_breath_len) || is.na(avg_breath_len) || !is.numeric(avg_breath_len)){
     stop("Non-numeric breath length.")
   }
