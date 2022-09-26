@@ -117,5 +117,4 @@ python3 scripts/GUI/MainGUImain.py
 # Licensing
 <section under review>
 'Breathe Easy' is dually licensed. The project is available under a 'GPLv3 or later' license as well as a commercial license (inquiries for commercial licensing may be directed to Russell.Ray@bcm.edu). The fully packaged version of 'Breathe Easy is distributed under a 'GPLv2 or later' license.
-***Whatever Baylor tells us to do.***
 </section under review>
