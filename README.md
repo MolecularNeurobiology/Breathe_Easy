@@ -25,7 +25,7 @@ graph TD;
 Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. 
 
 # Where is the manual?
-[User Manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/) for this software.
+[User Manual](https://www.molecularneurobiology.github.io/BASSPRO-STAGG/) for this software.
 
 
 # Where is practice data?
