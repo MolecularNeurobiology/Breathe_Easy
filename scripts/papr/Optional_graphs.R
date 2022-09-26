@@ -24,7 +24,7 @@ apneas <- FALSE
 ## Outputs (saved in list):
 ### rel_comp: data frame, pairwise comparison results for biologically relevant comparisons
 ### lm: data frame, coefficient estimates from the model for each of the interaction groups
-stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = TRUE){
+stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = FALSE){
   
   # Removes rows with NAs and breath inclusion filter.
   if(inc_filt){
@@ -160,9 +160,9 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
   
   # Whether to use the breath inclusion filter
   if((!is.null(other_config_row$Inclusion)) && (other_config_row$Inclusion == 0)){
-    inclusion_filter <- TRUE
-  } else {
     inclusion_filter <- FALSE
+  } else {
+    inclusion_filter <- TRUE
   }
   
   # Optional y-axis settings
@@ -759,7 +759,7 @@ if(sighs || apneas){
 ## Outputs:
 ### Saves generated plot; otherwise no return value.
 poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1, 
-                           facet2, pointdodge_name = "", inclusion_filter = FALSE) {
+                           facet2, pointdodge_name = "", inclusion_filter = TRUE) {
   
   if(!is.numeric(graph_data[[resp_var]])){
     print(paste0("Poincare plot variable '", resp_var, "' not numeric."))
@@ -915,7 +915,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
   if(is.nan(avg_breath_len) || is.na(avg_breath_len) || !is.numeric(avg_breath_len)){
     stop("Non-numeric breath length.")
   }
-  max_hz <- min(max(2, floor(60/avg_breath_len)), min(table(graph_data[[pointdodge]])) / 2)
+  max_hz <- min(max(2, floor(60/avg_breath_len), na.rm = TRUE), min(table(graph_data[[pointdodge]]), na.rm = TRUE) / 2, na.rm = TRUE)
   
   # If pointdodge is specified, create separate plots per category.
   if(pointdodge != ""){
