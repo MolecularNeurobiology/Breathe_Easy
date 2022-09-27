@@ -1,6 +1,30 @@
 # -*- coding: utf-8 -*-
 """
 CONSTANTS for use with BASSPRO-STAGG
+Copyright (C) 2022  Christopher Scott Ward
+
+created as a component of Breathe Easy
+
+***
+Breathe Easy - an automated waveform analysis pipeline
+Copyright (C) 2022  
+Savannah Lusk, Andersen Chang, 
+Avery Twitchell-Heyne, Shaun Fattig, 
+Christopher Scott Ward, Russell Ray.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+***
 
 Current contents include the list of anticipated BASSPRO_OUTPUT columns and 
 the list of known continuous variables (a.k.a. BASSPRO_CONTINUOUS)

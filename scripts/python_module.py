@@ -3,16 +3,32 @@
 BASSPRO
 Breathing Analysis Selection and Segmentation 
 for Plethysmography and Respiratory Observations
-
+***
 built as part of the Russell Ray Lab Breathing And Physiology Analysis Pipeline
+***
+Breathe Easy - an automated waveform analysis pipeline
+Copyright (C) 2022  
+Savannah Lusk, Andersen Chang, 
+Avery Twitchell-Heyne, Shaun Fattig, 
+Christopher Scott Ward, Russell Ray.
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ***
-Plethysmography Analysis Pipeline in R with
-Python Launcher and Analysis Interface Node
-"PAPR PLAIN"
 
-***
-Automated Breathcaller created by Christopher S Ward (C) 2020
+-History-
+BASSPRO created by Christopher S Ward (C) 2020
 updates include contributions from Avery Twitchell-Heyne and feedback from
 Russell Ray, Savannah Lusk, and Andersen Chang
 
@@ -23,6 +39,7 @@ by Christopher S Ward
     'Breathing Analysis' for Matlab (C) 2011
 
 ***
+
 Command Line Arguments
     '-i', help='Path containing signal files for input'
     '-f', action='append', help='names of signal files,\
@@ -35,7 +52,7 @@ Command Line Arguments
     '-c', help='Path to Automated Criteria File'
         *optional, to explicitly indicate none provided, use NONE as the value
 
-***
+
 """
 __version__ = '36.3.1'
 
@@ -57,7 +74,6 @@ __version__ = '36.3.1'
     # Implementation of smoothing filter for O2 CO2 signals (rolling median, or 
     outlier trim and impute approach) - in progress (suggested centered window 
     of +/- 10sec)
-
 
 # v36.1.0 README
     New updates are added to selection of breaths with Auto_Conditions to 
@@ -121,8 +137,7 @@ __version__ = '36.3.1'
     *VO2 - consider quality measures (VO2 slope, VO2 variation,
                                       VO2 becoming negative?)
     
-
-
+***
 
 !!!
 Style Suggestions
@@ -134,13 +149,12 @@ ClassName()
 
 
 !!!
-Automated Selection of Breaths for Analysis - Heirarchy
+Automated Selection of Breaths for Analysis - Heirarchy/Nomenclature
 Timestamp_Intervals
 Blocks
 Sections
 Breaths
 Segments
-
 
 """
 
