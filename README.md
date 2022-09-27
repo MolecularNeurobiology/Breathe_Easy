@@ -25,7 +25,9 @@ graph TD;
 Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. 
 
 # Where is the manual?
-[User Manual](https://www.molecularneurobiology.github.io/BASSPRO-STAGG/) for this software.
+
+[User Manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/) for this software.
+[BASSPRO](/docs/index.html)
 
 
 # Where is practice data?
@@ -72,6 +74,21 @@ python3 scripts/GUI/MainGUImain.py
 ```
 
 # Licensing
-<section under review>
-'Breathe Easy' is dually licensed. The project is available under a 'GPLv3 or later' license as well as a commercial license (inquiries for commercial licensing may be directed to Russell.Ray@bcm.edu). The fully packaged version of 'Breathe Easy is distributed under a 'GPLv2 or later' license.
-</section under review>
+'Breathe Easy' is dually licensed. The project (BASSPRO, STAGG, and GUI components) is available under a 'GPLv3 or later' license as well as a commercial license (inquiries for commercial licensing may be directed to Russell.Ray@bcm.edu). The fully packaged version of 'Breathe Easy is distributed under a 'GPLv2 or later' license.
+
+    Breathe Easy - an automated waveform analysis pipeline
+    Copyright (C) 2002  Savannah Lusk, Andersen Chang, Avery Twitchell-Heyne,
+    Shaun Fattig, Christopher Scott Ward, Russell Ray.
+
+    This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
