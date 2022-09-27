@@ -914,7 +914,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge, bcd_col) {
   # Calculate range of frequencies to graph.
   avg_breath_len <- mean(as.numeric(graph_data[[bcd_col]]), na.rm = TRUE)
   if(is.nan(avg_breath_len) || is.na(avg_breath_len) || !is.numeric(avg_breath_len)){
-    stop("Non-numeric breath length.")
+    stop("Non-numeric or NA breath length.")
   }
   max_hz <- min(max(2, floor(60/avg_breath_len), na.rm = TRUE), min(table(graph_data[[pointdodge]]), na.rm = TRUE) / 2, na.rm = TRUE)
   
