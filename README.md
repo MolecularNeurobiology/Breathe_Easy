@@ -32,50 +32,7 @@ Our software is available as source code and as a windows executable with all de
 Instructions for accessing, downloading, and running practice datasets can be found in the [User Manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
 
 # Dependencies
-The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be performed via the following instructions.
-
-Python
-- numpy==1.23.1 
-- pandas==1.4.3
-- pyodbc==4.0.34
-- PyQt5==5.15.7
-- PyQt5-Qt5==5.15.2
-- PyQt5-sip==12.11.0
-- python-dateutil==2.8.2
-- pytz==2022.1
-- scipy==1.9.0
-- six==1.16.0
-R
-- rjson
-- tidyverse
-- magrittr
-- data.table
-- ggpubr
-- kableExtra
-- rmarkdown
-- argparser
-- lme4
-- Matrix
-- multcomp
-- mvtnorm
-- survival
-- TH-data
-- xtable
-- tidyselect
-- ggthemes
-- RcolorBrewer
-- openxlsx
-- reshape2
-- svglite
-- systemfonts
-- lmerTest
-- purrr
-- scales
-- MASS
-- nloptr
-- nlme
-- ggrepel
-- gridExtra
+The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be done using instructions in the Installation section below. For a list of all dependencies, see the requirements.txt file.
 
 # Installation
 ## Install Python3
