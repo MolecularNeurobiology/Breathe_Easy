@@ -906,12 +906,13 @@ if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
 ### graph_data: data frame, data used for graphing.
 ### pointdodge: character string, variable to separate different plots.
 ### inclusion_filter: boolean, whether to exclude points by the breath filter.
+### bcd_col: character string, name of variable representing breath cycle duration.
 ## Outputs:
 ### Saves generated plot; otherwise no return value.
-spec_graph <- function(resp_var, graph_data, pointdodge) {
+spec_graph <- function(resp_var, graph_data, pointdodge, bcd_col) {
   
   # Calculate range of frequencies to graph.
-  avg_breath_len <- mean(as.numeric(graph_data[["Breath_Cycle_Duration"]]), na.rm = TRUE)
+  avg_breath_len <- mean(as.numeric(graph_data[[bcd_col]]), na.rm = TRUE)
   if(is.nan(avg_breath_len) || is.na(avg_breath_len) || !is.numeric(avg_breath_len)){
     stop("Non-numeric breath length.")
   }
@@ -930,6 +931,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     
     # Turn results to data frame for plotting
     psd_df <-  reshape2::melt(as.data.frame(psd_list))
+    colnames(psd_df) <- c(pointdodge, "value")
     psd_df$tt <- rep(2:max_hz, length(unique(graph_data[[pointdodge]])))
     psd_df <- graph_reorder(psd_df, pointdodge, graph_vars, tbl0)
     
@@ -937,7 +939,7 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
     # Make graph + save
     psd_p <- ggplot(data = psd_df) +
       geom_path(aes(x = tt, y = value)) +
-      facet_grid(rows = vars(variable), scales = "free_y") +
+      facet_grid(rows = pointdodge, scales = "free_y") +
       labs(x = "Hz", y = "Magnitude", title = paste0("Spectral: ", resp_var)) +
       theme_few(base_size = base_pt)
     
@@ -980,10 +982,11 @@ spec_graph <- function(resp_var, graph_data, pointdodge) {
 }
 
 # Run spectral graph function
+bcd_alias <- var_names$Alias[which(var_names$With_units == "Breath_Cycle_Duration")]
 if((!is.na(spec_vars)) && (length(spec_vars) != 0)){
   for(ii in 1:length(spec_vars)){
     print((paste0("Making spectral plot ", ii, "/", length(spec_vars))))
-    try(spec_graph(spec_vars[ii], tbl0, pointdodge))
+    try(spec_graph(spec_vars[ii], tbl0, pointdodge, bcd_alias))
   }
 }
 
