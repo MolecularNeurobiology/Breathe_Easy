@@ -54,9 +54,12 @@ Command Line Arguments
 
 
 """
-__version__ = '36.3.1'
+__version__ = '36.3.2'
 
 """
+# v36.3.2 README
+    *Updates to basicFilt and basicRR to improve ECG detection
+
 # v36.3.1 README
     *Updates to improve compatability with automated pneumotach data.
     *Note - pneumo mode updates rely on a modified metadata that uses RUID
@@ -1607,13 +1610,15 @@ def basicFilt(CT,sampleHz,f0,Q):
         the filtered data
 
     """
+
     b,a=signal.iirnotch(f0/(sampleHz/2),Q)
     
-    notched=signal.lfilter(b,a,CT)
+    notched=signal.filtfilt(b,a,CT)
     
     b,a=signal.butter(1,1/(sampleHz/2),btype='highpass')
-    filtered=signal.lfilter(b,a,notched)
+    filtered=signal.filtfilt(b,a,notched)
     return filtered
+
 
 
 def smooth_gas_signals(
@@ -2020,7 +2025,7 @@ def basicRR(
         TS,
         noisecutoff = 75,
         threshfactor = 2,
-        absthresh = 0.3,
+        absthresh = 0.2,
         minRR = 0.05,
         ecg_filter = '1',
         ecg_invert = '0',
@@ -2114,8 +2119,8 @@ def basicRR(
             
     beat_df = pandas.DataFrame(beats).transpose()
     beat_df.index.name = 'ts'
-    beat_df.reset_index()
-    return beat_df['RR']
+    beat_df = beat_df.reset_index()
+    return beat_df[['ts','RR']]
 
 
 def calculate_basic_breath_parameters(
@@ -4778,13 +4783,15 @@ def main():
                             Beat_List.to_csv(
                                 os.path.join(
                                     Output_Path,f'{MUID}_{PLYUID}_beats.csv'
-                                    )
+                                    ),
+                                index = False
                                 )
                         else:
                             Beat_List.to_csv(
                                 os.path.join(
                                     Output_Path,f'{RUID}_beats.csv'
-                                    )
+                                    ),
+                                index=False
                                 )
                         
                 else:
