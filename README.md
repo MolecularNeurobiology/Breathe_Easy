@@ -59,8 +59,23 @@ Install dependencies
 pip install -r requirements.txt
 ```
 ### Install R Dependencies
-Dependencies for R should be downloaded and installed upon the first run of STAGG. 
 
+All required packages and dependencies for R are automatically downloaded and installed upon the first run of StaGG. Manual package installation can be done inside of the R terminal using 
+
+```
+install.packages("<package_name>", dependencies = TRUE)
+```
+
+or each individual package can be installed through the command line via [CRAN](https://cran.r-project.org/) with 
+
+```
+wget https://cran.r-project.org/src/contrib/<package_name_and_version>.tar.gz
+R CMD INSTALL <package_name_and_version>.tar.gz
+```
+
+Note that the latter method does not automatically install package dependencies. The list of required packages can be found in the manual.
+
+Producing the R markdown also requires an installation of pandocs; instructions can be found [here](https://pandoc.org/installing.html).
 # How to launch?
 ## From packaged version
 Double click the `launch.bat` file in the BASSPRO-STAGG_QUIPPL folder.
