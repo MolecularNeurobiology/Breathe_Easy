@@ -20,12 +20,18 @@ graph TD;
 ```
 
 # Main Features
+What does Breathe Easy breeze through?
+
+1. Analysis of [manually selected data](https://molecularneurobiology.github.io/BASSPRO-STAGG/ManualSettings.html#manual-settings-configuration) from whole body plethysmography recordings
+2. [Automated selection and analysis](https://molecularneurobiology.github.io/BASSPRO-STAGG/Autosettings.html) of calm, quiet breathing from desired sections within whole body plethysmography recordings
+4. Harnesses the graphical power of R Studio to [produce publication-ready figures](https://molecularneurobiology.github.io/BASSPRO-STAGG/STAGGsettings.html#assign-graph-roles) of all desired respiratory and metadata variables
+3. Perform [advanced statistical analyses](https://molecularneurobiology.github.io/BASSPRO-STAGG/STAGGsettings.html) on par with even the most complex experimental designs
 
 # Where to get it?
-Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [instructions](https://molecularneurobiology.github.io/BASSPRO-STAGG/usage.html) provided for more information.
+Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [install page](https://molecularneurobiology.github.io/BASSPRO-STAGG/usage.html) for more information.
 
 # Where is the manual?
-Access the user manual for this software [here](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
+Access the full user manual for this software [here](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
 
 # Where is practice data?
 Instructions for accessing, downloading, and running practice datasets can be found in the [vignette section of our user manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/Vignette.html). Instructions to download the larger datasets for this example run through are found in the vignette instructions at the link provided. 
@@ -33,11 +39,11 @@ Instructions for accessing, downloading, and running practice datasets can be fo
 # Dependencies
 The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be done using instructions in the Installation section below. For a list of all dependencies, see the requirements.txt file.
 
-# Installation
-## Install Python3
+## Installation
+### Install Python3
 Download python [here](https://www.python.org/downloads/)
 
-## Install Dependencies
+### Install Dependencies
 Activate Python virtual environment to help manage package installation.
 ```
 # Posix
