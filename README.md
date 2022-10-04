@@ -5,7 +5,7 @@
   <img alt="Shows logo for Breathe Easy." src="https://github.com/MolecularNeurobiology/BASSPRO-STAGG/blob/main/Logo.png"raw=true width="350">
 </picture>
 
-## What is it?
+# What is it?
 Breathe Easy is an automated waveform analysis pipeline for data gathered in whole animal plethysmography experiments. It utilizes python, pyQT, and R languages in three modules 1) Breathing Analysis Selection and Segmentation for Plethysmography and Respiratory Observations (BASSPRO), 2) Statistics And Graph Generator (STAGG), and a graphical user interface (GUI) to allow for high-thruput, consistent analysis of respiratory waveforms.
 
 ```mermaid
@@ -19,16 +19,16 @@ graph TD;
     STAGG-->Appropriate_Statistical_Analyses;
 ```
 
-## How to cite this software?
+# Main Features
 
 # Where to get it?
-Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. 
+Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [instructions](https://molecularneurobiology.github.io/BASSPRO-STAGG/docs/usage.html) provided for more information.
 
 # Where is the manual?
-[User Manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/) for this software.
+Access the user manual for this software [here](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
 
 # Where is practice data?
-Instructions for accessing, downloading, and running practice datasets can be found in the [User Manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
+Instructions for accessing, downloading, and running practice datasets can be found in the [vignette section of our user manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/docs/Vignette.html).
 
 # Dependencies
 The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be done using instructions in the Installation section below. For a list of all dependencies, see the requirements.txt file.
