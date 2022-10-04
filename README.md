@@ -34,7 +34,7 @@ Our software is available as source code and as a windows executable with all de
 Access the full user manual for this software [here](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
 
 # Where is practice data?
-Instructions for accessing, downloading, and running practice datasets can be found in the [vignette section of our user manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/Vignette.html). Instructions to download the larger datasets for this example run through are found in the vignette instructions at the link provided. 
+Instructions for accessing, downloading, and running practice datasets can be found in the [vignette section of our user manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/Vignette.html). Instructions to download the larger datasets for this example are found in the vignette instructions at the link provided. 
 
 # Dependencies
 The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be done using instructions in the Installation section below. For a list of all dependencies, see the requirements.txt file.
