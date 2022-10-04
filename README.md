@@ -43,7 +43,7 @@ The prepackaged release of Breathe Easy includes all dependencies. If running fr
 ### Install Python3
 Download python [here](https://www.python.org/downloads/)
 
-### Install Dependencies
+### Install Python Dependencies
 Activate Python virtual environment to help manage package installation.
 ```
 # Posix
@@ -58,8 +58,8 @@ Install dependencies
 ```
 pip install -r requirements.txt
 ```
-
-Dependencies for R should be downloaded and installed upon the first run of StaGG.
+### Install R Dependencies
+Dependencies for R should be downloaded and installed upon the first run of STAGG. 
 
 # How to launch?
 ## From packaged version
