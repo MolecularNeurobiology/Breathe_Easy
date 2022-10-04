@@ -1,0 +1,189 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>10. Initialize: Input for STAGG &#8212; Breathe Easy V1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="11. Running STAGG" href="RunSTAGG.html" />
+    <link rel="prev" title="9. STAGG Settings subGUI" href="STAGGsettings.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="initialize-input-for-stagg">
+<h1><span class="section-number">10. </span>Initialize: Input for STAGG<a class="headerlink" href="#initialize-input-for-stagg" title="Permalink to this heading">¶</a></h1>
+<p>There are a number of ways that STAGG input may be populated in the corresponding box on the GUI. Whichever way it is populated
+(all are described below), ensure that the STAGG settings you’ve just generated correspond to the files that will be used in the STAGG modeling.</p>
+<p>The output folder for STAGG will automatically be the folder selected for BASSPRO output (the path to this folder can be found in window A).</p>
+<ol class="arabic">
+<li><p>Automatic addition of STAGG input from current BASSPRO run</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If you just finished running BASSPRO, then the JSON files produced as BASSPRO output will automatically appear in window (F) as the STAGG input.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>If you want to select STAGG input manually, click Select STAGG input files to open a file dialog to navigate to the desired STAGG input.</p>
+<blockquote>
+<div><ul>
+<li><p>STAGG accepts three types of input:</p>
+<blockquote>
+<div><ol class="arabic">
+<li><p>JSON files produced by BASSPRO.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If you want to select files from different directories, complete the selection of files from the first folder and click Open.</p></li>
+<li><p>Then, click Select STAGG input files again, navigate to a different directory, and make your selections. You will be asked if you want to keep your previously selected STAGG input files – if you do, click Yes.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>RData files produced by STAGG.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Only available if this dataset has been previously run through STAGG.</p></li>
+<li><p>You can only select one RData file at a time.</p></li>
+<li><p>STAGG produces two RData files for each run. You can use either one but using the smaller one will be faster.</p></li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>A single RData file and any number of JSON files.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>RData file is only available if this dataset has been previously run through STAGG.</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+</div></blockquote>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p>Important use notes:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>If you haven’t run a particular dataset through STAGG, then you need to provide the JSON files as input.</p></li>
+<li><p>If you have run a particular dataset through STAGG, then we recommend providing the RData file as input –
+STAGG runs significantly faster with the RData file.</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ol>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Breathe Easy</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Prepping%20Data.html">Prepping Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#launching-breathe-easy">Launching Breathe Easy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="DetailedUserGuide.html">Where do I start?</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="BASSPRO%20Settings%20Configuration.html">1. Initialize: Input and Output for BASSPRO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="BASSPRO%20Settings%20Configuration.html#optional-data-validation">2. Optional Data Validation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Metadata%20Configuration.html">3. Metadata Generation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Metadata%20Configuration.html#metadata-configuration-subgui">4. Metadata Configuration subGUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Basic%20Settings.html">5. Basic Settings subGUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="Autosettings.html">6. Automated Settings subGUI</a></li>
+<li class="toctree-l2"><a class="reference internal" href="ManualSettings.html">7. Manual Settings Configuration</a></li>
+<li class="toctree-l2"><a class="reference internal" href="BASSPRO.html">8. Running BASSPRO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="STAGGsettings.html">9. STAGG Settings subGUI</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">10. Initialize: Input for STAGG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="RunSTAGG.html">11. Running STAGG</a></li>
+<li class="toctree-l2"><a class="reference internal" href="FullRun.html">12. Full Run of BASSPRO-STAGG</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Vignette.html">Vignette (Example Data)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Output.html">Understanding the Output</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Resources.html">Resources</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="DetailedUserGuide.html">Where do I start?</a><ul>
+      <li>Previous: <a href="STAGGsettings.html" title="previous chapter"><span class="section-number">9. </span>STAGG Settings subGUI</a></li>
+      <li>Next: <a href="RunSTAGG.html" title="next chapter"><span class="section-number">11. </span>Running STAGG</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, S. Lusk, C. Ward, A. Chang, A. Twitchell-Heyne, S. Fattig, R. Ray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/STAGGdata.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

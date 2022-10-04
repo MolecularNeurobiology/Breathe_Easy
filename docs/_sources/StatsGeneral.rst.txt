@@ -1,0 +1,48 @@
+Basic Statistics
+=======================
+Finding it difficult to determine what selections to make in the STAGG settings subGUI? Visit the below resources for
+help understanding some of the basics about your data. We use the same verbiage in these resources, so it should help
+make the right choices for your dataset.
+
+Continuous vs. Discrete Variables
+---------------------------------------
+`Click here for enlightenment <https://www.statisticshowto.com/probability-and-statistics/statistics-definitions/discrete-vs-continuous-variables/>`_.
+
+Independent, Dependent, and Covariate Variables
+---------------------------------------------------
+`Covariate variables <https://www.statisticshowto.com/covariate/>`_.
+
+`Independent vs. Dependent Variables <https://statisticsbyjim.com/regression/independent-dependent-variables/>`_.
+
+Advanced statistics
+============================
+
+Statistical Modeling and Results
+-------------------------------------
+For the statistical modeling, we utilize a mixed effects model framework. Each of the crossinteractions
+between the categories of the selected independent variables are used as the set of
+fixed effects, while the mouse is considered a random effect. Because the independent variables
+are categorical, the first group in alphanumeric order from each independent variable is selected to
+be part of the overall interaction reference group, whose effect is considered as part of the model
+intercept; this is necessary in order for the model to be mathematically identifiable. The resulting
+fixed effect table from the modeling step are saved in stat res.xlsx, with separate sheets for each
+dependent variable. In particular, each table shows the coefficient estimates, standard errors, and
+p-values which correspond to each interaction group in the data. The p-values for the coefficients in
+the fixed effects tables are obtained from the hypothesis test for whether each of the corresponding
+coefficient estimates is statistically significantly different from 0, i.e. whether the group is significantly
+different from the combination of the global mean and the reference group. The p-values
+that are less than 10−9 will be rounded to exactly 0 in the output.
+
+Post-Hoc Tukey Testing
+-----------------------------
+After the mixed effects model is fit to the data, at Tukey’s HSD test is used to run pairwise
+comparison tests between each of the different groups with multiple comparison corrections. The
+results of each of these tests are saved in tukey res.xlsx, with separate sheets for each dependent
+variable. Only the biologically relevant comparisons are saved, i.e. those that compare groups
+which are different in one single independent variable. Each table show the estimated difference,
+standard errors, and p-values for each biologically relevant pairwise comparison in the model. The
+p-values for the estimated differences are obtained from the Tukey HSD test, and they are used to
+determine whether the difference between each pair of groups is statistically significantly different
+from 0. Note that these are only done for the variables defined as independent variables in the
+model, and not for those designated as covariates. The p-values that are less than 10−9 will be
+rounded to exactly 0 in the output.
