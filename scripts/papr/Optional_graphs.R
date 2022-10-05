@@ -638,7 +638,7 @@ if(nrow(other_config) > 0){
   
   other_stat_dir  <- paste0(args$Output, "/OptionalStatResults/")
   if(!dir.exists(other_stat_dir)){
-    dirtest <- try(dir.create(other_stat_dir))
+    dirtest <- try(dir.create(other_stat_dir, recursive = TRUE))
   } 
   
   # Run optional graphs
@@ -739,6 +739,17 @@ if(sighs || apneas){
     r_vars_wu <- c(r_vars_wu, "Apnea Rate (1/min)")
   }
   
+  
+  ## Saving modeling results for each dependent variable
+  sa_mod_res_list <- list()
+  ## Saves Tukey test results
+  sa_tukey_res_list <- list()
+  
+  other_stat_dir  <- paste0(args$Output, "/OptionalStatResults/")
+  if(!dir.exists(other_stat_dir)){
+    dirtest <- try(dir.create(other_stat_dir, recursive = TRUE))
+  } 
+  
   # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
     graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
@@ -751,6 +762,10 @@ if(sighs || apneas){
       other_mod_res <- stat_run(r_vars[ii], box_vars, character(0), eventtab_join, FALSE)
     }
     
+    # Save stat results.
+    sa_mod_res_list[[ii]] <- other_mod_res$lmer
+    sa_tukey_res_list[[ii]] <- other_mod_res $rel_comp
+    
     # Set order of categories in variables as specified by the user, if specified.
     eventtab_join_graph <- graph_reorder(eventtab_join, box_vars, graph_vars, tbl0)
     
@@ -762,6 +777,23 @@ if(sighs || apneas){
     if(class(sa_test) == "try-error"){
       print(paste0('Failed to make plots for ', r_vars[ii]))
       next
+    }
+    
+    # Save stat results tables in Excel
+    mod_res_list_save <- sa_mod_res_list
+    names(mod_res_list_save) <- str_trunc(names(mod_res_list_save), 31, side = "center", ellipsis = "___")
+    tukey_res_list_save <- sa_tukey_res_list
+    names(tukey_res_list_save) <- str_trunc(names(tukey_res_list_save), 31, side = "center", ellipsis = "___")
+    
+    # Save statistics results to Excel.
+    if(length(mod_res_list_save) > 0){
+      if(exists("dirtest") && (class(dirtest) == "try-error")){
+        try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/sighapnea_stat_res.xlsx"), row.names=TRUE))
+        try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+      } else {
+        try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_stat_res.xlsx"), row.names=TRUE))
+        try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+      }
     }
   }
 }

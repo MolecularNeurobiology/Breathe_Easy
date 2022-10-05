@@ -139,7 +139,7 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = TRUE){
 # Create directory to save stat results
 stat_dir  <- paste0(args$Output, "/StatResults/")
 if(!dir.exists(stat_dir)){
-  dirtest <- try(dir.create(paste0(args$Output, "/StatResults/")))
+  dirtest <- try(dir.create(paste0(args$Output, "/StatResults/"), recursive = TRUE))
 } 
 
 #Runs LMER for all selected variables above and provides printed stamps for user to monitor progress.
