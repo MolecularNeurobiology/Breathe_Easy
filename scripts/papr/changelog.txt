@@ -1,9 +1,0 @@
-- Added code comments on all the files.
-- Minor adjustments to code structure (purely aesthetic).
-
-Data import:
-- Added error handling for creating the tibble.
-  - If empty JSON, specific warning printed and file skipped.
-  - If incompatible JSON, general warning printed and file skipped.
-  - If empty tibble after all files have been added, raises error and stops execution.
-
