@@ -28,7 +28,7 @@ What does Breathe Easy breeze through?
 3. Perform [advanced statistical analyses](https://molecularneurobiology.github.io/BASSPRO-STAGG/STAGGsettings.html) on par with even the most complex experimental designs
 
 # Where to get it?
-Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [install page](https://molecularneurobiology.github.io/BASSPRO-STAGG/) for more information.
+Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [install page](https://molecularneurobiology.github.io/BASSPRO-STAGG/usage.html) for more information.
 
 # Where is the manual?
 Access the full user manual for this software [here](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
