@@ -37,7 +37,7 @@ Access the full user manual for this software [here](https://molecularneurobiolo
 Instructions for accessing, downloading, and running practice datasets can be found in the [vignette section of our user manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/Vignette.html). Instructions to download the larger datasets for this example are found in the vignette instructions at the link provided. 
 
 # Dependencies
-The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be done using instructions in the Installation section below. For a list of all dependencies, see the requirements.txt file.
+The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be done using instructions in the Installation section below. For a list of all python dependencies, see the requirements.txt file. For all program dependencies and applications, see the [install page](https://molecularneurobiology.github.io/BASSPRO-STAGG/usage.html).
 
 ## Installation
 ### Install Python3
@@ -58,8 +58,11 @@ Install dependencies
 ```
 pip install -r requirements.txt
 ```
-### Install R Dependencies
 
+### Install R
+Download R [here](https://cran.r-project.org/bin/windows/base/)
+
+### Install R Dependencies
 All required packages and dependencies for R are automatically downloaded and installed upon the first run of STAGG. Manual package installation can be done inside of the R terminal using 
 
 ```
@@ -76,6 +79,7 @@ R CMD INSTALL <package_name_and_version>.tar.gz
 Note that the latter method does not automatically install package dependencies. The list of required packages can be found in the manual.
 
 Producing the R markdown also requires an installation of pandocs; instructions can be found [here](https://pandoc.org/installing.html).
+
 # How to launch?
 ## From packaged version
 Double click the `launch.bat` file in the BASSPRO-STAGG_QUIPPL folder.
