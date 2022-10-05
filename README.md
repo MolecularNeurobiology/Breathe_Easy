@@ -60,7 +60,7 @@ pip install -r requirements.txt
 ```
 ### Install R Dependencies
 
-All required packages and dependencies for R are automatically downloaded and installed upon the first run of StaGG. Manual package installation can be done inside of the R terminal using 
+All required packages and dependencies for R are automatically downloaded and installed upon the first run of STAGG. Manual package installation can be done inside of the R terminal using 
 
 ```
 install.packages("<package_name>", dependencies = TRUE)
