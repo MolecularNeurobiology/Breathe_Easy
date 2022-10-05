@@ -1,11 +1,29 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue May 10 15:23:42 2022
-columns_and_values_tools
-@author: wardc
-
 functions contained are intended to assist with identifying column names and 
 unique values contained within.
+
+***
+built as part of the Russell Ray Lab Breathing And Physiology Analysis Pipeline
+***
+Breathe Easy - an automated waveform analysis pipeline
+Copyright (C) 2022  
+Savannah Lusk, Andersen Chang, 
+Avery Twitchell-Heyne, Shaun Fattig, 
+Christopher Scott Ward, Russell Ray.
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+any later version.
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+You should have received a copy of the GNU General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+***
+
+
 
 3 functions are included:
 1) --function to prepare column_names and values starting from basspro output
