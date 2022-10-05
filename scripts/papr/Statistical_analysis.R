@@ -167,12 +167,30 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
       b_stat_list[[response_vars[ii]]] <- mod_res$b_stat
       
       ## Save residual plots
-      if(exists("dirtest") && (class(dirtest) == "try-error")){
-        ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = args$Output)
-        ggsave(paste0("QQ_", response_vars[ii], args$I), plot = mod_res$qqplot, path = args$Output)
+      if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+        if(args$I == ".svg"){
+          svglite(paste0(args$Output, "/Residual_", response_vars[ii], args$I))
+          print(mod_res$residplot)
+          dev.off()
+          svglite(paste0(args$Output, "/QQ_", response_vars[ii], args$I))
+          print(mod_res$qqplot)
+          dev.off()
+        } else {
+          ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = args$Output)
+          ggsave(paste0("QQ_", response_vars[ii], args$I), plot = mod_res$qqplot, path = args$Output)
+        }
       } else {
-        ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = paste0(args$Output, "/StatResults/"))
-        ggsave(paste0("QQ_", response_vars[ii], args$I), plot = mod_res$qqplot, path = paste0(args$Output, "/StatResults/"))
+        if(args$I == ".svg"){
+          svglite(paste0(stat_dir, "/Residual_", response_vars[ii], args$I))
+          print(mod_res$residplot)
+          dev.off()
+          svglite(paste0(stat_dir, "/QQ_", response_vars[ii], args$I))
+          print(mod_res$qqplot)
+          dev.off()
+        } else {
+          ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = stat_dir)
+          ggsave(paste0("QQ_", response_vars[ii], args$I), plot = mod_res$qqplot, path = stat_dir)
+        }
       }
     }
     
@@ -210,12 +228,30 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           b_stat_list[[new_colname]] <- mod_res$b_stat
           
           ## Save residual plots
-          if(exists("dirtest") && (class(dirtest) == "try-error")){
-            ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = args$Output)
-            ggsave(paste0("QQ_", new_colname, args$I), plot = mod_res$qqplot, path = args$Output)
+          if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+            if(args$I == ".svg"){
+              svglite(paste0(args$Output, "/Residual_", new_colname, args$I))
+              print(mod_res$residplot)
+              dev.off()
+              svglite(paste0(args$Output, "/QQ_", new_colname, args$I))
+              print(mod_res$qqplot)
+              dev.off()
+            } else {
+              ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = args$Output)
+              ggsave(paste0("QQ_", new_colname, args$I), plot = mod_res$qqplot, path = args$Output)
+            }
           } else {
-            ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = paste0(args$Output, "/StatResults/"))
-            ggsave(paste0("QQ_", new_colname, args$I), plot = mod_res$qqplot, path = paste0(args$Output, "/StatResults/"))
+            if(args$I == ".svg"){
+              svglite(paste0(stat_dir, "/Residual_", new_colname, args$I))
+              print(mod_res$residplot)
+              dev.off()
+              svglite(paste0(stat_dir, "/QQ_", new_colname, args$I))
+              print(mod_res$qqplot)
+              dev.off()
+            } else {
+              ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = stat_dir)
+              ggsave(paste0("QQ_", new_colname, args$I), plot = mod_res$qqplot, path = stat_dir)
+            }
           }
         }
       }
@@ -231,7 +267,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
   names(b_stat_list_save) <- str_trunc(names(b_stat_list_save), 31, side = "center", ellipsis = "___")
 
   # Save basic statistics results to Excel.
-  if(exists("dirtest") && (class(dirtest) == "try-error")){
+  if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
     try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/stat_res.xlsx"), row.names=TRUE))
     try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/tukey_res.xlsx"), row.names=TRUE))
     try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/stat_basic.xlsx"), row.names=TRUE))

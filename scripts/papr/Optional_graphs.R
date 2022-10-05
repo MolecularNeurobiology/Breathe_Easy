@@ -151,9 +151,11 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
 ### tbl0: data frame, full data set.
 ### var_names: data frame, R config file.
 ### graph_vars: data frame, graph config file.
+### other_stat_dir: character string, location of optional stat output folder.
+### dirtest: logical, whether default optional stat output folder was successfully created.
 ## Outputs:
 ### other_mod_res: statistics results used for the optional graphs.
-optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
+optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest){
   
   graph_v <- c(xvar, pointdodge, facet1, facet2)
   graph_v <- graph_v[graph_v != ""]
@@ -295,15 +297,35 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
                "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
-    if(exists("dirtest") && (class(dirtest) == "try-error")){
-      ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
-      ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+    ## Save residual plots
+    if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+      if(args$I == ".svg"){
+        svglite(paste0(args$Output, "/Residual_", other_config_row$Graph, args$I))
+        print(other_mod_res$residplot)
+        dev.off()
+        svglite(paste0(args$Output, "/QQ_", other_config_row$Graph, args$I))
+        print(other_mod_res$qqplot)
+        dev.off()
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+      }
     } else {
-      ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
-             path = paste0(args$Output, "/OptionalStatResults/"))
-      ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
-             path = paste0(args$Output, "/OptionalStatResults/"))
+      if(args$I == ".svg"){
+        svglite(paste0(other_stat_dir, "/Residual_", other_config_row$Graph, args$I))
+        print(other_mod_res$residplot)
+        dev.off()
+        svglite(paste0(other_stat_dir, "/QQ_", other_config_row$Graph, args$I))
+        print(other_mod_res$qqplot)
+        dev.off()
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+      }
     }
+    
     #######################################################
     # Age graphs. NB: Requires a column specifically named "Age"
   } else if(ocr2["Resp"] == "Age") {
@@ -395,14 +417,33 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
                "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
-    if(exists("dirtest") && (class(dirtest) == "try-error")){
-      ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
-      ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+    ## Save residual plots
+    if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+      if(args$I == ".svg"){
+        svglite(paste0(args$Output, "/Residual_", other_config_row$Graph, args$I))
+        print(other_mod_res$residplot)
+        dev.off()
+        svglite(paste0(args$Output, "/QQ_", other_config_row$Graph, args$I))
+        print(other_mod_res$qqplot)
+        dev.off()
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+      }
     } else {
-      ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
-             path = paste0(args$Output, "/OptionalStatResults/"))
-      ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
-             path = paste0(args$Output, "/OptionalStatResults/"))
+      if(args$I == ".svg"){
+        svglite(paste0(other_stat_dir, "/Residual_", other_config_row$Graph, args$I))
+        print(other_mod_res$residplot)
+        dev.off()
+        svglite(paste0(other_stat_dir, "/QQ_", other_config_row$Graph, args$I))
+        print(other_mod_res$qqplot)
+        dev.off()
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+      }
     }
     
     #######################################################
@@ -507,14 +548,33 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
                "Temperature", "Time", as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
-    if(exists("dirtest") && (class(dirtest) == "try-error")){
-      ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
-      ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+    ## Save residual plots
+    if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+      if(args$I == ".svg"){
+        svglite(paste0(args$Output, "/Residual_", other_config_row$Graph, args$I))
+        print(other_mod_res$residplot)
+        dev.off()
+        svglite(paste0(args$Output, "/QQ_", other_config_row$Graph, args$I))
+        print(other_mod_res$qqplot)
+        dev.off()
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+      }
     } else {
-      ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
-             path = paste0(args$Output, "/OptionalStatResults/"))
-      ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
-             path = paste0(args$Output, "/OptionalStatResults/"))
+      if(args$I == ".svg"){
+        svglite(paste0(other_stat_dir, "/Residual_", other_config_row$Graph, args$I))
+        print(other_mod_res$residplot)
+        dev.off()
+        svglite(paste0(other_stat_dir, "/QQ_", other_config_row$Graph, args$I))
+        print(other_mod_res$qqplot)
+        dev.off()
+      } else {
+        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+      }
     }
     
     #######################################################
@@ -606,14 +666,33 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars){
                  as.character(ocr2_wu["Resp"]), as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                  ymins, ymaxes)
       
-      if(exists("dirtest") && (class(dirtest) == "try-error")){
-        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
-        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+      ## Save residual plots
+      if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+        if(args$I == ".svg"){
+          svglite(paste0(args$Output, "/Residual_", other_config_row$Graph, args$I))
+          print(other_mod_res$residplot)
+          dev.off()
+          svglite(paste0(args$Output, "/QQ_", other_config_row$Graph, args$I))
+          print(other_mod_res$qqplot)
+          dev.off()
+        } else {
+          ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, path = args$Output)
+          ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, path = args$Output)
+        }
       } else {
-        ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
-               path = paste0(args$Output, "/OptionalStatResults/"))
-        ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
-               path = paste0(args$Output, "/OptionalStatResults/"))
+        if(args$I == ".svg"){
+          svglite(paste0(other_stat_dir, "/Residual_", other_config_row$Graph, args$I))
+          print(other_mod_res$residplot)
+          dev.off()
+          svglite(paste0(other_stat_dir, "/QQ_", other_config_row$Graph, args$I))
+          print(other_mod_res$qqplot)
+          dev.off()
+        } else {
+          ggsave(paste0("Residual_", other_config_row$Graph, args$I), plot = other_mod_res$residplot, 
+                 path = paste0(args$Output, "/OptionalStatResults/"))
+          ggsave(paste0("QQ_", other_config_row$Graph, args$I), plot = other_mod_res$qqplot, 
+                 path = paste0(args$Output, "/OptionalStatResults/"))
+        }
       }
       
     } else {
@@ -662,7 +741,7 @@ if(nrow(other_config) > 0){
       next
     }
    
-    stat_res_optional <- try(optional_graph_maker(other_config_row, tbl0, var_names, graph_vars))
+    stat_res_optional <- try(optional_graph_maker(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest))
     # Save stat results.
     if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
       other_mod_res_list[[other_config_row$Graph]] <- stat_res_optional$lmer
@@ -679,7 +758,7 @@ if(nrow(other_config) > 0){
   
   # Save statistics results to Excel.
   if(length(mod_res_list_save) > 0){
-    if(exists("dirtest") && (class(dirtest) == "try-error")){
+    if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
       try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/other_stat_res.xlsx"), row.names=TRUE))
       try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/other_tukey_res.xlsx"), row.names=TRUE))
     } else {
@@ -763,8 +842,8 @@ if(sighs || apneas){
     }
     
     # Save stat results.
-    sa_mod_res_list[[ii]] <- other_mod_res$lmer
-    sa_tukey_res_list[[ii]] <- other_mod_res $rel_comp
+    sa_mod_res_list[[r_vars[ii]]] <- other_mod_res$lmer
+    sa_tukey_res_list[[r_vars[ii]]] <- other_mod_res $rel_comp
     
     # Set order of categories in variables as specified by the user, if specified.
     eventtab_join_graph <- graph_reorder(eventtab_join, box_vars, graph_vars, tbl0)
@@ -779,21 +858,50 @@ if(sighs || apneas){
       next
     }
     
-    # Save stat results tables in Excel
-    mod_res_list_save <- sa_mod_res_list
-    names(mod_res_list_save) <- str_trunc(names(mod_res_list_save), 31, side = "center", ellipsis = "___")
-    tukey_res_list_save <- sa_tukey_res_list
-    names(tukey_res_list_save) <- str_trunc(names(tukey_res_list_save), 31, side = "center", ellipsis = "___")
-    
-    # Save statistics results to Excel.
-    if(length(mod_res_list_save) > 0){
-      if(exists("dirtest") && (class(dirtest) == "try-error")){
-        try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/sighapnea_stat_res.xlsx"), row.names=TRUE))
-        try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+    ## Save residual plots
+    if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+      if(args$I == ".svg"){
+        svglite(paste0(args$Output, "/Residual_", r_vars[ii], args$I))
+        print(other_mod_res$residplot)
+        dev.off()
+        svglite(paste0(args$Output, "/QQ_", r_vars[ii], args$I))
+        print(other_mod_res$qqplot)
+        dev.off()
       } else {
-        try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_stat_res.xlsx"), row.names=TRUE))
-        try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+        ggsave(paste0("Residual_", r_vars[ii], args$I), plot = other_mod_res$residplot, path = args$Output)
+        ggsave(paste0("QQ_", r_vars[ii], args$I), plot = other_mod_res$qqplot, path = args$Output)
       }
+    } else {
+      if(args$I == ".svg"){
+        svglite(paste0(other_stat_dir, "/Residual_", r_vars[ii], args$I))
+        print(other_mod_res$residplot)
+        dev.off()
+        svglite(paste0(other_stat_dir, "/QQ_", r_vars[ii], args$I))
+        print(other_mod_res$qqplot)
+        dev.off()
+      } else {
+        ggsave(paste0("Residual_", r_vars[ii], args$I), plot = other_mod_res$residplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+        ggsave(paste0("QQ_", r_vars[ii], args$I), plot = other_mod_res$qqplot, 
+               path = paste0(args$Output, "/OptionalStatResults/"))
+      }
+    }
+  }
+  
+  # Save stat results tables in Excel
+  mod_res_list_save <- sa_mod_res_list
+  names(mod_res_list_save) <- str_trunc(names(mod_res_list_save), 31, side = "center", ellipsis = "___")
+  tukey_res_list_save <- sa_tukey_res_list
+  names(tukey_res_list_save) <- str_trunc(names(tukey_res_list_save), 31, side = "center", ellipsis = "___")
+  
+  # Save statistics results to Excel.
+  if(length(mod_res_list_save) > 0){
+    if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/sighapnea_stat_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+    } else {
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_stat_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_tukey_res.xlsx"), row.names=TRUE))
     }
   }
 }
