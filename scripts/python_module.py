@@ -54,9 +54,12 @@ Command Line Arguments
 
 
 """
-__version__ = '36.3.2'
+__version__ = '36.3.4'
 
 """
+# v36.3.4 README
+    *Update to basicRR to add HR, IS_RR and IS_HR as output columns
+
 # v36.3.2 README
     *Updates to basicFilt and basicRR to improve ECG detection
 
@@ -609,7 +612,7 @@ def resolve_plyuid(muid, animal_metadata, local_logger=None):
     return plyuid
 
 
-def load_signal_data(filename, local_logger):
+def load_signal_data(filename, local_logger = None):
     """
     Creates a dataframe containing plethysmography signal data
     includes calls to several other functions that are required for proper
@@ -2062,7 +2065,8 @@ def basicRR(
     Returns
     -------
     beat_df : Pandas.DataFrame
-        DataFrame containing baseg heart beat parameters (timestamp, 'RR')
+        DataFrame containing baseg heart beat parameters 
+        (ts, 'RR', 'HR', 'IS_RR', 'IS_HR')
 
     """
     if analysis_parameters is not None:
@@ -2120,6 +2124,9 @@ def basicRR(
     beat_df = pandas.DataFrame(beats).transpose()
     beat_df.index.name = 'ts'
     beat_df = beat_df.reset_index()
+    beat_df['HR'] = 60/beat_df['RR']
+    beat_df['IS_RR'] = calculate_irreg_score(beat_df['RR'])
+    beat_df['IS_HR'] = calculate_irreg_score(beat_df['HR'])
     return beat_df[['ts','RR']]
 
 
