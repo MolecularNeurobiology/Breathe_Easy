@@ -243,7 +243,6 @@ class Config(QDialog, Ui_Config):
         self.additional_dict = {
             "Feature": self.feature_combo,
             "Poincare": self.Poincare_combo,
-            "Spectral": self.Spectral_combo,
             "Transformation": self.transform_combo}
 
         self.graph_config_combos = {
@@ -261,7 +260,6 @@ class Config(QDialog, Ui_Config):
                         self.help_facet2,
                         self.help_feature,
                         self.help_poincare,
-                        self.help_spectral,
                         self.help_transformation]
 
         for button in help_buttons:
@@ -369,7 +367,6 @@ class Config(QDialog, Ui_Config):
                      "ymin",
                      "ymax",
                      "Poincare",
-                     "Spectral",
                      "Transformation"])
 
         origin = []
@@ -411,18 +408,8 @@ class Config(QDialog, Ui_Config):
             custom_data_list = [[val['Poincare plot']] for val in self.custom_data.values()]
             variable_table_df.loc[variable_table_df.Alias.isin(self.custom_data.keys()), ["Poincare"]] = custom_data_list
 
-        if self.Spectral_combo.currentText() == "All":
-            # Assign only dependent variables
-            deps = variable_table_df.loc[(variable_table_df["Dependent"] == 1)]["Alias"].values
-            variable_table_df.loc[variable_table_df['Alias'].isin(deps), 'Spectral'] = 1
-        elif self.Spectral_combo.currentText() == "None":
-            variable_table_df["Spectral"] = 0
-        elif self.Spectral_combo.currentText() == "Custom" and self.custom_data:
-            custom_data_list = [[val['Spectral graph']] for val in self.custom_data.values()]
-            variable_table_df.loc[variable_table_df.Alias.isin(self.custom_data.keys()), ["Spectral"]] = custom_data_list
-
         # Fill anything else missing with 0s
-        variable_table_df[["Poincare", "Spectral"]] = variable_table_df[["Poincare","Spectral"]].fillna(0)
+        variable_table_df[["Poincare"]] = variable_table_df[["Poincare"]].fillna(0)
         
         # na for ymin/ymax should be filled with blank, since 0 is a valid response
         variable_table_df["ymin"] = variable_table_df["ymin"].fillna("")
@@ -500,7 +487,7 @@ class Config(QDialog, Ui_Config):
         custom_values = custom_data.values()
 
         # distribute updates to combo boxes
-        for var_key, combo_box in {"Poincare plot": self.Poincare_combo, "Spectral graph": self.Spectral_combo}.items():
+        for var_key, combo_box in {"Poincare plot": self.Poincare_combo}.items():
 
             all_options = [combo_box.itemText(i) for i in range(combo_box.count())]
             if "Custom" in all_options:
@@ -821,7 +808,7 @@ class Config(QDialog, Ui_Config):
                 'Y axis maximum': record['ymax'],
                 'Transformation': record['Transformation'],
                 'Poincare plot': record['Poincare'],
-                'Spectral graph': record['Spectral']}
+                }
             custom_data[record['Alias']] = new_custom
 
         self.load_custom(custom_data)
@@ -1079,7 +1066,6 @@ class ConfigSettings(Settings):
                      "ymin",
                      "ymax",
                      "Poincare",
-                     "Spectral",
                      "Transformation"])
         return variable_table_df
 

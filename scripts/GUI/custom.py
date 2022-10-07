@@ -81,7 +81,6 @@ class Custom(QDialog, Ui_Custom):
             'ymin': "",
             'ymax': "",
             'Poincare': 0,
-            'Spectral': 0,
             'Transformation': ""
         }
 
@@ -111,11 +110,6 @@ class Custom(QDialog, Ui_Custom):
             poincare_checkbox = QCheckBox()
             poincare_checkbox.setChecked(vals['Poincare'] == 1)
             table.setCellWidget(row, 4, poincare_checkbox)
-
-            # Spectral 
-            spectral_checkbox = QCheckBox()
-            spectral_checkbox.setChecked(vals['Spectral'] == 1)
-            table.setCellWidget(row, 5, spectral_checkbox)
 
             # Creating the combo boxes that will populate the cells in each row:
             transformation_combo = CheckableComboBox()
