@@ -211,6 +211,9 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     dplyr::summarise_at(resp_var, list(mean, sd), na.rm = TRUE) %>%
     ungroup() %>% na.omit()
   
+  for(mm in 1:length(box_vars)){
+    b_stat_data[[mm]] <- factor(b_stat_data[[mm]])
+  }
   colnames(b_stat_data)[ncol(b_stat_data) - 1] <- "mid"
   colnames(b_stat_data)[ncol(b_stat_data)] <- "sds"
   
