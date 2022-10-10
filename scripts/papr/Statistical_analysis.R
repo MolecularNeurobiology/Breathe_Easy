@@ -290,13 +290,13 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
 
   # Save basic statistics results to Excel.
   if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-    try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/stat_res.xlsx"), row.names=TRUE))
-    try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/tukey_res.xlsx"), row.names=TRUE))
-    try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/stat_basic.xlsx"), row.names=TRUE))
+    try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/stat_res.xlsx"), rowNames=TRUE))
+    try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/tukey_res.xlsx"), rowNames=TRUE))
+    try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/stat_basic.xlsx"), rowNames=TRUE))
   } else {
-    try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/StatResults/stat_res.xlsx"), row.names=TRUE))
-    try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/StatResults/tukey_res.xlsx"), row.names=TRUE))
-    try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/StatResults/stat_basic.xlsx"), row.names=TRUE))
+    try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/StatResults/stat_res.xlsx"), rowNames=TRUE))
+    try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/StatResults/tukey_res.xlsx"), rowNames=TRUE))
+    try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/StatResults/stat_basic.xlsx"), rowNames=TRUE))
   }
   # Memory clearing
   rm(mod_res_list_save)

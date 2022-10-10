@@ -759,11 +759,11 @@ if(nrow(other_config) > 0){
   # Save statistics results to Excel.
   if(length(mod_res_list_save) > 0){
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/other_stat_res.xlsx"), row.names=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/other_tukey_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/other_stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/other_tukey_res.xlsx"), rowNames=TRUE))
     } else {
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_res.xlsx"), row.names=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/tukey_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/tukey_res.xlsx"), rowNames=TRUE))
     }
   }
   # Memory clearing
@@ -897,11 +897,11 @@ if(sighs || apneas){
   # Save statistics results to Excel.
   if(length(mod_res_list_save) > 0){
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/sighapnea_stat_res.xlsx"), row.names=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/sighapnea_stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/sighapnea_tukey_res.xlsx"), rowNames=TRUE))
     } else {
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_stat_res.xlsx"), row.names=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_tukey_res.xlsx"), rowNames=TRUE))
     }
   }
 }
