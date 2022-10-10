@@ -640,7 +640,7 @@ class Config(QDialog, Ui_Config):
                 other_config_df.at[loop_table_rows, "Graph"] = "Apneas"
                 other_config_df.at[loop_table_rows+1, "Graph"] = "Sighs"
             else:
-                other_config_df.at[loop_table_rows-1, "Graph"] = self.feature_combo.currentText()
+                other_config_df.at[loop_table_rows, "Graph"] = self.feature_combo.currentText()
         
         # Correcting some issue with filling nas on Apnea/Sighs stuff
         other_config_df['Inclusion'] = other_config_df['Inclusion'].fillna(0).astype(int)
