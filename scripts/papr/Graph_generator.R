@@ -96,7 +96,7 @@ graph_reorder <- function(graph_data_frame, plot_vars, graph_config, full_data){
 ### Saves generated plot; otherwise no return value.
 graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2, 
                       graph_data, run_data, tukey_res, inter_vars,
-                      savename, other = FALSE, resp_name = "", 
+                      savename, other = FALSE, inc_filter = TRUE, resp_name = "", 
                       xvar_name = "", pointdodge_name = "",
                       yax_min = NA, yax_max = NA) {
   
