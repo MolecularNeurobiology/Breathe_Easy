@@ -81,6 +81,7 @@ graph_reorder <- function(graph_data_frame, plot_vars, graph_config, full_data){
 ### facet1: character string, name of independent variable mapped to row-wise faceting.
 ### facet2: character string, name of independent variable mapped to column-wise faceting.
 ### graph_data: data frame, mouse-wise averaged data to be graphed.
+### run_data: data frame, raw data.
 ### tukey_res: data frame, multiple comparisons table output from statistical analysis.
 ### inter_vars: character vector, names of independent variables.
 ### savename: character string, name of graph file when saved,
@@ -95,7 +96,7 @@ graph_reorder <- function(graph_data_frame, plot_vars, graph_config, full_data){
 ### Saves generated plot; otherwise no return value.
 graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2, 
                       graph_data, run_data, tukey_res, inter_vars,
-                      savename, other = FALSE, resp_name = "", 
+                      savename, other = FALSE, inc_filter = TRUE, resp_name = "", 
                       xvar_name = "", pointdodge_name = "",
                       yax_min = NA, yax_max = NA) {
   
@@ -595,7 +596,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
       graph_file  <- paste0(response_vars[ii], args$I)
       graph_make(response_vars[ii], xvar, pointdodge, facet1,
                  facet2, graph_df, tbl0, tukey_res_list[[response_vars[ii]]],
-                 interaction_vars, graph_file, other = FALSE,
+                 interaction_vars, graph_file, other = FALSE,  inc_filter = TRUE,
                  response_var_names[ii], xvar_wu, pointdodge_wu,
                  yax_min = ymins[ii], yax_max = ymaxes[ii])
     }
@@ -627,7 +628,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           graph_file  <- paste0(new_colname, args$I)
           graph_make(new_colname, xvar, pointdodge, facet1,
                      facet2, graph_df, tbl0, tukey_res_list[[new_colname]],
-                     interaction_vars, graph_file, other = FALSE,
+                     interaction_vars, graph_file, other = FALSE, inc_filter = TRUE,
                      response_var_names[ii], xvar_wu, pointdodge_wu)
         }
         

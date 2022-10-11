@@ -293,7 +293,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     # Make graph + save
     graph_make(bw_vars, as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
-               other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
+               other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
                "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
@@ -413,7 +413,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     # Make graph + save
     graph_make(age_vars, as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
-               other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, 
+               other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
                "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
@@ -544,7 +544,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     # Make graph + save
     graph_make("Temp", "State", as.character(ocr2["Pointdodge"]), 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), melt_bt_graph_df, 
-               bodytemp_df, other_mod_res$rel_comp, temp_vars, graph_file, other = TRUE,
+               bodytemp_df, other_mod_res$rel_comp, temp_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
                "Temperature", "Time", as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes)
     
@@ -662,7 +662,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
       # Make graph + save
       graph_make(as.character(ocr2["Resp"]), as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
                  as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
-                 tbl0, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
+                 tbl0, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
                  as.character(ocr2_wu["Resp"]), as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                  ymins, ymaxes)
       
@@ -759,11 +759,11 @@ if(nrow(other_config) > 0){
   # Save statistics results to Excel.
   if(length(mod_res_list_save) > 0){
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/other_stat_res.xlsx"), row.names=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/other_tukey_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/other_stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/other_tukey_res.xlsx"), rowNames=TRUE))
     } else {
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_res.xlsx"), row.names=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/tukey_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/tukey_res.xlsx"), rowNames=TRUE))
     }
   }
   # Memory clearing
@@ -850,8 +850,8 @@ if(sighs || apneas){
     
     # Make graph + save
     sa_test <- try(graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join_graph, 
-                              eventtab_join, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,
-                              r_vars_wu[ii], xvar_wu, pointdodge_wu))
+                              eventtab_join, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,  
+                              inc_filter = FALSE, r_vars_wu[ii], xvar_wu, pointdodge_wu))
     
     if(class(sa_test) == "try-error"){
       print(paste0('Failed to make plots for ', r_vars[ii]))
@@ -897,11 +897,11 @@ if(sighs || apneas){
   # Save statistics results to Excel.
   if(length(mod_res_list_save) > 0){
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/sighapnea_stat_res.xlsx"), row.names=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/sighapnea_stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/sighapnea_tukey_res.xlsx"), rowNames=TRUE))
     } else {
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_stat_res.xlsx"), row.names=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_tukey_res.xlsx"), row.names=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/sighapnea_tukey_res.xlsx"), rowNames=TRUE))
     }
   }
 }
