@@ -31,7 +31,7 @@ What does Breathe Easy breeze through?
 Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [install page](https://molecularneurobiology.github.io/BASSPRO-STAGG/) for more information.
 
 # Where is the manual?
-Access the full user manual for this software [here](https://molecularneurobiology.github.io/BASSPRO-STAGG/usage.html).
+Access the full user manual for this software [here](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
 
 # Where is practice data?
 Instructions for accessing, downloading, and running practice datasets can be found in the [vignette section of our user manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/Vignette.html). Instructions to download the larger datasets for this example are found in the vignette instructions at the link provided. 
