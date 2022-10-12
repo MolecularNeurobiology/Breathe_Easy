@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+    <title>STAGG Output &#8212; Breathe Easy V1.0.0 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/alabaster.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Resources" href="Resources.html" />
+    <link rel="prev" title="BASSPRO Output" href="BASSPROoutput.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <section id="stagg-output">
+<h1>STAGG Output<a class="headerlink" href="#stagg-output" title="Permalink to this heading">¶</a></h1>
+<p>The expected output of STAGG includes one of each per folder:</p>
+<ol class="arabic simple">
+<li><p>the figures for each dependent variable,</p></li>
+<li><p>the figures for any optional graphs or additional models,</p></li>
+<li><p>the environments pre- and post-model creation as .RData files (the smaller file will be pre-model creation and can be used as input to STAGG),</p></li>
+<li><p>copies of the STAGG settings files,</p></li>
+<li><p>a .html file that concatenates all generated figures into a single .html page,</p></li>
+</ol>
+<p>one “StatResults” folder containing:</p>
+<ol class="arabic simple" start="6">
+<li><p>a stat_basic.xlsx file that contains summary statistics for each dependent variable,</p></li>
+<li><p>a stat_res.xlsx file that contains degrees of freedom, standard error, etc. that is used in the primary LMEM test,</p></li>
+<li><p>a tukey_res.xlsx file that contains all comparisons in the Tukey post-hoc and associated p-values and standard errors for those comparisons and</p></li>
+<li><p>residual and QQ plots for each dependent variable and any transformation chosen for those variables.</p></li>
+</ol>
+<p>and one “OptionalStatResults” folder containing:</p>
+<ol class="arabic simple" start="10">
+<li><p>a stat_res.xlsx file that contains degrees of freedom, standard error, etc. that is used in testing for optional graphs,</p></li>
+<li><p>a tukey_res.xlsx file that contains all comparisons in the Tukey post-hoc and associated p-values and standard errors for those comparisons and</p></li>
+<li><p>residual and QQ plots for each dependent variable and any transformation chosen for those variables.</p></li>
+</ol>
+<p>All of these outputs are saved in a single folder for each run of STAGG. Each of these folders is automatically named with the
+format “STAGG_output_CurrentDate_CurrentTime” to allow the user to keep track of each different run they perform with different settings.
+In addition to the timestamps in the folder name, the inclusion of the STAGG settings files allows direct confirmation of the settings
+used to generate the files for each run.</p>
+<p>We recommend that users rename the folders with more distinct names based on the purpose of each run to make referencing and finding figures
+and results easier later.</p>
+</section>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Breathe Easy</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="Prepping%20Data.html">Prepping Data</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html#launching-breathe-easy">Launching Breathe Easy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="DetailedUserGuide.html">Where do I start?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="Vignette.html">Vignette (Example Data)</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="Output.html">Understanding the Output</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="BASSPROoutput.html">BASSPRO Output</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">STAGG Output</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="Resources.html">Resources</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="Output.html">Understanding the Output</a><ul>
+      <li>Previous: <a href="BASSPROoutput.html" title="previous chapter">BASSPRO Output</a></li>
+      <li>Next: <a href="Resources.html" title="next chapter">Resources</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2022, S. Lusk, C. Ward, A. Chang, A. Twitchell-Heyne, S. Fattig, R. Ray.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 5.1.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/STAGGoutput.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
