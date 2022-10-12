@@ -22,8 +22,8 @@ with signficiance marks based on these tests automatically added for the user.
 .. toctree::
    :maxdepth: 2
 
-   Prepping Data
    usage
+   Prepping Data
    Quickstart
    DetailedUserGuide
    Vignette

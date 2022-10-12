@@ -14,7 +14,7 @@ the :ref:`signal file export<LabChart Signal File Export>` and the :ref:`DataPad
 
 Before running your data for the first time, we recommend completing the optional step of timestamp review
 to give you a chance to address formatting issues that would cause errors later in BASSPRO. This can potentially save 
-hours of the program running and unexpected results. See :ref:`Timestamp Review <Timestamp Review>` for more
+hours of program run time for unexpected results. See :ref:`Timestamp Review <Timestamp Review>` for more
 information.
 
 LabChart Signal File Export

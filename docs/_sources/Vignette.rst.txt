@@ -131,7 +131,7 @@ you to pages with more detailed instructions on completing each of the steps bel
 
 4.  :ref:`Load provided manual settings <Manual Settings Configuration>`. 
 
-        *  :download:`Click here to download auto settings <Docs/manual_sections.csv>`
+        *  :download:`Click here to download manual settings file <Docs/manual_sections.csv>`
         
       .. note::
       
