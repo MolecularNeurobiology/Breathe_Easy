@@ -894,14 +894,12 @@ class Config(QDialog, Ui_Config):
 
         # Reset feature comboBox
         self.feature_combo.setCurrentText("None")
-        if "Apneas" in set(odf["Graph"]):
-            self.feature_combo.setCurrentText("Apneas")
-
-        if "Sighs" in set(odf["Graph"]):
-            self.feature_combo.setCurrentText("Sighs") 
-
-        if ("Apneas" and "Sighs") in set(odf["Graph"]):
+        if "Apneas" in set(odf["Graph"]) and "Sighs" in set(odf["Graph"]):
             self.feature_combo.setCurrentText("All")
+        elif "Apneas" in set(odf["Graph"]):
+            self.feature_combo.setCurrentText("Apneas")
+        elif "Sighs" in set(odf["Graph"]):
+            self.feature_combo.setCurrentText("Sighs") 
 
         # Remove all Apneas and Sighs items to leave just loop items
         odf.drop(odf.loc[(odf["Graph"]=="Apneas") | (odf["Graph"]=="Sighs")].index, inplace = True)
