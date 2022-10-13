@@ -87,7 +87,7 @@ class Basic(QDialog, Ui_Basic):
         # Set up help buttons and callbacks
         basic_reference = [self.help_minTI,self.help_minPIF,self.help_minPEF,self.help_TTwin,self.help_SIGHwin,self.help_minAplTT,self.help_minApsTT]
         rig_reference = [self.help_ConvertTemp,self.help_ConvertCO2,self.help_ConvertO2,self.help_Flowrate,self.help_Roto_x,self.help_Roto_y,self.help_chamber_temp_cutoffs,self.help_chamber_temperature_units,self.help_chamber_temperature_default,self.help_chamber_temperature_trim_size,self.help_chamber_temperature_narrow_fix]
-        crude_reference = [self.help_per500win,self.help_perX,self.help_maxPer500,self.help_maximum_DVTV,self.help_apply_smoothing_filter,self.help_maxTV,self.help_maxVEVO2]
+        crude_reference = [self.help_per500win,self.help_perX,self.help_maxPer500,self.help_maximum_DVTV,self.help_apply_smoothing_filter,self.help_maxTV,self.help_max_VEVO2]
         output_reference = [self.help_All_Breath_Output,self.help_Aggregate_Output]
         self.ref_buttons = {
             self.basic_reference: {widg.objectName(): widg for widg in basic_reference},
@@ -121,7 +121,7 @@ class Basic(QDialog, Ui_Basic):
             self.lineEdit_chamber_temperature_narrow_fix: "chamber_temperature_narrow_fix",
             self.lineEdit_chamber_temp_cutoffs: "chamber_temp_cutoffs",
             self.lineEdit_maxTV: "maxTV",
-            self.lineEdit_maxVEVO2: "maxVEVO2",
+            self.lineEdit_max_VEVO2: "max_VEVO2",
             self.lineEdit_All_Breath_Output: "All_Breath_Output",
             self.lineEdit_Aggregate_Output: "Aggregate_Output"
         }
@@ -151,7 +151,7 @@ class Basic(QDialog, Ui_Basic):
             self.reset_chamber_temperature_trim_size,
             self.reset_chamber_temperature_narrow_fix,
             self.reset_maxTV,
-            self.reset_maxVEVO2,
+            self.reset_max_VEVO2,
             self.reset_All_Breath_Output,
             self.reset_Aggregate_Output
             ]
