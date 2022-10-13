@@ -418,7 +418,7 @@ class Config(QDialog, Ui_Config):
         transform_data = self.transform_combo.currentData()
         # If we have custom selections, fill it in
         if 'Custom' in transform_data and self.custom_data:
-            custom_data_list = [[val['Transformation']] for val in self.custom_data.values()]
+            custom_data_list = [val['Transformation'] for val in self.custom_data.values()]
             variable_table_df.loc[variable_table_df.Alias.isin(self.custom_data.keys()), ["Transformation"]] = custom_data_list
         # Otherwise, fill in for group
         else:
