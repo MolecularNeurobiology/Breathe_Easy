@@ -1,0 +1,5 @@
+Graph,Variable,Xvar,Pointdodge,Facet1,Facet2,Covariates,ymin,ymax,Inclusion
+Weight,Weight,Group,,,,,,,0
+Age,Age_FAIL,Group,,,,,,,0
+Apneas,,,,,,,,,0
+Sighs,,,,,,,,,0
