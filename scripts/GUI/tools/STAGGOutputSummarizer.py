@@ -95,12 +95,16 @@ def add_optional_table(document: Document, optional_data: pd.DataFrame):
             
     OT.style = "Light Grid"
 
-def generate_document(input_folder: str):
+def get_data_and_generate_document(input_folder: str, output_dir: str = ""):
 
     # Read in the tables for each of the 3 configuration files used by STAGG
     graph_data = retrieve_settings(input_folder, 'graph')
     variable_data = retrieve_settings(input_folder, 'variable')
     optional_data = retrieve_settings(input_folder, 'other')
+    generate_document(variable_data, graph_data, optional_data, output_dir)
+
+def generate_document(variable_data: pd.DataFrame, graph_data: pd.DataFrame,
+                      optional_data: pd.DataFrame, output_dir: str = ""):
 
     # Create document
     README = Document()
@@ -114,7 +118,7 @@ def generate_document(input_folder: str):
     add_variable_table(README, variable_data)
     add_optional_table(README, optional_data)
 
-    README.save('1_README.docx')
+    README.save(os.path.join(output_dir, 'README.docx'))
 
 if __name__ == '__main__':
     input_folder = fd.askdirectory()  # Get input from user
