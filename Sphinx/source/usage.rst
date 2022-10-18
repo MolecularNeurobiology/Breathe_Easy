@@ -52,6 +52,9 @@ Install Python Dependencies
    * - logging
      - This library aids in generating contextualized logging feedback to the console as well as the log file
      - BASSPRO  
+   * - lmxl
+     - This package is used in the ReadMe word document generation to access content within configuration .csv files.
+     - GUI
    * - math
      - This library provides additional functions for numerical operations and is currently used to aid in verifying if N/A values are present
      - BASSPRO
@@ -78,6 +81,9 @@ Install Python Dependencies
      - GUI
    * - python-dateutil
      - This library extends the Python native package *datetime* with extra utilities for working with dates and times
+     - GUI
+   * - python-docx
+     - This library is used to render word documents that summarize user selections for STAGG runs.
      - GUI
    * - pytz
      - This library provides Olson timezone calculations
