@@ -62,6 +62,7 @@ from ui.form import Ui_Plethysmography
 
 # Chris's scripts
 from tools.columns_and_values_tools import columns_and_values_from_settings
+from tools.STAGGOutputSummarizer import generate_document
 
 # Directory containing configuration JSONs
 CONFIG_DIR = os.path.join("scripts", "GUI", "config")
@@ -1625,6 +1626,14 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Write other config
         other_config = os.path.join(stagg_run_folder, f"other_config_{curr_timestamp}.csv")
         OtherSettings.save_file(self.other_config_df, other_config)
+
+        print('Generating report')
+        # Generate report for STAGG run summary
+        generate_document(variable_data=self.variable_config_df,
+                          graph_data=self.graph_config_df,
+                          optional_data=self.other_config_df,
+                          output_dir=stagg_run_folder)
+        print('Done!')
             
         # adjust thread limit for the qthreadpool
         self.qthreadpool.setMaxThreadCount(1)
