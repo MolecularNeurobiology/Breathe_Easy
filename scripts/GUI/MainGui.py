@@ -1307,7 +1307,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             
             # Set function in case cancel is selected
             cancel_func = lambda : self.basspro_launch_button.setEnabled(True) or self.enable_stagg_buttons(True)
-            cancel_msg = "would you like to cancel checking for STAGG autostart?"
+            cancel_msg = "Would you like to cancel checking for STAGG autostart?"
 
         else:
             # Wait to check output after basspro finishes

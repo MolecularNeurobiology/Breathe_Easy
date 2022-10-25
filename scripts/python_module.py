@@ -987,7 +987,7 @@ def repair_temperature(
     temperature signal data is checked for anomolous values. 
     
     If no chamber temperature is present then a default value from 
-    analysis_paramters or animal_metadata is used.
+    analysis_parameters or animal_metadata is used.
     If chamber temperature is present the first check uses cutoff values to 
     identify out of range values. Outlier regions are replaced with imputed 
     values. An additional optional check repeats this process where outliers 
@@ -2156,7 +2156,7 @@ def calculate_basic_breath_parameters(
     Returns
     -------
     breath_parameters : Pandas.DataFrame
-        DataFrame containing annotated paramters for candidate breaths
+        DataFrame containing annotated parameters for candidate breaths
 
     """
 
@@ -2967,7 +2967,7 @@ def apply_gas_calibration(
         breath_list_calibrated_o2 = breath_list['corrected_o2']
         local_logger.warning(
             'unable to calibrate O2 - insufficient data - ' +
-            'correction factor multiplier provided in analysis paramters used'
+            'correction factor multiplier provided in analysis parameters used'
             )
 
     if len(CO2_standards) > 1:
@@ -2982,7 +2982,7 @@ def apply_gas_calibration(
         breath_list_calibrated_co2 = breath_list['corrected_co2']
         local_logger.warning(
             'unable to calibrate CO2 - insufficient data - ' +
-            'correction factor multiplier provided in analysis paramters used'
+            'correction factor multiplier provided in analysis parameters used'
             )
 
     return signal_calibrated_o2, signal_calibrated_co2, \
