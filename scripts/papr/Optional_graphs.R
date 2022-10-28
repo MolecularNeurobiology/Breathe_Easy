@@ -56,6 +56,15 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
     run_data <- run_data %>% drop_na(any_of(inter_vars))
   }
   
+  # Basic stats 
+  b_stat_data <- run_data %>%
+    group_by_at(c(inter_vars)) %>%
+    dplyr::summarise_at(resp_var, list(mean, sd), na.rm = TRUE) %>%
+    ungroup() %>% na.omit()
+  
+  colnames(b_stat_data)[ncol(b_stat_data) - 1] <- "Mean"
+  colnames(b_stat_data)[ncol(b_stat_data)] <- "Std.Dev."
+  
   # Remove special characters and spaces in interaction variables categories. Necessary for relevant category finding below.
   # Should be processed in graph generator as well.
   for(vv in inter_vars){
@@ -65,6 +74,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
     }
   }
   
+  # Create list for function output.
   return_values <- list()
   # Create interaction variable string
   interact_string <- paste0("run_data$interact <- with(run_data, interaction(", paste(inter_vars, collapse = ", "), "))")
@@ -137,6 +147,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   return_values$lm <- summary(temp_mod)$coef
   return_values$residplot <- g1
   return_values$qqplot <- g2
+  return_values$b_stat <- b_stat_data
   
   return(return_values)
 }
@@ -714,6 +725,9 @@ if(nrow(other_config) > 0){
   other_mod_res_list <- list()
   ## Saves Tukey test results
   other_tukey_res_list <- list()
+  ## Saves basic statistics
+  other_b_stat_list <- list()
+  
   
   other_stat_dir  <- paste0(args$Output, "/OptionalStatResults/")
   if(!dir.exists(other_stat_dir)){
@@ -746,6 +760,7 @@ if(nrow(other_config) > 0){
     if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
       other_mod_res_list[[other_config_row$Graph]] <- stat_res_optional$lmer
       other_tukey_res_list[[other_config_row$Graph]] <- stat_res_optional$rel_comp
+      other_b_stat_list[[other_config_row$Graph]] <- stat_res_optional$b_stat
     }
     
   }
@@ -755,20 +770,25 @@ if(nrow(other_config) > 0){
   names(mod_res_list_save) <- str_trunc(names(mod_res_list_save), 31, side = "center", ellipsis = "___")
   tukey_res_list_save <- other_tukey_res_list
   names(tukey_res_list_save) <- str_trunc(names(tukey_res_list_save), 31, side = "center", ellipsis = "___")
+  b_stat_list_save <- other_b_stat_list
+  names(b_stat_list_save) <- str_trunc(names(b_stat_list_save), 31, side = "center", ellipsis = "___")
   
   # Save statistics results to Excel.
   if(length(mod_res_list_save) > 0){
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/other_stat_res.xlsx"), rowNames=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/other_tukey_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/optional_stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/optional_tukey_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/optional_stat_basic.xlsx"), rowNames=TRUE))
     } else {
       try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_res.xlsx"), rowNames=TRUE))
       try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/tukey_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_basic.xlsx"), rowNames=TRUE))
     }
   }
   # Memory clearing
   rm(mod_res_list_save)
   rm(tukey_res_list_save)
+  rm(b_stat_list_save)
 }
 
 

@@ -72,6 +72,7 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = TRUE){
   
   colnames(b_stat_data)[ncol(b_stat_data) - 1] <- "Mean"
   colnames(b_stat_data)[ncol(b_stat_data)] <- "Std.Dev."
+  
   # Remove special characters and spaces in interaction variables categories. Necessary for relevant category finding below.
   # Needs to be processed in the same manner in the graph_maker function as well.
   for(vv in inter_vars){
