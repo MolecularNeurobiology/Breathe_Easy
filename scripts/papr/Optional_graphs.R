@@ -824,7 +824,7 @@ if(sighs || apneas){
   ## Join tables to calculate rates.
   eventtab_join <- inner_join(eventtab, timetab, by = c(box_vars, "MUID")) %>%
     mutate(SighRate = sighs/measuretime*60, ApneaRate = apneas/measuretime*60)
-
+  
   # Set label + internal variable names.
   ## Depending on if sighs and/or apneas are desired.
   r_vars <- c()
@@ -851,8 +851,13 @@ if(sighs || apneas){
   
   # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
-    graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
+    if(all(eventtab_join[[r_vars[ii]]] < 10^-8)) {
+      warning(paste0("No non-zero values of ", r_vars[ii]))
+      next
+    }
+    
+    graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
     # Stat modeling, calculated ONLY using graphing variables as independent variables.
     if(length(unique(eventtab_join$MUID)) == nrow(eventtab_join)){
