@@ -755,6 +755,12 @@ if(nrow(other_config) > 0){
       next
     }
    
+    if(sd(tbl0[[other_config_row$Variable]]) < 10^-9){
+      warning(paste0(other_config_row$Variable, " is a (near) 0 variance response variable; computationally infeasible model fitting."))
+      next
+    }
+    
+    
     stat_res_optional <- try(optional_graph_maker(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest))
     # Save stat results.
     if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
