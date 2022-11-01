@@ -807,10 +807,6 @@ if(nrow(other_config) > 0){
 if(sighs || apneas){
   print("Making apnea and sigh graphs")
   
-  # Break up non-sequential observations
-  tbl0$measure_breaks <- as.logical(c(FALSE, tbl0$Mouse_And_Session_ID[1:(nrow(tbl0) - 1)] != 
-                                        tbl0$Mouse_And_Session_ID[2:(nrow(tbl0))]))
-  
   # Set graphing variables as a vector.
   box_vars <- c(xvar, pointdodge, facet1, facet2)
   box_vars <- box_vars[box_vars != ""]
@@ -818,13 +814,11 @@ if(sighs || apneas){
   # Summarize data by mouse for plotting.
   ## Find total measurement time for each interaction group + mouse.
   timetab <- tbl0 %>%
-    dplyr::filter(!measure_breaks) %>%
     dplyr::group_by_at(c(box_vars, "MUID")) %>%
     dplyr::summarise_at(var_names$Alias[which(var_names$Column == "Breath_Cycle_Duration")], sum, na.rm = TRUE)
   colnames(timetab)[ncol(timetab)] <- "measuretime"  
   ## Find number of sighs/apneas for each interaction group + mouse.
   eventtab <- tbl0 %>%
-    dplyr::filter(!measure_breaks) %>%
     dplyr::group_by_at(c(box_vars, "MUID")) %>%
     dplyr::summarise(sighs = sum(Sigh), apneas = sum(Apnea))
   ## Join tables to calculate rates.
