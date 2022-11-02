@@ -769,6 +769,14 @@ if(nrow(other_config) > 0){
       other_b_stat_list[[other_config_row$Graph]] <- stat_res_optional$b_stat
     }
     
+    if((other_config_row$Variable == "Weight") && ((is.na(other_config_row$Transformation)) || (other_config_row$Transformation == ""))){
+      other_config_row$Transformation <- var_names$Transformation[which(var_names$Column == "Weight")]
+    }
+    
+    if((other_config_row$Variable == "Age") && ((is.na(other_config_row$Transformation)) || (other_config_row$Transformation == ""))){
+      other_config_row$Transformation <- var_names$Transformation[which(var_names$Column == "Age")]
+    }
+    
     # Optional graph transformations
     if((!is.null(other_config_row$Transformation)) && (!is.na(other_config_row$Transformation)) && (other_config_row$Transformation != "")){ 
       if(any(tbl0[[other_config_row$Variable]] <= 0, na.rm=TRUE)){
