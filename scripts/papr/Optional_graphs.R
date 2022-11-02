@@ -215,7 +215,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
   
   #######################################################
   # Body weight
-  if(ocr2["Resp"] == "Weight") {
+  if(grepl("Weight", ocr2["Resp"])) {
     
     #Gathers alias names of data columns that contain the body weight values the user wishes to graph.
     bw_vars <- c(var_names$Alias[which(var_names$Body.Weight == 1)])
@@ -339,7 +339,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     
     #######################################################
     # Age graphs. NB: Requires a column specifically named "Age"
-  } else if(ocr2["Resp"] == "Age") {
+  } else if(grepl("Age", ocr2["Resp"])) {
     
     # Check if there is an Age column
     if("Age" %in% var_names$Alias) {
@@ -459,7 +459,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     
     #######################################################
     # Body Temp  
-  } else if(ocr2["Resp"] == "Temperature") {
+  } else if(grepl("Temperature", ocr2["Resp"])) {
     
     #CURRENTLY IGNORES ANY XVAR INPUT
     #Gathers alias names of data columns that contain the body temperature values the user wishes to graph.
@@ -769,6 +769,41 @@ if(nrow(other_config) > 0){
       other_b_stat_list[[other_config_row$Graph]] <- stat_res_optional$b_stat
     }
     
+    # Optional graph transformations
+    if((!is.null(other_config_row$Transformation)) && (!is.na(other_config_row$Transformation)) && (other_config_row$Transformation != "")){ 
+      if(any(tbl0[[other_config_row$Variable]] <= 0, na.rm=TRUE)){
+        ## Most transformations require non-negative variables.
+        print("Optional graph response variable has negative values, potential transformations will not work.")
+        next
+      }
+      transforms_resp <- unlist(strsplit(other_config_row$Transformation, "@"))
+      for(jj in 1:length(transforms_resp)){
+        new_colname <- paste0(other_config_row$Variable, "_", transforms_resp[jj])
+        if(transforms_resp[jj] == "log10"){
+          tbl0[[new_colname]] <- log10(tbl0[[other_config_row$Variable]])
+        } else if(transforms_resp[jj] == "log"){
+          tbl0[[new_colname]] <- log(tbl0[[other_config_row$Variable]])
+        } else if(transforms_resp[jj] == "sqrt"){
+          tbl0[[new_colname]] <- sqrt(tbl0[[other_config_row$Variable]])
+        } else if(transforms_resp[jj] == "sq"){
+          tbl0[[new_colname]] <- (tbl0[[other_config_row$Variable]])^2
+        } else {
+          next
+        }
+      }
+      
+      trans_config_row <- other_config_row
+      trans_config_row$Variable <- new_colname
+      stat_res_optional <- try(optional_graph_maker(trans_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest))
+      # Save stat results.
+      if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
+        trans_graphname <- paste0(other_config_row$Graph, "_", transforms_resp[jj])
+        other_mod_res_list[[trans_graphname]] <- stat_res_optional$lmer
+        other_tukey_res_list[[trans_graphname]] <- stat_res_optional$rel_comp
+        other_b_stat_list[[trans_graphname]] <- stat_res_optional$b_stat
+      }
+    }
+    
   }
  
   # Save stat results tables in Excel
@@ -832,12 +867,78 @@ if(sighs || apneas){
   if(sighs){
     r_vars <- c(r_vars, "SighRate")
     r_vars_wu <- c(r_vars_wu, "Sigh Rate (1/min)")
+    
+    # Transforms for sigh rate.
+    sigh_transform <- var_names$Transformation[which(var_names$Alias == "Sigh")]
+    if((!is.na(sigh_transform)) && (sigh_transform != "")){
+      transforms_resp <- unlist(strsplit(sigh_transform, "@"))
+      for(jj in 1:length(transforms_resp)){
+        new_colname <- paste0("SighRate", "_", transforms_resp[jj])
+        new_graphname <- paste0("Sigh Rate (1/min), ", transforms_resp[jj])
+        if(transforms_resp[jj] == "log10"){
+          if(any(eventtab_join[["SighRate"]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print("Sigh rate has exact 0 values, log10 transform will not work.")
+            next
+          }
+          eventtab_join[[new_colname]] <- log10(eventtab_join[["SighRate"]])
+        } else if(transforms_resp[jj] == "log"){
+          if(any(eventtab_join[["SighRate"]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print("Sigh rate has exact 0 values, log transform will not work.")
+            next
+          }
+          eventtab_join[[new_colname]] <- log(eventtab_join[["SighRate"]])
+        } else if(transforms_resp[jj] == "sqrt"){
+          eventtab_join[[new_colname]] <- sqrt(eventtab_join[["SighRate"]])
+        } else if(transforms_resp[jj] == "sq"){
+          eventtab_join[[new_colname]] <- (eventtab_join[["SighRate"]])^2
+        } else {
+          next
+        }
+        r_vars <- c(r_vars, new_colname)
+        r_vars_wu <- c(r_vars_wu, new_graphname)
+      }
+    }
   }
+  
   if(apneas){
     r_vars <- c(r_vars, "ApneaRate")
     r_vars_wu <- c(r_vars_wu, "Apnea Rate (1/min)")
+    apnea_transform <- var_names$Transformation[which(var_names$Alias == "Apnea")]
+    
+    # Transforms for apnea rate.
+    if((!is.na(apnea_transform)) && (apnea_transform != "")){
+      transforms_resp <- unlist(strsplit(apnea_transform, "@"))
+      for(jj in 1:length(transforms_resp)){
+        new_colname <- paste0("ApneaRate", "_", transforms_resp[jj])
+        new_graphname <- paste0("Apnea Rate (1/min), ", transforms_resp[jj])
+        if(transforms_resp[jj] == "log10"){
+          if(any(eventtab_join[["ApneaRate"]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print("Sigh rate has exact 0 values, log10 transform will not work.")
+            next
+          }
+          eventtab_join[[new_colname]] <- log10(eventtab_join[["ApneaRate"]])
+        } else if(transforms_resp[jj] == "log"){
+          if(any(eventtab_join[["ApneaRate"]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print("Sigh rate has exact 0 values, log transform will not work.")
+            next
+          }
+          eventtab_join[[new_colname]] <- log(eventtab_join[["ApneaRate"]])
+        } else if(transforms_resp[jj] == "sqrt"){
+          eventtab_join[[new_colname]] <- sqrt(eventtab_join[["ApneaRate"]])
+        } else if(transforms_resp[jj] == "sq"){
+          eventtab_join[[new_colname]] <- (eventtab_join[["ApneaRate"]])^2
+        } else {
+          next
+        }
+        r_vars <- c(r_vars, new_colname)
+        r_vars_wu <- c(r_vars_wu, new_graphname)
+      }
+    }
   }
-  
   
   ## Saving modeling results for each dependent variable
   sa_mod_res_list <- list()
@@ -852,7 +953,7 @@ if(sighs || apneas){
   # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
     
-    if(all(eventtab_join[[r_vars[ii]]] < 10^-8)) {
+    if(all(abs(eventtab_join[[r_vars[ii]]] < 10^-8))) {
       warning(paste0("No non-zero values of ", r_vars[ii]))
       next
     }
