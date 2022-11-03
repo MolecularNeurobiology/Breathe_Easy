@@ -180,7 +180,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     # Runs the model on the original, non-transformed dependent variable (if selected by user)
     if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii])))){
       
-      if(sd(response_vars[ii]) < 10^-9){
+      if(sd(tbl0[[response_vars[ii]]]) < 10^-9){
         warning(paste0(response_vars[ii], " is a (near) 0 variance response variable; computationally infeasible model fitting."))
         next
       }
