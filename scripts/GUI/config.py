@@ -231,7 +231,7 @@ class Config(QDialog, Ui_Config):
         for i in range(self.loop_table.columnCount()):
             headers.append(self.loop_table.horizontalHeaderItem(i).text())
         return headers
-
+        
     def setup_variables_config(self): 
         """
         General window setup
@@ -604,6 +604,7 @@ class Config(QDialog, Ui_Config):
                 self.loop_table.cellWidget(row, headers.index("Facet1")).currentText(),
                 self.loop_table.cellWidget(row, headers.index("Facet2")).currentText(),
                 self.loop_table.cellWidget(row, headers.index("Covariates")).currentData(),
+                self.loop_table.cellWidget(row, headers.index("Transformation")).currentData(),
                 self.loop_table.cellWidget(row, headers.index("Y axis minimum")).text(),
                 self.loop_table.cellWidget(row, headers.index("Y axis maximum")).text(),
                 int(self.loop_table.cellWidget(row, headers.index("Filter breaths?")).currentText() == "Yes")
@@ -725,7 +726,7 @@ class Config(QDialog, Ui_Config):
         self.loop_table.setCellWidget(loop_row, 6, covariates_checkable_combo)
 
         transform_checkable_combo = CheckableComboBox()
-        transform_checkable_combo.addItems(["raw","log10","ln","sqrt","None"])
+        transform_checkable_combo.addItems(["raw","log10","ln","sqrt"])
         transform_checkable_combo.currentIndexChanged.connect(self.update_loop)
         self.loop_table.setCellWidget(loop_row, 7, transform_checkable_combo)
         
@@ -897,7 +898,7 @@ class Config(QDialog, Ui_Config):
 
         odf = df.copy()
         odf = odf.fillna("")
-
+        
         # Reset feature comboBox
         self.feature_combo.setCurrentText("None")
         if "Apneas" in set(odf["Graph"]) and "Sighs" in set(odf["Graph"]):
@@ -930,7 +931,9 @@ class Config(QDialog, Ui_Config):
                         covariate_combo = self.loop_table.cellWidget(row_num, table_idx)
                         covariate_combo.loadCustom(covariates)
                         covariate_combo.updateText()
-                elif header == "Transformation":
+                    continue
+
+                if header == "Transformation":
                     transforms = odf.at[row_num, 'Transformation']
                     if transforms:
                         transform_combo = self.loop_table.cellWidget(row_num, table_idx)

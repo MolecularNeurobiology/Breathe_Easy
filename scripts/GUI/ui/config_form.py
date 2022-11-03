@@ -567,9 +567,9 @@ class Ui_Config(object):
 
         # Setting column sizing policies
         self.loop_table.horizontalHeader().setSectionResizeMode(0, QtWidgets.QHeaderView.ResizeToContents)
-        for i in range(1, 9):
+        for i in range(1, 10):
             self.loop_table.horizontalHeader().setSectionResizeMode(i, QtWidgets.QHeaderView.Stretch)
-        self.loop_table.horizontalHeader().setSectionResizeMode(9, QtWidgets.QHeaderView.ResizeToContents)
+        self.loop_table.horizontalHeader().setSectionResizeMode(10, QtWidgets.QHeaderView.ResizeToContents)
 
         self.horizontalLayout.addWidget(self.loop_table)
         spacerItem79 = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
