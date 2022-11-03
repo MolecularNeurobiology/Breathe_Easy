@@ -246,9 +246,6 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
             next
           }
           
-          # Add to the set of produced Poincare plots.
-          poincare_vars <- c(poincare_vars, new_colname)
-          
           print(paste0("Running model for ", new_colname))
           
           ## Run models
