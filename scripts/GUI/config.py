@@ -418,7 +418,7 @@ class Config(QDialog, Ui_Config):
         transform_data = self.transform_combo.currentData()
         # If we have custom selections, fill it in
         if 'Custom' in transform_data and self.custom_data:
-            custom_data_list = [[val['Transformation']] for val in self.custom_data.values()]
+            custom_data_list = [val['Transformation'] for val in self.custom_data.values()]
             variable_table_df.loc[variable_table_df.Alias.isin(self.custom_data.keys()), ["Transformation"]] = custom_data_list
         # Otherwise, fill in for group
         else:
@@ -894,14 +894,12 @@ class Config(QDialog, Ui_Config):
 
         # Reset feature comboBox
         self.feature_combo.setCurrentText("None")
-        if "Apneas" in set(odf["Graph"]):
-            self.feature_combo.setCurrentText("Apneas")
-
-        if "Sighs" in set(odf["Graph"]):
-            self.feature_combo.setCurrentText("Sighs") 
-
-        if ("Apneas" and "Sighs") in set(odf["Graph"]):
+        if "Apneas" in set(odf["Graph"]) and "Sighs" in set(odf["Graph"]):
             self.feature_combo.setCurrentText("All")
+        elif "Apneas" in set(odf["Graph"]):
+            self.feature_combo.setCurrentText("Apneas")
+        elif "Sighs" in set(odf["Graph"]):
+            self.feature_combo.setCurrentText("Sighs") 
 
         # Remove all Apneas and Sighs items to leave just loop items
         odf.drop(odf.loc[(odf["Graph"]=="Apneas") | (odf["Graph"]=="Sighs")].index, inplace = True)

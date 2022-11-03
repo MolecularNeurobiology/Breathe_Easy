@@ -56,6 +56,15 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
     run_data <- run_data %>% drop_na(any_of(inter_vars))
   }
   
+  # Basic stats 
+  b_stat_data <- run_data %>%
+    group_by_at(c(inter_vars)) %>%
+    dplyr::summarise_at(resp_var, list(mean, sd), na.rm = TRUE) %>%
+    ungroup() %>% na.omit()
+  
+  colnames(b_stat_data)[ncol(b_stat_data) - 1] <- "Mean"
+  colnames(b_stat_data)[ncol(b_stat_data)] <- "Std.Dev."
+  
   # Remove special characters and spaces in interaction variables categories. Necessary for relevant category finding below.
   # Should be processed in graph generator as well.
   for(vv in inter_vars){
@@ -65,6 +74,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
     }
   }
   
+  # Create list for function output.
   return_values <- list()
   # Create interaction variable string
   interact_string <- paste0("run_data$interact <- with(run_data, interaction(", paste(inter_vars, collapse = ", "), "))")
@@ -137,6 +147,7 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
   return_values$lm <- summary(temp_mod)$coef
   return_values$residplot <- g1
   return_values$qqplot <- g2
+  return_values$b_stat <- b_stat_data
   
   return(return_values)
 }
@@ -204,7 +215,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
   
   #######################################################
   # Body weight
-  if(ocr2["Resp"] == "Weight") {
+  if(grepl("Weight", ocr2["Resp"])) {
     
     #Gathers alias names of data columns that contain the body weight values the user wishes to graph.
     bw_vars <- c(var_names$Alias[which(var_names$Body.Weight == 1)])
@@ -328,7 +339,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     
     #######################################################
     # Age graphs. NB: Requires a column specifically named "Age"
-  } else if(ocr2["Resp"] == "Age") {
+  } else if(grepl("Age", ocr2["Resp"])) {
     
     # Check if there is an Age column
     if("Age" %in% var_names$Alias) {
@@ -448,7 +459,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     
     #######################################################
     # Body Temp  
-  } else if(ocr2["Resp"] == "Temperature") {
+  } else if(grepl("Temperature", ocr2["Resp"])) {
     
     #CURRENTLY IGNORES ANY XVAR INPUT
     #Gathers alias names of data columns that contain the body temperature values the user wishes to graph.
@@ -714,6 +725,9 @@ if(nrow(other_config) > 0){
   other_mod_res_list <- list()
   ## Saves Tukey test results
   other_tukey_res_list <- list()
+  ## Saves basic statistics
+  other_b_stat_list <- list()
+  
   
   other_stat_dir  <- paste0(args$Output, "/OptionalStatResults/")
   if(!dir.exists(other_stat_dir)){
@@ -741,11 +755,61 @@ if(nrow(other_config) > 0){
       next
     }
    
+    if(sd(tbl0[[other_config_row$Variable]]) < 10^-9){
+      warning(paste0(other_config_row$Variable, " is a (near) 0 variance response variable; computationally infeasible model fitting."))
+      next
+    }
+    
+    
     stat_res_optional <- try(optional_graph_maker(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest))
     # Save stat results.
     if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
       other_mod_res_list[[other_config_row$Graph]] <- stat_res_optional$lmer
       other_tukey_res_list[[other_config_row$Graph]] <- stat_res_optional$rel_comp
+      other_b_stat_list[[other_config_row$Graph]] <- stat_res_optional$b_stat
+    }
+    
+    if((other_config_row$Variable == "Weight") && ((is.na(other_config_row$Transformation)) || (other_config_row$Transformation == ""))){
+      other_config_row$Transformation <- var_names$Transformation[which(var_names$Column == "Weight")]
+    }
+    
+    if((other_config_row$Variable == "Age") && ((is.na(other_config_row$Transformation)) || (other_config_row$Transformation == ""))){
+      other_config_row$Transformation <- var_names$Transformation[which(var_names$Column == "Age")]
+    }
+    
+    # Optional graph transformations
+    if((!is.null(other_config_row$Transformation)) && (!is.na(other_config_row$Transformation)) && (other_config_row$Transformation != "")){ 
+      if(any(tbl0[[other_config_row$Variable]] <= 0, na.rm=TRUE)){
+        ## Most transformations require non-negative variables.
+        print("Optional graph response variable has negative values, potential transformations will not work.")
+        next
+      }
+      transforms_resp <- unlist(strsplit(other_config_row$Transformation, "@"))
+      for(jj in 1:length(transforms_resp)){
+        new_colname <- paste0(other_config_row$Variable, "_", transforms_resp[jj])
+        if(transforms_resp[jj] == "log10"){
+          tbl0[[new_colname]] <- log10(tbl0[[other_config_row$Variable]])
+        } else if(transforms_resp[jj] == "log"){
+          tbl0[[new_colname]] <- log(tbl0[[other_config_row$Variable]])
+        } else if(transforms_resp[jj] == "sqrt"){
+          tbl0[[new_colname]] <- sqrt(tbl0[[other_config_row$Variable]])
+        } else if(transforms_resp[jj] == "sq"){
+          tbl0[[new_colname]] <- (tbl0[[other_config_row$Variable]])^2
+        } else {
+          next
+        }
+      }
+      
+      trans_config_row <- other_config_row
+      trans_config_row$Variable <- new_colname
+      stat_res_optional <- try(optional_graph_maker(trans_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest))
+      # Save stat results.
+      if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
+        trans_graphname <- paste0(other_config_row$Graph, "_", transforms_resp[jj])
+        other_mod_res_list[[trans_graphname]] <- stat_res_optional$lmer
+        other_tukey_res_list[[trans_graphname]] <- stat_res_optional$rel_comp
+        other_b_stat_list[[trans_graphname]] <- stat_res_optional$b_stat
+      }
     }
     
   }
@@ -755,20 +819,25 @@ if(nrow(other_config) > 0){
   names(mod_res_list_save) <- str_trunc(names(mod_res_list_save), 31, side = "center", ellipsis = "___")
   tukey_res_list_save <- other_tukey_res_list
   names(tukey_res_list_save) <- str_trunc(names(tukey_res_list_save), 31, side = "center", ellipsis = "___")
+  b_stat_list_save <- other_b_stat_list
+  names(b_stat_list_save) <- str_trunc(names(b_stat_list_save), 31, side = "center", ellipsis = "___")
   
   # Save statistics results to Excel.
   if(length(mod_res_list_save) > 0){
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/other_stat_res.xlsx"), rowNames=TRUE))
-      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/other_tukey_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/optional_stat_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/optional_tukey_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/optional_stat_basic.xlsx"), rowNames=TRUE))
     } else {
       try(openxlsx::write.xlsx(mod_res_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_res.xlsx"), rowNames=TRUE))
       try(openxlsx::write.xlsx(tukey_res_list_save, file=paste0(args$Output, "/OptionalStatResults/tukey_res.xlsx"), rowNames=TRUE))
+      try(openxlsx::write.xlsx(b_stat_list_save, file=paste0(args$Output, "/OptionalStatResults/stat_basic.xlsx"), rowNames=TRUE))
     }
   }
   # Memory clearing
   rm(mod_res_list_save)
   rm(tukey_res_list_save)
+  rm(b_stat_list_save)
 }
 
 
@@ -781,10 +850,6 @@ if(nrow(other_config) > 0){
 if(sighs || apneas){
   print("Making apnea and sigh graphs")
   
-  # Break up non-sequential observations
-  tbl0$measure_breaks <- as.logical(c(FALSE, tbl0$Mouse_And_Session_ID[1:(nrow(tbl0) - 1)] != 
-                                        tbl0$Mouse_And_Session_ID[2:(nrow(tbl0))]))
-  
   # Set graphing variables as a vector.
   box_vars <- c(xvar, pointdodge, facet1, facet2)
   box_vars <- box_vars[box_vars != ""]
@@ -792,19 +857,17 @@ if(sighs || apneas){
   # Summarize data by mouse for plotting.
   ## Find total measurement time for each interaction group + mouse.
   timetab <- tbl0 %>%
-    dplyr::filter(!measure_breaks) %>%
     dplyr::group_by_at(c(box_vars, "MUID")) %>%
     dplyr::summarise_at(var_names$Alias[which(var_names$Column == "Breath_Cycle_Duration")], sum, na.rm = TRUE)
   colnames(timetab)[ncol(timetab)] <- "measuretime"  
   ## Find number of sighs/apneas for each interaction group + mouse.
   eventtab <- tbl0 %>%
-    dplyr::filter(!measure_breaks) %>%
     dplyr::group_by_at(c(box_vars, "MUID")) %>%
     dplyr::summarise(sighs = sum(Sigh), apneas = sum(Apnea))
   ## Join tables to calculate rates.
   eventtab_join <- inner_join(eventtab, timetab, by = c(box_vars, "MUID")) %>%
     mutate(SighRate = sighs/measuretime*60, ApneaRate = apneas/measuretime*60)
-
+  
   # Set label + internal variable names.
   ## Depending on if sighs and/or apneas are desired.
   r_vars <- c()
@@ -812,12 +875,78 @@ if(sighs || apneas){
   if(sighs){
     r_vars <- c(r_vars, "SighRate")
     r_vars_wu <- c(r_vars_wu, "Sigh Rate (1/min)")
+    
+    # Transforms for sigh rate.
+    sigh_transform <- var_names$Transformation[which(var_names$Alias == "Sigh")]
+    if((!is.na(sigh_transform)) && (sigh_transform != "")){
+      transforms_resp <- unlist(strsplit(sigh_transform, "@"))
+      for(jj in 1:length(transforms_resp)){
+        new_colname <- paste0("SighRate", "_", transforms_resp[jj])
+        new_graphname <- paste0("Sigh Rate (1/min), ", transforms_resp[jj])
+        if(transforms_resp[jj] == "log10"){
+          if(any(eventtab_join[["SighRate"]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print("Sigh rate has exact 0 values, log10 transform will not work.")
+            next
+          }
+          eventtab_join[[new_colname]] <- log10(eventtab_join[["SighRate"]])
+        } else if(transforms_resp[jj] == "log"){
+          if(any(eventtab_join[["SighRate"]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print("Sigh rate has exact 0 values, log transform will not work.")
+            next
+          }
+          eventtab_join[[new_colname]] <- log(eventtab_join[["SighRate"]])
+        } else if(transforms_resp[jj] == "sqrt"){
+          eventtab_join[[new_colname]] <- sqrt(eventtab_join[["SighRate"]])
+        } else if(transforms_resp[jj] == "sq"){
+          eventtab_join[[new_colname]] <- (eventtab_join[["SighRate"]])^2
+        } else {
+          next
+        }
+        r_vars <- c(r_vars, new_colname)
+        r_vars_wu <- c(r_vars_wu, new_graphname)
+      }
+    }
   }
+  
   if(apneas){
     r_vars <- c(r_vars, "ApneaRate")
     r_vars_wu <- c(r_vars_wu, "Apnea Rate (1/min)")
+    apnea_transform <- var_names$Transformation[which(var_names$Alias == "Apnea")]
+    
+    # Transforms for apnea rate.
+    if((!is.na(apnea_transform)) && (apnea_transform != "")){
+      transforms_resp <- unlist(strsplit(apnea_transform, "@"))
+      for(jj in 1:length(transforms_resp)){
+        new_colname <- paste0("ApneaRate", "_", transforms_resp[jj])
+        new_graphname <- paste0("Apnea Rate (1/min), ", transforms_resp[jj])
+        if(transforms_resp[jj] == "log10"){
+          if(any(eventtab_join[["ApneaRate"]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print("Sigh rate has exact 0 values, log10 transform will not work.")
+            next
+          }
+          eventtab_join[[new_colname]] <- log10(eventtab_join[["ApneaRate"]])
+        } else if(transforms_resp[jj] == "log"){
+          if(any(eventtab_join[["ApneaRate"]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print("Sigh rate has exact 0 values, log transform will not work.")
+            next
+          }
+          eventtab_join[[new_colname]] <- log(eventtab_join[["ApneaRate"]])
+        } else if(transforms_resp[jj] == "sqrt"){
+          eventtab_join[[new_colname]] <- sqrt(eventtab_join[["ApneaRate"]])
+        } else if(transforms_resp[jj] == "sq"){
+          eventtab_join[[new_colname]] <- (eventtab_join[["ApneaRate"]])^2
+        } else {
+          next
+        }
+        r_vars <- c(r_vars, new_colname)
+        r_vars_wu <- c(r_vars_wu, new_graphname)
+      }
+    }
   }
-  
   
   ## Saving modeling results for each dependent variable
   sa_mod_res_list <- list()
@@ -831,8 +960,13 @@ if(sighs || apneas){
   
   # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
-    graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
+    if(all(abs(eventtab_join[[r_vars[ii]]] < 10^-8))) {
+      warning(paste0("No non-zero values of ", r_vars[ii]))
+      next
+    }
+    
+    graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
     # Stat modeling, calculated ONLY using graphing variables as independent variables.
     if(length(unique(eventtab_join$MUID)) == nrow(eventtab_join)){

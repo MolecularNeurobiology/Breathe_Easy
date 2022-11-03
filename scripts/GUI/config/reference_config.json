@@ -156,7 +156,7 @@
                     "Retro Filters": {
                         "Chamber temperature range": "temp_range",
                         "Maximum tidal volume": "maxTV",
-                        "Maximum VEVO2": "maxVEVO2"
+                        "Maximum VEVO2": "max_VEVO2"
                     }
                 }
             }
@@ -216,9 +216,9 @@
             "Roto_x": "Definition: Standardized rotometer readings\nDescription: Rotometer readings that correspond to flowrates (used to create a standard curve to quantify flowrate from a rotometer reading).\nDefault Values: 50 75 80 90 95 100 110 125 150",
             "Roto_y": "Definition: Standardized rotometer flowrates\nDescription: Flowrate corresponding to rotometer readings (used to create a standard curve to quantify flowrate from a rotometer reading).\nDefault Values: 0.0724 0.13476 0.14961 0.18137 0.19811 0.21527 0.2504 0.30329 0.38847",
             "apply_smoothing_filter": "Definition: Indicates whether to apply a high and low pass filter to the breathing signal\nDescription: Binary (1=yes, 0=no) indicating that the signal should be processed through high and lowpass filters to help smooth the breathing signal and remove signal noise artifacts.\nDefault Value: 1",
-            "minApSec": "Definition: Minimum apnea duration (s)\nDescription: The minimum amount of time for a breath cycle to persist in order to be considered a candidate for apnea.\nDefault Values: 0.5",
-            "minApsTT": "Definition: Minimum apnea duration (relative to local breath cycle duration)\nDescription: The minimum fold change in breath cycle duration relative to surrounding breaths for a breath cycle to be considered a candidate for apnea.\nDefault Values: 2",
-            "minAplTT": "Definition: The minimum sigh tidal volume (relative to local tidal volumes)\nDescription: The minimum fold change in tidal volume relative to surrounding breaths for a breath to be considered a sigh.\nDefault Values: 2",
+            "minimum_apnea_time": "Definition: Minimum apnea standard (s)\nDescription: The minimum amount of time for apneic breathing to persist in order to be considered an apnea.\nDefault Values: 0.5",
+            "minimum_apnea_fold_change": "Definition: Minimum apnea duration (relative to local breath cycle duration)\nDescription: The minimum fold change in breath cycle duration relative to surrounding breaths for a breath cycle to be considered a candidate for apnea.\nDefault Values: 2",
+            "minimum_sigh_amplitude_x_local_VT": "Definition: The minimum sigh tidal volume (relative to local tidal volumes)\nDescription: The minimum fold change in tidal volume relative to surrounding breaths for a breath to be considered a sigh.\nDefault Values: 2",
             "All_Breath_Output": "Description:Select this flag to produce an output file annotating all detected breath cycles.\nDefault Value: 1",
             "Aggregate_Output": "Description: Select this flag to produce an output file with values aggregated by variables of your choosing.\nDefault Value: Auto_Condition@Man_Condition@Breath_Inclusion_Filter",
             "chamber_temp_cutoffs": "Definition: The minimum and maximum temperatures that reflect physiological data\nDescription: The minimum and maximum temperatures that reflect physiological data. Readings outside of this range will be filtered and treated as sensor artifacts - removed data will be replaced with data imputed from neighboring valid data.\nDefault Values: 18 35",
@@ -230,7 +230,7 @@
             "include_sigh": "Definition: Indicates whether to exclude breaths from calm breathing if they are also categorized as an sigh\nDefault Values: No",
             "include_high_chamber_temp": "Definition: Indicates whether to include data where the chamber temperature has exceeded the body temperature of the animal\nDescription: Including such data will likely lead abberant values for Bartlett and Tennery corrected tidal volumes.\nDefault Values: No",
             "maxTV": "Definition: Maximum tidal volume\nDescription: Maximum tidal volume for a breath to be considered a candidate of calm breathing.\nDefault Value: off",
-            "maxVEVO2": "Definition: Maximum ventilation normalized to oxygen consumption\nDescription: Any breaths with VEVO2 values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: off",
+            "max_VEVO2": "Definition: Maximum ventilation normalized to oxygen consumption\nDescription: Any breaths with VEVO2 values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: off",
             "max_calibrated_TV": "Definition: Maximum calibrated tidal volume\nDescription: Any breaths with tidal volumes greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers.\nDefault Values: 5",
             "min_VO2pg": "Definition: Minimum calibrated oxygen consumption per gram\nDescription: Any breaths with standardized oxygen consumption values less than this value are filtered out. This filter is intended to catch aberrant outliers. \nDefault Values: off",
             "min_VCO2": "Definition: Minimum calibrated carbon dioxide consumption\nDescription: Any breaths with carbon dioxide consumption values greater than this value are filtered out. This filter is intended to catch infrequent, aberrant outliers. \nDefault Values: off"

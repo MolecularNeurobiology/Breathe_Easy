@@ -85,9 +85,9 @@ class Basic(QDialog, Ui_Basic):
         Organize widgets into dictionaries and assign signals and slots to relevant buttons.
         """
         # Set up help buttons and callbacks
-        basic_reference = [self.help_minTI,self.help_minPIF,self.help_minPEF,self.help_TTwin,self.help_SIGHwin,self.help_minAplTT,self.help_minApsTT]
+        basic_reference = [self.help_minTI,self.help_minPIF,self.help_minPEF,self.help_TTwin,self.help_SIGHwin,self.help_minimum_sigh_amplitude_x_local_VT,self.help_minimum_apnea_time,self.help_minimum_apnea_fold_change]
         rig_reference = [self.help_ConvertTemp,self.help_ConvertCO2,self.help_ConvertO2,self.help_Flowrate,self.help_Roto_x,self.help_Roto_y,self.help_chamber_temp_cutoffs,self.help_chamber_temperature_units,self.help_chamber_temperature_default,self.help_chamber_temperature_trim_size,self.help_chamber_temperature_narrow_fix]
-        crude_reference = [self.help_per500win,self.help_perX,self.help_maxPer500,self.help_maximum_DVTV,self.help_apply_smoothing_filter,self.help_maxTV,self.help_maxVEVO2]
+        crude_reference = [self.help_per500win,self.help_perX,self.help_maxPer500,self.help_maximum_DVTV,self.help_apply_smoothing_filter,self.help_maxTV,self.help_max_VEVO2]
         output_reference = [self.help_All_Breath_Output,self.help_Aggregate_Output]
         self.ref_buttons = {
             self.basic_reference: {widg.objectName(): widg for widg in basic_reference},
@@ -113,7 +113,8 @@ class Basic(QDialog, Ui_Basic):
             self.lineEdit_flowrate: "flowrate",
             self.lineEdit_rotometer_standard_curve_readings: "rotometer_standard_curve_readings",
             self.lineEdit_rotometer_standard_curve_flowrates: "rotometer_standard_curve_flowrates",
-            self.lineEdit_minimum_apnea_duration_x_local_TT: "minimum_apnea_duration_x_local_TT",
+            self.lineEdit_minimum_apnea_time: "minimum_apnea_time",
+            self.lineEdit_minimum_apnea_fold_change: "minimum_apnea_fold_change",
             self.lineEdit_minimum_sigh_amplitude_x_local_VT: "minimum_sigh_amplitude_x_local_VT",
             self.lineEdit_chamber_temperature_units: "chamber_temperature_units",
             self.lineEdit_chamber_temperature_default: "chamber_temperature_default",
@@ -121,7 +122,7 @@ class Basic(QDialog, Ui_Basic):
             self.lineEdit_chamber_temperature_narrow_fix: "chamber_temperature_narrow_fix",
             self.lineEdit_chamber_temp_cutoffs: "chamber_temp_cutoffs",
             self.lineEdit_maxTV: "maxTV",
-            self.lineEdit_maxVEVO2: "maxVEVO2",
+            self.lineEdit_max_VEVO2: "max_VEVO2",
             self.lineEdit_All_Breath_Output: "All_Breath_Output",
             self.lineEdit_Aggregate_Output: "Aggregate_Output"
         }
@@ -135,7 +136,8 @@ class Basic(QDialog, Ui_Basic):
             self.reset_percent_X_value,
             self.reset_maximum_percent_X,
             self.reset_maximum_DVTV,
-            self.reset_minimum_apnea_duration_x_local_TT,
+            self.reset_minimum_apnea_time,
+            self.reset_minimum_apnea_fold_change,
             self.reset_minimum_sigh_amplitude_x_local_VT,
             self.reset_sigh_window,
             self.reset_apply_smoothing_filter,
@@ -151,7 +153,7 @@ class Basic(QDialog, Ui_Basic):
             self.reset_chamber_temperature_trim_size,
             self.reset_chamber_temperature_narrow_fix,
             self.reset_maxTV,
-            self.reset_maxVEVO2,
+            self.reset_max_VEVO2,
             self.reset_All_Breath_Output,
             self.reset_Aggregate_Output
             ]

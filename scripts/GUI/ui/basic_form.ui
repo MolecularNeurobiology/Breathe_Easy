@@ -3218,7 +3218,7 @@ window size</string>
                        </spacer>
                       </item>
                       <item>
-                       <widget class="QToolButton" name="help_maxVEVO2">
+                       <widget class="QToolButton" name="help_max_VEVO2">
                         <property name="text">
                          <string>?</string>
                         </property>
@@ -3565,7 +3565,7 @@ tidal volume</string>
                        </spacer>
                       </item>
                       <item>
-                       <widget class="QLineEdit" name="lineEdit_maxVEVO2"/>
+                       <widget class="QLineEdit" name="lineEdit_max_VEVO2"/>
                       </item>
                       <item>
                        <spacer name="verticalSpacer_126">
@@ -3718,7 +3718,7 @@ tidal volume</string>
                        </spacer>
                       </item>
                       <item>
-                       <widget class="QToolButton" name="reset_maxVEVO2">
+                       <widget class="QToolButton" name="reset_max_VEVO2">
                         <property name="text">
                          <string>Reset</string>
                         </property>

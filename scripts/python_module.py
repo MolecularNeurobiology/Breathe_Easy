@@ -57,6 +57,9 @@ Command Line Arguments
 __version__ = '36.3.4'
 
 """
+# v36.3.5 README
+    *Updated apnea detection rules (time and fold change based)
+
 # v36.3.4 README
     *Update to basicRR to add HR, IS_RR and IS_HR as output columns
 
@@ -984,7 +987,7 @@ def repair_temperature(
     temperature signal data is checked for anomolous values. 
     
     If no chamber temperature is present then a default value from 
-    analysis_paramters or animal_metadata is used.
+    analysis_parameters or animal_metadata is used.
     If chamber temperature is present the first check uses cutoff values to 
     identify out of range values. Outlier regions are replaced with imputed 
     values. An additional optional check repeats this process where outliers 
@@ -2153,7 +2156,7 @@ def calculate_basic_breath_parameters(
     Returns
     -------
     breath_parameters : Pandas.DataFrame
-        DataFrame containing annotated paramters for candidate breaths
+        DataFrame containing annotated parameters for candidate breaths
 
     """
 
@@ -2233,12 +2236,32 @@ def calculate_basic_breath_parameters(
         int(analysis_parameters['percent_X_window']),
         include_current=True
         )
+    
+    if 'minimum_apnea_time' not in analysis_parameters.keys() or \
+            'minimum_apnea_fold_change' not in analysis_parameters.keys():
+        if local_logger:
+            local_logger.warning('basic settings are missing for apnea values')
+        if not analysis_parameters.get('minumum_apnea_time'):
+            local_logger.warning('default value used for minimum_apnea_time')
+        analysis_parameters['minimum_apnea_time'] = \
+            analysis_parameters.get('minimum_apnea_time',0.5)
+        if not analysis_parameters.get('minimum_apnea_fold_change'):
+            local_logger.warning(
+                'default value used for minimum_apnea_fold_change'
+                )
+        analysis_parameters['minimum_apnea_fold_change'] = \
+            analysis_parameters.get('minimum_apnea_fold_change',2)
 
     breath_parameters['apnea'] = (
-        breath_parameters['TT'] > (
-            breath_parameters['apnea_local_threshold'] *
-            float(analysis_parameters['minimum_apnea_duration_x_local_TT'])
-            )
+        (
+            breath_parameters['TT'] > (
+                breath_parameters['apnea_local_threshold'] *
+                float(analysis_parameters['minimum_apnea_fold_change'])
+                )
+            ) & (
+                breath_parameters['TT'] > \
+                    float(analysis_parameters['minimum_apnea_time'])
+                )
         ).astype(int)
 
     breath_parameters['sigh'] = (
@@ -2944,7 +2967,7 @@ def apply_gas_calibration(
         breath_list_calibrated_o2 = breath_list['corrected_o2']
         local_logger.warning(
             'unable to calibrate O2 - insufficient data - ' +
-            'correction factor multiplier provided in analysis paramters used'
+            'correction factor multiplier provided in analysis parameters used'
             )
 
     if len(CO2_standards) > 1:
@@ -2959,7 +2982,7 @@ def apply_gas_calibration(
         breath_list_calibrated_co2 = breath_list['corrected_co2']
         local_logger.warning(
             'unable to calibrate CO2 - insufficient data - ' +
-            'correction factor multiplier provided in analysis paramters used'
+            'correction factor multiplier provided in analysis parameters used'
             )
 
     return signal_calibrated_o2, signal_calibrated_co2, \

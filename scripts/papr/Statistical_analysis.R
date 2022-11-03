@@ -72,6 +72,7 @@ stat_run <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = TRUE){
   
   colnames(b_stat_data)[ncol(b_stat_data) - 1] <- "Mean"
   colnames(b_stat_data)[ncol(b_stat_data)] <- "Std.Dev."
+  
   # Remove special characters and spaces in interaction variables categories. Necessary for relevant category finding below.
   # Needs to be processed in the same manner in the graph_maker function as well.
   for(vv in inter_vars){
@@ -178,6 +179,12 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     
     # Runs the model on the original, non-transformed dependent variable (if selected by user)
     if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii])))){
+      
+      if(sd(response_vars[ii]) < 10^-9){
+        warning(paste0(response_vars[ii], " is a (near) 0 variance response variable; computationally infeasible model fitting."))
+        next
+      }
+      
       print(paste0("Running model for ", response_vars[ii]))
       
       ## Run models
@@ -238,6 +245,9 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           } else {
             next
           }
+          
+          # Add to the set of produced Poincare plots.
+          poincare_vars <- c(poincare_vars, new_colname)
           
           print(paste0("Running model for ", new_colname))
           
