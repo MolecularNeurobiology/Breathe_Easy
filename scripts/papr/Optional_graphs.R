@@ -1193,7 +1193,6 @@ if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
   pc_transform_set <- var_names$Transformation[which(var_names$Poincare != 0)]
   for(pp in 1:length(pc_transform_set)){
     if((!is.na(pc_transform_set[pp])) && (pc_transform_set[pp] != "")){
-      print("here")
       transforms_resp <- unlist(strsplit(pc_transform_set[pp], "@"))
       if(any(tbl0[[raw_pc_vars[pp]]] <= 0, na.rm=TRUE)){
         ## Most transformations require non-negative variables.
@@ -1222,7 +1221,7 @@ if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
   }
   for(ii in 1:length(poincare_vars)){
     print((paste0("Making Poincare plot ", ii, "/", length(poincare_vars))))
-    try(poincare_graph(poincare_vars[ii], tbl0, xvar, pointdodge, facet1, 
+    try(poincare_graph(poincare_vars[ii], tbl0, xvar, pointdodge, facet1,
                    facet2, pointdodge_wu))
   }
 }
