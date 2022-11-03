@@ -1185,40 +1185,41 @@ poincare_graph <- function(resp_var, graph_data, xvar, pointdodge, facet1,
 }
 
 
-# Check for desired transformations for extra poincare plots.
-raw_pc_vars <- poincare_vars
-pc_transform_set <- var_names$Transformation[which(var_names$Poincare != 0)]
-for(pp in 1:length(pc_transform_set)){
-  if((!is.na(pc_transform_set[pp])) && (pc_transform_set[pp] != "")){
-    transforms_resp <- unlist(strsplit(pc_transform_set[pp], "@"))
-    if(any(tbl0[[raw_pc_vars[pp]]] <= 0, na.rm=TRUE)){
-      ## Most transformations require non-negative variables.
-      print("Response variable has negative values, potential transformations will not work.")
-    } else {
-      ## Create transformed variables.
-      for(jj in 1:length(transforms_resp)){
-        new_colname <- paste0(raw_pc_vars[pp], "_", transforms_resp[jj])
-        poincare_vars <- c(poincare_vars, new_colname)
-        if(!(new_colname %in% names(tbl0))){
-          if(transforms_resp[jj] == "log10"){
-            tbl0[[new_colname]] <- log10(tbl0[[raw_pc_vars[pp]]])
-          } else if(transforms_resp[jj] == "log"){
-            tbl0[[new_colname]] <- log(tbl0[[raw_pc_vars[pp]]])
-          } else if(transforms_resp[jj] == "sqrt"){
-            tbl0[[new_colname]] <- sqrt(tbl0[[raw_pc_vars[pp]]])
-          } else if(transforms_resp[jj] == "sq"){
-            tbl0[[new_colname]] <- (tbl0[[raw_pc_vars[pp]]])^2
-          } else {
-            next
+
+# Run poincare graph function
+if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
+  # Check for desired transformations for extra poincare plots.
+  raw_pc_vars <- poincare_vars
+  pc_transform_set <- var_names$Transformation[which(var_names$Poincare != 0)]
+  for(pp in 1:length(pc_transform_set)){
+    if((!is.na(pc_transform_set[pp])) && (pc_transform_set[pp] != "")){
+      print("here")
+      transforms_resp <- unlist(strsplit(pc_transform_set[pp], "@"))
+      if(any(tbl0[[raw_pc_vars[pp]]] <= 0, na.rm=TRUE)){
+        ## Most transformations require non-negative variables.
+        print("Response variable has negative values, potential transformations will not work.")
+      } else {
+        ## Create transformed variables.
+        for(jj in 1:length(transforms_resp)){
+          new_colname <- paste0(raw_pc_vars[pp], "_", transforms_resp[jj])
+          poincare_vars <- c(poincare_vars, new_colname)
+          if(!(new_colname %in% names(tbl0))){
+            if(transforms_resp[jj] == "log10"){
+              tbl0[[new_colname]] <- log10(tbl0[[raw_pc_vars[pp]]])
+            } else if(transforms_resp[jj] == "log"){
+              tbl0[[new_colname]] <- log(tbl0[[raw_pc_vars[pp]]])
+            } else if(transforms_resp[jj] == "sqrt"){
+              tbl0[[new_colname]] <- sqrt(tbl0[[raw_pc_vars[pp]]])
+            } else if(transforms_resp[jj] == "sq"){
+              tbl0[[new_colname]] <- (tbl0[[raw_pc_vars[pp]]])^2
+            } else {
+              next
+            }
           }
         }
       }
     }
   }
-}
-
-# Run poincare graph function
-if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
   for(ii in 1:length(poincare_vars)){
     print((paste0("Making Poincare plot ", ii, "/", length(poincare_vars))))
     try(poincare_graph(poincare_vars[ii], tbl0, xvar, pointdodge, facet1, 
