@@ -629,6 +629,7 @@ class Config(QDialog, Ui_Config):
                                                 "Facet1",
                                                 "Facet2",
                                                 "Covariates",
+                                                "Transformation",
                                                 "ymin",
                                                 "ymax",
                                                 "Inclusion"])
@@ -723,13 +724,18 @@ class Config(QDialog, Ui_Config):
         covariates_checkable_combo.currentIndexChanged.connect(self.update_loop)
         self.loop_table.setCellWidget(loop_row, 6, covariates_checkable_combo)
 
-        self.loop_table.setCellWidget(loop_row, 7, QLineEdit())
+        transform_checkable_combo = CheckableComboBox()
+        transform_checkable_combo.addItems(["raw","log10","ln","sqrt","None"])
+        transform_checkable_combo.currentIndexChanged.connect(self.update_loop)
+        self.loop_table.setCellWidget(loop_row, 7, transform_checkable_combo)
+        
         self.loop_table.setCellWidget(loop_row, 8, QLineEdit())
+        self.loop_table.setCellWidget(loop_row, 9, QLineEdit())
 
         inclusion_combo_box = QComboBox()
         inclusion_combo_box.addItems(["No", "Yes"])
         inclusion_combo_box.currentIndexChanged.connect(self.update_loop)
-        self.loop_table.setCellWidget(loop_row, 9, inclusion_combo_box)
+        self.loop_table.setCellWidget(loop_row, 10, inclusion_combo_box)
 
         self.update_loop()
 
@@ -924,6 +930,12 @@ class Config(QDialog, Ui_Config):
                         covariate_combo = self.loop_table.cellWidget(row_num, table_idx)
                         covariate_combo.loadCustom(covariates)
                         covariate_combo.updateText()
+                elif header == "Transformation":
+                    transforms = odf.at[row_num, 'Transformation']
+                    if transforms:
+                        transform_combo = self.loop_table.cellWidget(row_num, table_idx)
+                        transform_combo.loadCustom(transforms)
+                        transform_combo.updateText()
                     continue
 
                 if header == "Filter breaths?":
@@ -1148,6 +1160,23 @@ class OtherSettings(ConfigSettings):
     def attempt_load(filepath):
         odf = pd.read_csv(filepath, index_col=False, keep_default_na=False)
         odf['Covariates'] = odf['Covariates'].str.split('@')
+
+        odf['Transformation'] = odf['Transformation'].fillna("")
+
+        new_transforms = []
+        # Clean transform values and create list
+        for i, record in odf.iterrows():
+            if record['Transformation']:
+                # Replace all 'non' with 'raw'
+                transform = [t.replace("non","raw") for t in record['Transformation'].split('@')]
+                # Replace all 'log' with 'ln', unless the text is 'log10'
+                transform = [t.replace("log","ln") if t != "log10" else t for t in transform ]
+                new_transforms.append(transform)
+            else:
+                new_transforms.append([])
+
+        odf['Transformation'] = new_transforms
+
         return odf
 
     @staticmethod
@@ -1156,7 +1185,15 @@ class OtherSettings(ConfigSettings):
 
         df = df.fillna("")
 
-        # Rename transform labels
+        # Reformat covariates string
         df['Covariates'] = df['Covariates'].str.join('@')
+
+        # Rename transformation labels
+        populated_trans = df[df["Transformation"] != ""]
+        for i, record in populated_trans.iterrows():
+            trans = record['Transformation']
+            trans = [t.replace("raw", "non") for t in trans]
+            trans = [t.replace("ln", "log") for t in trans]
+            df.at[i, 'Transformation'] = '@'.join(trans)
 
         df.to_csv(filepath, index=False)
