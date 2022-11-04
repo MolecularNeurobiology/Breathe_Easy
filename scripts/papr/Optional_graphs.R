@@ -977,9 +977,14 @@ if(sighs || apneas){
   for(ii in 1:length(r_vars)){
     
     if(sd(eventtab_join[[r_vars[ii]]]) < 10^-9) {
-      warning(paste0("No non-zero values of ", r_vars[ii]))
+      warning(paste0("No variation in values of ", r_vars[ii], "; are these all zero?"))
+      next
+    } else if (any((eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii], list(sd)))[[r_vars[ii]]] <= 10^-9)){
+      warning(paste0("No variation in values of ", r_vars[ii], "; for one or more interaction groups; are these all zero?"))
       next
     }
+    
+    eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii], list(sd))
     
     graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
