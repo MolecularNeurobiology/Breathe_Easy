@@ -779,7 +779,7 @@ if(nrow(other_config) > 0){
     
     # Optional graph transformations
     if((!is.null(other_config_row$Transformation)) && (!is.na(other_config_row$Transformation)) && (other_config_row$Transformation != "")){ 
-      if(any(tbl0[[other_config_row$Variable]] <= 0, na.rm=TRUE)){
+      if(any(tbl0[[other_config_row$Variable]] < 0, na.rm=TRUE)){
         ## Most transformations require non-negative variables.
         print("Optional graph response variable has negative values, potential transformations will not work.")
         next
@@ -788,8 +788,18 @@ if(nrow(other_config) > 0){
       for(jj in 1:length(transforms_resp)){
         new_colname <- paste0(other_config_row$Variable, "_", transforms_resp[jj])
         if(transforms_resp[jj] == "log10"){
+          if(any(tbl0[[other_config_row$Variable]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print(paste0("Response variable ", other_config_row$Variable," has exact 0 values, log transformations will not work."))
+            next
+          }
           tbl0[[new_colname]] <- log10(tbl0[[other_config_row$Variable]])
         } else if(transforms_resp[jj] == "log"){
+          if(any(tbl0[[other_config_row$Variable]] <= 0, na.rm=TRUE)){
+            ## Most transformations require non-negative variables.
+            print(paste0("Response variable ", other_config_row$Variable," has exact 0 values, log transformations will not work."))
+            next
+          }
           tbl0[[new_colname]] <- log(tbl0[[other_config_row$Variable]])
         } else if(transforms_resp[jj] == "sqrt"){
           tbl0[[new_colname]] <- sqrt(tbl0[[other_config_row$Variable]])
@@ -878,6 +888,9 @@ if(sighs || apneas){
     
     # Transforms for sigh rate.
     sigh_transform <- var_names$Transformation[which(var_names$Alias == "Sigh")]
+    if((is.na(sigh_transform)) || (sigh_transform != "")){ 
+      sigh_transform <- other_config$Transformation[which(other_config$Graph == "Sighs")]
+    }
     if((!is.na(sigh_transform)) && (sigh_transform != "")){
       transforms_resp <- unlist(strsplit(sigh_transform, "@"))
       for(jj in 1:length(transforms_resp)){
@@ -914,7 +927,9 @@ if(sighs || apneas){
     r_vars <- c(r_vars, "ApneaRate")
     r_vars_wu <- c(r_vars_wu, "Apnea Rate (1/min)")
     apnea_transform <- var_names$Transformation[which(var_names$Alias == "Apnea")]
-    
+    if((is.na(apnea_transform)) || (apnea_transform != "")){ 
+      apnea_transform <- other_config$Transformation[which(other_config$Graph == "Apneas")]
+    }
     # Transforms for apnea rate.
     if((!is.na(apnea_transform)) && (apnea_transform != "")){
       transforms_resp <- unlist(strsplit(apnea_transform, "@"))
@@ -961,7 +976,7 @@ if(sighs || apneas){
   # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
     
-    if(all(abs(eventtab_join[[r_vars[ii]]] < 10^-8))) {
+    if(sd(eventtab_join[[r_vars[ii]]]) < 10^-9) {
       warning(paste0("No non-zero values of ", r_vars[ii]))
       next
     }
@@ -1194,18 +1209,27 @@ if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
   for(pp in 1:length(pc_transform_set)){
     if((!is.na(pc_transform_set[pp])) && (pc_transform_set[pp] != "")){
       transforms_resp <- unlist(strsplit(pc_transform_set[pp], "@"))
-      if(any(tbl0[[raw_pc_vars[pp]]] <= 0, na.rm=TRUE)){
+      if(any(tbl0[[raw_pc_vars[pp]]] < 0, na.rm=TRUE)){
         ## Most transformations require non-negative variables.
-        print("Response variable has negative values, potential transformations will not work.")
+        print(paste0("Response variable ", raw_pc_vars[pp]," has negative values, potential transformations will not work."))
       } else {
         ## Create transformed variables.
         for(jj in 1:length(transforms_resp)){
           new_colname <- paste0(raw_pc_vars[pp], "_", transforms_resp[jj])
-          poincare_vars <- c(poincare_vars, new_colname)
           if(!(new_colname %in% names(tbl0))){
             if(transforms_resp[jj] == "log10"){
+              if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
+                ## Most transformations require non-negative variables.
+                print(paste0("Response variable ", raw_pc_vars[pp]," has exact 0 values, log transformations will not work."))
+                next
+              }
               tbl0[[new_colname]] <- log10(tbl0[[raw_pc_vars[pp]]])
             } else if(transforms_resp[jj] == "log"){
+              if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
+                ## Most transformations require non-negative variables.
+                print(paste0("Response variable ", raw_pc_vars[pp]," has exact 0 values, log transformations will not work."))
+                next
+              }
               tbl0[[new_colname]] <- log(tbl0[[raw_pc_vars[pp]]])
             } else if(transforms_resp[jj] == "sqrt"){
               tbl0[[new_colname]] <- sqrt(tbl0[[raw_pc_vars[pp]]])
@@ -1214,6 +1238,7 @@ if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
             } else {
               next
             }
+            poincare_vars <- c(poincare_vars, new_colname)
           }
         }
       }

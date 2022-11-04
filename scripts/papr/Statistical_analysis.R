@@ -227,16 +227,27 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     if((!is.na(transform_set[ii])) && (transform_set[ii] != "")){
       ## Assumes desired transformation are concatenated as a character string, with separator character '@'.
       transforms_resp <- unlist(strsplit(transform_set[ii], "@"))
-      if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
+      if(any(tbl0[[response_vars[ii]]] < 0, na.rm=TRUE)){
         ## Most transformations require non-negative variables.
-        print("Response variable has negative values, potential transformations will not work.")
+        print(paste0("Response variable ", response_vars[ii]," has negative values, potential transformations will not work."))
+        transform_set[ii] <- NA
       } else {
         ## Create transformed variables.
         for(jj in 1:length(transforms_resp)){
           new_colname <- paste0(response_vars[ii], "_", transforms_resp[jj])
           if(transforms_resp[jj] == "log10"){
+            if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
+              ## Most transformations require non-negative variables.
+              print(paste0("Response variable ", response_vars[ii]," has exact 0 values, log transformations will not work."))
+              next
+            }
             tbl0[[new_colname]] <- log10(tbl0[[response_vars[ii]]])
           } else if(transforms_resp[jj] == "log"){
+            if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
+              ## Most transformations require non-negative variables.
+              print(paste0("Response variable ", response_vars[ii]," has exact 0 values, log transformations will not work."))
+              next
+            }
             tbl0[[new_colname]] <- log(tbl0[[response_vars[ii]]])
           } else if(transforms_resp[jj] == "sqrt"){
             tbl0[[new_colname]] <- sqrt(tbl0[[response_vars[ii]]])
