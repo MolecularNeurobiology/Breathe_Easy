@@ -763,6 +763,7 @@ if(nrow(other_config) > 0){
                            ifelse(is.null(other_config_row$Facet1), "", other_config_row$Facet1),
                            ifelse(is.null(other_config_row$Facet2), "", other_config_row$Facet2))
     optional_box_vars <- optional_box_vars[optional_box_vars != ""]
+    optional_box_vars <- c(optional_box_vars, other_config_row$Independent)
     
     if(length(optional_box_vars) != 0){
       optional_box_vars <- sapply(optional_box_vars, wu_convert)

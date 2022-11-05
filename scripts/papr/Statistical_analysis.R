@@ -180,10 +180,16 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     # Runs the model on the original, non-transformed dependent variable (if selected by user)
     if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii])))){
       
+      
       if(sd(tbl0[[response_vars[ii]]]) < 10^-9){
         warning(paste0(response_vars[ii], " is a (near) 0 variance response variable; computationally infeasible model fitting."))
         next
+      } else if (any((tbl0 %>% group_by_at(interaction_vars) %>% 
+                      summarize_at(response_vars[ii], list(sd)))[[response_vars[ii]]] <= 10^-9)){
+        warning(paste0("No variation in values of ", response_vars[ii], " for one or more interaction groups; are these all zero?"))
+        next
       }
+      
       
       print(paste0("Running model for ", response_vars[ii]))
       
