@@ -181,7 +181,7 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii])))){
       
       
-      if(sd(tbl0[[response_vars[ii]]]) < 10^-9){
+      if(sd(tbl0[[response_vars[ii]]], na.rm = TRUE) < 10^-9){
         warning(paste0(response_vars[ii], " is a (near) 0 variance response variable; computationally infeasible model fitting."))
         next
       } else if (any((tbl0 %>% group_by_at(interaction_vars) %>% 

@@ -823,7 +823,7 @@ if(nrow(other_config) > 0){
       optional_box_vars <- sapply(optional_box_vars, wu_convert)
     }
 
-    if(!is.null(tbl0[[other_config_row$Variable]]) && sd(tbl0[[other_config_row$Variable]]) < 10^-9){
+    if(!is.null(tbl0[[other_config_row$Variable]]) && sd(tbl0[[other_config_row$Variable]], na.rm = TRUE) < 10^-9){
       warning(paste0(other_config_row$Variable, " is a (near) 0 variance response variable; computationally infeasible model fitting."))
       next
     } else if (!is.null(tbl0[[other_config_row$Variable]]) && any((tbl0 %>% group_by_at(optional_box_vars) %>% 
@@ -1055,7 +1055,7 @@ if(sighs || apneas){
   # Loop to make sighs + apneas graphs.
   for(ii in 1:length(r_vars)){
     
-    if(sd(eventtab_join[[r_vars[ii]]]) < 10^-9) {
+    if(sd(eventtab_join[[r_vars[ii]]], na.rm = TRUE) < 10^-9) {
       warning(paste0("No variation in values of ", r_vars[ii], "; are these all zero?"))
       next
     } else if (any((eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii], list(sd)))[[r_vars[ii]]] <= 10^-9)){
