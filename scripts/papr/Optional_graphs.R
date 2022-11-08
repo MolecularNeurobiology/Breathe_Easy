@@ -827,7 +827,7 @@ if(nrow(other_config) > 0){
       warning(paste0(other_config_row$Variable, " is a (near) 0 variance response variable; computationally infeasible model fitting."))
       next
     } else if (!is.null(tbl0[[other_config_row$Variable]]) && any((tbl0 %>% group_by_at(optional_box_vars) %>% 
-                    summarize_at(other_config_row$Variable, list(sd)))[[other_config_row$Variable]] <= 10^-9)){
+                    summarize_at(other_config_row$Variable,  sd, na.rm = TRUE))[[other_config_row$Variable]] <= 10^-9)){
       warning(paste0("No variation in values of ", other_config_row$Variable, " for one or more interaction groups; are these all zero?"))
       next
     }
@@ -1058,12 +1058,12 @@ if(sighs || apneas){
     if(sd(eventtab_join[[r_vars[ii]]], na.rm = TRUE) < 10^-9) {
       warning(paste0("No variation in values of ", r_vars[ii], "; are these all zero?"))
       next
-    } else if (any((eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii], list(sd)))[[r_vars[ii]]] <= 10^-9)){
+    } else if (any((eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii], sd, na.rm = TRUE))[[r_vars[ii]]] <= 10^-9)){
       warning(paste0("No variation in values of ", r_vars[ii], " for one or more interaction groups; are these all zero?"))
       next
     }
     
-    eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii], list(sd))
+    eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii],  sd, na.rm = TRUE)
     
     graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     

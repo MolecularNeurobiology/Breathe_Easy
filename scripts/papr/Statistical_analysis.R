@@ -177,21 +177,26 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
   # For each response variable, run on original variable, then on all desired transformations.
   for(ii in 1:length(response_vars)){
     
+    print(paste0("Running model for ", response_vars[ii]))
+    
+    # NA check
+    if(sum(!is.na(tbl0[[response_vars[ii]]]) & tbl0$Breath_Inclusion_Filter) <= 1){
+      warning(paste0(response_vars[ii], " does not have enough non-NA values."))
+      next
+    }
+    
+    # 0 variance check
+    if(sd(tbl0[[response_vars[ii]]], na.rm = TRUE) < 10^-9){
+      warning(paste0(response_vars[ii], " is a (near) 0 variance response variable; computationally infeasible model fitting."))
+      next
+    } else if (any((tbl0 %>% group_by_at(interaction_vars) %>% 
+                    summarize_at(response_vars[ii], sd, na.rm = TRUE))[[response_vars[ii]]] <= 10^-9)){
+      warning(paste0("No variation in values of ", response_vars[ii], " for one or more interaction groups; are these all zero?"))
+      next
+    }
+    
     # Runs the model on the original, non-transformed dependent variable (if selected by user)
     if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii])))){
-      
-      
-      if(sd(tbl0[[response_vars[ii]]], na.rm = TRUE) < 10^-9){
-        warning(paste0(response_vars[ii], " is a (near) 0 variance response variable; computationally infeasible model fitting."))
-        next
-      } else if (any((tbl0 %>% group_by_at(interaction_vars) %>% 
-                      summarize_at(response_vars[ii], list(sd)))[[response_vars[ii]]] <= 10^-9)){
-        warning(paste0("No variation in values of ", response_vars[ii], " for one or more interaction groups; are these all zero?"))
-        next
-      }
-      
-      
-      print(paste0("Running model for ", response_vars[ii]))
       
       ## Run models
       mod_res <- try(stat_run(response_vars[ii], interaction_vars, covariates, tbl0, inc_filt = TRUE))
@@ -243,6 +248,8 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
         ## Create transformed variables.
         for(jj in 1:length(transforms_resp)){
           new_colname <- paste0(response_vars[ii], "_", transforms_resp[jj])
+          print(paste0("Running model for ", new_colname))
+          
           if(transforms_resp[jj] == "log10"){
             if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
               ## Most transformations require non-negative variables.
@@ -265,7 +272,15 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
             next
           }
           
-          print(paste0("Running model for ", new_colname))
+          if(sd(tbl0[[new_colname]], na.rm = TRUE) < 10^-9){
+            warning(paste0(new_colname, " is a (near) 0 variance response variable; computationally infeasible model fitting."))
+            next
+          } else if (any((tbl0 %>% group_by_at(interaction_vars) %>% 
+                          summarize_at(new_colname, sd, na.rm = TRUE))[[new_colname]] <= 10^-9)){
+            warning(paste0("No variation in values of ", new_colname, " for one or more interaction groups; are these all zero?"))
+            next
+          }
+          
           
           ## Run models
           mod_res <- try(stat_run(new_colname, interaction_vars, covariates, tbl0, inc_filt = TRUE))
