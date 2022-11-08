@@ -164,9 +164,12 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
 ### graph_vars: data frame, graph config file.
 ### other_stat_dir: character string, location of optional stat output folder.
 ### dirtest: logical, whether default optional stat output folder was successfully created.
+### xvar, pointdodge, facet1, facet2: main graphing loop variables. Used only for ordering factors as specified in the graph config file.
+### transform_feature; for feature plots, particular transform selected.
 ## Outputs:
 ### other_mod_res: statistics results used for the optional graphs.
-optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest){
+optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest,
+                                 xvar, pointdodge, facet1, facet2, transform_feature = ""){
   
   graph_v <- c(xvar, pointdodge, facet1, facet2)
   graph_v <- graph_v[graph_v != ""]
@@ -225,6 +228,23 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
         bw_vars <- "Weight"
       } else {
         stop("No weight variables to plot.")
+      }
+    }
+    
+    # Transform check
+    if(transform_feature != ""){
+      old_bw_var <- bw_vars
+      bw_vars <- paste0(bw_vars, "_", transform_feature)
+      if(transform_feature == "log10"){
+        tbl0[[bw_vars]] <- log10(tbl0[[old_bw_var]])
+      } else if(transforms_resp[jj] == "log"){
+        tbl0[[bw_vars]] <- log(tbl0[[old_bw_var]])
+      } else if(transforms_resp[jj] == "sqrt"){
+        tbl0[[bw_vars]] <- sqrt(tbl0[[old_bw_var]])
+      } else if(transforms_resp[jj] == "sq"){
+        tbl0[[bw_vars]] <- (tbl0[[old_bw_var]])^2
+      } else {
+        next
       }
     }
     
@@ -348,6 +368,23 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
       stop("No Age variable to plot.")
     }
     
+    # Transform check
+    if(transform_feature != ""){
+      old_age_var <-age_vars
+      age_vars <- paste0(age_vars, transform_feature)
+      if(transform_feature == "log10"){
+        tbl0[[age_vars]] <- log10(tbl0[[old_age_var]])
+      } else if(transforms_resp[jj] == "log"){
+        tbl0[[age_vars]] <- log(tbl0[[old_age_var]])
+      } else if(transforms_resp[jj] == "sqrt"){
+        tbl0[[age_vars]] <- sqrt(tbl0[[old_age_var]])
+      } else if(transforms_resp[jj] == "sq"){
+        tbl0[[age_vars]] <- (tbl0[[old_age_var]])^2
+      } else {
+        next
+      }
+    }
+    
     # Set graphing variables as a vector.
     box_vars <- c(ocr2["Xvar"], ocr2["Pointdodge"], ocr2["Facet1"], ocr2["Facet2"])
     box_vars <- box_vars[box_vars != ""]
@@ -469,6 +506,25 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     
     if(length(bt_vars) == 0) {
       stop("No temperature variables to plot.")
+    }
+    
+    # Transform check
+    if(transform_feature != ""){
+      old_temp_var <- bt_vars
+      bt_vars <- paste(bt_vars, transform_feature, sep = "_")
+      for(tt in 1:length(old_temp_var)){
+        if(transform_feature == "log10"){
+          tbl0[[bt_vars[tt]]] <- log10(tbl0[[old_temp_var[tt]]])
+        } else if(transforms_resp[jj] == "log"){
+          tbl0[[bt_vars[tt]]] <- log(tbl0[[old_temp_var[tt]]])
+        } else if(transforms_resp[jj] == "sqrt"){
+          tbl0[[bt_vars[tt]]] <- sqrt(tbl0[[old_temp_var[tt]]])
+        } else if(transforms_resp[jj] == "sq"){
+          tbl0[[bt_vars[tt]]] <- (tbl0[[old_temp_var[tt]]])^2
+        } else {
+          next
+        }
+      }
     }
     
     # Set graphing variables as a vector.
@@ -596,7 +652,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
       # Set graphing variables as a vector.
       box_vars <- c(ocr2["Xvar"], ocr2["Pointdodge"], ocr2["Facet1"], ocr2["Facet2"])
       box_vars <- box_vars[box_vars != ""]
-      if(length(box_vars) == 0){  stop("Optional graph requires an independent variable.") }
+      if(length(box_vars) == 0){  stop("Custom optional graph requires an independent variable.") }
       names(box_vars) <- NULL
       
       # Check user settings
@@ -606,7 +662,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
           if(typeof(tbl0[[jj]]) == "numeric"){
             tbl0[[jj]] <- as.character(tbl0[[jj]])
           }
-          if(length(unique(tbl0[[jj]])) == 1){
+          if(length(unique(tbl0[[jj]])) == 1){ 
             warning(paste0("Independent variable ", jj, " has only one unique value. Results may be unreliable."))
           }
           if(length(unique(tbl0[[jj]])) > 20){
@@ -662,7 +718,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
       name_part <- str_replace_all(c(other_config_row$Variable, other_config_row$Graph), "[[:punct:]]", "")
       graph_file <- paste0(name_part[1], "_", name_part[2], args$I) %>% str_replace_all(" ", "")
       
-      # Runs stat modeling
+      # Runs stat modeling 
       # Assumes that each individual observation is relevant (and not mouse-level statistic.)
       if(length(unique(tbl0$MUID)) == nrow(tbl0)){
         other_mod_res <- stat_run_other(as.character(ocr2["Resp"]), other_inter_vars, other_covars, tbl0, FALSE)
@@ -755,13 +811,30 @@ if(nrow(other_config) > 0){
       next
     }
    
+    # Check for 0 variance responses.
+    optional_box_vars <- c(ifelse(is.null(other_config_row$Xvar), "", other_config_row$Xvar),
+                           ifelse(is.null(other_config_row$Pointdodge), "", other_config_row$Pointdodge),
+                           ifelse(is.null(other_config_row$Facet1), "", other_config_row$Facet1),
+                           ifelse(is.null(other_config_row$Facet2), "", other_config_row$Facet2))
+    optional_box_vars <- optional_box_vars[optional_box_vars != ""]
+    optional_box_vars <- c(optional_box_vars, other_config_row$Independent)
+    
+    if(length(optional_box_vars) != 0){
+      optional_box_vars <- sapply(optional_box_vars, wu_convert)
+    }
+
     if(sd(tbl0[[other_config_row$Variable]]) < 10^-9){
       warning(paste0(other_config_row$Variable, " is a (near) 0 variance response variable; computationally infeasible model fitting."))
       next
+    } else if (any((tbl0 %>% group_by_at(optional_box_vars) %>% 
+                    summarize_at(other_config_row$Variable, list(sd)))[[other_config_row$Variable]] <= 10^-9)){
+      warning(paste0("No variation in values of ", other_config_row$Variable, " for one or more interaction groups; are these all zero?"))
+      next
     }
     
-    
-    stat_res_optional <- try(optional_graph_maker(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest))
+    # Try to run stats, make optional graphs/
+    stat_res_optional <- try(optional_graph_maker(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest,
+                                                  xvar, pointdodge, facet1, facet2))
     # Save stat results.
     if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
       other_mod_res_list[[other_config_row$Graph]] <- stat_res_optional$lmer
@@ -778,6 +851,10 @@ if(nrow(other_config) > 0){
     }
     
     # Optional graph transformations
+    if((is.null(other_config_row$Transformation)) || (is.na(other_config_row$Transformation)) || (other_config_row$Transformation == "")){
+      other_config_row$Transformation <- var_names$Transformation[which(var_names$Alias == other_config_row$Variable)]
+    }
+    
     if((!is.null(other_config_row$Transformation)) && (!is.na(other_config_row$Transformation)) && (other_config_row$Transformation != "")){ 
       if(any(tbl0[[other_config_row$Variable]] < 0, na.rm=TRUE)){
         ## Most transformations require non-negative variables.
@@ -808,11 +885,13 @@ if(nrow(other_config) > 0){
         } else {
           next
         }
+        trans_config_row <- other_config_row
+        trans_config_row$Variable <- new_colname
+        trans_config_row$Graph <- paste0(other_config_row$Graph, "_", transforms_resp[jj])
+        stat_res_optional <- try(optional_graph_maker(trans_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest,
+                                                     xvar, pointdodge, facet1, facet2, transforms_resp[jj]))
       }
       
-      trans_config_row <- other_config_row
-      trans_config_row$Variable <- new_colname
-      stat_res_optional <- try(optional_graph_maker(trans_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest))
       # Save stat results.
       if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
         trans_graphname <- paste0(other_config_row$Graph, "_", transforms_resp[jj])
@@ -887,11 +966,11 @@ if(sighs || apneas){
     r_vars_wu <- c(r_vars_wu, "Sigh Rate (1/min)")
     
     # Transforms for sigh rate.
-    sigh_transform <- var_names$Transformation[which(var_names$Alias == "Sigh")]
-    if((is.na(sigh_transform)) || (sigh_transform != "")){ 
-      sigh_transform <- other_config$Transformation[which(other_config$Graph == "Sighs")]
+    sigh_transform <- other_config$Transformation[which(other_config$Graph == "Sighs")]
+    if((is.null(sigh_transform)) || (is.na(sigh_transform)) || (sigh_transform == "")){ 
+      sigh_transform <- var_names$Transformation[which(var_names$Alias == "Sigh")] 
     }
-    if((!is.na(sigh_transform)) && (sigh_transform != "")){
+    if((!is.null(sigh_transform)) && (!is.na(sigh_transform)) && (sigh_transform != "")){
       transforms_resp <- unlist(strsplit(sigh_transform, "@"))
       for(jj in 1:length(transforms_resp)){
         new_colname <- paste0("SighRate", "_", transforms_resp[jj])
@@ -926,12 +1005,12 @@ if(sighs || apneas){
   if(apneas){
     r_vars <- c(r_vars, "ApneaRate")
     r_vars_wu <- c(r_vars_wu, "Apnea Rate (1/min)")
-    apnea_transform <- var_names$Transformation[which(var_names$Alias == "Apnea")]
-    if((is.na(apnea_transform)) || (apnea_transform != "")){ 
-      apnea_transform <- other_config$Transformation[which(other_config$Graph == "Apneas")]
+    apnea_transform <- other_config$Transformation[which(other_config$Graph == "Apneas")] 
+    if((is.null(apnea_transform)) || (is.na(apnea_transform)) || (apnea_transform == "")){ 
+      apnea_transform <- var_names$Transformation[which(var_names$Alias == "Apnea")]
     }
     # Transforms for apnea rate.
-    if((!is.na(apnea_transform)) && (apnea_transform != "")){
+    if((!is.null(apnea_transform)) && (!is.na(apnea_transform)) && (apnea_transform != "")){
       transforms_resp <- unlist(strsplit(apnea_transform, "@"))
       for(jj in 1:length(transforms_resp)){
         new_colname <- paste0("ApneaRate", "_", transforms_resp[jj])
@@ -980,7 +1059,7 @@ if(sighs || apneas){
       warning(paste0("No variation in values of ", r_vars[ii], "; are these all zero?"))
       next
     } else if (any((eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii], list(sd)))[[r_vars[ii]]] <= 10^-9)){
-      warning(paste0("No variation in values of ", r_vars[ii], "; for one or more interaction groups; are these all zero?"))
+      warning(paste0("No variation in values of ", r_vars[ii], " for one or more interaction groups; are these all zero?"))
       next
     }
     

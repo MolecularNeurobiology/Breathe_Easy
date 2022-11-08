@@ -180,45 +180,53 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
     # Runs the model on the original, non-transformed dependent variable (if selected by user)
     if(((is.na(transform_set[ii])) || (transform_set[ii] == "") || (grepl("non", transform_set[ii])))){
       
+      
       if(sd(tbl0[[response_vars[ii]]]) < 10^-9){
         warning(paste0(response_vars[ii], " is a (near) 0 variance response variable; computationally infeasible model fitting."))
         next
+      } else if (any((tbl0 %>% group_by_at(interaction_vars) %>% 
+                      summarize_at(response_vars[ii], list(sd)))[[response_vars[ii]]] <= 10^-9)){
+        warning(paste0("No variation in values of ", response_vars[ii], " for one or more interaction groups; are these all zero?"))
+        next
       }
+      
       
       print(paste0("Running model for ", response_vars[ii]))
       
       ## Run models
-      mod_res <- stat_run(response_vars[ii], interaction_vars, covariates, tbl0, inc_filt = TRUE)
+      mod_res <- try(stat_run(response_vars[ii], interaction_vars, covariates, tbl0, inc_filt = TRUE))
       
       ## Save parts of output
-      mod_res_list[[response_vars[ii]]] <- mod_res$lmer
-      tukey_res_list[[response_vars[ii]]] <- mod_res$rel_comp
-      b_stat_list[[response_vars[ii]]] <- mod_res$b_stat
-      
-      ## Save residual plots
-      if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-        if(args$I == ".svg"){
-          svglite(paste0(args$Output, "/Residual_", response_vars[ii], args$I))
-          print(mod_res$residplot)
-          dev.off()
-          svglite(paste0(args$Output, "/QQ_", response_vars[ii], args$I))
-          print(mod_res$qqplot)
-          dev.off()
+      if(class(mod_res) != "try-error" && !is.null(mod_res)){
+        mod_res_list[[response_vars[ii]]] <- mod_res$lmer
+        tukey_res_list[[response_vars[ii]]] <- mod_res$rel_comp
+        b_stat_list[[response_vars[ii]]] <- mod_res$b_stat
+        
+        ## Save residual plots
+        if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+          if(args$I == ".svg"){
+            svglite(paste0(args$Output, "/Residual_", response_vars[ii], args$I))
+            print(mod_res$residplot)
+            dev.off()
+            svglite(paste0(args$Output, "/QQ_", response_vars[ii], args$I))
+            print(mod_res$qqplot)
+            dev.off()
+          } else {
+            ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = args$Output)
+            ggsave(paste0("QQ_", response_vars[ii], args$I), plot = mod_res$qqplot, path = args$Output)
+          }
         } else {
-          ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = args$Output)
-          ggsave(paste0("QQ_", response_vars[ii], args$I), plot = mod_res$qqplot, path = args$Output)
-        }
-      } else {
-        if(args$I == ".svg"){
-          svglite(paste0(stat_dir, "/Residual_", response_vars[ii], args$I))
-          print(mod_res$residplot)
-          dev.off()
-          svglite(paste0(stat_dir, "/QQ_", response_vars[ii], args$I))
-          print(mod_res$qqplot)
-          dev.off()
-        } else {
-          ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = stat_dir)
-          ggsave(paste0("QQ_", response_vars[ii], args$I), plot = mod_res$qqplot, path = stat_dir)
+          if(args$I == ".svg"){
+            svglite(paste0(stat_dir, "/Residual_", response_vars[ii], args$I))
+            print(mod_res$residplot)
+            dev.off()
+            svglite(paste0(stat_dir, "/QQ_", response_vars[ii], args$I))
+            print(mod_res$qqplot)
+            dev.off()
+          } else {
+            ggsave(paste0("Residual_", response_vars[ii], args$I), plot = mod_res$residplot, path = stat_dir)
+            ggsave(paste0("QQ_", response_vars[ii], args$I), plot = mod_res$qqplot, path = stat_dir)
+          }
         }
       }
     }
@@ -260,37 +268,39 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           print(paste0("Running model for ", new_colname))
           
           ## Run models
-          mod_res <- stat_run(new_colname, interaction_vars, covariates, tbl0, inc_filt = TRUE)
+          mod_res <- try(stat_run(new_colname, interaction_vars, covariates, tbl0, inc_filt = TRUE))
           
           ## Save parts of output
-          mod_res_list[[new_colname]] <- mod_res$lmer
-          tukey_res_list[[new_colname]] <- mod_res$rel_comp
-          b_stat_list[[new_colname]] <- mod_res$b_stat
-          
-          ## Save residual plots
-          if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
-            if(args$I == ".svg"){
-              svglite(paste0(args$Output, "/Residual_", new_colname, args$I))
-              print(mod_res$residplot)
-              dev.off()
-              svglite(paste0(args$Output, "/QQ_", new_colname, args$I))
-              print(mod_res$qqplot)
-              dev.off()
+          if(class(mod_res) != "try-error" && !is.null(mod_res)){
+            mod_res_list[[new_colname]] <- mod_res$lmer
+            tukey_res_list[[new_colname]] <- mod_res$rel_comp
+            b_stat_list[[new_colname]] <- mod_res$b_stat
+            
+            ## Save residual plots
+            if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
+              if(args$I == ".svg"){
+                svglite(paste0(args$Output, "/Residual_", new_colname, args$I))
+                print(mod_res$residplot)
+                dev.off()
+                svglite(paste0(args$Output, "/QQ_", new_colname, args$I))
+                print(mod_res$qqplot)
+                dev.off()
+              } else {
+                ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = args$Output)
+                ggsave(paste0("QQ_", new_colname, args$I), plot = mod_res$qqplot, path = args$Output)
+              }
             } else {
-              ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = args$Output)
-              ggsave(paste0("QQ_", new_colname, args$I), plot = mod_res$qqplot, path = args$Output)
-            }
-          } else {
-            if(args$I == ".svg"){
-              svglite(paste0(stat_dir, "/Residual_", new_colname, args$I))
-              print(mod_res$residplot)
-              dev.off()
-              svglite(paste0(stat_dir, "/QQ_", new_colname, args$I))
-              print(mod_res$qqplot)
-              dev.off()
-            } else {
-              ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = stat_dir)
-              ggsave(paste0("QQ_", new_colname, args$I), plot = mod_res$qqplot, path = stat_dir)
+              if(args$I == ".svg"){
+                svglite(paste0(stat_dir, "/Residual_", new_colname, args$I))
+                print(mod_res$residplot)
+                dev.off()
+                svglite(paste0(stat_dir, "/QQ_", new_colname, args$I))
+                print(mod_res$qqplot)
+                dev.off()
+              } else {
+                ggsave(paste0("Residual_", new_colname, args$I), plot = mod_res$residplot, path = stat_dir)
+                ggsave(paste0("QQ_", new_colname, args$I), plot = mod_res$qqplot, path = stat_dir)
+              }
             }
           }
         }
