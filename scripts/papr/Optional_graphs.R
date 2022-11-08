@@ -237,11 +237,11 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
       bw_vars <- paste0(bw_vars, "_", transform_feature)
       if(transform_feature == "log10"){
         tbl0[[bw_vars]] <- log10(tbl0[[old_bw_var]])
-      } else if(transforms_resp[jj] == "log"){
+      } else if(transform_feature == "log"){
         tbl0[[bw_vars]] <- log(tbl0[[old_bw_var]])
-      } else if(transforms_resp[jj] == "sqrt"){
+      } else if(transform_feature == "sqrt"){
         tbl0[[bw_vars]] <- sqrt(tbl0[[old_bw_var]])
-      } else if(transforms_resp[jj] == "sq"){
+      } else if(transform_feature == "sq"){
         tbl0[[bw_vars]] <- (tbl0[[old_bw_var]])^2
       } else {
         next
@@ -374,11 +374,11 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
       age_vars <- paste0(age_vars, transform_feature)
       if(transform_feature == "log10"){
         tbl0[[age_vars]] <- log10(tbl0[[old_age_var]])
-      } else if(transforms_resp[jj] == "log"){
+      } else if(transform_feature == "log"){
         tbl0[[age_vars]] <- log(tbl0[[old_age_var]])
-      } else if(transforms_resp[jj] == "sqrt"){
+      } else if(transform_feature == "sqrt"){
         tbl0[[age_vars]] <- sqrt(tbl0[[old_age_var]])
-      } else if(transforms_resp[jj] == "sq"){
+      } else if(transform_feature == "sq"){
         tbl0[[age_vars]] <- (tbl0[[old_age_var]])^2
       } else {
         next
@@ -515,11 +515,11 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
       for(tt in 1:length(old_temp_var)){
         if(transform_feature == "log10"){
           tbl0[[bt_vars[tt]]] <- log10(tbl0[[old_temp_var[tt]]])
-        } else if(transforms_resp[jj] == "log"){
+        } else if(transform_feature == "log"){
           tbl0[[bt_vars[tt]]] <- log(tbl0[[old_temp_var[tt]]])
-        } else if(transforms_resp[jj] == "sqrt"){
+        } else if(transform_feature == "sqrt"){
           tbl0[[bt_vars[tt]]] <- sqrt(tbl0[[old_temp_var[tt]]])
-        } else if(transforms_resp[jj] == "sq"){
+        } else if(transform_feature == "sq"){
           tbl0[[bt_vars[tt]]] <- (tbl0[[old_temp_var[tt]]])^2
         } else {
           next
@@ -823,10 +823,10 @@ if(nrow(other_config) > 0){
       optional_box_vars <- sapply(optional_box_vars, wu_convert)
     }
 
-    if(sd(tbl0[[other_config_row$Variable]]) < 10^-9){
+    if(!is.null(tbl0[[other_config_row$Variable]]) && sd(tbl0[[other_config_row$Variable]]) < 10^-9){
       warning(paste0(other_config_row$Variable, " is a (near) 0 variance response variable; computationally infeasible model fitting."))
       next
-    } else if (any((tbl0 %>% group_by_at(optional_box_vars) %>% 
+    } else if (!is.null(tbl0[[other_config_row$Variable]]) && any((tbl0 %>% group_by_at(optional_box_vars) %>% 
                     summarize_at(other_config_row$Variable, list(sd)))[[other_config_row$Variable]] <= 10^-9)){
       warning(paste0("No variation in values of ", other_config_row$Variable, " for one or more interaction groups; are these all zero?"))
       next
