@@ -106,7 +106,7 @@ print("Loading data")
 #########################
 # Sets working directory to the chosen working directory so arguments in command line that indicate file locations are 
 # understood and found by R.
-starting_wd = getwd()
+starting_wd_new = getwd()
 setwd(args2$dir)
 
 # Find RData file.
@@ -125,6 +125,8 @@ load(renv_dir)
 
 # Remove conflicting arguments.
 args <- args2
+starting_wd <- starting_wd_new
+rm(starting_wd_new)
 rm(args2)
 
 #########################
