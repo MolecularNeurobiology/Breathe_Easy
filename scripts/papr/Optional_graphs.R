@@ -165,10 +165,11 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
 ### other_stat_dir: character string, location of optional stat output folder.
 ### dirtest: logical, whether default optional stat output folder was successfully created.
 ### xvar, pointdodge, facet1, facet2: main graphing loop variables. Used only for ordering factors as specified in the graph config file.
+### transform_feature; for feature plots, particular transform selected.
 ## Outputs:
 ### other_mod_res: statistics results used for the optional graphs.
 optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest,
-                                 xvar, pointdodge, facet1, facet2){
+                                 xvar, pointdodge, facet1, facet2, transform_feature = ""){
   
   graph_v <- c(xvar, pointdodge, facet1, facet2)
   graph_v <- graph_v[graph_v != ""]
@@ -227,6 +228,23 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
         bw_vars <- "Weight"
       } else {
         stop("No weight variables to plot.")
+      }
+    }
+    
+    # Transform check
+    if(transform_feature != ""){
+      old_bw_var <- bw_vars
+      bw_vars <- paste0(bw_vars, "_", transform_feature)
+      if(transform_feature == "log10"){
+        tbl0[[bw_vars]] <- log10(tbl0[[old_bw_var]])
+      } else if(transforms_resp[jj] == "log"){
+        tbl0[[bw_vars]] <- log(tbl0[[old_bw_var]])
+      } else if(transforms_resp[jj] == "sqrt"){
+        tbl0[[bw_vars]] <- sqrt(tbl0[[old_bw_var]])
+      } else if(transforms_resp[jj] == "sq"){
+        tbl0[[bw_vars]] <- (tbl0[[old_bw_var]])^2
+      } else {
+        next
       }
     }
     
@@ -350,6 +368,23 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
       stop("No Age variable to plot.")
     }
     
+    # Transform check
+    if(transform_feature != ""){
+      old_age_var <-age_vars
+      age_vars <- paste0(age_vars, transform_feature)
+      if(transform_feature == "log10"){
+        tbl0[[age_vars]] <- log10(tbl0[[old_age_var]])
+      } else if(transforms_resp[jj] == "log"){
+        tbl0[[age_vars]] <- log(tbl0[[old_age_var]])
+      } else if(transforms_resp[jj] == "sqrt"){
+        tbl0[[age_vars]] <- sqrt(tbl0[[old_age_var]])
+      } else if(transforms_resp[jj] == "sq"){
+        tbl0[[age_vars]] <- (tbl0[[old_age_var]])^2
+      } else {
+        next
+      }
+    }
+    
     # Set graphing variables as a vector.
     box_vars <- c(ocr2["Xvar"], ocr2["Pointdodge"], ocr2["Facet1"], ocr2["Facet2"])
     box_vars <- box_vars[box_vars != ""]
@@ -471,6 +506,25 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     
     if(length(bt_vars) == 0) {
       stop("No temperature variables to plot.")
+    }
+    
+    # Transform check
+    if(transform_feature != ""){
+      old_temp_var <- bt_vars
+      bt_vars <- paste(bt_vars, transform_feature, sep = "_")
+      for(tt in 1:length(old_temp_var)){
+        if(transform_feature == "log10"){
+          tbl0[[bt_vars[tt]]] <- log10(tbl0[[old_temp_var[tt]]])
+        } else if(transforms_resp[jj] == "log"){
+          tbl0[[bt_vars[tt]]] <- log(tbl0[[old_temp_var[tt]]])
+        } else if(transforms_resp[jj] == "sqrt"){
+          tbl0[[bt_vars[tt]]] <- sqrt(tbl0[[old_temp_var[tt]]])
+        } else if(transforms_resp[jj] == "sq"){
+          tbl0[[bt_vars[tt]]] <- (tbl0[[old_temp_var[tt]]])^2
+        } else {
+          next
+        }
+      }
     }
     
     # Set graphing variables as a vector.
@@ -835,7 +889,7 @@ if(nrow(other_config) > 0){
         trans_config_row$Variable <- new_colname
         trans_config_row$Graph <- paste0(other_config_row$Graph, "_", transforms_resp[jj])
         stat_res_optional <- try(optional_graph_maker(trans_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest,
-                                                      xvar, pointdodge, facet1, facet2))
+                                                     xvar, pointdodge, facet1, facet2, transforms_resp[jj]))
       }
       
       # Save stat results.
