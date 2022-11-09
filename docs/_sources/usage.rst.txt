@@ -2,7 +2,7 @@ Installation
 ================
 Packaged Program Install
 ---------------------------
-#. For our most recently released version, visit our `GitHub release page <https://www.GitHub.com/MolecularNeurobiology/BASSPRO-STAGG/releases>`_.
+#. For our most recently released version, visit our `GitHub release page <https://github.com/MolecularNeurobiology/Breathe_Easy/releases/tag/v0.9.1>`_.
 #. Select our most recent release.
 #. In the asset section, download the packaged zip file. 
 #. Once the file is downloaded, unzip the file.
