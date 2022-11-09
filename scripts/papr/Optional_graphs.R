@@ -1018,14 +1018,14 @@ if(sighs || apneas){
         if(transforms_resp[jj] == "log10"){
           if(any(eventtab_join[["ApneaRate"]] <= 0, na.rm=TRUE)){
             ## Most transformations require non-negative variables.
-            print("Apnea rate has exact 0 values, log10 transform will not work.")
+            print("Sigh rate has exact 0 values, log10 transform will not work.")
             next
           }
           eventtab_join[[new_colname]] <- log10(eventtab_join[["ApneaRate"]])
         } else if(transforms_resp[jj] == "log"){
           if(any(eventtab_join[["ApneaRate"]] <= 0, na.rm=TRUE)){
             ## Most transformations require non-negative variables.
-            print("Apnea rate has exact 0 values, log transform will not work.")
+            print("Sigh rate has exact 0 values, log transform will not work.")
             next
           }
           eventtab_join[[new_colname]] <- log(eventtab_join[["ApneaRate"]])
