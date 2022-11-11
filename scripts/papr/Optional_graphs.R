@@ -1063,8 +1063,6 @@ if(sighs || apneas){
       next
     }
     
-    eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii],  sd, na.rm = TRUE)
-    
     graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     
     # Stat modeling, calculated ONLY using graphing variables as independent variables.
