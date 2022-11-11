@@ -13,7 +13,7 @@ Ex. LabChart Exporting
 ===========================
 Example LabChart files (.adicht format) are provided to allow users to practice the conversion process and batch exporting of DataPad selections.
 
-1.  Download the dataset containing the LabChart files (doi: 10.5281/zenodo.7144692) from `Zenodo <https://zenodo.org/>`_.
+1.  Download the dataset containing the `LabChart files (doi: 10.5281/zenodo.7144692) from Zenodo <https://zenodo.org/record/7144692#.Y254rNNKj0o>`_. 
 2.  Follow :ref:`detailed user guide <LabChart Signal File Export>` to batch export .adicht files to .txt format.
 3.  Follow :ref:`instructions <LabChart DataPad Export>` to batch export DataPad selections from LabChart files into .txt format.
 
@@ -22,7 +22,7 @@ Ex. Automated Run
 Example .txt files (already exported to required format) are provided on our Zenodo site. Internal links in the below instructions will take
 you to pages with more detailed instructions on completing each of the steps below.
 
-1.  Download the Zenodo dataset containing the .txt formatted LabChart file exports for the vignette dataset (doi: 10.5281/zenodo.7120978) at `Zenodo's website <https://zenodo.org/>`_.
+1.  Download the Zenodo dataset containing the .txt formatted `LabChart file exports for the vignette dataset (doi: 10.5281/zenodo.7120978) at Zenodo's website <https://zenodo.org/record/7120978#.Y2545tNKj0o>`_.
 2.  :ref:`Initialize BASSPRO by selecting input files (the downloaded .txt files) and your desired output folder <Initialize: Input and Output for BASSPRO>`.
 3.  :ref:`Load the metadata <Manual Entry>` using the below provided metadata.csv file. No changes are needed, unless you want to explore options. However,
     it should be noted that any changes to the below file made within the subGUI or in the file itself will not guarantee a successful run.
@@ -122,7 +122,7 @@ Ex. Manual Run
 Example .txt files (already exported to required format) are provided on our Zenodo site. Internal links in the below instructions will take
 you to pages with more detailed instructions on completing each of the steps below. 
 
-1.  Download the dataset containing .txt formatted LabChart file exports for the vignette dataset (doi: 10.5281/zenodo.7120978) at `Zenodo's website <https://zenodo.org/>`_.
+1.  Download the dataset containing .txt formatted `LabChart file exports for the vignette dataset (doi: 10.5281/zenodo.7120978) at Zenodo's website <https://zenodo.org/record/7120978#.Y2545tNKj0o>`_.
 2.  :ref:`Initialize BASSPRO by selecting input files (the downloaded .txt files) and your desired output folder <Initialize: Input and Output for BASSPRO>`.
 3.  :ref:`Load the metadata <Manual Entry>` using the below provided metadata.csv file. No changes are needed, unless you want to explore options. However,
     it should be noted that any changes to the below file made within the subGUI or in the file itself will not guarantee a successful run.
@@ -135,7 +135,7 @@ you to pages with more detailed instructions on completing each of the steps bel
         
       .. note::
       
-         If you want to practice making the manual settings file, we have provided the DataPad exports for this dataset on `Zenodo <https://zenodo.org/>`_
+         If you want to practice making the manual settings file, we have provided the `DataPad exports for this dataset on Zenodo <https://zenodo.org/record/7120968#.Y255INNKj0o>`_. 
          (doi: 10.5281/zenodo.7120968). Use these files with a 5% CO2 experimental design to generate the manual settings provided here.
          See :ref:`full manual settings instructions <Manual Settings Configuration>` for more information.
 
