@@ -1,8 +1,8 @@
 # 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MolecularNeurobiology/BASSPRO-STAGG/blob/main/Logo_2.png"raw=true width="350">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MolecularNeurobiology/BASSPRO-STAGG/blob/main/Logo.png"raw=true width="350">
-  <img alt="Shows logo for Breathe Easy." src="https://github.com/MolecularNeurobiology/BASSPRO-STAGG/blob/main/Logo.png"raw=true width="350">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/main/Logo_2.png"raw=true width="350">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/main/Logo.png"raw=true width="350">
+  <img alt="Shows logo for Breathe Easy." src="https://github.com/MolecularNeurobiology/Breathe_Easy/main/Logo.png"raw=true width="350">
 </picture>
 
 # What is it?
