@@ -1,8 +1,8 @@
 # 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MolecularNeurobiology/BASSPRO-STAGG/blob/main/Logo_2.png"raw=true width="350">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MolecularNeurobiology/BASSPRO-STAGG/blob/main/Logo.png"raw=true width="350">
-  <img alt="Shows logo for Breathe Easy." src="https://github.com/MolecularNeurobiology/BASSPRO-STAGG/blob/main/Logo.png"raw=true width="350">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo_2.png"raw=true width="350">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo.png"raw=true width="350">
+  <img alt="Shows logo for Breathe Easy." src="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo.png"raw=true width="350">
 </picture>
 
 # What is it?
@@ -22,22 +22,22 @@ graph TD;
 # Main Features
 What does Breathe Easy breeze through?
 
-1. Analysis of [manually selected data](https://molecularneurobiology.github.io/BASSPRO-STAGG/ManualSettings.html#manual-settings-configuration) from whole body plethysmography recordings
-2. [Automated selection and analysis](https://molecularneurobiology.github.io/BASSPRO-STAGG/Autosettings.html) of calm, quiet breathing from desired sections within whole body plethysmography recordings
-4. Harnesses the graphical power of R Studio to [produce publication-ready figures](https://molecularneurobiology.github.io/BASSPRO-STAGG/STAGGsettings.html#assign-graph-roles) of all desired respiratory and metadata variables
-3. Perform [advanced statistical analyses](https://molecularneurobiology.github.io/BASSPRO-STAGG/STAGGsettings.html) on par with even the most complex experimental designs
+1. Analysis of [manually selected data](https://molecularneurobiology.github.io/Breathe_Easy/ManualSettings.html#manual-settings-configuration) from whole body plethysmography recordings
+2. [Automated selection and analysis](https://molecularneurobiology.github.io/Breathe_Easy/Autosettings.html) of calm, quiet breathing from desired sections within whole body plethysmography recordings
+4. Harnesses the graphical power of R Studio to [produce publication-ready figures](https://molecularneurobiology.github.io/Breathe_Easy/STAGGsettings.html#assign-graph-roles) of all desired respiratory and metadata variables
+3. Perform [advanced statistical analyses](https://molecularneurobiology.github.io/Breathe_Easy/STAGGsettings.html) on par with even the most complex experimental designs
 
 # Where to get it?
-Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [install page](https://molecularneurobiology.github.io/BASSPRO-STAGG/) for more information.
+Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [install page](https://molecularneurobiology.github.io/Breathe_Easy/) for more information.
 
 # Where is the manual?
-Access the full user manual for this software [here](https://molecularneurobiology.github.io/BASSPRO-STAGG/).
+Access the full user manual for this software [here](https://molecularneurobiology.github.io/Breathe_Easy/).
 
 # Where is practice data?
-Instructions for accessing, downloading, and running practice datasets can be found in the [vignette section of our user manual](https://molecularneurobiology.github.io/BASSPRO-STAGG/Vignette.html). Instructions to download the larger datasets for this example are found in the vignette instructions at the link provided. 
+Instructions for accessing, downloading, and running practice datasets can be found in the [vignette section of our user manual](https://molecularneurobiology.github.io/Breathe_Easy/Vignette.html). Instructions to download the larger datasets for this example are found in the vignette instructions at the link provided. 
 
 # Dependencies
-The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be done using instructions in the Installation section below. For a list of all python dependencies, see the requirements.txt file. For all program dependencies and applications, see the [install page](https://molecularneurobiology.github.io/BASSPRO-STAGG/usage.html).
+The prepackaged release of Breathe Easy includes all dependencies. If running from source, you will need to ensure download and installation of dependencies which can be done using instructions in the Installation section below. For a list of all python dependencies, see the requirements.txt file. For all program dependencies and applications, see the [install page](https://molecularneurobiology.github.io/Breathe_Easy/usage.html).
 
 ## Installation
 ### Install Python3
