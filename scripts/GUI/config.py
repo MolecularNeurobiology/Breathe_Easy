@@ -231,7 +231,7 @@ class Config(QDialog, Ui_Config):
         for i in range(self.loop_table.columnCount()):
             headers.append(self.loop_table.horizontalHeaderItem(i).text())
         return headers
-
+        
     def setup_variables_config(self): 
         """
         General window setup
@@ -418,14 +418,24 @@ class Config(QDialog, Ui_Config):
         transform_data = self.transform_combo.currentData()
         # If we have custom selections, fill it in
         if 'Custom' in transform_data and self.custom_data:
-            custom_data_list = [val['Transformation'] for val in self.custom_data.values()]
-            variable_table_df.loc[variable_table_df.Alias.isin(self.custom_data.keys()), ["Transformation"]] = custom_data_list
+            for key, val in self.custom_data.items():
+                idx = variable_table_df[variable_table_df['Alias'] == key].index[0]
+                variable_table_df.at[idx, 'Transformation'] = val['Transformation']
         # Otherwise, fill in for group
         else:
             all_checked = [item for item in ['raw', 'log10', 'ln', 'sqrt'] if item in transform_data]
             # Must assign each row independently b/c pandas doesnt like lists
             for idx in np.array(dependent).nonzero()[0]:
-                variable_table_df.at[idx, "Transformation"] = all_checked
+                variable_table_df.at[idx, 'Transformation'] = all_checked
+                
+            # Populate Sigh/Apnea with transformations -- see above comment on nonstandard assignment
+            feature_selection = self.feature_combo.currentText()
+            if feature_selection == 'All' or feature_selection == 'Sighs':
+                idx = variable_table_df[variable_table_df['Alias'] == 'Sigh'].index[0]
+                variable_table_df.at[idx, 'Transformation'] = all_checked
+            if feature_selection == 'All' or feature_selection == 'Apneas':
+                idx = variable_table_df[variable_table_df['Alias'] == 'Apnea'].index[0]
+                variable_table_df.at[idx, 'Transformation'] = all_checked
 
         # Default to null string ""
         variable_table_df["Transformation"] = variable_table_df["Transformation"].fillna("")
@@ -443,19 +453,22 @@ class Config(QDialog, Ui_Config):
 
         return variable_table_df
 
-    def get_all_dep_variables(self):
-        """Return list of all dependent variables"""
-        var_table_df = self.get_variable_table_df()
-        dependent_vars = var_table_df.loc[(var_table_df["Dependent"] == 1)]["Alias"]
-        return dependent_vars
-
     def edit_custom(self):
         """Show the custom settings subGUI to edit custom data."""
 
-        deps = self.get_all_dep_variables()
+        # Pull variables assigned as dependent variables
+        var_table_df = self.get_variable_table_df()
+        deps = list(var_table_df.loc[(var_table_df["Dependent"] == 1)]["Alias"].values)
+
+        # Add Apnea and Sigh if not already marked and set as feature plots
+        feature_selection = self.feature_combo.currentText()
+        if feature_selection == 'All' or feature_selection == 'Apneas':
+            deps.append('Apnea')
+        if feature_selection == 'All' or feature_selection == 'Sighs':
+            deps.append('Sigh')
 
         # Require at least 1 dependent variable assignment
-        if deps.empty:
+        if len(deps) == 0:
             notify_info(title='Choose variables', msg='Please select response variables to be modeled.')
             return
 
@@ -463,7 +476,7 @@ class Config(QDialog, Ui_Config):
         variable_df = self.get_variable_table_df()
 
         # Open Custom window
-        custom_window = Custom(variable_df, deps)
+        custom_window = Custom(variable_df, sorted(np.unique(deps)))
         reply = custom_window.exec()
 
         if reply:
@@ -489,6 +502,7 @@ class Config(QDialog, Ui_Config):
         # distribute updates to combo boxes
         for var_key, combo_box in {"Poincare plot": self.Poincare_combo}.items():
 
+            # clear Custom option if already populated
             all_options = [combo_box.itemText(i) for i in range(combo_box.count())]
             if "Custom" in all_options:
                 combo_box.removeItem(all_options.index("Custom"))
@@ -508,12 +522,8 @@ class Config(QDialog, Ui_Config):
         all_selections = [tuple(data_row['Transformation']) for data_row in custom_values]
         unique_selections = set(all_selections)
         
-        # None are selected
-        if len(all_selections) == 0:
-            self.transform_combo.loadCustom(["None"])
-
         # If the set has only one value, the selections are all the same
-        elif len(unique_selections) == 1:
+        if len(unique_selections) == 1:
             selected_options = list(unique_selections)[0]
             self.transform_combo.loadCustom(selected_options)
 
@@ -604,6 +614,7 @@ class Config(QDialog, Ui_Config):
                 self.loop_table.cellWidget(row, headers.index("Facet1")).currentText(),
                 self.loop_table.cellWidget(row, headers.index("Facet2")).currentText(),
                 self.loop_table.cellWidget(row, headers.index("Covariates")).currentData(),
+                self.loop_table.cellWidget(row, headers.index("Transformation")).currentData(),
                 self.loop_table.cellWidget(row, headers.index("Y axis minimum")).text(),
                 self.loop_table.cellWidget(row, headers.index("Y axis maximum")).text(),
                 int(self.loop_table.cellWidget(row, headers.index("Filter breaths?")).currentText() == "Yes")
@@ -629,6 +640,7 @@ class Config(QDialog, Ui_Config):
                                                 "Facet1",
                                                 "Facet2",
                                                 "Covariates",
+                                                "Transformation",
                                                 "ymin",
                                                 "ymax",
                                                 "Inclusion"])
@@ -723,13 +735,18 @@ class Config(QDialog, Ui_Config):
         covariates_checkable_combo.currentIndexChanged.connect(self.update_loop)
         self.loop_table.setCellWidget(loop_row, 6, covariates_checkable_combo)
 
-        self.loop_table.setCellWidget(loop_row, 7, QLineEdit())
+        transform_checkable_combo = CheckableComboBox()
+        transform_checkable_combo.addItems(["raw","log10","ln","sqrt"])
+        transform_checkable_combo.currentIndexChanged.connect(self.update_loop)
+        self.loop_table.setCellWidget(loop_row, 7, transform_checkable_combo)
+        
         self.loop_table.setCellWidget(loop_row, 8, QLineEdit())
+        self.loop_table.setCellWidget(loop_row, 9, QLineEdit())
 
         inclusion_combo_box = QComboBox()
         inclusion_combo_box.addItems(["No", "Yes"])
         inclusion_combo_box.currentIndexChanged.connect(self.update_loop)
-        self.loop_table.setCellWidget(loop_row, 9, inclusion_combo_box)
+        self.loop_table.setCellWidget(loop_row, 10, inclusion_combo_box)
 
         self.update_loop()
 
@@ -799,9 +816,8 @@ class Config(QDialog, Ui_Config):
         self.populate_variable_table(df)
 
         # Load custom data
-        all_custom = df[df["Dependent"] == 1].fillna("")
         custom_data = {}
-        for record in all_custom.to_dict('records'):
+        for record in df.fillna("").to_dict('records'):
             new_custom = {
                 'Variable': record['Alias'],
                 'Y axis minimum': record['ymin'],
@@ -891,7 +907,7 @@ class Config(QDialog, Ui_Config):
 
         odf = df.copy()
         odf = odf.fillna("")
-
+        
         # Reset feature comboBox
         self.feature_combo.setCurrentText("None")
         if "Apneas" in set(odf["Graph"]) and "Sighs" in set(odf["Graph"]):
@@ -924,6 +940,14 @@ class Config(QDialog, Ui_Config):
                         covariate_combo = self.loop_table.cellWidget(row_num, table_idx)
                         covariate_combo.loadCustom(covariates)
                         covariate_combo.updateText()
+                    continue
+
+                if header == "Transformation":
+                    transforms = odf.at[row_num, 'Transformation']
+                    if transforms:
+                        transform_combo = self.loop_table.cellWidget(row_num, table_idx)
+                        transform_combo.loadCustom(transforms)
+                        transform_combo.updateText()
                     continue
 
                 if header == "Filter breaths?":
@@ -1148,6 +1172,23 @@ class OtherSettings(ConfigSettings):
     def attempt_load(filepath):
         odf = pd.read_csv(filepath, index_col=False, keep_default_na=False)
         odf['Covariates'] = odf['Covariates'].str.split('@')
+
+        odf['Transformation'] = odf['Transformation'].fillna("")
+
+        new_transforms = []
+        # Clean transform values and create list
+        for i, record in odf.iterrows():
+            if record['Transformation']:
+                # Replace all 'non' with 'raw'
+                transform = [t.replace("non","raw") for t in record['Transformation'].split('@')]
+                # Replace all 'log' with 'ln', unless the text is 'log10'
+                transform = [t.replace("log","ln") if t != "log10" else t for t in transform ]
+                new_transforms.append(transform)
+            else:
+                new_transforms.append([])
+
+        odf['Transformation'] = new_transforms
+
         return odf
 
     @staticmethod
@@ -1156,7 +1197,15 @@ class OtherSettings(ConfigSettings):
 
         df = df.fillna("")
 
-        # Rename transform labels
+        # Reformat covariates string
         df['Covariates'] = df['Covariates'].str.join('@')
+
+        # Rename transformation labels
+        populated_trans = df[df["Transformation"] != ""]
+        for i, record in populated_trans.iterrows():
+            trans = record['Transformation']
+            trans = [t.replace("raw", "non") for t in trans]
+            trans = [t.replace("ln", "log") for t in trans]
+            df.at[i, 'Transformation'] = '@'.join(trans)
 
         df.to_csv(filepath, index=False)

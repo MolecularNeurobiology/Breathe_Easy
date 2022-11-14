@@ -55,6 +55,7 @@ graph_reorder <- function(graph_data_frame, plot_vars, graph_config, full_data){
           graph_data_frame[[graph_config$Alias[v_ind]]] <- factor(graph_data_frame[[graph_config$Alias[v_ind]]], levels = f_levels)
         } else {
           # If error, set categories in order of appearance in data.
+          warning(paste0("Categories in graph ordering column for ", plot_vars[mm], " do not match categories present in data."))
           graph_data_frame[[graph_config$Alias[v_ind]]] <- factor(graph_data_frame[[graph_config$Alias[v_ind]]], 
                                                         levels = unique(full_data[[graph_config$Alias[v_ind]]]))
         }

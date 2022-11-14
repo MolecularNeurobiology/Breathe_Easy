@@ -1018,14 +1018,14 @@ if(sighs || apneas){
         if(transforms_resp[jj] == "log10"){
           if(any(eventtab_join[["ApneaRate"]] <= 0, na.rm=TRUE)){
             ## Most transformations require non-negative variables.
-            print("Sigh rate has exact 0 values, log10 transform will not work.")
+            print("Apnea rate has exact 0 values, log10 transform will not work.")
             next
           }
           eventtab_join[[new_colname]] <- log10(eventtab_join[["ApneaRate"]])
         } else if(transforms_resp[jj] == "log"){
           if(any(eventtab_join[["ApneaRate"]] <= 0, na.rm=TRUE)){
             ## Most transformations require non-negative variables.
-            print("Sigh rate has exact 0 values, log transform will not work.")
+            print("Apnea rate has exact 0 values, log transform will not work.")
             next
           }
           eventtab_join[[new_colname]] <- log(eventtab_join[["ApneaRate"]])
@@ -1062,8 +1062,6 @@ if(sighs || apneas){
       warning(paste0("No variation in values of ", r_vars[ii], " for one or more interaction groups; are these all zero?"))
       next
     }
-    
-    eventtab_join %>% group_by_at(box_vars) %>% summarize_at(r_vars[ii],  sd, na.rm = TRUE)
     
     graph_file <- paste0(r_vars[ii], args$I) %>% str_replace_all(" ", "")
     

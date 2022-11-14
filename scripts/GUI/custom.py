@@ -24,6 +24,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 """
 from typing import List
+import pandas as pd
 from PyQt5.QtWidgets import QDialog, QTableWidgetItem, QCheckBox
 from PyQt5.QtCore import Qt
 from checkable_combo_box import CheckableComboBox
@@ -39,7 +40,7 @@ class Custom(QDialog, Ui_Custom):
     ---------
     data (dict): data in the GUI represented as a dictionary
     """
-    def __init__(self, custom_data: dict, dependent_vars: List[str]):
+    def __init__(self, custom_data: pd.DataFrame, dependent_vars: List[str]):
         """
         Instantiate the Custom class.
 
@@ -63,7 +64,7 @@ class Custom(QDialog, Ui_Custom):
         self.populate_table(custom_data, dependent_vars)
         self.adjustSize()
 
-    def populate_table(self, custom_data: dict, dependent_vars: List[str]):
+    def populate_table(self, custom_data: pd.DataFrame, dependent_vars: List[str]):
         """
         Populate the window with an initial set of data and a list of available variables
 
@@ -85,7 +86,7 @@ class Custom(QDialog, Ui_Custom):
         }
 
         for row, var_name in enumerate(dependent_vars):
-            vals = custom_data[custom_data.Alias == var_name]
+            vals = custom_data[custom_data['Alias'] == var_name]
             if len(vals):
                 vals = vals.to_dict('records')[0]
             else:
