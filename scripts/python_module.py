@@ -54,9 +54,12 @@ Command Line Arguments
 
 
 """
-__version__ = '36.3.4'
+__version__ = '36.3.5.r1'
 
 """
+# v36.3.5.r1 README
+    *Updated Irreg Score Calculation
+
 # v36.3.5 README
     *Updated apnea detection rules (time and fold change based)
 
@@ -1951,9 +1954,9 @@ def extract_filtered_breaths_from_candidates(
 def calculate_irreg_score(input_series):
     """
     takes a numpy compatible series and calculates an irregularity score
-    using the formula |x[n]-X[n-1]| / X[n-1]. A series of the irregularity 
-    scores will be returned.
-    First value will be zero as it has no comparison to change from.
+    using the formula |x[n]-X[n-1]| / X[n-1] * 100. 
+    A series of the irregularity scores will be returned.
+    First value will be nan as it has no comparison to change from.
 
     Parameters
     ----------
@@ -1968,14 +1971,17 @@ def calculate_irreg_score(input_series):
         
     """
     output_series = numpy.insert(
-        numpy.divide(
-            numpy.abs(
-                numpy.subtract(
-                    list(input_series[1:]), list(input_series[:-1])
+        numpy.multiply(
+            numpy.divide(
+                numpy.abs(
+                    numpy.subtract(
+                        list(input_series[1:]), list(input_series[:-1])
                     )
                 ),
             list(input_series[:-1])
-            ), 0, numpy.nan)
+            ),100
+        ), 0, numpy.nan
+    )
     return output_series
 
 
