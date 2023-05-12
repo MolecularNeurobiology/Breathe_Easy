@@ -1602,6 +1602,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             image_format = ".svg"
         elif self.jpeg_radioButton.isChecked():
             image_format = ".jpeg"
+        elif self.bmp_radioButton.isChecked():
+            image_format = ".bmp"
+        elif self.eps_radioButton.isChecked():
+            image_format = ".eps"
+        elif self.pdf_radioButton.isChecked():
+            image_format = ".pdf"
+        elif self.png_radioButton.isChecked():
+            image_format = ".png"
+        elif self.tiff_radioButton.isChecked():
+            image_format = ".tiff"
+        #else:
+        #    image_format = 'jpeg'
 
 
         ## WRITE FILES ##
