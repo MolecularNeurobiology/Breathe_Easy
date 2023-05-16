@@ -94,13 +94,15 @@ graph_reorder <- function(graph_data_frame, plot_vars, graph_config, full_data){
 ### yax_min: numeric, lower limit of y-axis range; if NA, use default setting.
 ### yax_max: numeric, upper limit of y-axis range; if NA, use default setting.
 ### ast_gen: should asterisks be plotted?; default TRUE.
+### ast_bunch: should lines be ignored if too dense?; default FALSE.
+
 ## Outputs:
 ### Saves generated plot; otherwise no return value.
 graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2, 
                        graph_data, run_data, tukey_res, inter_vars,
                        savename, other = FALSE, inc_filter = TRUE, resp_name = "", 
                        xvar_name = "", pointdodge_name = "",
-                       yax_min = NA, yax_max = NA, ast_gen = TRUE) {
+                       yax_min = NA, yax_max = NA, ast_gen = TRUE, ast_bunch = FALSE) {
   
   #Sets color palette for graphs.
   cPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
@@ -452,15 +454,24 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
             if(pointdodge != ""){
               suppressWarnings(eval(parse(text = paste0("x_lines_df <- left_join(x_lines_df, colorframe, by = c('", 
                                                         pointdodge, "' = 'val'))" ))))
-              p <- p + 
-                geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend", color = "color"), 
-                             data = x_lines_df, show.legend = FALSE,
-                             linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
+              if((!ast_bunch) || (length(unique(x_lines_df$xend)) < 3)){
+                p <- p + 
+                  geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend", color = "color"), 
+                               data = x_lines_df, show.legend = FALSE,
+                               linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
+              } else {
+                box_graph_df$astx[jj] <- "**"
+              }
             } else {
-              p <- p + 
-                geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend"), 
-                             data = x_lines_df, show.legend = FALSE,
-                             linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
+              
+              if((!ast_bunch) || (length(unique(x_lines_df$xend)) < 3)){
+                p <- p + 
+                  geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend"), 
+                               data = x_lines_df, show.legend = FALSE,
+                               linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
+              } else {
+                box_graph_df$astx[jj] <- "**"
+              }
             }
           }
         }
@@ -501,9 +512,13 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
             
             ## Draw dotted lines connecting significantly different pairs.
             suppressWarnings(eval(parse(text = paste0("pd_lines_df <- left_join(pd_lines_df, colorframe, by = c('", pointdodge, "' = 'val'))" ))))
-            p <- p + 
-              geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend", color = "color"), data = pd_lines_df, show.legend = FALSE,
-                           linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
+            if((!ast_bunch) || (length(unique(pd_lines_df$xend)) < 3)){
+              p <- p + 
+                geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend", color = "color"), data = pd_lines_df, show.legend = FALSE,
+                             linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
+            } else {
+              box_graph_df$astpd[jj] <- "**"
+            }
           }
         }
       }
@@ -604,7 +619,8 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
                      facet2, graph_df, tbl0, tukey_res_list[[response_vars[ii]]],
                      interaction_vars, graph_file, other = FALSE,  inc_filter = TRUE,
                      response_var_names[ii], xvar_wu, pointdodge_wu,
-                     yax_min = ymins[ii], yax_max = ymaxes[ii], ast_gen = TRUE))
+                     yax_min = ymins[ii], yax_max = ymaxes[ii], ast_gen = TRUE,
+                     ast_bunch = FALSE))
     }
     
     
@@ -635,7 +651,8 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           try(graph_make(new_colname, xvar, pointdodge, facet1,
                          facet2, graph_df, tbl0, tukey_res_list[[new_colname]],
                          interaction_vars, graph_file, other = FALSE, inc_filter = TRUE,
-                         response_var_names[ii], xvar_wu, pointdodge_wu, ast_gen = TRUE))
+                         response_var_names[ii], xvar_wu, pointdodge_wu, ast_gen = TRUE,
+                         ast_bunch = FALSE))
         }
         
       }
