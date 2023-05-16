@@ -166,10 +166,13 @@ stat_run_other <- function(resp_var, inter_vars, cov_vars, run_data, inc_filt = 
 ### dirtest: logical, whether default optional stat output folder was successfully created.
 ### xvar, pointdodge, facet1, facet2: main graphing loop variables. Used only for ordering factors as specified in the graph config file.
 ### transform_feature; for feature plots, particular transform selected.
+### ast_gen: should asterisks be plotted?; default TRUE.
+### ast_bunch: should lines be ignored if too dense?; default FALSE.
 ## Outputs:
 ### other_mod_res: statistics results used for the optional graphs.
 optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest,
-                                 xvar, pointdodge, facet1, facet2, transform_feature = ""){
+                                 xvar, pointdodge, facet1, facet2, transform_feature = "", 
+                                 ast_gen = TRUE, ast_bunch = FALSE){
   
   graph_v <- c(xvar, pointdodge, facet1, facet2)
   graph_v <- graph_v[graph_v != ""]
@@ -326,7 +329,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
                other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
                "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
-               ymins, ymaxes)
+               ymins, ymaxes, ast_gen, ast_bunch)
     
     ## Save residual plots
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
@@ -463,7 +466,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
                other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
                "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
-               ymins, ymaxes)
+               ymins, ymaxes, ast_gen, ast_bunch)
     
     ## Save residual plots
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
@@ -613,7 +616,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), melt_bt_graph_df, 
                bodytemp_df, other_mod_res$rel_comp, temp_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
                "Temperature", "Time", as.character(ocr2_wu["Pointdodge"]),
-               ymins, ymaxes)
+               ymins, ymaxes, ast_gen, ast_bunch)
     
     ## Save residual plots
     if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
@@ -731,7 +734,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
                  as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
                  tbl0, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
                  as.character(ocr2_wu["Resp"]), as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
-                 ymins, ymaxes)
+                 ymins, ymaxes, ast_gen, ast_bunch)
       
       ## Save residual plots
       if(exists("dirtest") && ((class(dirtest) == "try-error") || !dirtest)){
@@ -832,9 +835,9 @@ if(nrow(other_config) > 0){
       next
     }
     
-    # Try to run stats, make optional graphs/
+    # Try to run stats, make optional graphs
     stat_res_optional <- try(optional_graph_maker(other_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest,
-                                                  xvar, pointdodge, facet1, facet2))
+                                                  xvar, pointdodge, facet1, facet2, ast_gen = TRUE, ast_bunch = FALSE))
     # Save stat results.
     if(class(stat_res_optional) != "try-error" && !is.null(stat_res_optional)){
       other_mod_res_list[[other_config_row$Graph]] <- stat_res_optional$lmer
@@ -889,7 +892,8 @@ if(nrow(other_config) > 0){
         trans_config_row$Variable <- new_colname
         trans_config_row$Graph <- paste0(other_config_row$Graph, "_", transforms_resp[jj])
         stat_res_optional <- try(optional_graph_maker(trans_config_row, tbl0, var_names, graph_vars, other_stat_dir, dirtest,
-                                                     xvar, pointdodge, facet1, facet2, transforms_resp[jj]))
+                                                     xvar, pointdodge, facet1, facet2, transforms_resp[jj], 
+                                                     ast_gen = TRUE, ast_bunch = FALSE))
       }
       
       # Save stat results.
@@ -1082,7 +1086,8 @@ if(sighs || apneas){
     # Make graph + save
     sa_test <- try(graph_make(r_vars[ii], xvar, pointdodge, facet1, facet2, eventtab_join_graph, 
                               eventtab_join, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE,  
-                              inc_filter = FALSE, r_vars_wu[ii], xvar_wu, pointdodge_wu))
+                              inc_filter = FALSE, r_vars_wu[ii], xvar_wu, pointdodge_wu, 
+                              ast_gen = TRUE, ast_bunch = FALSE))
     
     if(class(sa_test) == "try-error"){
       print(paste0('Failed to make plots for ', r_vars[ii]))
