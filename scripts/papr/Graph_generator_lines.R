@@ -583,6 +583,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   } else {
     box_graph_df$asty2 <- box_graph_df$ymax
     box_graph_df$ymin.y <- box_graph_df$ymin
+    box_graph_df$ymax.y <- box_graph_df$ymax
   }
   # Add plot labels.
   p <- p + labs(x = xvar_name, y = resp_name, fill = pointdodge_name)
