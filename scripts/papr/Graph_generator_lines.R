@@ -232,7 +232,6 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                size = 5.5, pch = 21, stroke = 1, fill = NA) + 
     geom_errorbar(aes(x = linex, ymin = mid + sds, ymax = mid - sds), data = b_stat_data,
                   alpha = 0.5) 
-  
   if(ast_gen){
     # Find locations for statistical significance indicator features on graph.
     ## Plotting locations for each pointdodge category.
