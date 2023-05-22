@@ -301,9 +301,11 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     # x_line_df$asty2 <- x_line_df$yline2 + x_line_df$y2 * 1.5
     
     ## Draw line separating statistical significance indicators from data portion of plot.
-    p <- p +
-      geom_segment(aes(x = xmin, xend = xmax, y = yline2, yend = yline2), data = x_line_df,
-                   color = "grey") 
+    if(xvar != ""){
+      p <- p +
+        geom_segment(aes(x = xmin, xend = xmax, y = yline2, yend = yline2), data = x_line_df,
+                     color = "grey") 
+    }
     
     # Finds whether or not there is at least one statistically significant difference between biologically relevant comparisons
     # involving each category of pointdodge and xvar. 
@@ -311,7 +313,9 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     if(length(pd_line_vars) > 0){
       box_graph_df <- left_join(box_graph_df, pd_line_graph_df, by = pd_line_vars)
     } else {
-      box_graph_df <- dplyr::bind_cols(box_graph_df, pd_line_graph_df %>% slice(rep(1:n(), each = nrow(box_graph_df))))
+      pd_line_l_df <- pd_line_graph_df
+      colnames(pd_line_l_df) <- c("ymin.y", "ymax.y", "sdmax", "sdmin", "xmin.y", "xmax.y", "yline", "asty")
+      box_graph_df <- dplyr::bind_cols(box_graph_df, pd_line_l_df %>% slice(rep(1:n(), each = nrow(box_graph_df))))
       box_graph_df$xmin.x <- box_graph_df$xmin
       box_graph_df$xmax.x <- box_graph_df$xmax
     }
@@ -349,7 +353,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     ### Out of the interaction variables in the stat modeling, which correspond to xvar and pointdodge?
     xvar_ind <- which(inter_vars == xvar)
     pd_ind <- which(inter_vars == pointdodge)
-    
+    print(box_graph_df)
     ####################################
     # Loop for determining if and where statistical significance indicators should be drawn.
     ## Currently, statistical significance indicators are drawn if there is at least one pairwise comparison with p < 0.05.
@@ -560,6 +564,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     # Add asterisks on plot as required.
     if(pointdodge != "") {
       ## Pointdodge asterisks
+      print(box_graph_df)
       p <- p +
         geom_text(aes_string(x = "linex", y = "asty", label = "astpd", color = "color"),
                   data = box_graph_df, size = 8, show.legend = FALSE) + 
@@ -599,10 +604,18 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   if(!(is.na(yax_min)) && !(is.na(yax_max)) && !(is.null(yax_min)) && !(is.null(yax_max))) {
     p <- p + scale_y_continuous(limits = c(yax_min, yax_max), expand = expansion(mult = c(0, 0)))
   } else {
-    p <- p + scale_y_continuous(limits = c(min(c(box_graph_df$ymin.y, box_graph_df$mid - box_graph_df$sds)), 
-                                           max(c(box_graph_df$asty2[which(box_graph_df$astx != "")], box_graph_df$mid + box_graph_df$sds)) + 
-                                             (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.05), 
-                                expand = expansion(mult = c(0.035, 0.035)))
+    if(xvar != ""){
+      p <- p + scale_y_continuous(limits = c(min(c(box_graph_df$ymin.y, box_graph_df$mid - box_graph_df$sds)), 
+                                             max(c(box_graph_df$asty2[which(box_graph_df$astx != "")], box_graph_df$mid + box_graph_df$sds)) + 
+                                               (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.05), 
+                                  expand = expansion(mult = c(0.035, 0.035)))
+    } else {
+      p <- p + scale_y_continuous(limits = c(min(c(box_graph_df$ymin.y, box_graph_df$mid - box_graph_df$sds)), 
+                                             max(c(box_graph_df$asty[which(box_graph_df$astpd != "")], box_graph_df$mid + box_graph_df$sds)) + 
+                                               (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.05), 
+                                  expand = expansion(mult = c(0.035, 0.035)))
+    }
+
   }
   
   # Saves graphs to designated folder from user selections in GUI.
