@@ -353,7 +353,6 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     ### Out of the interaction variables in the stat modeling, which correspond to xvar and pointdodge?
     xvar_ind <- which(inter_vars == xvar)
     pd_ind <- which(inter_vars == pointdodge)
-    print(box_graph_df)
     ####################################
     # Loop for determining if and where statistical significance indicators should be drawn.
     ## Currently, statistical significance indicators are drawn if there is at least one pairwise comparison with p < 0.05.
@@ -538,7 +537,6 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                                       yend = box_graph_df$asty[jj])
             pd_var_names <- box_graph_df[jj, box_vars, drop = FALSE] %>% slice(rep(1:n(), each = length(pd_lines)))
             pd_lines_df <- dplyr::bind_cols(pd_lines_df, pd_var_names)
-            # print(pd_lines_df[which(pd_lines_df$xend > pd_lines_df$x), ])
             ## Draw dotted lines connecting significantly different pairs.
             suppressWarnings(eval(parse(text = paste0("pd_lines_df <- left_join(pd_lines_df, colorframe, by = c('", pointdodge, "' = 'val'))" ))))
             pd_lines_df2 <- pd_lines_df[which(pd_lines_df$xend > pd_lines_df$x), ]
@@ -564,7 +562,6 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     # Add asterisks on plot as required.
     if(pointdodge != "") {
       ## Pointdodge asterisks
-      print(box_graph_df)
       p <- p +
         geom_text(aes_string(x = "linex", y = "asty", label = "astpd", color = "color"),
                   data = box_graph_df, size = 8, show.legend = FALSE) + 
