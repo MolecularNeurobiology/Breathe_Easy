@@ -146,7 +146,6 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
       as.numeric(graph_data[[pointdodge_g2]])]
   graph_data$xmin <- as.numeric(graph_data[[xvar_g]]) - 0.5
   graph_data$xmax <- as.numeric(graph_data[[xvar_g]]) + 0.5
-  
   # Arrange graph_df for drawing line segments
   graph_data <- graph_data %>%
     dplyr::arrange(linex)
@@ -233,7 +232,6 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                size = 5.5, pch = 21, stroke = 1, fill = NA) + 
     geom_errorbar(aes(x = linex, ymin = mid + sds, ymax = mid - sds), data = b_stat_data,
                   alpha = 0.5) 
-  
   if(ast_gen){
     # Find locations for statistical significance indicator features on graph.
     ## Plotting locations for each pointdodge category.
@@ -265,8 +263,13 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     pd_line_graph_df$yline <- pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) + 
       max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 0.08
     ### Asterisk
-    pd_line_graph_df$asty <- pd_line_graph_df$yline +  
-      max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 0.05 
+    if (pointdodge == ""){
+      pd_line_graph_df$asty <- pd_line_graph_df$yline 
+    } else {
+      pd_line_graph_df$asty <- pd_line_graph_df$yline +  
+        max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
+        (0.06 * length(unique(box_graph_df[[pointdodge]])))
+    }
     
     ## Draw line separating statistical significance indicators from data portion of plot.
     p <- p +
@@ -293,14 +296,16 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     }
     ## Calculate where seperator lines and asterisks should go on y-axis for each xvar category.
     ### Line
-    x_line_df$yline2 <- x_line_df$y1 + x_line_df$y2 * 2
+    x_line_df$yline2 <- x_line_df$y1 + x_line_df$y2
     ### Asterisk
-    x_line_df$asty2 <- x_line_df$yline2 + x_line_df$y2 * 1.5
+    # x_line_df$asty2 <- x_line_df$yline2 + x_line_df$y2 * 1.5
     
     ## Draw line separating statistical significance indicators from data portion of plot.
-    p <- p +
-      geom_segment(aes(x = xmin, xend = xmax, y = yline2, yend = yline2), data = x_line_df,
-                   color = "grey") 
+    if(xvar != ""){
+      p <- p +
+        geom_segment(aes(x = xmin, xend = xmax, y = yline2, yend = yline2), data = x_line_df,
+                     color = "grey") 
+    }
     
     # Finds whether or not there is at least one statistically significant difference between biologically relevant comparisons
     # involving each category of pointdodge and xvar. 
@@ -308,17 +313,33 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     if(length(pd_line_vars) > 0){
       box_graph_df <- left_join(box_graph_df, pd_line_graph_df, by = pd_line_vars)
     } else {
-      box_graph_df <- dplyr::bind_cols(box_graph_df, pd_line_graph_df %>% slice(rep(1:n(), each = nrow(box_graph_df))))
+      pd_line_l_df <- pd_line_graph_df
+      colnames(pd_line_l_df) <- c("ymin.y", "ymax.y", "sdmax", "sdmin", "xmin.y", "xmax.y", "yline", "asty")
+      box_graph_df <- dplyr::bind_cols(box_graph_df, pd_line_l_df %>% slice(rep(1:n(), each = nrow(box_graph_df))))
+      box_graph_df$xmin.x <- box_graph_df$xmin
+      box_graph_df$xmax.x <- box_graph_df$xmax
     }
-    
     ## Set where lines and asterisks should go on x-axis for each xvar category.
     if(length(facet_vars) > 0){
       box_graph_df <- left_join(box_graph_df, x_line_df, by = facet_vars)
     } else {
       box_graph_df$yline2 <- x_line_df$yline2
-      box_graph_df$asty2 <- x_line_df$asty2
+      # box_graph_df$asty2 <- x_line_df$asty2
     }
     
+    if (pointdodge != ""){
+      box_graph_df$asty <- box_graph_df$yline +  
+        max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
+        (0.06 * ((((0:(nrow(box_graph_df) - 1)) %% length(unique(box_graph_df[[pointdodge]])))) + 1))
+    } else {
+      box_graph_df$asty <- box_graph_df$yline
+    }
+    
+    box_graph_df$asty2 <- box_graph_df$yline2 + 
+      max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
+      (0.08 * (1:(nrow(box_graph_df))))
+      
+
     # Ensures that the color of each asterisk is correct by force.
     if(pointdodge != ""){
       colorframe <- data.frame(val = levels(box_graph_df[[pointdodge]]), color = cPalette[1:nlevels(box_graph_df[[pointdodge]])])
@@ -332,7 +353,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     ### Out of the interaction variables in the stat modeling, which correspond to xvar and pointdodge?
     xvar_ind <- which(inter_vars == xvar)
     pd_ind <- which(inter_vars == pointdodge)
-    
+    print(box_graph_df)
     ####################################
     # Loop for determining if and where statistical significance indicators should be drawn.
     ## Currently, statistical significance indicators are drawn if there is at least one pairwise comparison with p < 0.05.
@@ -424,7 +445,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
       
       # For particular row in the graphing data, find all of the pairwise comparison tests that involve 
       ## the specific category of the x-axis variable.
-      if(length(xvar_ind) == 1) {
+      if((length(xvar_ind) == 1)) {
+      # if((length(xvar_ind) == 1) && (box_graph_df$xmax[jj] - box_graph_df$linex[jj] > 1)) {
         relevant_x_rows <- (unlist(lapply(comp_rows, relevant_row_find, comp_ind = xvar_ind, 
                                           curr_ind = jj, sum_df = box_graph_df, comp_var = xvar, 
                                           match_var_names = box_vars)))
@@ -437,40 +459,48 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
           if(length(ast_x_rows) != 0) {
             # If at least one statistically significant test, add asterisk on plot
             ## Will appear on top of category.
-            box_graph_df$astx[jj] <- "*"
             # Find the rows in graphing data that are associated with significant differences vs. the current row.
             x_lines <- lapply(comp_rows[ast_x_rows], match_row_find, curr_ind = jj, sum_df = box_graph_df,
                               match_var_names = box_vars)
             # Find where dotted lines connecting statistically significantly differrent categories should go.
             ## Will connect the asterisk corresponding to current graphing data frame row
             ## to the seperator line, above the categories that it is statistically significantly different from.
-            x_lines_df <- data.frame(x = box_graph_df$linex[unlist(lapply(x_lines, "[[", 1))], 
-                                     y = box_graph_df$asty2[unlist(lapply(x_lines, "[[", 1))], 
+            x_lines_df <- data.frame(x = box_graph_df$linex[jj], 
+                                     y = box_graph_df$asty2[jj], 
                                      xend = box_graph_df$linex[unlist(lapply(x_lines, "[[", 2))], 
-                                     yend = box_graph_df$yline2[unlist(lapply(x_lines, "[[", 2))])
+                                     yend = box_graph_df$asty2[jj])
             x_var_names <- box_graph_df[jj, box_vars, drop = FALSE] %>% slice(rep(1:n(), each = length(x_lines)))
             x_lines_df <- dplyr::bind_cols(x_lines_df, x_var_names)
             ## Draw dotted lines connecting significantly different pairs.
             if(pointdodge != ""){
               suppressWarnings(eval(parse(text = paste0("x_lines_df <- left_join(x_lines_df, colorframe, by = c('", 
                                                         pointdodge, "' = 'val'))" ))))
-              if((!ast_bunch) || (length(unique(x_lines_df$xend)) < 3)){
-                p <- p + 
-                  geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend", color = "color"), 
-                               data = x_lines_df, show.legend = FALSE,
-                               linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
-              } else {
-                box_graph_df$astx[jj] <- "**"
+              x_lines_df2 <- x_lines_df[which(x_lines_df$xend > x_lines_df$x), ]
+              if(nrow(x_lines_df2) > 0){
+                box_graph_df$astx[jj] <- "*"
+                if(TRUE){
+                  p <- p + 
+                    geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend", color = "color"), 
+                                  data = x_lines_df2, show.legend = FALSE, 
+                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.04, 
+                                  linewidth = 0.5, alpha = 0.7)
+                } else {
+                  box_graph_df$astx[jj] <- "**"
+                }
               }
             } else {
-              
-              if((!ast_bunch) || (length(unique(x_lines_df$xend)) < 3)){
-                p <- p + 
-                  geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend"), 
-                               data = x_lines_df, show.legend = FALSE,
-                               linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
-              } else {
-                box_graph_df$astx[jj] <- "**"
+              x_lines_df2 <- x_lines_df[which(x_lines_df$xend > x_lines_df$x), ]
+              if(nrow(x_lines_df2) > 0){
+                box_graph_df$astx[jj] <- "*"
+                if(TRUE){
+                  p <- p + 
+                    geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend"), 
+                                  data = x_lines_df, show.legend = FALSE, 
+                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.04, 
+                                  linewidth = 0.5, alpha = 0.7)
+                } else {
+                  box_graph_df$astx[jj] <- "**"
+                }
               }
             }
           }
@@ -496,28 +526,32 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
           if(length(ast_pd_rows) != 0){
             # If at least one statistically significant test, add asterisk on plot
             ## Will appear on top of category.
-            box_graph_df$astpd[jj] <- "*"
             # Find the rows in graphing data that are associated with significant differences vs. the current row.
             pd_lines <- lapply(comp_rows[ast_pd_rows], match_row_find, curr_ind = jj, sum_df = box_graph_df,
                                match_var_names = box_vars)
             # Find where dotted lines connecting statistically significantly differrent categories should go.
             ## Output will connect the asterisk corresponding to current graphing data frame row
             ## to the seperator line, above the categories that it is statistically significantly different from.
-            pd_lines_df <- data.frame(x = box_graph_df$linex[unlist(lapply(pd_lines, "[[", 1))], 
-                                      y = box_graph_df$asty[unlist(lapply(pd_lines, "[[", 1))], 
+            pd_lines_df <- data.frame(x = box_graph_df$linex[jj], 
+                                      y = box_graph_df$asty[jj], 
                                       xend = box_graph_df$linex[unlist(lapply(pd_lines, "[[", 2))], 
-                                      yend = box_graph_df$yline[unlist(lapply(pd_lines, "[[", 2))])
+                                      yend = box_graph_df$asty[jj])
             pd_var_names <- box_graph_df[jj, box_vars, drop = FALSE] %>% slice(rep(1:n(), each = length(pd_lines)))
             pd_lines_df <- dplyr::bind_cols(pd_lines_df, pd_var_names)
-            
+            # print(pd_lines_df[which(pd_lines_df$xend > pd_lines_df$x), ])
             ## Draw dotted lines connecting significantly different pairs.
             suppressWarnings(eval(parse(text = paste0("pd_lines_df <- left_join(pd_lines_df, colorframe, by = c('", pointdodge, "' = 'val'))" ))))
-            if((!ast_bunch) || (length(unique(pd_lines_df$xend)) < 3)){
-              p <- p + 
-                geom_segment(aes_string(x = "x", y = "y", xend = "xend", yend = "yend", color = "color"), data = pd_lines_df, show.legend = FALSE,
-                             linewidth = 0.5, alpha = 0.6, linetype = 'dotted')
-            } else {
-              box_graph_df$astpd[jj] <- "**"
+            pd_lines_df2 <- pd_lines_df[which(pd_lines_df$xend > pd_lines_df$x), ]
+            if(nrow(pd_lines_df2) > 0){
+              box_graph_df$astpd[jj] <- "*"
+              if(TRUE){
+                p <- p + geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend", color = "color"), 
+                                       data = pd_lines_df2, show.legend = FALSE, 
+                                       width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.04, 
+                                       linewidth = 0.5, alpha = 0.7)
+              } else {
+                box_graph_df$astpd[jj] <- "**"
+              }
             }
           }
         }
@@ -530,36 +564,38 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     # Add asterisks on plot as required.
     if(pointdodge != "") {
       ## Pointdodge asterisks
+      print(box_graph_df)
       p <- p +
         geom_text(aes_string(x = "linex", y = "asty", label = "astpd", color = "color"),
-                  data = box_graph_df, size = 5, show.legend = FALSE) + 
+                  data = box_graph_df, size = 8, show.legend = FALSE) + 
         scale_color_identity()
       
       ## xvar asterisks
       if(length(facet_vars) > 0){
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx", color = "color"),
-                           data = box_graph_df, size = 10, show.legend = FALSE) 
+                           data = box_graph_df, size = 8, show.legend = FALSE) 
       } else {
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx", color = "color"),
-                           data = box_graph_df, size = 10, show.legend = FALSE) 
+                           data = box_graph_df, size = 8, show.legend = FALSE) 
       }
     } else {
       ## Pointdodge asterisks
       p <- p +
         geom_text(aes_string(x = "linex", y = "asty", label = "astpd"),
-                  data = box_graph_df, size = 5, show.legend = FALSE) 
+                  data = box_graph_df, size = 8, show.legend = FALSE)
       ## xvar asterisks
       if(length(facet_vars) > 0){
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx"),
-                           data = box_graph_df, size = 10, show.legend = FALSE) 
+                           data = box_graph_df, size = 8, show.legend = FALSE) 
       } else {
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx"),
-                           data = box_graph_df, size = 10, show.legend = FALSE) 
+                           data = box_graph_df, size = 8, show.legend = FALSE) 
       }
     }
   } else {
     box_graph_df$asty2 <- box_graph_df$ymax
     box_graph_df$ymin.y <- box_graph_df$ymin
+    box_graph_df$ymax.y <- box_graph_df$ymax
   }
   # Add plot labels.
   p <- p + labs(x = xvar_name, y = resp_name, fill = pointdodge_name)
@@ -568,9 +604,18 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   if(!(is.na(yax_min)) && !(is.na(yax_max)) && !(is.null(yax_min)) && !(is.null(yax_max))) {
     p <- p + scale_y_continuous(limits = c(yax_min, yax_max), expand = expansion(mult = c(0, 0)))
   } else {
-    p <- p + scale_y_continuous(limits = c(min(c(box_graph_df$ymin.y, box_graph_df$mid - box_graph_df$sds)), 
-                                           max(c(box_graph_df$asty2, box_graph_df$mid + box_graph_df$sds))), 
-                                expand = expansion(mult = c(0.035, 0.07)))
+    if(xvar != ""){
+      p <- p + scale_y_continuous(limits = c(min(c(box_graph_df$ymin.y, box_graph_df$mid - box_graph_df$sds)), 
+                                             max(c(box_graph_df$asty2[which(box_graph_df$astx != "")], box_graph_df$mid + box_graph_df$sds)) + 
+                                               (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.05), 
+                                  expand = expansion(mult = c(0.035, 0.035)))
+    } else {
+      p <- p + scale_y_continuous(limits = c(min(c(box_graph_df$ymin.y, box_graph_df$mid - box_graph_df$sds)), 
+                                             max(c(box_graph_df$asty[which(box_graph_df$astpd != "")], box_graph_df$mid + box_graph_df$sds)) + 
+                                               (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.05), 
+                                  expand = expansion(mult = c(0.035, 0.035)))
+    }
+
   }
   
   # Saves graphs to designated folder from user selections in GUI.
