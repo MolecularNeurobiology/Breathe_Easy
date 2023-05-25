@@ -284,13 +284,13 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     if(length(facet_vars) > 0){
       x_line_df <- pd_line_graph_df %>%
         group_by_at(facet_vars) %>%
-        dplyr::summarise(y1 = max(asty), y2 = max(asty - yline),
+        dplyr::summarise(y1 = max(asty), y2 = max(diff(asty)) * 2,
                          xmin = min(xmin),
                          xmax = max(xmax))
     } else {
       x_line_df <- pd_line_graph_df %>%
         ungroup() %>%
-        dplyr::summarise(y1 = max(asty), y2 = max(asty - yline),
+        dplyr::summarise(y1 = max(asty), y2 = max(diff(asty)) * 2,
                          xmin = min(xmin),
                          xmax = max(xmax))
     }
