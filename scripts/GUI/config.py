@@ -255,15 +255,15 @@ class Config(QDialog, Ui_Config):
         for combo in self.graph_config_combos.values():
             combo.currentIndexChanged.connect(self.update_graph_config)
             
-        self.graph_config_show_stats = {
-            "Xvar":self.Xvar_showstats,    
-            "Pointdodge":self.Pointdodge_showstats,
-            "Facet1":self.Facet1_showstats,
-            "Facet2":self.Facet2_showstats
-        }
+        # self.graph_config_show_stats = {
+        #     "Xvar":self.Xvar_showstats,    
+        #     "Pointdodge":self.Pointdodge_showstats,
+        #     "Facet1":self.Facet1_showstats,
+        #     "Facet2":self.Facet2_showstats
+        # }
 
-        for combo in self.graph_config_show_stats.values():
-            combo.currentIndexChanged.connect(self.update_graph_config)
+        # for combo in self.graph_config_show_stats.values():
+        #     combo.currentIndexChanged.connect(self.update_graph_config)
 
         help_buttons = [self.help_xvar,
                         self.help_pointdodge,
@@ -591,12 +591,15 @@ class Config(QDialog, Ui_Config):
                 selected_var = var_df[var_df['Alias'] == alias].iloc[0]['Column']
                 # Get all the values for that variable
                 selected_values = self.col_vals_variable.get(selected_var, [])
-            show_stats = self.graph_config_show_stats[key].currentText()
+            # show_stats = self.graph_config_show_stats[key].currentText()
             
-            data.append((role, alias, selected_values,show_stats))
+            # data.append((role, alias, selected_values,show_stats))
+            data.append((role, alias, selected_values))
 
+        # graph_config_df = pd.DataFrame(data=data,
+        #                                columns=['Role', 'Alias', 'Order','Show_Stats'])
         graph_config_df = pd.DataFrame(data=data,
-                                       columns=['Role', 'Alias', 'Order','Show_Stats'])
+                                        columns=['Role', 'Alias', 'Order'])
         return graph_config_df
 
     @graph_config_df.setter
@@ -914,15 +917,15 @@ class Config(QDialog, Ui_Config):
                 if len(curr_selection):
                     combo.setCurrentText(curr_selection["Alias"].values[0])
             combo.blockSignals(False)
-            self.graph_config_show_stats[key].blockSignals(True)
-            try:
-                self.graph_config_show_stats[key].setCurrentText(
-                    gdf.loc[gdf['Role'] == combo_role]['Show_Stats'].values[0]
-                )
-            except:
-                # permissive in the event an old stat template was used                                                                                                    
-                self.graph_config_show_stats[key].setCurrentText('Show ALL Stats')
-            self.graph_config_show_stats[key].blockSignals(False)
+            # self.graph_config_show_stats[key].blockSignals(True)
+            # try:
+            #     self.graph_config_show_stats[key].setCurrentText(
+            #         gdf.loc[gdf['Role'] == combo_role]['Show_Stats'].values[0]
+            #     )
+            # except:
+            #     # permissive in the event an old stat template was used                                                                                                    
+            #     self.graph_config_show_stats[key].setCurrentText('Show ALL Stats')
+            # self.graph_config_show_stats[key].blockSignals(False)
             
 
     def load_other_config(self, df):
