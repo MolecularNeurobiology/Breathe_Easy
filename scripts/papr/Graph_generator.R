@@ -162,7 +162,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   y_height <- max(dev.size("cm")[2], max(length(unique(graph_data[[facet2_g]])), 1) * 7.5 + 10)
   
   # Set text label base size
-  base_pt <- 12 * sqrt(y_height / 17.5)
+  base_pt <- 14 * sqrt(y_height / 17.5)
   
   # Initialize plot
   p <- ggplot() +
