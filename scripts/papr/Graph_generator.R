@@ -284,19 +284,20 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     if(length(facet_vars) > 0){
       x_line_df <- pd_line_graph_df %>%
         group_by_at(facet_vars) %>%
-        dplyr::summarise(y1 = max(asty), y2 = max(diff(asty)) * 2,
+        dplyr::summarise(y1 = max(asty), y2 = max(asty - yline),
                          xmin = min(xmin),
                          xmax = max(xmax))
     } else {
       x_line_df <- pd_line_graph_df %>%
         ungroup() %>%
-        dplyr::summarise(y1 = max(asty), y2 = max(diff(asty)) * 2,
+        dplyr::summarise(y1 = max(asty), y2 = max(asty - yline),
                          xmin = min(xmin),
                          xmax = max(xmax))
     }
     ## Calculate where seperator lines and asterisks should go on y-axis for each xvar category.
     ### Line
-    x_line_df$yline2 <- x_line_df$y1 + x_line_df$y2
+    x_line_df$yline2 <- x_line_df$y1 + + 
+      max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 0.08
     ### Asterisk
     # x_line_df$asty2 <- x_line_df$yline2 + x_line_df$y2 * 1.5
     
