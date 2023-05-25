@@ -465,7 +465,7 @@ optional_graph_maker <- function(other_config_row, tbl0, var_names, graph_vars, 
     graph_make(age_vars, as.character(ocr2["Xvar"]), as.character(ocr2["Pointdodge"]), 
                as.character(ocr2["Facet1"]), as.character(ocr2["Facet2"]), other_graph_df, 
                other_df, other_mod_res$rel_comp, box_vars, graph_file, other = TRUE, inc_filter = inclusion_filter,
-               "Weight", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
+               "Age", as.character(ocr2_wu["Xvar"]), as.character(ocr2_wu["Pointdodge"]),
                ymins, ymaxes, ast_gen, ast_bunch)
     
     ## Save residual plots
