@@ -571,29 +571,29 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
       ## Pointdodge asterisks
       p <- p +
         geom_text(aes_string(x = "linex", y = "asty", label = "astpd", color = "color"),
-                  data = box_graph_df, size = 8, show.legend = FALSE) + 
+                  data = box_graph_df, size = 6, show.legend = FALSE) + 
         scale_color_identity()
       
       ## xvar asterisks
       if(length(facet_vars) > 0){
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx", color = "color"),
-                           data = box_graph_df, size = 8, show.legend = FALSE) 
+                           data = box_graph_df, size = 6, show.legend = FALSE) 
       } else {
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx", color = "color"),
-                           data = box_graph_df, size = 8, show.legend = FALSE) 
+                           data = box_graph_df, size = 6, show.legend = FALSE) 
       }
     } else {
       ## Pointdodge asterisks
       p <- p +
         geom_text(aes_string(x = "linex", y = "asty", label = "astpd"),
-                  data = box_graph_df, size = 8, show.legend = FALSE)
+                  data = box_graph_df, size = 6, show.legend = FALSE)
       ## xvar asterisks
       if(length(facet_vars) > 0){
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx"),
-                           data = box_graph_df, size = 8, show.legend = FALSE) 
+                           data = box_graph_df, size = 6, show.legend = FALSE) 
       } else {
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx"),
-                           data = box_graph_df, size = 8, show.legend = FALSE) 
+                           data = box_graph_df, size = 6, show.legend = FALSE) 
       }
     }
   } else {
