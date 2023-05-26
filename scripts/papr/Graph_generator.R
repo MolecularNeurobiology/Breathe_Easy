@@ -330,7 +330,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     if (pointdodge != ""){
       box_graph_df$asty <- box_graph_df$yline +
         rep(rep(max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
-                  (0.05 * c(1:length(unique(box_graph_df[[pointdodge]])))), each = max(length(unique(graph_data[[facet1]])), 1) * 
+                  (0.05 * c(1:max(length(unique(box_graph_df[[pointdodge]])), 1))), each = max(length(unique(graph_data[[facet1]])), 1) * 
                   max(length(unique(graph_data[[facet2]])), 1)), times = max(length(unique(graph_data[[xvar]])), 1))
     } else {
       box_graph_df$asty <- box_graph_df$yline
@@ -338,7 +338,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     
     box_graph_df$asty2 <- box_graph_df$yline2 + 
       rep(max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
-            (0.05 * c(1:(length(unique(box_graph_df[[xvar]])) * max(length(unique(graph_data[[pointdodge]])), 1)))), 
+            (0.05 * c(1:(max(length(unique(box_graph_df[[xvar]])), 1) * max(length(unique(graph_data[[pointdodge]])), 1)))), 
           each = max(length(unique(graph_data[[facet1]])), 1) * max(length(unique(graph_data[[facet2]])), 1))
     
     
@@ -487,7 +487,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                   p <- p + 
                     geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend", color = "color"), 
                                   data = x_lines_df2, show.legend = FALSE, 
-                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.04, 
+                                  width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.03, 
                                   linewidth = 0.25, alpha = 1)
                 } else {
                   box_graph_df$astx[jj] <- "**"
@@ -503,7 +503,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                   p <- p + 
                     geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend"), 
                                   data = x_lines_df, show.legend = FALSE, 
-                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.04, 
+                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.03, 
                                   linewidth = 0.25, alpha = 1)
                 } else {
                   box_graph_df$astx[jj] <- "**"
@@ -553,7 +553,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
               if(TRUE){
                 p <- p + geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend", color = "color"), 
                                        data = pd_lines_df2, show.legend = FALSE, 
-                                       width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.04, 
+                                       width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.03, 
                                        linewidth = 0.25, alpha = 1)
               } else {
                 box_graph_df$astpd[jj] <- "**"
