@@ -148,7 +148,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   graph_data$xmax <- as.numeric(graph_data[[xvar_g]]) + 0.5
   
   # If too many potential lines, only draw asterisks on same level.
-  if((nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]]) >= 10){
+  if((nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]]) >= 30){
     ast_bunch <- TRUE
   }
     
@@ -503,8 +503,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                                   width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.02, 
                                   linewidth = 0.25, alpha = 1)
                 } else {
-                  box_graph_df$astx[jj] <- "**"
-                  box_graph_df$astx[unlist(lapply(x_lines, "[[", 2))] <- "**"
+                  box_graph_df$astx[jj] <- "*"
+                  box_graph_df$astx[unlist(lapply(x_lines, "[[", 2))] <- "*"
                 }
               }
             } else {
@@ -520,8 +520,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                                   width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.02, 
                                   linewidth = 0.25, alpha = 1)
                 } else {
-                  box_graph_df$astx[jj] <- "**"
-                  box_graph_df$astx[unlist(lapply(x_lines, "[[", 2))] <- "**"
+                  box_graph_df$astx[jj] <- "*"
+                  box_graph_df$astx[unlist(lapply(x_lines, "[[", 2))] <- "*"
                 }
               }
             }
@@ -571,7 +571,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                                        width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.02, 
                                        linewidth = 0.25, alpha = 1)
               } else {
-                box_graph_df$astpd[jj] <- "**"
+                box_graph_df$astpd[jj] <- "*"
               }
             }
           }
