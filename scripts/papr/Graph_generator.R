@@ -146,6 +146,12 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
       as.numeric(graph_data[[pointdodge_g2]])]
   graph_data$xmin <- as.numeric(graph_data[[xvar_g]]) - 0.5
   graph_data$xmax <- as.numeric(graph_data[[xvar_g]]) + 0.5
+  
+  # If too many potential lines, only draw asterisks on same level.
+  if((nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]]) >= 10){
+    ast_bunch <- TRUE
+  }
+    
   # Arrange graph_df for drawing line segments
   graph_data <- graph_data %>%
     dplyr::arrange(linex)
@@ -336,11 +342,18 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
       box_graph_df$asty <- box_graph_df$yline
     }
     
-    box_graph_df$asty2 <- box_graph_df$yline2 + 
-      rep(max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
-            (0.05 * c(1:(max(length(unique(box_graph_df[[xvar]])), 1) * max(length(unique(graph_data[[pointdodge]])), 1)))), 
-          each = max(length(unique(graph_data[[facet1]])), 1) * max(length(unique(graph_data[[facet2]])), 1))
-    
+    if(ast_bunch){
+      box_graph_df$asty2 <- box_graph_df$yline2 + 
+        rep(max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
+              (0.05 * c(1:(max(length(unique(graph_data[[pointdodge]])), 1)))), times = max(length(unique(box_graph_df[[xvar]])), 1),
+            each = max(length(unique(graph_data[[facet1]])), 1) * 
+              max(length(unique(graph_data[[facet2]])), 1))
+    } else {
+      box_graph_df$asty2 <- box_graph_df$yline2 + 
+        rep(max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
+              (0.05 * c(1:(max(length(unique(box_graph_df[[xvar]])), 1) * max(length(unique(graph_data[[pointdodge]])), 1)))), 
+            each = max(length(unique(graph_data[[facet1]])), 1) * max(length(unique(graph_data[[facet2]])), 1))
+    }
     
     # Ensures that the color of each asterisk is correct by force.
     if(pointdodge != ""){
@@ -483,14 +496,15 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                 # box_graph_df$asty3[jj] <- box_graph_df$asty2[xy_counter]
                 xy_counter <- xy_counter + 1
                 box_graph_df$astx[jj] <- "*"
-                if(TRUE){
+                if(!ast_bunch){
                   p <- p + 
                     geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend", color = "color"), 
                                   data = x_lines_df2, show.legend = FALSE, 
-                                  width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.03, 
+                                  width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.02, 
                                   linewidth = 0.25, alpha = 1)
                 } else {
                   box_graph_df$astx[jj] <- "**"
+                  box_graph_df$astx[unlist(lapply(x_lines, "[[", 2))] <- "**"
                 }
               }
             } else {
@@ -499,14 +513,15 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                 # box_graph_df$asty3[jj] <- box_graph_df$asty2[xy_counter]
                 xy_counter <- xy_counter + 1
                 box_graph_df$astx[jj] <- "*"
-                if(TRUE){
+                if(!ast_bunch){
                   p <- p + 
                     geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend"), 
                                   data = x_lines_df, show.legend = FALSE, 
-                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.03, 
+                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.02, 
                                   linewidth = 0.25, alpha = 1)
                 } else {
                   box_graph_df$astx[jj] <- "**"
+                  box_graph_df$astx[unlist(lapply(x_lines, "[[", 2))] <- "**"
                 }
               }
             }
@@ -553,7 +568,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
               if(TRUE){
                 p <- p + geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend", color = "color"), 
                                        data = pd_lines_df2, show.legend = FALSE, 
-                                       width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.03, 
+                                       width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.02, 
                                        linewidth = 0.25, alpha = 1)
               } else {
                 box_graph_df$astpd[jj] <- "**"
@@ -630,7 +645,6 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   } else {
     ggsave(savename, plot = p, path = args$Output, width = x_width, height = y_height, units = "cm", dpi = 300)
   }
-  return(box_graph_df)
 }
 
 #####################################
