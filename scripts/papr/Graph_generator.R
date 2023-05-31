@@ -171,7 +171,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   
   # Set text label base size
   base_pt <- 14 * y_height / 17.5
-  space_const <- min(0.25 / ((nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]])), 0.04)
+  space_const <- min(0.4 / ((nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]])), 0.04)
   
   # Initialize plot
   p <- ggplot() +
