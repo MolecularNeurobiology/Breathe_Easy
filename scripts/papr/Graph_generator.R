@@ -148,7 +148,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   graph_data$xmax <- as.numeric(graph_data[[xvar_g]]) + 0.5
   
   # If too many potential lines, only draw asterisks on same level.
-  if((nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]]) >= 30){
+  if((nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]]) >= 1000){
     ast_bunch <- TRUE
   }
     
@@ -165,16 +165,20 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                    max(length(unique(graph_data[[facet1_g]])), 1) * 2 / 3 + 5)
   
   # Set manual height of plot to ensure the graph is tall enough.
-  y_height <- max(dev.size("cm")[2], max(length(unique(graph_data[[facet2_g]])), 1) * 7.5 + 10)
+  y_height <-  max(length(unique(graph_data[[facet2_g]])), 1) * 
+                    (10 + (nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]]) * 0.75 + 
+                       nlevels(graph_data[[pointdodge_g2]]) * 0.75) + 10
   
   # Set text label base size
-  base_pt <- 14 * sqrt(y_height / 17.5)
+  base_pt <- 14 * y_height / 17.5
+  space_const <- min(0.25 / ((nlevels(graph_data[[xvar_g]]) - 1) * nlevels(graph_data[[pointdodge_g2]])), 0.04)
   
   # Initialize plot
   p <- ggplot() +
     geom_blank(aes_string(x = xvar_g, y = resp_var), data = graph_data) +
     facet_grid(form_string, scales = "fixed") + 
-    theme_few(base_size = base_pt) 
+    theme_few(base_size = base_pt) +
+    theme(plot.subtitle = element_text(size = 8))
   
   # Draw lines between points corresponding to same mouse.
   p <- p + geom_path(aes_string(x = "linex", y = resp_var, group = "grouppath"), data = graph_data,
@@ -303,7 +307,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     ## Calculate where seperator lines and asterisks should go on y-axis for each xvar category.
     ### Line
     x_line_df$yline2 <- x_line_df$y1 + 
-      max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 0.08
+      max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * space_const
     ### Asterisk
     # x_line_df$asty2 <- x_line_df$yline2 + x_line_df$y2 * 1.5
     
@@ -336,7 +340,7 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     if (pointdodge != ""){
       box_graph_df$asty <- box_graph_df$yline +
         rep(rep(max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
-                  (0.05 * c(1:max(length(unique(box_graph_df[[pointdodge]])), 1))), each = max(length(unique(graph_data[[facet1]])), 1) * 
+                  (space_const * c(1:max(length(unique(box_graph_df[[pointdodge]])), 1))), each = max(length(unique(graph_data[[facet1]])), 1) * 
                   max(length(unique(graph_data[[facet2]])), 1)), times = max(length(unique(graph_data[[xvar]])), 1))
     } else {
       box_graph_df$asty <- box_graph_df$yline
@@ -345,13 +349,13 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     if(ast_bunch){
       box_graph_df$asty2 <- box_graph_df$yline2 + 
         rep(max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
-              (0.05 * c(1:(max(length(unique(graph_data[[pointdodge]])), 1)))), times = max(length(unique(box_graph_df[[xvar]])), 1),
+              (space_const * c(1:(max(length(unique(graph_data[[pointdodge]])), 1)))), times = max(length(unique(box_graph_df[[xvar]])), 1),
             each = max(length(unique(graph_data[[facet1]])), 1) * 
               max(length(unique(graph_data[[facet2]])), 1))
     } else {
       box_graph_df$asty2 <- box_graph_df$yline2 + 
         rep(max(pmax(pd_line_graph_df$ymax, pd_line_graph_df$sdmax) -  pmin(pd_line_graph_df$ymin, pd_line_graph_df$sdmin)) * 
-              (0.05 * c(1:(max(length(unique(box_graph_df[[xvar]])), 1) * max(length(unique(graph_data[[pointdodge]])), 1)))), 
+              (space_const * c(1:(max(length(unique(box_graph_df[[xvar]])), 1) * max(length(unique(graph_data[[pointdodge]])), 1)))), 
             each = max(length(unique(graph_data[[facet1]])), 1) * max(length(unique(graph_data[[facet2]])), 1))
     }
     
@@ -500,8 +504,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                   p <- p + 
                     geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend", color = "color"), 
                                   data = x_lines_df2, show.legend = FALSE, 
-                                  width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.02, 
-                                  linewidth = 0.25, alpha = 1)
+                                  width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * space_const * 0.3, 
+                                  linewidth = 0.5, alpha = 1)
                 } else {
                   box_graph_df$astx[jj] <- "*"
                   box_graph_df$astx[unlist(lapply(x_lines, "[[", 2))] <- "*"
@@ -517,8 +521,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
                   p <- p + 
                     geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend"), 
                                   data = x_lines_df, show.legend = FALSE, 
-                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * 0.02, 
-                                  linewidth = 0.25, alpha = 1)
+                                  width = (max(box_graph_df$ymax.y) - min(box_graph_df$ymin.y)) * space_const * 0.3, 
+                                  linewidth = 0.5, alpha = 1)
                 } else {
                   box_graph_df$astx[jj] <- "*"
                   box_graph_df$astx[unlist(lapply(x_lines, "[[", 2))] <- "*"
@@ -568,8 +572,8 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
               if(TRUE){
                 p <- p + geom_errorbar(aes_string(xmin = "x", y = "y", xmax = "xend", color = "color"), 
                                        data = pd_lines_df2, show.legend = FALSE, 
-                                       width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * 0.02, 
-                                       linewidth = 0.25, alpha = 1)
+                                       width = (max(box_graph_df$asty2) - min(box_graph_df$ymin.y)) * space_const * 0.3, 
+                                       linewidth = 0.5, alpha = 1)
               } else {
                 box_graph_df$astpd[jj] <- "*"
               }
@@ -586,29 +590,29 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
       ## Pointdodge asterisks
       p <- p +
         geom_text(aes_string(x = "linex", y = "asty", label = "astpd", color = "color"),
-                  data = box_graph_df, size = 6, show.legend = FALSE) + 
+                  data = box_graph_df, size = 7, show.legend = FALSE) + 
         scale_color_identity()
       
       ## xvar asterisks
       if(length(facet_vars) > 0){
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx", color = "color"),
-                           data = box_graph_df, size = 6, show.legend = FALSE) 
+                           data = box_graph_df, size = 7, show.legend = FALSE) 
       } else {
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx", color = "color"),
-                           data = box_graph_df, size = 6, show.legend = FALSE) 
+                           data = box_graph_df, size = 7, show.legend = FALSE) 
       }
     } else {
       ## Pointdodge asterisks
       p <- p +
         geom_text(aes_string(x = "linex", y = "asty", label = "astpd"),
-                  data = box_graph_df, size = 6, show.legend = FALSE)
+                  data = box_graph_df, size = 7, show.legend = FALSE)
       ## xvar asterisks
       if(length(facet_vars) > 0){
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx"),
-                           data = box_graph_df, size = 6, show.legend = FALSE) 
+                           data = box_graph_df, size = 7, show.legend = FALSE) 
       } else {
         p <- p + geom_text(aes_string(x = "linex", y = "asty2", label = "astx"),
-                           data = box_graph_df, size = 6, show.legend = FALSE) 
+                           data = box_graph_df, size = 7, show.legend = FALSE) 
       }
     }
   } else {
@@ -617,8 +621,14 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
     box_graph_df$ymax.y <- box_graph_df$ymax
   }
   # Add plot labels.
-  p <- p + labs(x = xvar_name, y = resp_name, fill = pointdodge_name)
-  
+  if(ast_bunch){
+    note <- "* Refer to Tukey results table for x variable comparisons"
+    p <- p + labs(x = xvar_name, y = resp_name, fill = pointdodge_name,
+                  subtitle = substitute(italic(x), list(x = note)))
+  } else {
+    p <- p + labs(x = xvar_name, y = resp_name, fill = pointdodge_name)
+  }
+
   # Set y-axis limits of plot, either default or as selected by user.
   if(!(is.na(yax_min)) && !(is.na(yax_max)) && !(is.null(yax_min)) && !(is.null(yax_max))) {
     p <- p + scale_y_continuous(limits = c(yax_min, yax_max), expand = expansion(mult = c(0, 0)))
