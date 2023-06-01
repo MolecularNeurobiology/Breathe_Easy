@@ -160,9 +160,9 @@ graph_make <- function(resp_var, xvar, pointdodge, facet1, facet2,
   form_string <- as.formula(paste0(facet2_g, " ~ ", facet1_g))
   
   # Set manual width of plot to ensure the graph is wide enough.
-  x_width <- max(dev.size("cm")[1], max(length(unique(graph_data[[xvar_g]])), 1) * 
-                   max(length(unique(graph_data[[pointdodge_g2]])), 1) * 
-                   max(length(unique(graph_data[[facet1_g]])), 1) * 2 / 3 + 5)
+  x_width <- (max(length(unique(graph_data[[xvar_g]])), 1) * 5 +
+                   max(length(unique(graph_data[[pointdodge_g2]])), 1) * 1.5) * 
+                   max(length(unique(graph_data[[facet1_g]])), 1) + 10
   
   # Set manual height of plot to ensure the graph is tall enough.
   y_height <-  max(length(unique(graph_data[[facet2_g]])), 1) * 
