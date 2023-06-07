@@ -180,6 +180,29 @@ class Ui_Config(object):
         self.verticalLayout_16.setObjectName("verticalLayout_16")
         spacerItem20 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_16.addItem(spacerItem20)
+        # !!!
+        self.horizontalLayout_show_stats = QtWidgets.QHBoxLayout()
+        
+        self.label_show_stats = QtWidgets.QLabel(self.widget)
+        self.label_show_stats.setText("Show Statistics Annotations")
+        self.horizontalLayout_show_stats.addWidget(self.label_show_stats)
+        
+        self.help_show_stats = QtWidgets.QToolButton(self.widget)
+        self.help_show_stats.setObjectName("help_show_stats")
+        self.horizontalLayout_show_stats.addWidget(self.help_show_stats)
+        
+        self.graph_showstats = QtWidgets.QComboBox(self.widget)
+        self.graph_showstats.setDuplicatesEnabled(False)
+        self.graph_showstats.setObjectName("graph_show_stats_options")
+        self.graph_showstats.addItem("Asterisks")
+        self.graph_showstats.addItem("Lines_and_Ticks")
+        self.graph_showstats.addItem("None")
+        self.horizontalLayout_show_stats.addWidget(self.graph_showstats)
+        
+        self.verticalLayout_17.addLayout(self.horizontalLayout_show_stats)
+        # !!!
+        
+        
         self.label_6 = QtWidgets.QLabel(self.widget)
         self.label_6.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
         self.label_6.setObjectName("label_6")
@@ -249,7 +272,8 @@ class Ui_Config(object):
         # self.Xvar_showstats.addItem("Show NO Stats")
         # self.Xvar_showstats.addItem("Automatic")
         # self.verticalLayout_14.addWidget(self.Xvar_showstats)
-        # !!!
+        # !!!        
+
         spacerItem32 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_14.addItem(spacerItem32)
         self.Pointdodge_combo = QtWidgets.QComboBox(self.widget)
@@ -707,6 +731,9 @@ class Ui_Config(object):
         self.label_8.setText(_translate("Config", "Pointdodge"))
         self.label_9.setText(_translate("Config", "Facet1"))
         self.label_10.setText(_translate("Config", "Facet2"))
+        # !!!
+        self.help_show_stats.setText(_translate("Config", "?"))
+        # !!!
         self.help_xvar.setText(_translate("Config", "?"))
         self.help_pointdodge.setText(_translate("Config", "?"))
         self.help_facet1.setText(_translate("Config", "?"))
