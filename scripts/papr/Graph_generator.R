@@ -1202,14 +1202,14 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
       # Run graph maker.
       graph_file  <- paste0(response_vars[ii], args$I)
       if((!is.null(graph_vars$ShowStats)) && (!is.na(graph_vars$ShowStats))){
-        if(graph_vars$ShowStats == "None"){
+        if(graph_vars$ShowStats[1] == "None"){
           try(graph_make(response_vars[ii], xvar, pointdodge, facet1,
                          facet2, graph_df, tbl0, tukey_res_list[[response_vars[ii]]],
                          interaction_vars, graph_file, other = FALSE,  inc_filter = TRUE,
                          response_var_names[ii], xvar_wu, pointdodge_wu,
                          yax_min = ymins[ii], yax_max = ymaxes[ii], ast_gen = FALSE,
                          ast_bunch = FALSE))
-        } else if (graph_vars$ShowStats == "Lines_and_Ticks") {
+        } else if (graph_vars$ShowStats[1] == "Lines_and_Ticks") {
           try(graph_make_ticks(response_vars[ii], xvar, pointdodge, facet1,
                          facet2, graph_df, tbl0, tukey_res_list[[response_vars[ii]]],
                          interaction_vars, graph_file, other = FALSE,  inc_filter = TRUE,
@@ -1266,14 +1266,14 @@ if((!is.na(response_vars)) && (!is_empty(response_vars)) && (!is.na(interaction_
           graph_file  <- paste0(new_colname, args$I)
           
           if((!is.null(graph_vars$ShowStats)) && (!is.na(graph_vars$ShowStats))){
-            if(graph_vars$ShowStats == "None"){
+            if(graph_vars$ShowStats[1] == "None"){
               try(graph_make(new_colname, xvar, pointdodge, facet1,
                              facet2, graph_df, tbl0, tukey_res_list[[new_colname]],
                              interaction_vars, graph_file, other = FALSE,  inc_filter = TRUE,
                              new_graphname, xvar_wu, pointdodge_wu,
                              yax_min = ymins[ii], yax_max = ymaxes[ii], ast_gen = FALSE,
                              ast_bunch = FALSE))
-            } else if (graph_vars$ShowStats == "Lines_and_Ticks") {
+            } else if (graph_vars$ShowStats[1] == "Lines_and_Ticks") {
               try(graph_make_ticks(new_colname, xvar, pointdodge, facet1,
                                    facet2, graph_df, tbl0, tukey_res_list[[new_colname]],
                                    interaction_vars, graph_file, other = FALSE,  inc_filter = TRUE,
