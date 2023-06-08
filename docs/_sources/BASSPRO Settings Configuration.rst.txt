@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Initialize: Input and Output for BASSPRO
+Initialize: Input and Output for SASSI
 ############################################
 
 .. note::
@@ -17,7 +17,7 @@ Initialize: Input and Output for BASSPRO
 
 Select Input files and and Output folder
 *****************************************
-#. Choose the folder where you would like your BASSPRO-STAGG output for the current session saved. 
+#. Choose the folder where you would like your SASSI-STAGG output for the current session saved. 
     * Click the ``Select output directory`` button (1) to navigate through the File Finder display and select your desired folder.
     * The file path for your selected output folder will be displayed in window (A).
 #. Choose the converted .txt signal files you would like analyzed. 
@@ -40,8 +40,8 @@ Optional Data Validation
 
 Timestamp Review
 *****************************
-BASSPRO relies on a set of recognized timestamps (called comments in LabChart) to apply different 
-settings to different sections of the run. BASSPRO will not work if it does not recognize the 
+SASSI relies on a set of recognized timestamps (called comments in LabChart) to apply different 
+settings to different sections of the run. SASSI will not work if it does not recognize the 
 timestamps of the signal files provided as input. The user can check these timestamps via the GUI 
 by selecting the signal files they would like to review. In the drop-down menu (4), the user must 
 choose which type of experiment was run, thus selecting a set of timestamps to compare to those found 
@@ -64,7 +64,7 @@ are not mutually exclusive. As an example, take a signal file for a 5% Hypercapn
    5% CO2 
    Room Air
 
-The series of timestamps recognized by BASSPRO for 5% Hypercapnia is as follows: 
+The series of timestamps recognized by SASSI for 5% Hypercapnia is as follows: 
     
 .. code-block::
     

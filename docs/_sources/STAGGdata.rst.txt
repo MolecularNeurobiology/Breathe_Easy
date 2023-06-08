@@ -3,17 +3,17 @@ Initialize: Input for STAGG
 There are a number of ways that STAGG input may be populated in the corresponding box on the GUI. Whichever way it is populated 
 (all are described below), ensure that the STAGG settings you’ve just generated correspond to the files that will be used in the STAGG modeling. 
 
-The output folder for STAGG will automatically be the folder selected for BASSPRO output (the path to this folder can be found in window A).
+The output folder for STAGG will automatically be the folder selected for SASSI output (the path to this folder can be found in window A).
 
-1. Automatic addition of STAGG input from current BASSPRO run
+1. Automatic addition of STAGG input from current SASSI run
 
-    * If you just finished running BASSPRO, then the JSON files produced as BASSPRO output will automatically appear in window (F) as the STAGG input.
+    * If you just finished running SASSI, then the JSON files produced as SASSI output will automatically appear in window (F) as the STAGG input.
 
 2. If you want to select STAGG input manually, click Select STAGG input files to open a file dialog to navigate to the desired STAGG input. 
 
     * STAGG accepts three types of input:
 
-        #. JSON files produced by BASSPRO. 
+        #. JSON files produced by SASSI. 
             
             * If you want to select files from different directories, complete the selection of files from the first folder and click Open. 
 

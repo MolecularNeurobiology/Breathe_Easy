@@ -1,6 +1,6 @@
 Automated Settings subGUI
 #################################
-You can configure your settings for automated selection of breathing by BASSPRO in 3 ways:
+You can configure your settings for automated selection of breathing by SASSI in 3 ways:
 
 1) :ref:`Default Settings <Default Settings>`
 
@@ -34,9 +34,9 @@ Default Settings
 3. Make edits if needed.
 4. Save your settings.
 
-      * Click ``Ok`` to save your settings in local memory – the actual csv files detailing the settings won’t be created until BASSPRO is launched.
+      * Click ``Ok`` to save your settings in local memory – the actual csv files detailing the settings won’t be created until SASSI is launched.
       * Click ``Save As`` to open a file dialog to save your settings in a particular location for access later.
-      * Either option of saving will result in a copy of these settings saved in the BASSPRO output folder for this run once launched.
+      * Either option of saving will result in a copy of these settings saved in the SASSI output folder for this run once launched.
 
 Existing Settings Files
 *************************
@@ -46,13 +46,13 @@ Existing Settings Files
 4. Make edits if needed.
 5. Save your settings.
 
-    * Click ``Ok`` to save your settings in local memory – the actual csv files detailing the settings won’t be created until BASSPRO is launched.
+    * Click ``Ok`` to save your settings in local memory – the actual csv files detailing the settings won’t be created until SASSI is launched.
     * Click ``Save As`` to open a file dialog to save your settings in a particular location for access later.
-    * Either option of saving will result in a copy of these settings saved in the BASSPRO output folder for this run once launched.
+    * Either option of saving will result in a copy of these settings saved in the SASSI output folder for this run once launched.
 
 Derive Settings from Signal Files
 ******************************************
-1. Click the ``Automated Settings`` button (6) to open the automated BASSPRO settings subGUI.
+1. Click the ``Automated Settings`` button (6) to open the automated SASSI settings subGUI.
 2. Click the ``From Signal Files`` button (Figure 11).
 
     .. figure:: Figures/FromSignalFiles.png

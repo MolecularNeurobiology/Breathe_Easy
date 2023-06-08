@@ -23,7 +23,7 @@ Example .txt files (already exported to required format) are provided on our Zen
 you to pages with more detailed instructions on completing each of the steps below.
 
 1.  Download the Zenodo dataset containing the .txt formatted `LabChart file exports for the vignette dataset (doi: 10.5281/zenodo.7120978) at Zenodo's website <https://zenodo.org/record/7120978#.Y2545tNKj0o>`_.
-2.  :ref:`Initialize BASSPRO by selecting input files (the downloaded .txt files) and your desired output folder <Initialize: Input and Output for BASSPRO>`.
+2.  :ref:`Initialize SASSI by selecting input files (the downloaded .txt files) and your desired output folder <Initialize: Input and Output for SASSI>`.
 3.  :ref:`Load the metadata <Manual Entry>` using the below provided metadata.csv file. No changes are needed, unless you want to explore options. However,
     it should be noted that any changes to the below file made within the subGUI or in the file itself will not guarantee a successful run.
         
@@ -37,8 +37,8 @@ you to pages with more detailed instructions on completing each of the steps bel
 
         *  :download:`Click here to download basic settings <Docs/basics_auto.csv>`
         
-6.  :ref:`Select desired run settings for BASSPRO and click run <Running BASSPRO>`.
-7.  Your JSON file output from the BASSPRO run should automatically populate the input for STAGG. If this does not happen for some reason, 
+6.  :ref:`Select desired run settings for SASSI and click run <Running SASSI>`.
+7.  Your JSON file output from the SASSI run should automatically populate the input for STAGG. If this does not happen for some reason, 
     then please follow the instructions provided :ref:`here <Initialize: Input for STAGG>` to select the appropriate JSON files.
 8.  :ref:`Load provided settings for STAGG run <STAGG Settings subGUI>`. You will need to select all 3 settings files when choosing
     the option to ``Select file``.
@@ -54,15 +54,15 @@ you to pages with more detailed instructions on completing each of the steps bel
          making any changes, bur rather noting the selections made.
          
 9.  Once the STAGG settings are made, select your desired file type output (.jpeg or .svg) and :ref:`run STAGG <Running STAGG>`.
-10.  For help understanding the outputs for :ref:`STAGG <STAGG Output>` or :ref:`BASSPRO <BASSPRO Output>`, see the linked sections of this manual.
+10.  For help understanding the outputs for :ref:`STAGG <STAGG Output>` or :ref:`SASSI <SASSI Output>`, see the linked sections of this manual.
 
 Automated Run Output
 -----------------------
-This is what your BASSPRO and STAGG output folders should look like for the automated run outlined above.
+This is what your SASSI and STAGG output folders should look like for the automated run outlined above.
 
 .. figure:: Figures/AutoBASSPROOutputFolder.png
    
-   Screenshot of the BASSPRO output folder for automated run instructions in vignette.
+   Screenshot of the SASSI output folder for automated run instructions in vignette.
    
 .. figure:: Figures/AutoSTAGGOutputFolder.png
    
@@ -123,7 +123,7 @@ Example .txt files (already exported to required format) are provided on our Zen
 you to pages with more detailed instructions on completing each of the steps below. 
 
 1.  Download the dataset containing .txt formatted `LabChart file exports for the vignette dataset (doi: 10.5281/zenodo.7120978) at Zenodo's website <https://zenodo.org/record/7120978#.Y2545tNKj0o>`_.
-2.  :ref:`Initialize BASSPRO by selecting input files (the downloaded .txt files) and your desired output folder <Initialize: Input and Output for BASSPRO>`.
+2.  :ref:`Initialize SASSI by selecting input files (the downloaded .txt files) and your desired output folder <Initialize: Input and Output for SASSI>`.
 3.  :ref:`Load the metadata <Manual Entry>` using the below provided metadata.csv file. No changes are needed, unless you want to explore options. However,
     it should be noted that any changes to the below file made within the subGUI or in the file itself will not guarantee a successful run.
         
@@ -143,8 +143,8 @@ you to pages with more detailed instructions on completing each of the steps bel
 
         *  :download:`Click here to download basic settings <Docs/basics_man.csv>`
         
-6.  :ref:`Select desired run settings for BASSPRO and click run <Running BASSPRO>`.
-7.  Your JSON file output from the BASSPRO run should automatically populate the input for STAGG. If this does not happen for some reason, 
+6.  :ref:`Select desired run settings for SASSI and click run <Running SASSI>`.
+7.  Your JSON file output from the SASSI run should automatically populate the input for STAGG. If this does not happen for some reason, 
     then please follow the instructions provided :ref:`here <Initialize: Input for STAGG>` to select the appropriate JSON files.
 8.  :ref:`Load provided settings for STAGG run <STAGG Settings subGUI>`. You will need to select all 3 settings files when choosing
     the option to ``Select file``.
@@ -160,15 +160,15 @@ you to pages with more detailed instructions on completing each of the steps bel
          making any changes, but rather noting the selections made.
          
 9.  Once the STAGG settings are made, select your desired file type output (.jpeg or .svg) and :ref:`run STAGG <Running STAGG>`.
-10.  For help understanding the outputs for :ref:`STAGG <STAGG Output>` or :ref:`BASSPRO <BASSPRO Output>`, see the linked sections of this manual.
+10.  For help understanding the outputs for :ref:`STAGG <STAGG Output>` or :ref:`SASSI <SASSI Output>`, see the linked sections of this manual.
 
 Manual Run Output
 -----------------------
-This is what your BASSPRO and STAGG output folders should look like for the automated run outlined above.
+This is what your SASSI and STAGG output folders should look like for the automated run outlined above.
 
 .. figure:: Figures/ManBASSPROOutputFolder.png
    
-   Screenshot of the BASSPRO output folder for manual run instructions in vignette.
+   Screenshot of the SASSI output folder for manual run instructions in vignette.
    
 .. figure:: Figures/ManSTAGGOutputFolder.png
    

@@ -1,6 +1,6 @@
-Full Run of BASSPRO-STAGG
+Full Run of SASSI-STAGG
 ==============================
-You can run BASSPRO-STAGG front to back with no pause in running the code. If this is your first time running data through the pipeline we 
+You can run SASSI-STAGG front to back with no pause in running the code. If this is your first time running data through the pipeline we 
 do not recommend using this function as you may find that your data needs slightly more curation or your settings for breath selection 
 need to be adjusted. 
 
@@ -14,5 +14,5 @@ need to be adjusted.
 4. Click ``Launch BASSPRO``, ``button 12``.
 
     .. note::
-       This is the same button as would be pressed for a run of just BASSPRO. The full run is indicated by the checkmark in ``button 11``.
-       If this button is not checked, then only BASSPRO will run.
+       This is the same button as would be pressed for a run of just SASSI. The full run is indicated by the checkmark in ``button 11``.
+       If this button is not checked, then only SASSI will run.
