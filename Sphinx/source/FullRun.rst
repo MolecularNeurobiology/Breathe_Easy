@@ -11,7 +11,7 @@ need to be adjusted.
 
 2. Choose parallel processing preference ``button 10`` and image format saving preference ``button 15``. 
 3. Select checkbox indicating you want a full run of Breathe easy ``button 11``.
-4. Click ``Launch BASSPRO``, ``button 12``.
+4. Click ``Launch SASSI``, ``button 12``.
 
     .. note::
        This is the same button as would be pressed for a run of just SASSI. The full run is indicated by the checkmark in ``button 11``.

@@ -182,7 +182,7 @@ Launching Breathe Easy
 ===========================
 From packaged version
 -------------------------
-#. Inside the unzipped file, you'll find a folder named ``BASSPRO-STAGG_QUIPPL``.
+#. Inside the unzipped file, you'll find a folder named ``SASSI-STAGG_QUIPPL``.
 #. Double click the ``launcher.bat`` file in this folder to launch the GUI.
   
     #. The ``launcher.bat`` file can be moved to your Desktop or another easily accessible location 
