@@ -6,15 +6,15 @@
 </picture>
 
 # What is it?
-Breathe Easy is an automated waveform analysis pipeline for data gathered in whole animal plethysmography experiments. It utilizes python, pyQT, and R languages in three modules 1) Breathing Analysis Selection and Segmentation for Plethysmography and Respiratory Observations (BASSPRO), 2) Statistics And Graph Generator (STAGG), and a graphical user interface (GUI) to allow for high-thruput, consistent analysis of respiratory waveforms.
+Breathe Easy is an automated waveform analysis pipeline for data gathered in whole animal plethysmography experiments. It utilizes python, pyQT, and R languages in three modules 1) Signal Analysis Selection and Segmentation Integration (SASSI), 2) Statistics And Graph Generator (STAGG), and a graphical user interface (GUI) to allow for high-thruput, consistent analysis of respiratory waveforms.
 
 ```mermaid
 graph TD;
-    Respiratory_Waveforms-->BASSPRO;
-    Animal_Metadata-->BASSPRO;
-    Waveform_Settings-->BASSPRO;
+    Respiratory_Waveforms-->SASSI;
+    Animal_Metadata-->SASSI;
+    Waveform_Settings-->SASSI;
     Graph_and_Stats_Settings-->STAGG;
-    BASSPRO-->STAGG;
+    SASSI-->STAGG;
     STAGG-->Publication-Worthy_Graphs;
     STAGG-->Appropriate_Statistical_Analyses;
 ```
@@ -28,7 +28,7 @@ What does Breathe Easy breeze through?
 3. Perform [advanced statistical analyses](https://molecularneurobiology.github.io/Breathe_Easy/STAGGsettings.html) on par with even the most complex experimental designs
 
 # Where to get it?
-Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the BASSPRO-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [install page](https://molecularneurobiology.github.io/Breathe_Easy/) for more information.
+Our software is available as source code and as a windows executable with all dependencies for the release. The executable is available in the SASSI-STAGG_QUIPPL folder and can be launched after downloading to a PC. See our [install page](https://molecularneurobiology.github.io/Breathe_Easy/) for more information.
 
 # Where is the manual?
 Access the full user manual for this software [here](https://molecularneurobiology.github.io/Breathe_Easy/).
@@ -82,7 +82,7 @@ Producing the R markdown also requires an installation of pandocs; instructions 
 
 # How to launch?
 ## From packaged version
-Double click the `launch.bat` file in the BASSPRO-STAGG_QUIPPL folder.
+Double click the `launch.bat` file in the SASSI-STAGG_QUIPPL folder.
 
 ## From source
 ```
@@ -96,7 +96,7 @@ python3 scripts/GUI/MainGUImain.py
 ```
 
 # Licensing
-'Breathe Easy' is dually licensed. The project (BASSPRO, STAGG, and GUI components) is available under a 'GPLv3 or later' license as well as a commercial license (inquiries for commercial licensing may be directed to Russell.Ray@bcm.edu). The fully packaged version of 'Breathe Easy is distributed under a 'GPLv2 or later' license.
+'Breathe Easy' is dually licensed. The project (SASSI, STAGG, and GUI components) is available under a 'GPLv3 or later' license as well as a commercial license (inquiries for commercial licensing may be directed to Russell.Ray@bcm.edu). The fully packaged version of 'Breathe Easy is distributed under a 'GPLv2 or later' license.
 
     Breathe Easy - an automated waveform analysis pipeline
     Copyright (C) 2022  
