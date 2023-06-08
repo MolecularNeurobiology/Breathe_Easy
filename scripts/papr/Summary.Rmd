@@ -7,7 +7,7 @@ This R Markdown document includes all figures generated from this run of the Bre
 
 
 ```{r, results='asis', fig.height=4, fig.width=15, echo = FALSE}
-files <- list.files(path = args$Output, pattern = args$I, full.names = TRUE, all.files = TRUE, recursive = TRUE)
+files <- list.files(path = args$Output, pattern = args$I, full.names = TRUE, all.files = TRUE)
 if(length(files) > 0) {
   for (f in files) {
   cat(paste0("![image_label](", f, ")\n"))
