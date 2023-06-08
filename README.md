@@ -1,7 +1,7 @@
 # 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo.png"raw=true width="350">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo.png"raw=true width="350">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo_3.png"raw=true width="350">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo_3.png"raw=true width="350">
   <img alt="Shows logo for Breathe Easy." src="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo.png"raw=true width="350">
 </picture>
 
