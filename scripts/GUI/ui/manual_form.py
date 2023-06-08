@@ -201,7 +201,7 @@ class Ui_Manual(object):
     def retranslateUi(self, Manual):
         _translate = QtCore.QCoreApplication.translate
         Manual.setWindowTitle(_translate("Manual", "Form"))
-        self.label.setText(_translate("Manual", "BASSPRO Manual Settings"))
+        self.label.setText(_translate("Manual", "SASSI Manual Settings"))
         self.load_manual_button.setText(_translate("Manual", "Load previous settings"))
         self.export_button.setText(_translate("Manual", "Export"))
         self.datapad_load.setText(_translate("Manual", "Load LabChart selections"))

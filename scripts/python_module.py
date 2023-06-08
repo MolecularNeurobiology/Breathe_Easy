@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-BASSPRO
+SASSI
+Signal Analysis Selection, Segmentation, and Integration
+
+formerly BASSPRO
 Breathing Analysis Selection and Segmentation 
 for Plethysmography and Respiratory Observations
 ***
@@ -28,7 +31,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ***
 
 -History-
-BASSPRO created by Christopher S Ward (C) 2020
+SASSI created by Christopher S Ward (C) 2020
 updates include contributions from Avery Twitchell-Heyne and feedback from
 Russell Ray, Savannah Lusk, and Andersen Chang
 
@@ -54,9 +57,12 @@ Command Line Arguments
 
 
 """
-__version__ = '36.3.5.r1'
+__version__ = '36.3.5.r2'
 
 """
+# v36.3.5.r2 README
+    *BASSPRO is now SASSI
+
 # v36.3.5.r1 README
     *Updated Irreg Score Calculation
 

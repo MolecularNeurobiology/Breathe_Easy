@@ -359,7 +359,7 @@ class Ui_Plethysmography(object):
         self.filemaker_button.setText(_translate("Plethysmography", "Source metadata\n"
 "from database"))
         self.variable_annotation_button.setText(_translate("Plethysmography", "Variable Annotation"))
-        self.signal_segments.setText(_translate("Plethysmography", "Select BASSPRO\n"
+        self.signal_segments.setText(_translate("Plethysmography", "Select SASSI\n"
 " settings files"))
         self.delete_sections.setText(_translate("Plethysmography", "Delete"))
         self.label_2.setText(_translate("Plethysmography", "Advanced Settings"))
@@ -369,7 +369,7 @@ class Ui_Plethysmography(object):
         self.variable_button.setText(_translate("Plethysmography", "Select STAGG settings"))
         self.breath_files.setText(_translate("Plethysmography", "Select STAGG\n"
 " input files"))
-        self.py_go.setText(_translate("Plethysmography", "Launch BASSPRO"))
+        self.py_go.setText(_translate("Plethysmography", "Launch SASSI"))
         self.parallel_combo.setItemText(0, _translate("Plethysmography", "Parallel processing settings..."))
         self.r_go.setText(_translate("Plethysmography", "Launch STAGG"))
         self.imageformat_group.setTitle(_translate("Plethysmography", "Image file format"))

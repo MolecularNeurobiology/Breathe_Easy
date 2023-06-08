@@ -32,23 +32,23 @@ functions contained are intended to assist with identifying column names and
 unique values contained within.
 
 3 functions are included:
-1) --function to prepare column_names and values starting from basspro output
+1) --function to prepare column_names and values starting from SASSI output
     --JSON files--
     
     columns_and_values_from_jsons(
             paths_to_jsons,
-            known_continuous = __BASSPRO_CONTINUOUS__,
+            known_continuous = __SASSI_CONTINUOUS__,
             truncate_to = 10,
             truncate_all = False
             ):
-2) --funtion to prepare column_names and values starting from basspro input
+2) --funtion to prepare column_names and values starting from SASSI input
     --metadata, auto_settings, manual_settings (all as pandas.DataFrames)--
     
     columns_and_values_from_settings(
             metadata,
             auto_settings = None,
             manual_settings = None,
-            known_continuous = __BASSPRO_CONTINUOUS__,
+            known_continuous = __SASSI_CONTINUOUS__,
             truncate_to = 10,
             truncate_all = False
             ):
@@ -57,7 +57,7 @@ unique values contained within.
     
     truncate_values_from_columns(
             input_dict,
-            known_continuous = __BASSPRO_CONTINUOUS__,
+            known_continuous = __SASSI_CONTINUOUS__,
             truncate_to = 10,
             truncate_all = True
             ):
@@ -70,7 +70,7 @@ import pandas
 
 #%% CONSTANTS
 
-__BASSPRO_CONTINUOUS__ = [
+__SASSI_CONTINUOUS__ = [
     'Breath Number',
     'Timestamp_Inspiration',
     'Timestamp_Expiration',
@@ -150,7 +150,7 @@ __BASSPRO_CONTINUOUS__ = [
 
 def columns_and_values_from_jsons(
         paths_to_jsons,
-        known_continuous = __BASSPRO_CONTINUOUS__,
+        known_continuous = __SASSI_CONTINUOUS__,
         truncate_to = 10,
         truncate_all = False
         ):
@@ -190,7 +190,7 @@ def columns_and_values_from_settings(
         metadata,
         auto_settings = None,
         manual_settings = None,
-        known_continuous = __BASSPRO_CONTINUOUS__,
+        known_continuous = __SASSI_CONTINUOUS__,
         truncate_to = 10,
         truncate_all = False
         ):
@@ -219,7 +219,7 @@ def columns_and_values_from_settings(
 
 def truncate_values_from_columns(
         input_dict,
-        known_continuous = __BASSPRO_CONTINUOUS__,
+        known_continuous = __SASSI_CONTINUOUS__,
         truncate_to = 10,
         truncate_all = True
         ):

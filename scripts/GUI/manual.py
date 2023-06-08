@@ -37,7 +37,7 @@ from ui.manual_form import Ui_Manual
 
 class Manual(QDialog, Ui_Manual):
     """
-    Properties, attributes, and methods used by the manual BASSPRO settings subGUI.
+    Properties, attributes, and methods used by the manual SASSI settings subGUI.
 
     Attributes
     ---------

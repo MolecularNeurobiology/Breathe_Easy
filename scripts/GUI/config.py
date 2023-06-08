@@ -890,8 +890,8 @@ class Config(QDialog, Ui_Config):
         if var_name not in self.col_vals_variable:
             msg  = "No values available to order."
             msg += "\n\nTry loading STAGG Settings from:"
-            msg += "\n  -Previous BASSPRO Settings"
-            msg += "\n  -Previous BASSPRO Output"
+            msg += "\n  -Previous SASSI Settings"
+            msg += "\n  -Previous SASSI Output"
             notify_info(msg)
             return
 

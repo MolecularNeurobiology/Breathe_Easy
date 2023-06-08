@@ -141,9 +141,9 @@ class Ui_Plethysmography(object):
 
         spacerItem5 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_8.addItem(spacerItem5)
-        self.SASSI_settings_button = QtWidgets.QPushButton(self.centralwidget)
-        self.SASSI_settings_button.setObjectName("signal_segments")
-        self.verticalLayout_8.addWidget(self.SASSI_settings_button)
+        self.basspro_settings_button = QtWidgets.QPushButton(self.centralwidget)
+        self.basspro_settings_button.setObjectName("signal_segments")
+        self.verticalLayout_8.addWidget(self.basspro_settings_button)
         spacerItem6 = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
         self.verticalLayout_8.addItem(spacerItem6)
         self.label_2 = QtWidgets.QLabel(self.centralwidget)
@@ -265,21 +265,21 @@ class Ui_Plethysmography(object):
         self.verticalLayout_9 = QtWidgets.QVBoxLayout()
         self.verticalLayout_9.setObjectName("verticalLayout_9")
 
-        SASSI_button_layout = QtWidgets.QHBoxLayout()
+        basspro_button_layout = QtWidgets.QHBoxLayout()
         spacerleft = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        SASSI_button_layout.addItem(spacerleft)
+        basspro_button_layout.addItem(spacerleft)
 
-        self.SASSI_launch_button = QtWidgets.QPushButton(self.centralwidget)
+        self.basspro_launch_button = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(14)
-        self.SASSI_launch_button.setFont(font)
-        self.SASSI_launch_button.setObjectName("SASSI_launch_button")
-        SASSI_button_layout.addWidget(self.SASSI_launch_button)
+        self.basspro_launch_button.setFont(font)
+        self.basspro_launch_button.setObjectName("basspro_launch_button")
+        basspro_button_layout.addWidget(self.basspro_launch_button)
 
         spacerright = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
-        SASSI_button_layout.addItem(spacerright)
+        basspro_button_layout.addItem(spacerright)
 
-        self.verticalLayout_9.addLayout(SASSI_button_layout)
+        self.verticalLayout_9.addLayout(basspro_button_layout)
 
         hlayout = QtWidgets.QHBoxLayout()
         spacerleft = QtWidgets.QSpacerItem(40, 20, QtWidgets.QSizePolicy.Expanding, QtWidgets.QSizePolicy.Minimum)
@@ -400,12 +400,12 @@ class Ui_Plethysmography(object):
         self.retranslateUi(Plethysmography)
         
         ## CALLBACKS ##
-        #   SASSI
+        #   basspro
         self.signal_files_button.clicked.connect(Plethysmography.select_signal_files)
         self.metadata_button.clicked.connect(Plethysmography.edit_metadata)
-        self.SASSI_settings_button.clicked.connect(Plethysmography.load_SASSI_settings)
+        self.basspro_settings_button.clicked.connect(Plethysmography.load_basspro_settings)
         self.output_dir_button.clicked.connect(Plethysmography.select_output_dir)
-        self.SASSI_launch_button.clicked.connect(Plethysmography.SASSI_run)
+        self.basspro_launch_button.clicked.connect(Plethysmography.basspro_run)
 
         #   stagg
         self.stagg_launch_button.clicked.connect(Plethysmography.stagg_run)
@@ -433,15 +433,15 @@ class Ui_Plethysmography(object):
         self.check_timestamps.setText(_translate("Plethysmography", "Check timestamps"))
         self.necessary_timestamp_box.setItemText(0, _translate("Plethysmography", "Select dataset..."))
         self.metadata_button.setText(_translate("Plethysmography", "Select metadata"))
-        self.SASSI_settings_button.setText(_translate("Plethysmography", "Select SASSI\nsettings files"))
-        self.label_2.setText(_translate("Plethysmography", "Advanced SASSI Settings"))
+        self.basspro_settings_button.setText(_translate("Plethysmography", "Select BASSPRO\nsettings files"))
+        self.label_2.setText(_translate("Plethysmography", "Advanced BASSPRO Settings"))
         self.auto_button.setText(_translate("Plethysmography", "Automated Settings"))
         self.manual_button.setText(_translate("Plethysmography", "Manual Settings"))
         self.breath_parameters.setText(_translate("Plethysmography", "Basic Settings"))
         self.stagg_settings_button.setText(_translate("Plethysmography", "Select STAGG settings"))
         self.breath_files_button.setText(_translate("Plethysmography", "Select STAGG\n"
 " input files"))
-        self.SASSI_launch_button.setText(_translate("Plethysmography", "Launch SASSI"))
+        self.basspro_launch_button.setText(_translate("Plethysmography", "Launch BASSPRO"))
         self.stagg_launch_button.setText(_translate("Plethysmography", "Launch STAGG"))
         self.imageformat_group.setTitle(_translate("Plethysmography", "Image file format"))
         self.svg_radioButton.setText(_translate("Plethysmography", ".svg"))
