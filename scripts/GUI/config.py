@@ -1116,7 +1116,7 @@ class ConfigSettings(Settings):
 
     @staticmethod
     def get_default_variable_df(variable_names):
-        default_values = [0, 0, 0, 0, 0, 0, []]
+        default_values = [0, 0, 0, "", "", 0, []]
         default_data = [[var_name, var_name] + default_values for var_name in variable_names]
         variable_table_df = pd.DataFrame(
             default_data,
