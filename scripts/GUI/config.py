@@ -1212,8 +1212,11 @@ class OtherSettings(ConfigSettings):
     def attempt_load(filepath):
         odf = pd.read_csv(filepath, index_col=False, keep_default_na=False)
         odf['Covariates'] = odf['Covariates'].str.split('@')
-
-        odf['Transformation'] = odf['Transformation'].fillna("")
+    
+        if 'Transformation' in odf.columns:
+            odf['Transformation'] = odf['Transformation'].fillna("")
+        else:
+            odf['Transformation'] = ""
 
         new_transforms = []
         # Clean transform values and create list
