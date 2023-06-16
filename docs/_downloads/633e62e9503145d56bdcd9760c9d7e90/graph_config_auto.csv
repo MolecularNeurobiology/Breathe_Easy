@@ -1,5 +1,5 @@
 Role,Alias,Order
-1,Condition,Room Air@5% CO2
+1,Condition,
 2,Group,Control@Experimental
 3,,
 4,,

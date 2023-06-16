@@ -1,12 +1,12 @@
 # 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo_2.png"raw=true width="350">
-  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo.png"raw=true width="350">
+  <source media="(prefers-color-scheme: dark)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo_3.png"raw=true width="350">
+  <source media="(prefers-color-scheme: light)" srcset="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo_3.png"raw=true width="350">
   <img alt="Shows logo for Breathe Easy." src="https://github.com/MolecularNeurobiology/Breathe_Easy/blob/main/Logo.png"raw=true width="350">
 </picture>
 
 # What is it?
-Breathe Easy is an automated waveform analysis pipeline for data gathered in whole animal plethysmography experiments. It utilizes python, pyQT, and R languages in three modules 1) Breathing Analysis Selection and Segmentation for Plethysmography and Respiratory Observations (SASSI), 2) Statistics And Graph Generator (STAGG), and a graphical user interface (GUI) to allow for high-thruput, consistent analysis of respiratory waveforms.
+Breathe Easy is an automated waveform analysis pipeline for data gathered in whole animal plethysmography experiments. It utilizes python, pyQT, and R languages in three modules 1) Signal Analysis Selection and Segmentation Integration (SASSI), 2) Statistics And Graph Generator (STAGG), and a graphical user interface (GUI) to allow for high-thruput, consistent analysis of respiratory waveforms.
 
 ```mermaid
 graph TD;

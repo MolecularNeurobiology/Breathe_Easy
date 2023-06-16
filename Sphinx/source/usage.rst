@@ -42,31 +42,31 @@ Install Python Dependencies
      - Program Module Utilization
    * - argparse
      - This library collects arguments that are provided in the command line when executing the script so that they can be easily accessed as variables
-     - BASSPRO
+     - SASSI
    * - csv
      - This library assists with reading in data from csv files such as the metadata and auto_criteria settings files
-     - BASSPRO
+     - SASSI
    * - datetime
      - This library provides a data structure for handling dates and times and applying mathematic operations to them - this is used as part of the logging system for tracking events through the execution of the script
-     - BASSPRO
+     - SASSI
    * - logging
      - This library aids in generating contextualized logging feedback to the console as well as the log file
-     - BASSPRO  
+     - SASSI  
    * - lmxl
      - This package is used in the ReadMe word document generation to access content within configuration .csv files.
      - GUI
    * - math
      - This library provides additional functions for numerical operations and is currently used to aid in verifying if N/A values are present
-     - BASSPRO
+     - SASSI
    * - numpy
      - This library includes several classes and functions that are used including arrays for storing values as well as mathematic and filtering generating functions
-     - BASSPRO, GUI
+     - SASSI, GUI
    * - os
      - This library provides access to functions for file i/o and filepath creationg and parsing
-     - BASSPRO
+     - SASSI
    * - pandas
      - This library is used for its DataFrame class that is used to store several variables including the input signals and the detected breaths and their derived parameters. Several methods that act upon DataFrame are utilized for filtering and applying calculations to the data.
-     - BASSPRO, GUI
+     - SASSI, GUI
    * - pyodbc
      - This library provides methods and utilities for accessing ODBC databases in Python
      - GUI
@@ -90,22 +90,22 @@ Install Python Dependencies
      - GUI
    * - re
      - This library is used for regular expression parsing of text strings and is used for parsing MUID and PlyUID information
-     - BASSPRO
+     - SASSI
    * - scipy
      - This library provides functions used for signal processing including high and low pass filters that are used to reduce noise in the derived flow signal. Additionally, this library's ``linregress`` function is used for the creation of calibration curves (O2 and CO2 concentrations vs. voltages).
-     - BASSPRO, GUI
+     - SASSI, GUI
    * - six
      - This library provides smooth compatibility between libraries written for both Python 2 and Python 3
      - GUI
    * - statistics
      - This library is used to provide access to statistical functions such as median
-     - BASSPRO
+     - SASSI
    * - sys
      - This library is used to connect the systems stdout to logging functions, used for displaying logging messages in the console
-     - BASSPRO
+     - SASSI
    * - tkinter
-     - This library is used to provide a minimal GUI when running the BASSPRO script separately from the GUI
-     - BASSPRO 
+     - This library is used to provide a minimal GUI when running the SASSI script separately from the GUI
+     - SASSI 
 
 Install R
 ^^^^^^^^^^^^^^^^^^^^
@@ -182,7 +182,7 @@ Launching Breathe Easy
 ===========================
 From packaged version
 -------------------------
-#. Inside the unzipped file, you'll find a folder named ``BASSPRO-STAGG_QUIPPL``.
+#. Inside the unzipped file, you'll find a folder named ``SASSI-STAGG_QUIPPL``.
 #. Double click the ``launcher.bat`` file in this folder to launch the GUI.
   
     #. The ``launcher.bat`` file can be moved to your Desktop or another easily accessible location 

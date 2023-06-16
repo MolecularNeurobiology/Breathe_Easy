@@ -25,7 +25,7 @@ Manual Entry
 2. Replace all placeholders with your respective metadata.
      
      .. note:: 
-        Some fields are required for a successful run of BASSPRO-STAGG and these fields 
+        Some fields are required for a successful run of SASSI-STAGG and these fields 
         are bolded in the provided “metadata.csv” file. These fields are required for 
         each run included in the experiment and are enumerated in the table below.
 
@@ -43,7 +43,7 @@ Manual Entry
         - Body weight at time of recording in grams
       * - Start_body_temperature
         - Body temperature at beginning of recording in Celsius or Fahrenheit. Celsius is preferred, 
-          but BASSPRO is programmed to detect Fahrenheit temperature values and perform 
+          but SASSI is programmed to detect Fahrenheit temperature values and perform 
           a conversion to Celsius automatically.
       * - Mid_body_temperature
         - Body temperature roughly in the middle of the recording, typically only in experiments
@@ -200,7 +200,7 @@ overly detailed labels can be simplified. You can also rename variables to match
       
 6. Save the configured metadata file.
 
-    * Click ``OK`` to save your configured metadata in local memory – the actual csv file won’t be created until BASSPRO is launched.
+    * Click ``OK`` to save your configured metadata in local memory – the actual csv file won’t be created until SASSI is launched.
     * Click ``Save As`` to open a file dialog to save your metadata in a particular location for access later.
-    * Either option of saving will result in a copy of this “metadata.csv” file saved in the BASSPRO output folder 
+    * Either option of saving will result in a copy of this “metadata.csv” file saved in the SASSI output folder 
       for this run once launched.

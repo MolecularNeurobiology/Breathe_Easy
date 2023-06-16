@@ -7,13 +7,13 @@ Prepping Data
    We use LabChart for all of our recordings, so instructions to convert those recordings are below. For the software you use, 
    please visit the appropriate help website for information on converting the recordings into text files.
 
-For manual selections to be run through BASSPRO-STAGG, you must convert the signal files AND the DataPad. 
+For manual selections to be run through SASSI-STAGG, you must convert the signal files AND the DataPad. 
 This requires the running of two different Macros. If you only intend to run automated selections, then you 
 need only complete signal file export below. If you intend to run manual selections, then you must run both 
 the :ref:`signal file export<LabChart Signal File Export>` and the :ref:`DataPad export <LabChart DataPad Export>`.
 
 Before running your data for the first time, we recommend completing the optional step of timestamp review
-to give you a chance to address formatting issues that would cause errors later in BASSPRO. This can potentially save 
+to give you a chance to address formatting issues that would cause errors later in SASSI. This can potentially save 
 hours of program run time for unexpected results. See :ref:`Timestamp Review <Timestamp Review>` for more
 information.
 
@@ -21,9 +21,9 @@ LabChart Signal File Export
 ------------------------------
 Download LabChart `here <https://www.adinstruments.com/support/downloads/windows/labchart/>`_.
 
-The required input for BASSPRO is text file-formatted recording files. If recordings are performed using 
+The required input for SASSI is text file-formatted recording files. If recordings are performed using 
 LabChart, the default saving format is .adicht rather than .txt. Therefore, all of your .adicht files will 
-need to be converted to .txt files before proceeding with BASSPRO-STAGG analysis. To do this, complete the 
+need to be converted to .txt files before proceeding with SASSI-STAGG analysis. To do this, complete the 
 below steps for batch conversion of all .adicht files within a folder. You can also convert a single file if 
 you have that file open in LabChart and click File > Export… This will open a file dialog where you choose the 
 folder in which you want your text file saved. Then click “Save”. 

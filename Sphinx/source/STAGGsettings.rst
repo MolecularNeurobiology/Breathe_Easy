@@ -7,8 +7,8 @@ If you need a refresher on statistics, see our :ref:`resource page about statist
 
 1. The STAGG settings subGUI will not open without one of the following sets of input: 
 
-    * A metadata file, a basic BASSPRO settings file, and an automated and/or manual BASSPRO settings file
-    * JSON files that were produced by BASSPRO and are selected using the Select STAGG input files button (14) and displayed in window (F).
+    * A metadata file, a basic SASSI settings file, and an automated and/or manual SASSI settings file
+    * JSON files that were produced by SASSI and are selected using the Select STAGG input files button (14) and displayed in window (F).
 
 2. Click the ``Select STAGG settings`` button (13) to open the subGUI (Figure 13).
 
@@ -161,7 +161,7 @@ dependent graphs created by the primary model. For example, you may want to grap
     * *Xvar, Pointdodge, Facet1, and Facet2* follow the same rules here as they do for the main model. 
     * *Filter breaths?* asks whether or not you want to include data from all breaths (No), as opposed to just “good breaths” (Yes). 
 
-        * It is important to note here that featured breathing, like apneas and sighs, does not always pass the breathing filters of BASSPRO. 
+        * It is important to note here that featured breathing, like apneas and sighs, does not always pass the breathing filters of SASSI. 
           If you want to include featured breathing that might not typically be considered “good” you may want to include all breaths rather 
           than applying the filter.
 
@@ -176,4 +176,4 @@ dependent graphs created by the primary model. For example, you may want to grap
 
     * Click ``Ok`` to save your settings in local memory – the actual csv files detailing the settings won’t be created until STAGG is launched.
     * Click ``Save As`` to open a file dialog to save your settings in a particular location for access later.
-    * Either option of saving will result in a copy of these settings saved in the BASSPRO output folder for this run once launched.
+    * Either option of saving will result in a copy of these settings saved in the SASSI output folder for this run once launched.
