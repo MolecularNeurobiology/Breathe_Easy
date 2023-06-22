@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-CONSTANTS for use with BASSPRO-STAGG
+CONSTANTS for use with SASSI-STAGG
 Copyright (C) 2022  Christopher Scott Ward
 
 created as a component of Breathe Easy
@@ -26,12 +26,12 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ***
 
-Current contents include the list of anticipated BASSPRO_OUTPUT columns and 
-the list of known continuous variables (a.k.a. BASSPRO_CONTINUOUS)
+Current contents include the list of anticipated SASSI_OUTPUT columns and 
+the list of known continuous variables (a.k.a. SASSI_CONTINUOUS)
 
 """
 
-BASSPRO_OUTPUT = [    
+SASSI_OUTPUT = [    
     'Mouse_And_Session_ID',
     'Breath_Inclusion_Filter',
     'Auto_Condition',
@@ -110,7 +110,7 @@ BASSPRO_OUTPUT = [
     'Irreg_Score_Body_Temperature_Linear'
     ]
 
-BASSPRO_CONTINUOUS = [
+SASSI_CONTINUOUS = [
     'Breath Number',
     'Timestamp_Inspiration',
     'Timestamp_Expiration',

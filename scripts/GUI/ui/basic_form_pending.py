@@ -1370,7 +1370,7 @@ class Ui_Basic(object):
     def retranslateUi(self, Basic):
         _translate = QtCore.QCoreApplication.translate
         Basic.setWindowTitle(_translate("Basic", "Form"))
-        self.label.setText(_translate("Basic", "BASSPRO Basic Settings"))
+        self.label.setText(_translate("Basic", "SASSI Basic Settings"))
         self.load_basic_button.setText(_translate("Basic", "Open"))
         self.save_basic_button.setText(_translate("Basic", "Save As"))
         self.rig_convert_label_2.setText(_translate("Basic", "Breath Identification"))

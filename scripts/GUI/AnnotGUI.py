@@ -37,7 +37,7 @@ from util.ui.dialogs import ask_user_ok, notify_error, notify_info
 
 class Annot(QDialog, Ui_Annot):
     """
-    Properties, attributes, and methods used by the BASSPRO metadata subGUI.
+    Properties, attributes, and methods used by the SASSI metadata subGUI.
 
     Attributes
     ---------
@@ -56,7 +56,7 @@ class Annot(QDialog, Ui_Annot):
         super(Annot, self).__init__()
 
         self.setupUi(self)
-        self.setWindowTitle("BASSPRO Variable Annotation")
+        self.setWindowTitle("SASSI Variable Annotation")
         self.isActiveWindow()
 
         self.data = data.copy()

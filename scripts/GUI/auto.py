@@ -1,6 +1,6 @@
 """
 Module for the autosections GUI, allowing the user to select
-options for an automated run of BASSPRO.
+options for an automated run of SASSI.
 
 ***
 built as part of the Russell Ray Lab Breathing And Physiology Analysis Pipeline
@@ -38,7 +38,7 @@ from tools.convert_timestamps_to_autosections import convert_timestamps_to_autos
 
 class Auto(QDialog, Ui_Auto):
     """
-    Properties, attributes, and methods used by the automated BASSPRO settings subGUI.
+    Properties, attributes, and methods used by the automated SASSI settings subGUI.
 
     Attributes
     ---------

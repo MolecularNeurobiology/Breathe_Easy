@@ -55,7 +55,7 @@ from manual import ManualSettings
 from AnnotGUI import MetadataSettings
 from config import GraphSettings, OtherSettings, VariableSettings, ConfigSettings
 from tools.import_cols_vals_thread import ColValImportThread
-from tools.constants import BASSPRO_OUTPUT
+from tools.constants import SASSI_OUTPUT
 from thread_manager import ThreadManager
 import MainGUIworker
 from ui.form import Ui_Plethysmography
@@ -72,10 +72,10 @@ CONFIG_DIR = os.path.join("scripts", "GUI", "config")
 class STAGGInputSettings(Settings):
     """Attributes and methods for handling STAGG input files"""
     valid_filetypes = ['.json', '.RData']
-    file_chooser_message = 'Choose STAGG input files from BASSPRO output'
+    file_chooser_message = 'Choose STAGG input files from SASSI output'
 
-class BASSPROInputSettings(Settings):
-    """Attributes and methods for handling BASSPRO input files"""
+class SASSIInputSettings(Settings):
+    """Attributes and methods for handling SASSI input files"""
     valid_filetypes = ['.txt']
     file_chooser_message = 'Select signal files'
 
@@ -89,7 +89,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     DEFAULT_OTHER_CONFIG_DF (DataFrame): default data for other config
     gui_config (str): path to default gui config
     stamp (dict): timestamp settings
-    bc_config (dict): default basspro settings
+    bc_config (dict): default SASSI settings
     rc_config (dict): help text config settings
     dialogs (Dict): attribute used to store nonblocking dialog windows
     qthreadpool (QThreadPool): used to allocate processes across CPU cores
@@ -99,7 +99,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         list of STAGG input paths previously used to import STAGG Settings
     col_vals (Dict[str, list]):
         all values for each column in STAGG Settings
-    basspro_path (str): path to BASSPRO python script
+    SASSI_path (str): path to SASSI python script
     papr_dir (str): path to STAGG scripts directory
     config_data (Dict[str, DataFrame]):
         'variable', 'graph', and 'other' data for STAGG Settings
@@ -125,12 +125,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         os.chdir(Path(__file__).parent.parent.parent)
 
         # Access configuration settings for GUI in gui_config.json
-        # - Paths to the BASSPRO and STAGG modules and the local
+        # - Paths to the SASSI and STAGG modules and the local
         #   Rscript.exe file
         # - Fields of the database accessed when building a
         #   metadata file
         # - Settings labels used to organize the populating of the
-        #   TableWidgets in the BASSPRO settings subGUIs
+        #   TableWidgets in the SASSI settings subGUIs
         with open(os.path.join(CONFIG_DIR, 'gui_config.json'), 'r') as config_file:
             self.gui_config = json.load(config_file)
 
@@ -143,17 +143,17 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         with open(os.path.join(CONFIG_DIR, 'timestamps.json'), 'r') as stamp_file:
             self.stamp = json.load(stamp_file)
 
-        # Access configuration settings for basspro in breathcaller_config.json
+        # Access configuration settings for SASSI in breathcaller_config.json
         # - Default settings of multiple experimental setups for
-        #   basic, automated, and manual BASSPRO settings
+        #   basic, automated, and manual SASSI settings
         # - Recently saved settings for automated and basic
-        #   BASSPRO settings
+        #   SASSI settings
         with open(os.path.join(CONFIG_DIR, 'breathcaller_config.json'), 'r') as bconfig_file:
             self.bc_config = json.load(bconfig_file)
 
-        # Access references for basspro in reference_config.json
+        # Access references for SASSI in reference_config.json
         # - Definitions, descriptions, and recommended values
-        #   for every basic, manual, and automated BASSPRO setting.
+        #   for every basic, manual, and automated SASSI setting.
         with open(os.path.join(CONFIG_DIR, 'reference_config.json'), 'r') as rconfig_file:
             self.rc_config = json.load(rconfig_file)
 
@@ -165,21 +165,21 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.qthreadpool.setMaxThreadCount(1)
         self.thread_manager = ThreadManager()
         
-        # Use for importing cols/vals from basspro json files
+        # Use for importing cols/vals from SASSI json files
         self.import_thread = None
         self.imported_files = None
         self.col_vals = None
 
 
         # TODO: deconflict with paths stored in gui config defaults
-        # path to the BASSPRO module script and STAGG scripts directory
-        self.basspro_path = os.path.join("scripts", "python_module.py")
+        # path to the SASSI module script and STAGG scripts directory
+        self.SASSI_path = os.path.join("scripts", "python_module.py")
         self.papr_dir = os.path.join("scripts", "papr")
 
         # STAGG Settings
         self.config_data = None  # {var=None, graph/other=defaults}
 
-        # Basspro settings
+        # SASSI settings
         self.autosections_df = None
         self.mansections_df = None
         self.metadata_df = None
@@ -516,7 +516,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def edit_manual(self):
         """
-        Show the manual BASSPRO settings subGUI to edit manual settings.
+        Show the manual SASSI settings subGUI to edit manual settings.
         
         If subGUI edits confirmed, store selections
         """
@@ -529,7 +529,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def edit_auto(self):
         """
-        Show the automated BASSPRO settings subGUI to edit auto settings.
+        Show the automated SASSI settings subGUI to edit auto settings.
         
         If subGUI edits confirmed, store selections
         """
@@ -545,7 +545,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def edit_basic(self):
         """
-        Show the basic BASSPRO settings subGUI to edit basic settings.
+        Show the basic SASSI settings subGUI to edit basic settings.
         
         If subGUI edits confirmed, store selections
         """
@@ -559,7 +559,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         
     def finish_import(self, kill_thread=False):
         """
-        Called at the conclusion of reading columns and values from Basspro json output
+        Called at the conclusion of reading columns and values from SASSI json output
           OR at the cancellation of existing import process
 
         Parameters
@@ -612,7 +612,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         If subGUI edits confirmed, store selections
 
         NOTE: this method may initiate a potentially longrunning import of
-              stagg settings from JSON basspro output files
+              stagg settings from JSON SASSI output files
 
         Attribute-In
         -----------
@@ -638,7 +638,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # Gather input options
             import_options = ["Select files"]
             if self.stagg_input_files:
-                import_options.append("BASSPRO output")
+                import_options.append("SASSI output")
             if self.metadata_df is not None and (self.autosections_df is not None or self.mansections_df is not None):
                 import_options.append("Settings files")
 
@@ -667,7 +667,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                 # Retrieve col vals from graph config dataframe
                 col_vals = GraphSettings.get_col_vals(input_data['graph'])
                 
-            elif selected_option == "BASSPRO output":
+            elif selected_option == "SASSI output":
                 # Import currently running
                 if self.import_thread:
                     if ask_user_yes("Import in progress",
@@ -695,7 +695,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
                     # Filter out anything thats not json (RData files)
                     json_files = [f for f in self.stagg_input_files if f.endswith('.json')]
 
-                    # load basspro output files
+                    # load SASSI output files
                     self.import_thread = ColValImportThread(json_files)
                     
                     # Print out any progress messages emitted by thread
@@ -734,7 +734,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
     ## File/Directory Selection ##
     ##############################
     def select_output_dir(self):
-        """Allow user to select an output folder, used for both BASSPRO and STAGG"""
+        """Allow user to select an output folder, used for both SASSI and STAGG"""
 
         # If we already have a workspace dir, set the initial choosing dir to the workspace parent
         if self.output_dir:
@@ -777,7 +777,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         method multiple times.
         """
         # Only allowed to select .txt files
-        files = BASSPROInputSettings.open_files(self.output_dir)
+        files = SASSIInputSettings.open_files(self.output_dir)
         # Catch cancel
         if not files:
             return
@@ -797,9 +797,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Add signal files
         [self.signal_files_list.addItem(file) for file in files]
       
-    def load_basspro_settings(self):
+    def load_SASSI_settings(self):
         """
-        Prompt user to select BASSPRO Settings files
+        Prompt user to select SASSI Settings files
 
         The following can be selected at once:
             * Auto sections
@@ -861,7 +861,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         Parameters
         ---------
-        signal_files: file paths of .txt signal files that are analyzed by BASSPRO.
+        signal_files: file paths of .txt signal files that are analyzed by SASSI.
         meta_df: metadata information
         
         Returns
@@ -1258,23 +1258,23 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             return metadata_warnings, metadata_pm_warnings
 
     #################
-    ## Run BASSPRO ##
+    ## Run SASSI ##
     #################
-    def basspro_run(self):
+    def SASSI_run(self):
         """
-        Check BASSPRO requirements, then launch BASSPRO and track asynchronously.
+        Check SASSI requirements, then launch SASSI and track asynchronously.
 
         If the "full_run" box is selected, will automatically attempt to run STAGG
-        after BASSPRO completion.
+        after SASSI completion.
         """
 
-        # check that the required input for BASSPRO has been selected
+        # check that the required input for SASSI has been selected
         if not self.check_bp_reqs():
             return
 
         # If doing full run, check stagg reqs
         is_full_run = self.full_run_checkbox.isChecked()
-        if is_full_run and not self.check_stagg_reqs(wait_for_basspro=True):
+        if is_full_run and not self.check_stagg_reqs(wait_for_SASSI=True):
                 return
 
         # Prep stagg settings ahead of time using current BP settings
@@ -1291,10 +1291,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             clear_stagg_input = ask_user_yes('Clear STAGG input list?',
                                              'Would you like to remove the previously selected STAGG input files?')
 
-        # launch BASSPRO
-        self.status_message("\n-- -- Launching BASSPRO -- --")
-        basspro_run_folder, shared_queue, workers = self.launch_basspro()
-        self.basspro_launch_button.setEnabled(False)
+        # launch SASSI
+        self.status_message("\n-- -- Launching SASSI -- --")
+        SASSI_run_folder, shared_queue, workers = self.launch_SASSI()
+        self.SASSI_launch_button.setEnabled(False)
 
         # TODO: prevent full run if stagg already running
         # Kick off stagg later if doing a full-run!
@@ -1303,61 +1303,61 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             self.enable_stagg_buttons(False)
 
             # Set next function to run and monitor the workers
-            execute_after = lambda : self.pickup_after_basspro(basspro_run_folder, clear_stagg_input, config_data, col_vals)
+            execute_after = lambda : self.pickup_after_SASSI(SASSI_run_folder, clear_stagg_input, config_data, col_vals)
             
             # Set function in case cancel is selected
-            cancel_func = lambda : self.basspro_launch_button.setEnabled(True) or self.enable_stagg_buttons(True)
+            cancel_func = lambda : self.SASSI_launch_button.setEnabled(True) or self.enable_stagg_buttons(True)
             cancel_msg = "Would you like to cancel checking for STAGG autostart?"
 
         else:
-            # Wait to check output after basspro finishes
-            execute_after = lambda : self.complete_basspro(basspro_run_folder, clear_stagg_input, config_data, col_vals)
+            # Wait to check output after SASSI finishes
+            execute_after = lambda : self.complete_SASSI(SASSI_run_folder, clear_stagg_input, config_data, col_vals)
 
             # Set function in case cancel is selected
-            cancel_func = lambda : self.basspro_launch_button.setEnabled(True)
+            cancel_func = lambda : self.SASSI_launch_button.setEnabled(True)
             cancel_msg = None
 
-        # Monitor the basspro processes and execute a function after completion
+        # Monitor the SASSI processes and execute a function after completion
         self.thread_manager.add_monitor(workers,
                                         shared_queue,
                                         execute_after=execute_after,
                                         exec_after_cancel=cancel_func,
                                         print_funcs=[self.status_message],
-                                        proc_name="BASSPRO",
+                                        proc_name="SASSI",
                                         cancel_msg=cancel_msg,
                                         )
     
-    def launch_basspro(self):
-        """Kick off a BASSPRO run as a collection of asynchronous processes."""
+    def launch_SASSI(self):
+        """Kick off a SASSI run as a collection of asynchronous processes."""
 
         # Create new folder for run
-        basspro_output_dir = os.path.join(self.output_dir, 'BASSPRO_output')
+        SASSI_output_dir = os.path.join(self.output_dir, 'SASSI_output')
 
-        if not os.path.exists(basspro_output_dir):
-            os.mkdir(basspro_output_dir)
+        if not os.path.exists(SASSI_output_dir):
+            os.mkdir(SASSI_output_dir)
 
         curr_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        basspro_run_folder = os.path.join(basspro_output_dir, f'BASSPRO_output_{curr_timestamp}')
-        os.mkdir(basspro_run_folder)
+        SASSI_run_folder = os.path.join(SASSI_output_dir, f'SASSI_output_{curr_timestamp}')
+        os.mkdir(SASSI_run_folder)
 
         # Write metadata file
-        metadata_file = os.path.join(basspro_run_folder, f"metadata_{curr_timestamp}.csv")
+        metadata_file = os.path.join(SASSI_run_folder, f"metadata_{curr_timestamp}.csv")
         MetadataSettings.save_file(self.metadata_df, metadata_file)
 
         # Write autosections file
         autosections_file = ""
         if self.autosections_df is not None:
-            autosections_file = os.path.join(basspro_run_folder, f"auto_sections_{curr_timestamp}.csv")
+            autosections_file = os.path.join(SASSI_run_folder, f"auto_sections_{curr_timestamp}.csv")
             AutoSettings.save_file(self.autosections_df, autosections_file)
     
         # Write mansections file
         mansections_file = ""
         if self.mansections_df is not None:
-            mansections_file = os.path.join(basspro_run_folder, f"manual_sections_{curr_timestamp}.csv")
+            mansections_file = os.path.join(SASSI_run_folder, f"manual_sections_{curr_timestamp}.csv")
             ManualSettings.save_file(self.mansections_df, mansections_file)
 
         # Write basic settings
-        basic_file = os.path.join(basspro_run_folder, f"basics_{curr_timestamp}.csv")
+        basic_file = os.path.join(SASSI_run_folder, f"basics_{curr_timestamp}.csv")
         BasicSettings.save_file(self.basicap_df, basic_file)
 
         # Write json config to gui_config location
@@ -1374,8 +1374,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         ## Start Jobs ##
         for job in MainGUIworker.get_jobs_py(signal_files=self.signal_files,
-                                             module=self.basspro_path,
-                                             output_folder=basspro_run_folder,
+                                             module=self.SASSI_path,
+                                             output_folder=SASSI_run_folder,
                                              metadata=metadata_file,
                                              manual=mansections_file,
                                              auto=autosections_file,
@@ -1395,10 +1395,10 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # Keep the worker around in a dict
             workers[worker_id] = new_worker
 
-        return basspro_run_folder, shared_queue, workers
+        return SASSI_run_folder, shared_queue, workers
     
     def output_check(self):
-        """Check for signal files that did not produce BASSPRO output."""
+        """Check for signal files that did not produce SASSI output."""
 
         # Compare just the MUID numbers
         # TXT can be MXXX.txt or MXXX_PlyYYY.txt
@@ -1411,28 +1411,28 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         if len(baddies) > 0:
             baddies_list_str = ', '.join(baddies)
-            msg  = "\nThe following signals files did not pass BASSPRO:"
+            msg  = "\nThe following signals files did not pass SASSI:"
             msg += f"\n{baddies_list_str}"
             self.status_message(msg)
 
-    def complete_basspro(self,basspro_run_folder: str, clear_stagg_input: bool,
+    def complete_SASSI(self,SASSI_run_folder: str, clear_stagg_input: bool,
                          config_data: Dict[str, pd.DataFrame], col_vals: Dict[str, list]):
         """
-        Follow-up processing after BASSPRO run
+        Follow-up processing after SASSI run
         
         Parameters
         ---------
-        basspro_run_folder: path to folder containing BASSPRO output
+        SASSI_run_folder: path to folder containing SASSI output
         clear_stagg_input: flag whether to clear existing STAGG input
         config_data: stagg settings
         col_vals: all input column names and their values
         """
-        # Re-enable basspro button
-        self.basspro_launch_button.setEnabled(True)
+        # Re-enable SASSI button
+        self.SASSI_launch_button.setEnabled(True)
 
         # autoload output JSON files
         self.status_message("\nAutopopulating STAGG")
-        self.auto_get_breath_files(basspro_run_folder, clear_files=clear_stagg_input)
+        self.auto_get_breath_files(SASSI_run_folder, clear_files=clear_stagg_input)
         
         # Set STAGG Settings
         self.config_data = config_data
@@ -1442,29 +1442,29 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         self.output_check()
 
         # Indicate completion to the user
-        title = "BASSPRO finished"
-        msg = f"Output can be found at: {basspro_run_folder}."
+        title = "SASSI finished"
+        msg = f"Output can be found at: {SASSI_run_folder}."
         self.nonblocking_msg(msg, title)
 
-    def auto_get_breath_files(self, basspro_run_folder: str, clear_files: bool):
+    def auto_get_breath_files(self, SASSI_run_folder: str, clear_files: bool):
         """
         Parameters
         --------
-        basspro_run_folder: path to basspro run output
+        SASSI_run_folder: path to SASSI run output
         clear_files: flag indicating whether to clear existing breath files
         """
 
         if len(self.stagg_input_files) and clear_files:
             self.breath_list.clear()
 
-        # Get all json files in basspro_run_folder
-        stagg_input_files = glob(os.path.join(basspro_run_folder, "*.json"))
+        # Get all json files in SASSI_run_folder
+        stagg_input_files = glob(os.path.join(SASSI_run_folder, "*.json"))
         for file in stagg_input_files:
             self.breath_list.addItem(file)
 
     def check_bp_reqs(self):
         """
-        Check requirements for running BASSPRO
+        Check requirements for running SASSI
         
         Returns
         ------
@@ -1494,7 +1494,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
     def get_cols_vals_from_settings(self):
         """
-        Import columns and values from current BASSPRO settings files.
+        Import columns and values from current SASSI settings files.
         
         The output will be used to populate the STAGG settings.
 
@@ -1508,9 +1508,9 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Import columns and values from settings files
         col_vals = columns_and_values_from_settings(self.metadata_df, self.autosections_df, self.mansections_df)
 
-        # For any column guaranteed to output from BASSPRO
+        # For any column guaranteed to output from SASSI
         #   -if its not included yet, add the column name with an empty list
-        for col in BASSPRO_OUTPUT:
+        for col in SASSI_OUTPUT:
             if col not in col_vals:
                 col_vals[col] = []
 
@@ -1525,13 +1525,13 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
 
         return col_vals, config_data
 
-    def pickup_after_basspro(self, basspro_run_folder, clear_stagg_input, config_data, col_vals):
+    def pickup_after_SASSI(self, SASSI_run_folder, clear_stagg_input, config_data, col_vals):
         """
-        Full-run processing to transition from BASSPRO to STAGG
+        Full-run processing to transition from SASSI to STAGG
         
         Parameters
         ---------
-        basspro_run_folder: path to folder containing BASSPRO output
+        SASSI_run_folder: path to folder containing SASSI output
         clear_stagg_input: flag whether to clear existing STAGG input
         config_data: stagg settings
         col_vals: all input column names and their values
@@ -1540,8 +1540,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Let the user edit STAGG again
         self.enable_stagg_buttons(True)
 
-        # check whether Basspro output is correct, re-enable basspro button
-        self.complete_basspro(basspro_run_folder, clear_stagg_input, config_data, col_vals)
+        # check whether SASSI output is correct, re-enable SASSI button
+        self.complete_SASSI(SASSI_run_folder, clear_stagg_input, config_data, col_vals)
 
         # launch STAGG
         self.stagg_run()
@@ -1564,7 +1564,7 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             # If Main.pipeline_des (aka the first STAGG script file path) isn't a file,
             #   then the STAGG scripts aren't where they're supposed to be.
             notify_error(title='STAGG scripts not found',
-                         msg='BASSPRO-STAGG cannot find the scripts for STAGG. Check the BASSPRO-STAGG folder for missing files or directories.')
+                         msg='SASSI-STAGG cannot find the scripts for STAGG. Check the SASSI-STAGG folder for missing files or directories.')
             return
 
         self.status_message("\n-- -- Launching STAGG -- --")
@@ -1573,11 +1573,11 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         # Prevent another run while running STAGG
         self.stagg_launch_button.setEnabled(False)
 
-        # Wait to check output after basspro finishes
+        # Wait to check output after SASSI finishes
         execute_after = lambda : self.complete_stagg(stagg_output_folder)
         cancel_func = lambda : self.stagg_launch_button.setEnabled(True)
 
-        # Monitor the basspro processes and execute a function after completion
+        # Monitor the SASSI processes and execute a function after completion
         self.thread_manager.add_monitor(workers,
                                         shared_queue,
                                         execute_after=execute_after,
@@ -1602,6 +1602,18 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
             image_format = ".svg"
         elif self.jpeg_radioButton.isChecked():
             image_format = ".jpeg"
+        elif self.bmp_radioButton.isChecked():
+            image_format = ".bmp"
+        elif self.eps_radioButton.isChecked():
+            image_format = ".eps"
+        elif self.pdf_radioButton.isChecked():
+            image_format = ".pdf"
+        elif self.png_radioButton.isChecked():
+            image_format = ".png"
+        elif self.tiff_radioButton.isChecked():
+            image_format = ".tiff"
+        #else:
+        #    image_format = 'jpeg'
 
 
         ## WRITE FILES ##
@@ -1692,12 +1704,12 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         msg = f"Output can be found at: {stagg_output_folder}."
         self.nonblocking_msg(msg, title)
 
-    def check_stagg_reqs(self, wait_for_basspro: bool = False):
+    def check_stagg_reqs(self, wait_for_SASSI: bool = False):
         """Check requirements to run STAGG
 
         Parameters
         --------
-        wait_for_basspro: flag indicating whether to expect BASSPRO to produce necessary input
+        wait_for_SASSI: flag indicating whether to expect SASSI to produce necessary input
 
         Returns
         ------
@@ -1708,8 +1720,8 @@ class Plethysmography(QMainWindow, Ui_Plethysmography):
         if not self.require_output_dir():
             return False
 
-        # If full run, this will all be handled after basspro runs
-        if not wait_for_basspro:
+        # If full run, this will all be handled after SASSI runs
+        if not wait_for_SASSI:
             if self.variable_config_df is None or \
                     self.graph_config_df is None or \
                     self.other_config_df is None:

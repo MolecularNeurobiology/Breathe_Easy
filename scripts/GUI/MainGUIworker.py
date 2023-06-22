@@ -1,5 +1,5 @@
 """
-Module for creating and executing BASSPRO and STAGG runs, asynchoronously
+Module for creating and executing SASSI and STAGG runs, asynchoronously
 
 ***
 built as part of the Russell Ray Lab Breathing And Physiology Analysis Pipeline
@@ -40,7 +40,7 @@ class Worker(QRunnable):
 
     Attributes
     ---------
-    path_to_script: command arguments yielded by get_jobs_py() or get_jobs_r() to launch either BASSPRO or STAGG respectively.
+    path_to_script: command arguments yielded by get_jobs_py() or get_jobs_r() to launch either SASSI or STAGG respectively.
     worker_id: unique identifier for this thread
     worker_queue: FIFO queue constructor for safely exchanging information between threads.
     """
@@ -50,7 +50,7 @@ class Worker(QRunnable):
 
         Parameters
         ---------
-        path_to_script: command arguments yielded by get_jobs_py() or get_jobs_r() to launch either BASSPRO or STAGG respectively.
+        path_to_script: command arguments yielded by get_jobs_py() or get_jobs_r() to launch either SASSI or STAGG respectively.
         worker_id: unique identifier for this thread
         worker_queue: FIFO queue constructor for safely exchanging information between threads.
         """
@@ -87,27 +87,27 @@ def get_jobs_py(signal_files: List[str], module: str, output_folder: str,
                 metadata: str, manual: str, auto: str, basic: str):
     """
     Return the list of arguments fed to the command line to launch
-    the BASSPRO module.
+    the SASSI module.
 
     Parameters
     --------
     signal_files: collection of input breath files
-    module: path to basspro script
-    output_folder: path to folder created for basspro run output
-    metadata: path to BASSPRO input metadata
-    manual: path to manual BASSPRO settings
-    auto: path to automated BASSPRO settings
-    basic: path to basic BASSPRO settings
+    module: path to SASSI script
+    output_folder: path to folder created for SASSI run output
+    metadata: path to SASSI input metadata
+    manual: path to manual SASSI settings
+    auto: path to automated SASSI settings
+    basic: path to basic SASSI settings
     NOTE: either mansections or autosections must be provided
     
     Returns
     ------
-    list: Command line arguments to launch the BASSPRO module.
+    list: Command line arguments to launch the SASSI module.
     """
     for file_py in signal_files:
         breathcaller_cmd = [
             sys.executable,  # path to the current python executable
-            '-u', module,  # path to basspro script
+            '-u', module,  # path to SASSI script
             '-i', os.path.dirname(file_py),  # signal dir
             '-f', os.path.basename(file_py),  # signal file
             '-o', output_folder,
@@ -151,7 +151,7 @@ def get_jobs_r(rscript: str, pipeline: str, papr_dir: str, output_dir: str,
         pipeline,
         # The path to the output directory chosen by the user
         '-d', output_dir,
-        # This variable is either a list of JSON file paths produced as BASSPRO output, a list of JSON file paths produced as BASSPRO output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as BASSPRO output.
+        # This variable is either a list of JSON file paths produced as SASSI output, a list of JSON file paths produced as SASSI output and an .RData file path produced as STAGG output, a list containing a single path of an .RData file, or a string that is the path to a single directory containing JSON files produced as SASSI output.
         '-J', inputpaths_file,
         # The path to the variable_config.csv file
         '-R', variable_config,

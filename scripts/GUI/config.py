@@ -249,18 +249,36 @@ class Config(QDialog, Ui_Config):
             "Xvar": self.Xvar_combo,
             "Pointdodge": self.Pointdodge_combo,
             "Facet1": self.Facet1_combo,
-            "Facet2": self.Facet2_combo}
-
+            "Facet2": self.Facet2_combo
+        }
+        
         for combo in self.graph_config_combos.values():
             combo.currentIndexChanged.connect(self.update_graph_config)
+        
+        self.graph_config_show_stats = {
+            "graph":self.graph_showstats
+        }
+        
+        # self.graph_config_show_stats = {
+        #     "Xvar":self.Xvar_showstats,    
+        #     "Pointdodge":self.Pointdodge_showstats,
+        #     "Facet1":self.Facet1_showstats,
+        #     "Facet2":self.Facet2_showstats
+        # }
 
-        help_buttons = [self.help_xvar,
-                        self.help_pointdodge,
-                        self.help_facet1,
-                        self.help_facet2,
-                        self.help_feature,
-                        self.help_poincare,
-                        self.help_transformation]
+        for combo in self.graph_config_show_stats.values():
+            combo.currentIndexChanged.connect(self.update_graph_config)
+
+        help_buttons = [
+            self.help_show_stats,
+            self.help_xvar,
+            self.help_pointdodge,
+            self.help_facet1,
+            self.help_facet2,
+            self.help_feature,
+            self.help_poincare,
+            self.help_transformation
+        ]
 
         for button in help_buttons:
             button.clicked.connect(self.show_help)
@@ -568,7 +586,13 @@ class Config(QDialog, Ui_Config):
         pd.DataFrame: graph config data
         """
         data = []
-        for idx, combo_box in enumerate(self.graph_config_combos.values()):
+        
+        # show_stats currently only populates from the single combo box
+        # in the future, this could be changed to define if stats should be
+        # shown at each level by moving show_stats assignment into the for loop
+        show_stats = self.graph_config_show_stats["graph"].currentText()
+        
+        for idx, (key, combo_box) in enumerate(self.graph_config_combos.items()):
             role = idx + 1  # (Role)?
             alias = combo_box.currentText()
             if alias == "Select variable:":
@@ -580,10 +604,15 @@ class Config(QDialog, Ui_Config):
                 selected_var = var_df[var_df['Alias'] == alias].iloc[0]['Column']
                 # Get all the values for that variable
                 selected_values = self.col_vals_variable.get(selected_var, [])
-            data.append((role, alias, selected_values))
+        
+            
+            data.append((role, alias, selected_values,show_stats))
+            # data.append((role, alias, selected_values))
 
         graph_config_df = pd.DataFrame(data=data,
-                                       columns=['Role', 'Alias', 'Order'])
+                                        columns=['Role', 'Alias', 'Order','Show_Stats'])
+        # graph_config_df = pd.DataFrame(data=data,
+        #                                 columns=['Role', 'Alias', 'Order'])
         return graph_config_df
 
     @graph_config_df.setter
@@ -861,8 +890,8 @@ class Config(QDialog, Ui_Config):
         if var_name not in self.col_vals_variable:
             msg  = "No values available to order."
             msg += "\n\nTry loading STAGG Settings from:"
-            msg += "\n  -Previous BASSPRO Settings"
-            msg += "\n  -Previous BASSPRO Output"
+            msg += "\n  -Previous SASSI Settings"
+            msg += "\n  -Previous SASSI Output"
             notify_info(msg)
             return
 
@@ -888,7 +917,7 @@ class Config(QDialog, Ui_Config):
         # Try getting from variable_table first
         indep_covariate_vars = self.get_independent_covariate_vars()
         
-        for idx, combo in enumerate(self.graph_config_combos.values()):
+        for idx, (key, combo) in enumerate(self.graph_config_combos.items()):
             combo.blockSignals(True)
             combo.clear()
             combo.addItem("Select variable:")
@@ -901,6 +930,17 @@ class Config(QDialog, Ui_Config):
                 if len(curr_selection):
                     combo.setCurrentText(curr_selection["Alias"].values[0])
             combo.blockSignals(False)
+            
+        self.graph_config_show_stats["graph"].blockSignals(True)
+        try:
+            self.graph_config_show_stats["graph"].setCurrentText(
+                gdf.loc[gdf['Role'] == combo_role]['Show_Stats'].values[0]
+            )
+        except:
+            # permissive in the event an old stat template was used                                                                                                    
+            self.graph_config_show_stats["graph"].setCurrentText('Asterisks')
+        self.graph_config_show_stats["graph"].blockSignals(False)
+            
 
     def load_other_config(self, df):
         """Load the given data into the other config widgets"""
@@ -1076,7 +1116,7 @@ class ConfigSettings(Settings):
 
     @staticmethod
     def get_default_variable_df(variable_names):
-        default_values = [0, 0, 0, 0, 0, 0, []]
+        default_values = [0, 0, 0, "", "", 0, []]
         default_data = [[var_name, var_name] + default_values for var_name in variable_names]
         variable_table_df = pd.DataFrame(
             default_data,
@@ -1172,8 +1212,11 @@ class OtherSettings(ConfigSettings):
     def attempt_load(filepath):
         odf = pd.read_csv(filepath, index_col=False, keep_default_na=False)
         odf['Covariates'] = odf['Covariates'].str.split('@')
-
-        odf['Transformation'] = odf['Transformation'].fillna("")
+    
+        if 'Transformation' in odf.columns:
+            odf['Transformation'] = odf['Transformation'].fillna("")
+        else:
+            odf['Transformation'] = ""
 
         new_transforms = []
         # Clean transform values and create list

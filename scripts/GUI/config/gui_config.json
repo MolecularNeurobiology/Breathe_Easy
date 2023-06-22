@@ -4,7 +4,7 @@
             "breathcaller": "scripts\\python_module.py",
             "papr": "scripts\\papr",
             "rscript": "..\\R-Portable\\bin\\Rscript.exe",
-            "basspro": "scripts\\python_module.py"
+            "SASSI": "scripts\\python_module.py"
         },
         "metadata": {
             "essential_fields": {

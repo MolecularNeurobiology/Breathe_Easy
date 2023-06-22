@@ -41,7 +41,7 @@ from util.ui.tools import populate_table
 
 class Basic(QDialog, Ui_Basic):
     """
-    Properties, attributes, and methods used by the basic BASSPRO settings subGUI.
+    Properties, attributes, and methods used by the basic SASSI settings subGUI.
 
     Attributes
     ---------
@@ -65,7 +65,7 @@ class Basic(QDialog, Ui_Basic):
         """
         super(Basic, self).__init__()
         self.setupUi(self)
-        self.setWindowTitle("Basic BASSPRO settings")
+        self.setWindowTitle("Basic SASSI settings")
         self.defaults = defaults
         self.ref_definitions = ref_definitions
         self.data = deepcopy(data)

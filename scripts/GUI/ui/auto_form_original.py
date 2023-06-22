@@ -1072,7 +1072,7 @@ class Ui_Auto(object):
     def retranslateUi(self, Auto):
         _translate = QtCore.QCoreApplication.translate
         Auto.setWindowTitle(_translate("Auto", "Form"))
-        self.label.setText(_translate("Auto", "BASSPRO Automated Settings"))
+        self.label.setText(_translate("Auto", "SASSI Automated Settings"))
         self.load_auto_button.setText(_translate("Auto", "Open"))
         self.save_as_button.setText(_translate("Auto", "Export"))
         self.rig_convert_label_2.setText(_translate("Auto", "Section Identification and Settings"))
