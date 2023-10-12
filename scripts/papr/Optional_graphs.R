@@ -1305,14 +1305,14 @@ if((!is.na(poincare_vars)) && (length(poincare_vars) != 0)){
           new_colname <- paste0(raw_pc_vars[pp], "_", transforms_resp[jj])
           if(!(new_colname %in% names(tbl0))){
             if(transforms_resp[jj] == "log10"){
-              if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
+              if(any(tbl0[[raw_pc_vars[pp]]] <= 0, na.rm=TRUE)){
                 ## Most transformations require non-negative variables.
                 print(paste0("Response variable ", raw_pc_vars[pp]," has exact 0 values, log transformations will not work."))
                 next
               }
               tbl0[[new_colname]] <- log10(tbl0[[raw_pc_vars[pp]]])
             } else if(transforms_resp[jj] == "log"){
-              if(any(tbl0[[response_vars[ii]]] <= 0, na.rm=TRUE)){
+              if(any(tbl0[[raw_pc_vars[pp]]] <= 0, na.rm=TRUE)){
                 ## Most transformations require non-negative variables.
                 print(paste0("Response variable ", raw_pc_vars[pp]," has exact 0 values, log transformations will not work."))
                 next
